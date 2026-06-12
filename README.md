@@ -1,4 +1,302 @@
-# docai — AI(LLM)向け API ドキュメントフォーマット定義
+# docai — API Documentation Format for AI/LLM
+
+docai is a documentation format for describing backend APIs in a way that is optimized for AI/LLM consumption.
+It is designed so that an AI can read the API documentation as context and efficiently implement a web frontend that calls the API correctly.
+
+> **日本語の説明は英語の説明の後に記載されています。** [→ 日本語版へジャンプ](#docai日本語)
+> *Japanese documentation follows the English documentation below.*
+
+---
+
+## Table of Contents
+
+- [1. Overview](#1-overview)
+- [2. Core Principles](#2-core-principles)
+- [3. File Structure](#3-file-structure)
+- [4. Endpoint Definition Format](#4-endpoint-definition-format)
+- [5. Workflow Definitions](#5-workflow-definitions-workflows-optional)
+- [6. Writing Style Rules](#6-writing-style-rules)
+- [7. Relationship with OpenAPI](#7-relationship-with-openapi)
+- [8. Compliance Checklist](#8-compliance-checklist)
+- [docai(日本語)](#docai日本語)
+
+---
+
+## 1. Overview
+
+docai is a documentation format for describing backend APIs in a way that is optimized for **LLMs to understand and use**. OpenAPI is intended for machine processing(code generation and validation) and human browsing. In contrast, docai has one purpose: **allow an LLM to load the documentation into context and write correct API-calling code on the first attempt**.
+
+This document defines only the **format rules**. It does not cover tools or generator implementations.
+
+### Why docai is needed instead of only OpenAPI
+
+OpenAPI is difficult for LLMs to read for these reasons:
+
+- Indirect references through `$ref` — understanding one endpoint requires moving around the document, which adds expansion cost in context
+- Deeply nested JSON/YAML — understanding the structure wastes tokens
+- Examples are optional — LLMs learn more accurately from concrete examples than from schemas alone
+- There is no natural place to write side effects, call order, or business rules
+
+docai reverses these tradeoffs: **no references, flat structure, required examples, and required behavior descriptions**.
+
+## 2. Core Principles
+
+1. **Self-contained** — One endpoint definition must be fully understandable on its own without referring to other sections. Even common schemas must be expanded inline in each endpoint. Duplication is acceptable. For LLMs, duplication has a cost, but reference resolution is more expensive.
+2. **Example-first** — Every request and response must include realistic concrete examples. Schemas exist to supplement examples.
+3. **Markdown-based** — Structured Markdown and fenced code blocks are the most stable format for LLM interpretation. docai must not be a YAML/JSON-only definition file.
+4. **Deterministic structure** — Section order and heading levels are fixed. An LLM should be able to predict where information exists just from knowing the docai format.
+5. **Describe behavior** — Side effects, idempotency, preconditions, error-time state, and other information that cannot be inferred from signatures must be required.
+6. **One file per resource** — Split files so that only the context needed for the task has to be loaded.
+
+## 3. File Structure
+
+```
+docs/
+  INDEX.md          # Required: list of all endpoints, one-line summary each
+  CONVENTIONS.md    # Required: API-wide conventions
+  resources/
+    users.md        # Endpoint definitions grouped by resource
+    orders.md
+  workflows/
+    checkout.md     # Optional: procedures spanning multiple endpoints
+```
+
+### 3.1 INDEX.md(required)
+
+The entry point that an LLM reads first. List all endpoints, one endpoint per row.
+
+```markdown
+# API Index
+
+| Method | Path | Summary | Details |
+|---|---|---|---|
+| POST | /users | Create user | resources/users.md |
+| GET | /users/{id} | Get user | resources/users.md |
+
+## Workflows
+
+| Name | Summary | Details |
+|---|---|---|
+| Checkout | From cart validation to order confirmation | workflows/checkout.md |
+```
+
+- One endpoint per row. The LLM uses only this table to decide which file to read.
+- Keep the summary within 40 characters.
+- If files exist under workflows/, list them in the `Workflows` section.
+
+### 3.2 CONVENTIONS.md(required)
+
+Write API-wide conventions in **one place only**. This is the only exception that allows repetition to be removed from endpoint definitions. Required items:
+
+- Base URLs and environments
+- API versioning convention(path, header, or another method)
+- Authentication method(header name, how to obtain a token, concrete examples)
+- Authentication state handling(redirect on 401, token refresh, logout, `credentials` setting when using cookies)
+- CORS, Cookie, and CSRF conventions
+- Request formats(JSON, multipart/form-data, application/x-www-form-urlencoded, etc.)
+- Common error response shape(401/403/429/500 and other errors shared by all endpoints)
+- Validation error shape(field-level error representation, messages used for screen display)
+- Pagination convention
+- List API sorting, filtering, and search conventions
+- Representation rules for datetime, IDs, money, etc.(for example, "all datetimes are RFC 3339 / UTC")
+- Handling of `null`, empty arrays, empty objects, empty strings, and omitted fields
+- File upload and file download conventions
+- Rate limits
+
+Each endpoint definition implicitly follows `CONVENTIONS.md`. Only deviations must be described in the endpoint itself.
+
+## 4. Endpoint Definition Format
+
+In a resource file, define each endpoint using the following template. **Section order and headings are fixed**. Do not omit sections that do not apply. Write `none` instead so that an LLM can distinguish "intentionally none" from "forgotten".
+
+````markdown
+## POST /users
+
+Creates a user. Email addresses are globally unique across all tenants.
+
+### Behavior
+
+- On successful creation, a confirmation email is sent asynchronously(side effect)
+- Idempotency: none. Use the `Idempotency-Key` header when retrying
+- Preconditions: caller must have the admin role
+- Authorization: `users:write` scope
+
+### Request
+
+#### Path Parameters
+
+none
+
+#### Query Parameters
+
+none
+
+#### Headers
+
+| Name | Required | Constraints / Meaning |
+|---|---|---|
+| Idempotency-Key | no | Set only when retrying. Re-sending the same key returns the same result |
+
+#### Body
+
+```json
+{
+  "email": "taro@example.com",
+  "name": "Taro Yamada",
+  "role": "member"
+}
+```
+
+| Field | Type | Required | Nullable | Constraints / Meaning |
+|---|---|---|---|---|
+| email | string | yes | no | RFC 5322. Unique **globally**, not only within a tenant |
+| name | string | yes | no | 1-100 characters |
+| role | string | no | no | `admin` \| `member`. Defaults to `member` when omitted |
+
+### Response 201
+
+```json
+{
+  "id": "usr_01HXYZ",
+  "email": "taro@example.com",
+  "name": "Taro Yamada",
+  "role": "member",
+  "created_at": "2026-06-11T09:30:00Z"
+}
+```
+
+| Field | Type | Meaning |
+|---|---|---|
+| id | string | ULID with `usr_` prefix. Use this in later API calls |
+| email | string | User email address |
+| name | string | User name |
+| role | string | `admin` or `member` |
+| created_at | string (RFC 3339) | Creation timestamp |
+
+### Errors
+
+| Status | code | Condition | What the caller should do |
+|---|---|---|---|
+| 409 | email_taken | email already exists | Use another email. Do not retry |
+| 422 | validation_failed | Input value is invalid | Show field-level errors in the form. Do not retry |
+
+```json
+{
+  "error": {
+    "code": "validation_failed",
+    "message": "input is invalid",
+    "field_errors": [
+      {"field": "role", "code": "invalid_enum", "message": "role must be admin or member"}
+    ]
+  }
+}
+```
+
+### Related
+
+- Fetch after creation: GET /users/{id}
+- List: GET /users
+- Workflow: workflows/user-onboarding.md
+````
+
+### 4.1 Section Rules
+
+**Heading(`## METHOD /path`)**
+- Use the method and path directly as the heading. Path parameters use `{id}` format.
+- Immediately after the heading, write 1-2 sentences describing why this endpoint is called. Describe the purpose, not the implementation.
+
+**Behavior(required)**
+- List all side effects(email sending, changes to other resources, event publishing, etc.)
+- State whether the endpoint is idempotent and whether it can be retried safely
+- State preconditions(earlier APIs that must be called, required resource state, etc.)
+- These are the pieces of information that OpenAPI has no natural place for and that LLMs are most likely to get wrong
+
+**Request / Response**
+- Put the **concrete example(JSON code block) first, then the field table**
+- Use realistic example values(`"taro@example.com"` instead of `"string"` or `"foo"`)
+- Every field in the example must have a corresponding row in the field table
+- Write requests in this order: `Path Parameters`, `Query Parameters`, `Headers`, `Body`. If a part does not apply, write `none`
+- If there is no body, write `none. Do not send a request body`
+- If there is no response body, write `none. No response body is returned`
+- If there are multiple successful responses, split them by status code, such as `### Response 200`, `### Response 202`, and `### Response 204`
+- For asynchronous acceptance such as `202 Accepted`, describe the endpoint used to check completion, polling interval, timeout, and failure-time state
+- Use simple type names: `string` / `int` / `float` / `bool` / `string[]` / `object` / `object[]`. Reference notation such as `$ref` is prohibited
+- Flatten nested objects in the table using dot notation such as `address.city`
+- Flatten objects inside arrays using `[]`, such as `items[].id` and `items[].product.name`
+- List all enum values in the constraints column
+- `Required` means "cannot be omitted in a request". Omission and `null` are separate concepts
+- Request field tables must include `Required` and `Nullable` columns
+- Specify default values when omitted, whether empty strings are allowed, whether empty arrays are allowed, and whether empty objects are allowed
+- If a response field may be absent, specify the condition under which it is omitted or becomes `null`
+
+**Errors(required)**
+- Write only errors specific to this endpoint(common errors belong in CONVENTIONS.md)
+- Always write the "condition" and "what the caller should do", including retryability. This information lets an LLM write error handling code
+- Include at least one concrete error response example
+- For errors that should be displayed in forms or input UIs, include a field-level error response example
+- For field-level errors, specify the target field name, machine-readable code, and whether the message can be shown to users
+
+**Related(required)**
+- Mention endpoints that are commonly called before or after this endpoint. This helps an LLM assemble the full workflow
+- If a related workflow exists, link to it, such as `Workflow: workflows/checkout.md`
+
+## 5. Workflow Definitions(workflows/, optional)
+
+Operations that require multiple endpoints to be called in a specific order should be written as workflows.
+
+```markdown
+# Checkout
+
+Procedure until order confirmation.
+
+1. POST /carts/{id}/validate — Check inventory. If 409 occurs, adjust quantities and retry
+2. POST /payments — Pass `cart_id`. Keep the returned `payment_id`
+3. POST /orders — Pass `payment_id`. Inventory is reserved only at this step
+
+Note: If more than 15 minutes pass between steps 2 and 3, the payment expires(410 is returned).
+```
+
+- Use a numbered list to express order. For each step, write "values passed to the next step" and "failure branches".
+- If there are state transitions(for example, order status), write a table listing possible states and the endpoints that cause transitions.
+- Workflow files must be discoverable from the `Workflows` section in INDEX.md.
+- Related endpoints must also reference the workflow from their `Related` section.
+
+## 6. Writing Style Rules
+
+- Keep each file within about 1,000 lines(roughly 10,000 tokens). If it grows beyond that, split the resource.
+- Prefer tables, lists, and code blocks over prose.
+- Avoid verbose expressions. Write directly and decisively.
+- Explicitly state negative facts, such as "this field cannot be updated" or "this API does not paginate". LLMs fill in missing information by guessing, so clearly stating what is not possible prevents hallucination.
+- Put freshness information such as version and date at the beginning of INDEX.md.
+- Do not omit information that affects frontend implementation. Examples: screen transition after authentication failure, retry display, mapping errors to form fields, download file name, upload size limit.
+- Distinguish messages that may be used directly as UI copy from messages intended for logs or developers.
+
+## 7. Relationship with OpenAPI
+
+- docai does not replace OpenAPI; it can coexist with OpenAPI. To keep future machine conversion from OpenAPI possible, field tables must contain at least as much information as OpenAPI schemas.
+- However, for LLM-oriented operation, docai is the source of truth.
+
+## 8. Compliance Checklist
+
+A document is docai-compliant if:
+
+- [ ] INDEX.md and CONVENTIONS.md exist
+- [ ] Every endpoint follows the fixed template section structure and order
+- [ ] Every request, response, and error has a concrete example
+- [ ] Requests are split into path parameters, query parameters, headers, and body
+- [ ] Successful responses are documented by status code, and body-less responses explicitly say `none`
+- [ ] Reference notation such as `$ref` is not used(except for implicit compliance with CONVENTIONS.md)
+- [ ] Array, nesting, `null`, omission, and default-value behavior are specified
+- [ ] Every error includes the condition and what the caller should do
+- [ ] Validation errors include a field-level error example
+- [ ] Side effects, idempotency, and preconditions are written in the `Behavior` section(write `none` when none apply)
+- [ ] Files under workflows/ are referenced from INDEX.md and from related endpoints
+
+---
+
+# docai(日本語)
+
+AI(LLM)向け API ドキュメントフォーマット定義
 
 ## 1. 概要
 
