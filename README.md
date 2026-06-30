@@ -6,6 +6,10 @@ It is designed so that an AI can read the API documentation as context and effic
 > **日本語の説明は英語の説明の後に記載されています。** [→ 日本語版へジャンプ](#docai日本語)
 > *Japanese documentation follows the English documentation below.*
 
+This README is intentionally bilingual (English / Japanese) because it is a **specification written for human readers**, who may prefer either language. That duplication applies only to this document. It is **not** a docai rule: a generated docai document is written in a **single language** and never repeats the same content across multiple languages (see §6).
+
+このREADMEは **人間の読者向けの仕様書** であり、読者がどちらの言語でも読めるよう、意図的に英語・日本語の二言語で記述している。この重複は本書のみに適用される。これは docai のルールではない: 生成される docai ドキュメントは **単一言語** で記述され、同じ内容を複数言語で繰り返すことはない(第6節を参照)。
+
 ---
 
 ## Table of Contents
@@ -292,6 +296,7 @@ The per-section rules in §4.1 are normative — this section only adds cross-cu
 - Put freshness information(version, date, source) at the beginning of **every file**, not only INDEX.md(see §3) — files are loaded individually.
 - Do not omit information that affects frontend implementation. Examples: screen transition after authentication failure, retry display, mapping errors to form fields, download file name, upload size limit.
 - Distinguish messages that may be used directly as UI copy from messages intended for logs or developers.
+- Write each generated docai document set in a **single language**. Unlike this README(which is bilingual for human readers), generated docai must not repeat the same content in multiple languages — choose one output language and use it consistently across INDEX.md, CONVENTIONS.md, and all resource and workflow files.
 
 ## 7. Relationship with OpenAPI
 
@@ -594,6 +599,7 @@ LLM が最初に読むエントリポイント。全エンドポイントを 1 �
 - 鮮度情報(バージョン・日付・ソース)は INDEX.md だけでなく **すべてのファイル** の冒頭に置く(§3 参照)。ファイルは個別にロードされるため
 - フロントエンド実装に影響する情報は省略しない。例: 認証失敗時の画面遷移、リトライ表示、フォームへのエラー割り当て、ダウンロードファイル名、アップロード上限
 - UI 文言としてそのまま使ってよい message と、ログ・開発者向け message は区別して書く
+- 生成される docai ドキュメント一式は **単一言語** で記述する。このREADME(人間向けに二言語併記)とは異なり、生成された docai は同じ内容を複数言語で繰り返してはならない — 出力言語を 1 つ選び、INDEX.md・CONVENTIONS.md・全リソース/ワークフローファイルで一貫して使う
 
 ## 7. OpenAPI との関係
 
