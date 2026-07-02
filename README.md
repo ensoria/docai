@@ -40,10 +40,10 @@ docai reverses these tradeoffs: **no cross-file schema/object references, flat s
 
 ## 2. Core Principles
 
-1. **Self-contained with conventions** — An endpoint definition must be fully understandable when read together with `CONVENTIONS.md`. The normal read order is `INDEX.md` → `CONVENTIONS.md` → the selected resource/workflow/webhook file. Even common schemas and shared domain objects(such as `User`, `Money`, `Address`) must be expanded inline in each endpoint; within a single file, the `compact` profile may replace repeated identical response shapes with a `**same_as**:` back-reference(§3.3). Duplication is acceptable. For LLMs, duplication has a cost, but reference resolution is more expensive. Consistency across the duplicated copies is the **generator's responsibility**(§1); keeping them in sync by hand is discouraged. The only thing factored out of endpoints is API-wide conventions, which live in CONVENTIONS.md(§3.2) — shared *objects* are not conventions and are still inlined.
-2. **Example-first** — Every non-empty request body and response body must include realistic concrete examples. Schemas exist to supplement examples. Body-less requests/responses must explicitly say `none`; in the `compact` profile, a response body may use `**same_as**:` instead of repeating an identical earlier example.
+1. **Self-contained with conventions** — An endpoint definition must be fully understandable when read together with `CONVENTIONS.md`. The normal read order is `INDEX.md` → `CONVENTIONS.md` → the selected resource/workflow/webhook file. Even common schemas and shared domain objects(such as `User`, `Money`, `Address`) must be expanded inline in each endpoint; within a single file, the `compact` profile may replace repeated identical body shapes with a `**same_as**:` back-reference(§3.3). Duplication is acceptable. For LLMs, duplication has a cost, but reference resolution is more expensive. Consistency across the duplicated copies is the **generator's responsibility**(§1); keeping them in sync by hand is discouraged. The only thing factored out of endpoints is API-wide conventions, which live in CONVENTIONS.md(§3.2) — shared *objects* are not conventions and are still inlined.
+2. **Example-first** — Every non-empty request body and response body must include realistic concrete examples. Schemas exist to supplement examples. Body-less requests/responses must explicitly say `none`; in the `compact` profile, a request or response body may use `**same_as**:` instead of repeating an identical earlier example.
 3. **Markdown-based** — Structured Markdown and fenced code blocks are the most stable format for LLM interpretation. docai must not be a YAML/JSON-only definition file.
-4. **Deterministic structure** — Section order, heading levels, and required section roles are fixed. Heading text may be translated as part of the generated prose language, but a document set must use one translation consistently. Canonical keys and markers remain English format tokens. An LLM should be able to predict where information exists just from knowing the docai format.
+4. **Deterministic structure** — Section order, heading levels, and required section roles are fixed. All structural text — fixed headings, table column headers, canonical keys, markers, and fixed values — is written in English regardless of the document language(§4.1); only prose is written in the document language. An LLM should be able to predict where information exists just from knowing the docai format.
 5. **Describe behavior** — Side effects, idempotency, preconditions, error-time state, and other information that cannot be inferred from signatures must be required.
 6. **One file per resource** — Split files so that only the context needed for the task has to be loaded.
 
@@ -74,19 +74,25 @@ Because files are loaded **individually**(that is the point of splitting), fresh
 - `source` is the source document(s) or source system(s) used to generate the file.
 - `source_sha` is the stable revision or content hash covering the input(s) used to generate that file, including pass-through inputs such as hand-maintained `CONVENTIONS.md` or workflow content when they are stamped by the generator. Omit it only when no stable revision can be produced.
 
+A document set is always regenerated **as a whole**: one generation run re-stamps every file in the set with the same `generated` date(`source` and `source_sha` may differ per file when files have different inputs). If `generated` differs between files of one set, the set has been partially regenerated and must not be treated as consistent.
+
 ### 3.1 INDEX.md(required)
 
-The entry point that an LLM reads first. List all endpoints, one endpoint per row.
+The entry point that an LLM reads first. Endpoints are listed under a fixed `## Endpoints` section, grouped into **one subsection per resource file**: a `###` heading whose text is the file's path from the docs root, followed by a table with one endpoint per row.
 
 ```markdown
 > docai: 1 | profile: full | generated: 2026-06-30 | source: openapi.yaml | source_sha: abc123
 
 # API Index
 
-| Method | Path | Task | Summary | Details | Also read |
-|---|---|---|---|---|---|
-| POST | /users | create user | Create user | resources/users.md | workflows/user-onboarding.md |
-| GET | /users/{id} | read user | Get user | resources/users.md | none |
+## Endpoints
+
+### resources/users.md
+
+| Method | Path | Task | Summary | Also read |
+|---|---|---|---|---|
+| POST | /users | create user | Create a user; sends a confirmation email | workflows/user-onboarding.md |
+| GET | /users/{id} | read user | Fetch one user by id | none |
 
 ## Workflows
 
@@ -101,10 +107,9 @@ The entry point that an LLM reads first. List all endpoints, one endpoint per ro
 | payment.completed | Sent when a payment settles | webhooks/payment-completed.md |
 ```
 
-- One endpoint per row. The LLM uses this table to decide which file to read.
-- `Task` is a short client intent label, usually 1-3 words, that helps an LLM avoid loading unrelated resource files. Keep it stable across related endpoints(for example, `create user`, `read user`, `checkout`, `auth`).
-- Keep each summary within 80 UTF-8 bytes. The limit is a language-neutral hard cap(about 80 ASCII characters or 26 Japanese characters); token counts vary by model and language, so treat any token estimate as only a rough guide.
-- Table column headers in INDEX.md are canonical English tokens(§4.1) and are not translated, even when summaries are written in another language.
+- One endpoint per row. The `###` heading names the file to read, so the LLM picks a subsection, then a row. There is no per-row file column — the heading carries the path once.
+- `Task` is a short client intent label, usually 1-3 words, that helps an LLM avoid loading unrelated resource files. Reuse the exact same label for every endpoint that serves the same client task(for example, all checkout endpoints use `checkout`); endpoints serving different tasks get different labels(`create user`, `read user`). Do not invent synonyms for one task.
+- `Summary` must add information beyond `Task`(key behavior, side effect, or distinguishing detail) — do not restate the task label. Keep each summary within 80 UTF-8 bytes. The limit is a language-neutral hard cap(about 80 ASCII characters or 26 Japanese characters); token counts vary by model and language, so treat any token estimate as only a rough guide.
 - `Also read` lists extra files that should usually be loaded for this endpoint, such as workflows. Write `none` when no extra file is normally needed.
 - If files exist under workflows/, list them in the `Workflows` section.
 - If files exist under webhooks/, list them in the `Webhooks` section.
@@ -127,9 +132,9 @@ Write API-wide conventions in **one place only**. This is the only exception tha
 - Handling of `null`, empty arrays, empty objects, empty strings, and omitted fields
 - File upload and file download conventions
 - Rate limits
-- Webhook delivery conventions(signature verification, sender identification), when the API sends webhooks
+- Webhook delivery conventions, when the API sends webhooks: signature verification, sender identification, what the receiver must return(status code, response deadline), retry policy(count, interval, when delivery is abandoned), and delivery guarantees(at-least-once or at-most-once, ordering)
 
-Each endpoint definition implicitly follows `CONVENTIONS.md`. Only deviations must be described in the endpoint itself, inside the section they affect and prefixed with the fixed marker `**deviation**:`(§4.1) so an LLM can locate them.
+Each endpoint definition, webhook file, and workflow file implicitly follows `CONVENTIONS.md`. Only deviations must be described in the file itself, inside the section they affect and prefixed with the fixed marker `**deviation**:`(§4.1) so an LLM can locate them. In a webhook file, deviations from the delivery conventions are placed directly after the intro description(§6).
 
 ### 3.3 Output Profiles
 
@@ -138,23 +143,23 @@ docai supports two generated profiles. Both profiles must be generated from the 
 - `full` — the canonical reference profile. It preserves all request/response fields and behavior needed to match the source schema and is the default generation profile.
 - `compact` — the LLM runtime profile. It reduces token usage while preserving enough information to call the API correctly for frontend or client implementation.
 
-A document set is generated per profile: every file in a set carries the same `profile` value in its stamp. When both profiles are generated, they live in separate roots(for example, the full set in `docs/` and the compact set in `docs-compact/`). An LLM implementing a client should load the compact set when it exists and consult the full set only for detail compact omits.
+A document set is generated per profile: every file in a set carries the same `profile` value in its stamp. When both profiles are generated, they live in separate roots(for example, the full set in `docs/` and the compact set in `docs-compact/`). An LLM implementing a client should load the compact set when it exists and consult the full set only for detail compact omits. When both profiles are generated, each set's INDEX.md must state the other set's root on one line directly under the metadata stamp, using the fixed labels `Full set:` / `Compact set:`(for example, `Compact set: ../docs-compact/` in the full set), so an LLM that loaded one set can discover the other.
 
 The `compact` profile may apply these reductions:
 
-- Split large response field tables into two tables under the fixed `####` headings `Frontend-visible fields` and `Opaque fields`, in that order(both are canonical tokens, §4.1, and are not translated). `Frontend-visible fields` are documented normally. `Opaque fields` may be summarized by name, type, and one short meaning when the client normally stores or forwards them without inspecting their internals.
+- Split large response field tables into two tables under the fixed `####` headings `Frontend-visible fields` and `Opaque fields`, in that order(both are canonical tokens, §4.1). `Frontend-visible fields` are documented normally. `Opaque fields` may be summarized by name, type, and one short meaning when the client normally stores or forwards them without inspecting their internals.
 - For opaque nested objects that the client stores or forwards without inspecting, document only the root field in `Opaque fields` as `object` or `object[]` with a short meaning such as `store/forward only`. Do not flatten opaque leaf fields unless client logic reads them.
 - Use minimal valid request examples. Include only required fields and optional fields that materially affect the call.
 - Use representative response examples. Include common frontend-visible fields and omit rarely used optional fields unless they affect client logic.
 - For very large enums, standardized enums, or enums irrelevant to client branching, reference the standard or category instead of listing every value. If the client branches on only a small subset, list the branching values explicitly and state how all other values should be handled.
 - Use short `none` lines such as `- Path Parameters: none`, `- Query Parameters: none`, and `- Body: none` as long as the fixed request order is preserved.
-- Within one resource file, when a later endpoint's response body is shape-identical to an earlier endpoint's response, replace its example and field table with a single `**same_as**:` line(§4.1). Backward references only — the full definition must appear at its first occurrence.
+- Within one resource file, when a later request or response body is shape-identical to an earlier body in the same file, replace its example and field table with a single `**same_as**:` line(§4.1). Backward references only — the full definition must appear at its first occurrence.
 
 The `compact` profile must not omit information that changes how a caller constructs requests, handles errors, follows workflows, authenticates, retries, paginates, uploads/downloads files, or interprets state transitions.
 
 ## 4. Endpoint Definition Format
 
-In a resource file, define each endpoint using the following template. **Section order, heading levels, and section roles are fixed**. Heading text may be translated consistently with the document language; canonical keys and markers must not be translated. Do not omit sections that do not apply. Write `none` instead so that an LLM can distinguish "intentionally none" from "forgotten". Request subsections whose entire content is `none` may be collapsed into one-line list items(§4.1).
+In a resource file, define each endpoint using the following template. **Section order, heading levels, and section roles are fixed**. Headings and all other structural text are fixed English tokens(§4.1); only prose is written in the document language. Do not omit sections that do not apply. Write `none` instead so that an LLM can distinguish "intentionally none" from "forgotten". Request subsections whose entire content is `none` may be collapsed into one-line list items(§4.1).
 
 ````markdown
 ## POST /users
@@ -166,7 +171,7 @@ Creates a user. Email addresses are globally unique across all tenants.
 ### Behavior
 
 - side_effects: On successful creation, a confirmation email is sent asynchronously
-- idempotency: not idempotent. Use the `Idempotency-Key` header when retrying
+- idempotency: not idempotent. Send an `Idempotency-Key` header from the first attempt when the call may be retried
 - preconditions: caller must have the admin role
 - authorization: `users:write` scope
 
@@ -179,7 +184,7 @@ Creates a user. Email addresses are globally unique across all tenants.
 
 | Name | Required | Type | Constraints / Meaning |
 |---|---|---|---|
-| Idempotency-Key | no | string | Set only when retrying. Re-sending the same key returns the same result |
+| Idempotency-Key | no | string | Send from the first attempt when the call may be retried, and reuse the same key on retries. A repeated key returns the first result instead of re-executing |
 
 #### Body
 
@@ -256,12 +261,12 @@ Creates a user. Email addresses are globally unique across all tenants.
 **Heading(`## METHOD /path`)**
 - Use the method and path directly as the heading. Path parameters use `{id}` format.
 - Immediately after the heading, write 1-2 sentences describing why this endpoint is called. Describe the purpose, not the implementation.
-- After the purpose description, a generated file may include one optional `**call_shape**:` line that summarizes how the client calls the endpoint and the most important implementation consequences(auth, returned resource, important endpoint-specific errors, or async/pagination behavior). This is recommended in the `compact` profile and should fit on one line.
+- After the purpose description, a generated file may include one optional `**call_shape**:` line that summarizes how the client calls the endpoint and the most important implementation consequences(auth, returned resource, important endpoint-specific errors, or async/pagination behavior). It should fit on one line. Its role is **in-file navigation**: in a long resource file, an LLM can scan only the `**call_shape**:` lines to find the endpoint it needs before reading it in full. That navigation value is why it is recommended in the `compact` profile even though it repeats facts stated in `Behavior` and `Errors`.
 - If the endpoint is deprecated, put a `**deprecated**: <replacement endpoint and migration>` line immediately after the heading, before the description, and prefix its INDEX.md summary with `(deprecated)`. Omit the line entirely otherwise — there is no permanent `deprecated` label.
 
 **Behavior(required)**
 - Use these **four canonical keys in this order** so an LLM and validation tools can always locate each fact: `side_effects`, `idempotency`, `preconditions`, `authorization`. Write `none` for any that do not apply
-- Canonical structural keys and markers are always written in English, even when generated prose is written in another language. These are: the Behavior keys `side_effects` / `idempotency` / `preconditions` / `authorization`; the markers `**call_shape**:`, `**deprecated**:`, `**deviation**:`, and `**same_as**:`; the value `none`; the metadata stamp keys `docai` / `profile` / `generated` / `source` / `source_sha`; the INDEX.md table headers `Method` / `Path` / `Task` / `Summary` / `Details` / `Also read` / `Name`; and the compact profile labels `Frontend-visible fields` / `Opaque fields`
+- All structural text is always written in English, even when generated prose is written in another language. Structural text is: every fixed heading this format defines(`API Index`, `Endpoints`, `Workflows`, `Webhooks`, `Behavior`, `Request`, `Path Parameters`, `Query Parameters`, `Headers`, `Body`, `Response <status>`, `Response Headers`, `Errors`, `Related`, `Payload`, `Frontend-visible fields`, `Opaque fields`); every table column header(`Method` / `Path` / `Task` / `Summary` / `Details` / `Also read` / `Name` / `Field` / `Type` / `Required` / `Nullable` / `Presence` / `Constraints / Meaning` / `Meaning` / `Status` / `code` / `Condition` / `What the caller should do`); the Behavior keys `side_effects` / `idempotency` / `preconditions` / `authorization`; the markers `**call_shape**:`, `**deprecated**:`, `**deviation**:`, `**same_as**:`, and `**variant**:`; the `(deprecated)` summary prefix and the profile cross-link labels `Full set:` / `Compact set:`(§3.3); the fixed values `none` / `yes` / `no` / `always` / `full` / `compact` and the simple type names; and the metadata stamp keys `docai` / `profile` / `generated` / `source` / `source_sha`. Only prose — descriptions, summaries, and free-text cells such as conditions, constraints, and meanings — is written in the document language(§7)
 - `side_effects`: list all(email sending, changes to other resources, event publishing, etc.)
 - `idempotency`: state whether the endpoint is idempotent and whether it can be retried safely
 - `preconditions`: earlier APIs that must be called, required resource state, etc.
@@ -293,13 +298,14 @@ Creates a user. Email addresses are globally unique across all tenants.
 - For asynchronous acceptance such as `202 Accepted`, describe the endpoint used to check completion, polling interval, timeout, and failure-time state
 - **Redirect responses(3xx)**: document them as `### Response 302`(etc.) with a `#### Response Headers` table containing `Location`, and state whether the client follows the redirect automatically(the `fetch` default) or must read `Location` and act manually(for example, signed download URLs)
 - **Non-JSON responses**(file download, binary, CSV, Server-Sent Events streaming, etc.): state the `Content-Type` explicitly, and instead of a JSON block give a representative sample fragment plus a prose description of the semantics(for downloads: filename, size limit; for SSE: event names, frame format, terminate condition)
-- Use simple type names: `string` / `int` / `float` / `bool` / `string[]` / `object` / `object[]` / `map<string, T>`. Reference notation such as `$ref` is prohibited; the only allowed reference is the same-file `**same_as**:` line in the compact profile(§3.3)
-- `**same_as**: <METHOD> <path> Response <status>`(compact profile only) declares that this response's body is identical to an earlier response in the same file, and replaces the JSON example and field table. Use it only for identical shapes — if any field differs, write the full example and table. The `full` profile never uses `**same_as**:` and always duplicates
+- **Non-JSON request bodies**(`multipart/form-data`, `application/x-www-form-urlencoded`, raw binary upload): state the `Content-Type` explicitly at the top of `#### Body`. For multipart and form-urlencoded bodies, keep the example-first rule — give a representative fragment(part names and sample values) instead of a JSON block, then document the parts/fields in the standard request field table, using the type `file` for file parts with accepted media types, maximum size, and filename rules in the constraints column. For raw binary bodies, describe the expected content and size limit in prose
+- Use simple type names: `string` / `int` / `float` / `bool` / `string[]` / `object` / `object[]` / `map<string, T>` / `file`(multipart file parts only). Reference notation such as `$ref` is prohibited; the only allowed reference is the same-file `**same_as**:` line in the compact profile(§3.3)
+- `**same_as**: <METHOD> <path> Request` or `**same_as**: <METHOD> <path> Response <status>`(compact profile only) declares that this request or response body is identical to an earlier body in the same file, and replaces the JSON example and field table. Use it only for identical shapes — if any field differs, write the full example and table. It must point at the full definition, never at another `**same_as**:` line. The `full` profile never uses `**same_as**:` and always duplicates
 - Flatten nested objects in the table using dot notation such as `address.city`
 - Flatten objects inside arrays using `[]`, such as `items[].id` and `items[].product.name`
 - Use `map<string, T>` for objects with dynamic keys(OpenAPI `additionalProperties`), such as `map<string, int>`. Dynamic keys cannot be flattened with dot notation, so put the value shape in the type column and show a representative key in the example. When the value type is an object, flatten its fields with a `{key}` placeholder segment, such as `balances.{key}.amount` — `{key}` rows correspond to the representative key shown in the example(the one case where example fields match table rows by placeholder, not by literal name)
-- **Polymorphic fields(OpenAPI `oneOf` / `anyOf`)**: list every value of the discriminator field(such as `type`) as an enum in the table, then give each variant its own JSON example and its own field table. Schema-composition notation must not be used, just like `$ref`
-- List all enum values in the constraints column. For large or standardized enums(ISO 4217 currency, country codes, etc.), reference the standard by name instead of enumerating every value — but only when the API accepts the standard's **full** set; if only a subset is accepted, enumerate the subset
+- **Polymorphic fields(OpenAPI `oneOf` / `anyOf`)**: list every value of the discriminator field(such as `type`) as an enum in the table, then give each variant its own JSON example and its own field table, introduced by the fixed one-line label `**variant**: <field> = <value>`(for example, `**variant**: type = card`) so variants can be located deterministically. Schema-composition notation must not be used, just like `$ref`
+- List all enum values in the constraints column. For large or standardized enums(ISO 4217 currency, country codes, etc.), reference the standard by name instead of enumerating every value — but only when the API accepts the standard's **full** set; if only a subset is accepted, enumerate the subset. These rules apply to the `full` profile; in the `compact` profile, the enum reductions of §3.3 take precedence
 - `Required` means "cannot be omitted in a request". Omission and `null` are separate concepts
 - Request field tables must include `Required` and `Nullable` columns
 - For update endpoints(`PUT` / `PATCH`), mark fields that cannot be changed explicitly(an `Updatable` note in the constraints column, or `not updatable`). Also state the merge semantics of `PATCH`(for example, whether sending `null` clears the field)
@@ -356,6 +362,8 @@ Webhooks are calls in the reverse direction: the API sends an HTTP request to a 
 
 Sent when a payment settles. Delivered as `POST` to the registered URL.
 
+**deviation**: delivery of this event is retried for up to 24 hours, not the default 5 attempts
+
 ## Payload
 
 ```json
@@ -370,28 +378,15 @@ Sent when a payment settles. Delivered as `POST` to the registered URL.
 | Field | Type | Presence | Nullable | Meaning |
 |---|---|---|---|---|
 | event | string | always | no | Always `payment.completed` |
-| payment_id | string | always | no | ULID with `pay_` prefix. Matches the id returned by POST /payments |
+| payment_id | string | always | no | ULID with `pay_` prefix. Matches the id returned by POST /payments. Deduplicate deliveries by this field |
 | amount | int | always | no | Settled amount in JPY |
 | occurred_at | string (RFC 3339) | always | no | When the payment settled |
-
-## Expected Response
-
-Return a `2xx` status within 10 seconds. The response body is ignored.
-
-## Retry
-
-On non-`2xx` or timeout, delivery is retried up to 5 times with exponential backoff, then abandoned.
-
-## Delivery Guarantees
-
-- At-least-once. Deduplicate by `payment_id`
-- Delivery order is not guaranteed
 ````
 
 - Write the payload with the same example-first rule as responses: JSON example first, then the field table.
-- Always state what the receiver must return(status code, response deadline) and the retry policy(count, interval, when delivery is abandoned).
-- State delivery guarantees explicitly: at-least-once or at-most-once, ordering, and the field to deduplicate by.
-- Signature verification and other conventions shared by all webhooks belong in CONVENTIONS.md.
+- Delivery conventions shared by all webhooks — signature verification, sender identification, what the receiver must return(status code, response deadline), retry policy(count, interval, when delivery is abandoned), and delivery guarantees(at-least-once or at-most-once, ordering) — belong in CONVENTIONS.md(§3.2) and are **not repeated per event**.
+- A webhook file documents only event-specific deviations from those conventions, prefixed with `**deviation**:` and placed directly after the intro description(see the template).
+- Name the field to deduplicate deliveries by in the payload table's meaning column — it is event-specific.
 - Webhook files must be discoverable from the `Webhooks` section in INDEX.md, and endpoints that trigger a webhook must mention it in their `Related` section.
 
 ## 7. Writing Style Rules
@@ -405,7 +400,7 @@ The per-section rules in §4.1 are normative — this section only adds cross-cu
 - Put metadata information(docai format version, profile, generation date, source, and source revision when available) at the beginning of **every file**, not only INDEX.md(see §3) — files are loaded individually.
 - Do not omit information that affects frontend implementation. Examples: screen transition after authentication failure, retry display, mapping errors to form fields, download file name, upload size limit.
 - Distinguish messages that may be used directly as UI copy from messages intended for logs or developers.
-- Write each generated docai document set in a **single prose language**. Generated docai must not repeat the same content in multiple languages — choose one output language and use it consistently across INDEX.md, CONVENTIONS.md, and all resource and workflow files. Canonical structural keys and markers remain English format tokens, not prose translations.
+- Write each generated docai document set in a **single prose language**. Generated docai must not repeat the same content in multiple languages — choose one output language and use it consistently across INDEX.md, CONVENTIONS.md, and all resource, workflow, and webhook files. Structural text(headings, table column headers, canonical keys, markers, fixed values) is always English(§4.1); the document language applies to prose only.
 
 ## 8. Relationship with OpenAPI
 
@@ -419,9 +414,11 @@ A document is docai-compliant if:
 
 - [ ] INDEX.md and CONVENTIONS.md exist
 - [ ] Every file(INDEX.md, CONVENTIONS.md, resources/, workflows/, webhooks/) begins with a metadata stamp(`docai` / `profile` / `generated` / `source`, and `source_sha` when available)
-- [ ] INDEX.md uses the canonical English column headers(§3.1) and fills `Task`, `Details`, and `Also read` for every endpoint
+- [ ] All files in the set share the same `generated` date(sets are regenerated as a whole, §3), and when both profiles exist each INDEX.md links the other set's root(§3.3)
+- [ ] INDEX.md groups endpoints into one `###` subsection per resource file under `## Endpoints`(§3.1), and fills `Task` and `Also read` for every endpoint; summaries stay within 80 UTF-8 bytes
+- [ ] The set is written in a single prose language, and all structural text is English(§4.1, §7)
 - [ ] Every endpoint follows the fixed template section structure and order
-- [ ] Every non-empty request body and response body has a concrete example(in `compact`, a response may instead carry a `**same_as**:` reference); body-less requests/responses explicitly say `none`; errors include an example when §4.1 requires it(shape deviates from CONVENTIONS.md, or field-level errors)
+- [ ] Every non-empty request body and response body has a concrete example(in `compact`, a request or response body may instead carry a `**same_as**:` reference); body-less requests/responses explicitly say `none`; errors include an example when §4.1 requires it(shape deviates from CONVENTIONS.md, or field-level errors)
 - [ ] Requests are split into path parameters, query parameters, headers, and body(all-`none` parts may be one-line list items)
 - [ ] Successful responses are documented by status code, and body-less responses explicitly say `none`
 - [ ] Response headers the caller must read are documented(or `none`); non-JSON responses state their `Content-Type`
@@ -434,5 +431,5 @@ A document is docai-compliant if:
 - [ ] The `Behavior` section uses the canonical keys `side_effects` / `idempotency` / `preconditions` / `authorization`(write `none` when none apply)
 - [ ] Deviations from CONVENTIONS.md are marked with `**deviation**:` in the affected section
 - [ ] Deprecated endpoints have a `**deprecated**:` line after the heading and `(deprecated)` in their INDEX.md summary
-- [ ] Files under workflows/ are referenced from INDEX.md and from related endpoints
-- [ ] Files under webhooks/ are listed in the `Webhooks` section of INDEX.md, and endpoints that trigger a webhook reference it in their `Related` section
+- [ ] Files under workflows/ are referenced from INDEX.md and from related endpoints; workflows with state transitions include a state-transition table(§5)
+- [ ] Files under webhooks/ are listed in the `Webhooks` section of INDEX.md, endpoints that trigger a webhook reference it in their `Related` section, and webhook files state delivery behavior only as `**deviation**:` lines from CONVENTIONS.md(§6)
