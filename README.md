@@ -36,12 +36,12 @@ OpenAPI is difficult for LLMs to read for these reasons:
 - Examples are optional — LLMs learn more accurately from concrete examples than from schemas alone
 - There is no natural place to write side effects, call order, or business rules
 
-docai reverses these tradeoffs: **no cross-file references, flat structure, required examples, and required behavior descriptions**.
+docai reverses these tradeoffs: **no cross-file schema/object references, flat structure, required examples for non-empty bodies, and required behavior descriptions**. Cross-file links are allowed only for navigation and context selection, such as `CONVENTIONS.md`, `Also read`, workflows, and webhooks.
 
 ## 2. Core Principles
 
 1. **Self-contained with conventions** — An endpoint definition must be fully understandable when read together with `CONVENTIONS.md`. The normal read order is `INDEX.md` → `CONVENTIONS.md` → the selected resource/workflow/webhook file. Even common schemas and shared domain objects(such as `User`, `Money`, `Address`) must be expanded inline in each endpoint; within a single file, the `compact` profile may replace repeated identical response shapes with a `**same_as**:` back-reference(§3.3). Duplication is acceptable. For LLMs, duplication has a cost, but reference resolution is more expensive. Consistency across the duplicated copies is the **generator's responsibility**(§1); keeping them in sync by hand is discouraged. The only thing factored out of endpoints is API-wide conventions, which live in CONVENTIONS.md(§3.2) — shared *objects* are not conventions and are still inlined.
-2. **Example-first** — Every request and response must include realistic concrete examples. Schemas exist to supplement examples.
+2. **Example-first** — Every non-empty request body and response body must include realistic concrete examples. Schemas exist to supplement examples. Body-less requests/responses must explicitly say `none`; in the `compact` profile, a response body may use `**same_as**:` instead of repeating an identical earlier example.
 3. **Markdown-based** — Structured Markdown and fenced code blocks are the most stable format for LLM interpretation. docai must not be a YAML/JSON-only definition file.
 4. **Deterministic structure** — Section order, heading levels, and required section roles are fixed. Heading text may be translated as part of the generated prose language, but a document set must use one translation consistently. Canonical keys and markers remain English format tokens. An LLM should be able to predict where information exists just from knowing the docai format.
 5. **Describe behavior** — Side effects, idempotency, preconditions, error-time state, and other information that cannot be inferred from signatures must be required.
@@ -71,8 +71,8 @@ Because files are loaded **individually**(that is the point of splitting), fresh
 - `docai` is the docai format version.
 - `profile` is either `full` or `compact`(§3.3).
 - `generated` is the generation date.
-- `source` is the source document or source system used to generate the file.
-- `source_sha` is the source revision or content hash when available. Omit it only when no stable revision can be produced.
+- `source` is the source document(s) or source system(s) used to generate the file.
+- `source_sha` is the stable revision or content hash covering the input(s) used to generate that file, including pass-through inputs such as hand-maintained `CONVENTIONS.md` or workflow content when they are stamped by the generator. Omit it only when no stable revision can be produced.
 
 ### 3.1 INDEX.md(required)
 
@@ -83,10 +83,10 @@ The entry point that an LLM reads first. List all endpoints, one endpoint per ro
 
 # API Index
 
-| Method | Path | Summary | Details | Also read |
-|---|---|---|---|---|
-| POST | /users | Create user | resources/users.md | workflows/user-onboarding.md |
-| GET | /users/{id} | Get user | resources/users.md | none |
+| Method | Path | Task | Summary | Details | Also read |
+|---|---|---|---|---|---|
+| POST | /users | create user | Create user | resources/users.md | workflows/user-onboarding.md |
+| GET | /users/{id} | read user | Get user | resources/users.md | none |
 
 ## Workflows
 
@@ -101,8 +101,9 @@ The entry point that an LLM reads first. List all endpoints, one endpoint per ro
 | payment.completed | Sent when a payment settles | webhooks/payment-completed.md |
 ```
 
-- One endpoint per row. The LLM uses only this table to decide which file to read.
-- Keep each summary within 80 UTF-8 bytes. The limit is in bytes so it is language-neutral: one token is roughly 4 UTF-8 bytes in any language, so 80 bytes ≈ 20 tokens(about 80 ASCII characters or 26 Japanese characters).
+- One endpoint per row. The LLM uses this table to decide which file to read.
+- `Task` is a short client intent label, usually 1-3 words, that helps an LLM avoid loading unrelated resource files. Keep it stable across related endpoints(for example, `create user`, `read user`, `checkout`, `auth`).
+- Keep each summary within 80 UTF-8 bytes. The limit is a language-neutral hard cap(about 80 ASCII characters or 26 Japanese characters); token counts vary by model and language, so treat any token estimate as only a rough guide.
 - Table column headers in INDEX.md are canonical English tokens(§4.1) and are not translated, even when summaries are written in another language.
 - `Also read` lists extra files that should usually be loaded for this endpoint, such as workflows. Write `none` when no extra file is normally needed.
 - If files exist under workflows/, list them in the `Workflows` section.
@@ -142,9 +143,10 @@ A document set is generated per profile: every file in a set carries the same `p
 The `compact` profile may apply these reductions:
 
 - Split large response field tables into two tables under the fixed `####` headings `Frontend-visible fields` and `Opaque fields`, in that order(both are canonical tokens, §4.1, and are not translated). `Frontend-visible fields` are documented normally. `Opaque fields` may be summarized by name, type, and one short meaning when the client normally stores or forwards them without inspecting their internals.
+- For opaque nested objects that the client stores or forwards without inspecting, document only the root field in `Opaque fields` as `object` or `object[]` with a short meaning such as `store/forward only`. Do not flatten opaque leaf fields unless client logic reads them.
 - Use minimal valid request examples. Include only required fields and optional fields that materially affect the call.
 - Use representative response examples. Include common frontend-visible fields and omit rarely used optional fields unless they affect client logic.
-- For very large enums, standardized enums, or enums irrelevant to client branching, reference the standard or category instead of listing every value.
+- For very large enums, standardized enums, or enums irrelevant to client branching, reference the standard or category instead of listing every value. If the client branches on only a small subset, list the branching values explicitly and state how all other values should be handled.
 - Use short `none` lines such as `- Path Parameters: none`, `- Query Parameters: none`, and `- Body: none` as long as the fixed request order is preserved.
 - Within one resource file, when a later endpoint's response body is shape-identical to an earlier endpoint's response, replace its example and field table with a single `**same_as**:` line(§4.1). Backward references only — the full definition must appear at its first occurrence.
 
@@ -158,6 +160,8 @@ In a resource file, define each endpoint using the following template. **Section
 ## POST /users
 
 Creates a user. Email addresses are globally unique across all tenants.
+
+**call_shape**: POST /users creates a User; requires `users:write`; may return 409 `email_taken` or 422 `validation_failed`
 
 ### Behavior
 
@@ -173,9 +177,9 @@ Creates a user. Email addresses are globally unique across all tenants.
 
 #### Headers
 
-| Name | Required | Constraints / Meaning |
-|---|---|---|
-| Idempotency-Key | no | Set only when retrying. Re-sending the same key returns the same result |
+| Name | Required | Type | Constraints / Meaning |
+|---|---|---|---|
+| Idempotency-Key | no | string | Set only when retrying. Re-sending the same key returns the same result |
 
 #### Body
 
@@ -205,19 +209,19 @@ Creates a user. Email addresses are globally unique across all tenants.
 }
 ```
 
-| Field | Type | Meaning |
-|---|---|---|
-| id | string | ULID with `usr_` prefix. Use this in later API calls |
-| email | string | User email address |
-| name | string | User name |
-| role | string | `admin` or `member` |
-| created_at | string (RFC 3339) | Creation timestamp |
+| Field | Type | Presence | Nullable | Meaning |
+|---|---|---|---|---|
+| id | string | always | no | ULID with `usr_` prefix. Use this in later API calls |
+| email | string | always | no | User email address |
+| name | string | always | no | User name |
+| role | string | always | no | `admin` or `member` |
+| created_at | string (RFC 3339) | always | no | Creation timestamp |
 
 #### Response Headers
 
-| Name | Meaning |
-|---|---|
-| Location | URL of the created user(`/users/usr_01HXYZ`). Use it to fetch the resource |
+| Name | Type | Meaning |
+|---|---|---|
+| Location | string | URL of the created user(`/users/usr_01HXYZ`). Use it to fetch the resource |
 
 ### Errors
 
@@ -252,11 +256,12 @@ Creates a user. Email addresses are globally unique across all tenants.
 **Heading(`## METHOD /path`)**
 - Use the method and path directly as the heading. Path parameters use `{id}` format.
 - Immediately after the heading, write 1-2 sentences describing why this endpoint is called. Describe the purpose, not the implementation.
+- After the purpose description, a generated file may include one optional `**call_shape**:` line that summarizes how the client calls the endpoint and the most important implementation consequences(auth, returned resource, important endpoint-specific errors, or async/pagination behavior). This is recommended in the `compact` profile and should fit on one line.
 - If the endpoint is deprecated, put a `**deprecated**: <replacement endpoint and migration>` line immediately after the heading, before the description, and prefix its INDEX.md summary with `(deprecated)`. Omit the line entirely otherwise — there is no permanent `deprecated` label.
 
 **Behavior(required)**
 - Use these **four canonical keys in this order** so an LLM and validation tools can always locate each fact: `side_effects`, `idempotency`, `preconditions`, `authorization`. Write `none` for any that do not apply
-- Canonical structural keys and markers are always written in English, even when generated prose is written in another language. These are: the Behavior keys `side_effects` / `idempotency` / `preconditions` / `authorization`; the markers `**deprecated**:`, `**deviation**:`, and `**same_as**:`; the value `none`; the metadata stamp keys `docai` / `profile` / `generated` / `source` / `source_sha`; the INDEX.md table headers `Method` / `Path` / `Summary` / `Details` / `Also read` / `Name`; and the compact profile labels `Frontend-visible fields` / `Opaque fields`
+- Canonical structural keys and markers are always written in English, even when generated prose is written in another language. These are: the Behavior keys `side_effects` / `idempotency` / `preconditions` / `authorization`; the markers `**call_shape**:`, `**deprecated**:`, `**deviation**:`, and `**same_as**:`; the value `none`; the metadata stamp keys `docai` / `profile` / `generated` / `source` / `source_sha`; the INDEX.md table headers `Method` / `Path` / `Task` / `Summary` / `Details` / `Also read` / `Name`; and the compact profile labels `Frontend-visible fields` / `Opaque fields`
 - `side_effects`: list all(email sending, changes to other resources, event publishing, etc.)
 - `idempotency`: state whether the endpoint is idempotent and whether it can be retried safely
 - `preconditions`: earlier APIs that must be called, required resource state, etc.
@@ -264,12 +269,13 @@ Creates a user. Email addresses are globally unique across all tenants.
 - These are the pieces of information that OpenAPI has no natural place for and that LLMs are most likely to get wrong
 
 **Request / Response**
-- Put the **concrete example(JSON code block) first, then the field table**
+- Put the **concrete example(JSON code block) first, then the field table** for every non-empty request body, JSON response body, and webhook payload
 - Use realistic example values(`"taro@example.com"` instead of `"string"` or `"foo"`)
 - In the `full` profile, request examples should be representative valid examples and response examples should show the normal complete shape. In the `compact` profile, request examples should be minimal valid examples, and response examples should be representative examples focused on fields that affect client implementation
 - Every field in the example must have a corresponding row in the field table
+- In the `full` profile, field tables must document every field in the source schema, even when a rarely used optional field is absent from the example. In the `compact` profile, field tables may be broader than the representative example, but they must not omit fields that affect client implementation
 - Write requests in this order: `Path Parameters`, `Query Parameters`, `Headers`, `Body`. If a part does not apply, write `none`
-- Request subsections whose entire content is `none` may drop the `####` heading and be written as one-line list items directly under `### Request`, keeping the fixed order(see the template). Subsections with content keep their `####` heading. `#### Response Headers` may likewise be collapsed to a one-line `- Response Headers: none`
+- Request subsections whose entire content is `none` may drop the `####` heading and be written as one-line list items directly under `### Request`, keeping the fixed order(see the template). Subsections with content keep their `####` heading: `#### Path Parameters`, `#### Query Parameters`, `#### Headers`, and `#### Body`. `#### Response Headers` may likewise be collapsed to a one-line `- Response Headers: none`
 - Path parameter tables use the columns `Name | Type | Constraints / Meaning`. There is no `Required` column — path parameters are always required
 - Query parameter tables use the columns `Name | Type | Required | Constraints / Meaning`, with defaults in the constraints column:
 
@@ -281,6 +287,8 @@ Creates a user. Email addresses are globally unique across all tenants.
 
 - If there is no response body, write `none`
 - Add a `#### Response Headers` table when the caller must read response headers(`Location`, `Set-Cookie`, `Retry-After`, `ETag`, `Link`, etc.). Write `none` when there are none. Document it per status code when it differs(for example, `Retry-After` only on 429)
+- Request header tables use the columns `Name | Required | Type | Constraints / Meaning`. Response header tables use the columns `Name | Type | Meaning`. Header values are strings unless another syntax is stated explicitly in the `Type` or meaning/constraints column
+- Response and webhook payload field tables normally use the columns `Field | Type | Presence | Nullable | Meaning`. `Presence` describes whether the field is `always` present or the condition under which it is omitted. In compact `Opaque fields` tables, `Field | Type | Meaning` is allowed for fields whose internals the client does not inspect
 - If there are multiple successful responses, split them by status code, such as `### Response 200`, `### Response 202`, and `### Response 204`
 - For asynchronous acceptance such as `202 Accepted`, describe the endpoint used to check completion, polling interval, timeout, and failure-time state
 - **Redirect responses(3xx)**: document them as `### Response 302`(etc.) with a `#### Response Headers` table containing `Location`, and state whether the client follows the redirect automatically(the `fetch` default) or must read `Location` and act manually(for example, signed download URLs)
@@ -296,7 +304,7 @@ Creates a user. Email addresses are globally unique across all tenants.
 - Request field tables must include `Required` and `Nullable` columns
 - For update endpoints(`PUT` / `PATCH`), mark fields that cannot be changed explicitly(an `Updatable` note in the constraints column, or `not updatable`). Also state the merge semantics of `PATCH`(for example, whether sending `null` clears the field)
 - Specify default values when omitted, whether empty strings are allowed, whether empty arrays are allowed, and whether empty objects are allowed
-- If a response field may be absent, specify the condition under which it is omitted or becomes `null`
+- If a response field may be absent, specify the condition in the `Presence` column. If it may be `null`, set `Nullable` to `yes` and state the condition in `Meaning`
 - **Reuse the same example values across endpoints**: the `id` returned by a create example should reappear in the matching GET/list examples(for instance `usr_01HXYZ` everywhere). Consistent fixtures let an LLM trace a value through a whole workflow
 
 **Errors(required)**
@@ -359,12 +367,12 @@ Sent when a payment settles. Delivered as `POST` to the registered URL.
 }
 ```
 
-| Field | Type | Meaning |
-|---|---|---|
-| event | string | Always `payment.completed` |
-| payment_id | string | ULID with `pay_` prefix. Matches the id returned by POST /payments |
-| amount | int | Settled amount in JPY |
-| occurred_at | string (RFC 3339) | When the payment settled |
+| Field | Type | Presence | Nullable | Meaning |
+|---|---|---|---|---|
+| event | string | always | no | Always `payment.completed` |
+| payment_id | string | always | no | ULID with `pay_` prefix. Matches the id returned by POST /payments |
+| amount | int | always | no | Settled amount in JPY |
+| occurred_at | string (RFC 3339) | always | no | When the payment settled |
 
 ## Expected Response
 
@@ -411,12 +419,13 @@ A document is docai-compliant if:
 
 - [ ] INDEX.md and CONVENTIONS.md exist
 - [ ] Every file(INDEX.md, CONVENTIONS.md, resources/, workflows/, webhooks/) begins with a metadata stamp(`docai` / `profile` / `generated` / `source`, and `source_sha` when available)
-- [ ] INDEX.md uses the canonical English column headers(§3.1) and fills `Details` and `Also read` for every endpoint
+- [ ] INDEX.md uses the canonical English column headers(§3.1) and fills `Task`, `Details`, and `Also read` for every endpoint
 - [ ] Every endpoint follows the fixed template section structure and order
-- [ ] Every request and response has a concrete example(in `compact`, a response may instead carry a `**same_as**:` reference); errors include one when §4.1 requires it(shape deviates from CONVENTIONS.md, or field-level errors)
+- [ ] Every non-empty request body and response body has a concrete example(in `compact`, a response may instead carry a `**same_as**:` reference); body-less requests/responses explicitly say `none`; errors include an example when §4.1 requires it(shape deviates from CONVENTIONS.md, or field-level errors)
 - [ ] Requests are split into path parameters, query parameters, headers, and body(all-`none` parts may be one-line list items)
 - [ ] Successful responses are documented by status code, and body-less responses explicitly say `none`
 - [ ] Response headers the caller must read are documented(or `none`); non-JSON responses state their `Content-Type`
+- [ ] Response and webhook payload field tables specify presence and nullability, except compact `Opaque fields` that are documented only for store/forward behavior
 - [ ] No cross-file reference notation such as `$ref` is used; `**same_as**:` appears only in the `compact` profile, only as a backward reference within the same file
 - [ ] Array, nesting, `null`, omission, and default-value behavior are specified
 - [ ] For update endpoints, non-updatable fields and `PATCH` merge semantics are specified
