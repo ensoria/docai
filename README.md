@@ -6,9 +6,9 @@ It is designed so that an AI can read the API documentation as context and effic
 > **日本語の説明は英語の説明の後に記載されています。** [→ 日本語版へジャンプ](#docai日本語)
 > *Japanese documentation follows the English documentation below.*
 
-This README is intentionally bilingual (English / Japanese) because it is a **specification written for human readers**, who may prefer either language. That duplication applies only to this document. It is **not** a docai rule: a generated docai document is written in a **single language** and never repeats the same content across multiple languages (see §6).
+This README is intentionally bilingual (English / Japanese) because it is a **specification written for human readers**, who may prefer either language. If the English and Japanese texts disagree, the **English text is normative**. That duplication applies only to this document. It is **not** a docai rule: a generated docai document is written in a **single language** and never repeats the same content across multiple languages (see §7).
 
-このREADMEは **人間の読者向けの仕様書** であり、読者がどちらの言語でも読めるよう、意図的に英語・日本語の二言語で記述している。この重複は本書のみに適用される。これは docai のルールではない: 生成される docai ドキュメントは **単一言語** で記述され、同じ内容を複数言語で繰り返すことはない(第6節を参照)。
+このREADMEは **人間の読者向けの仕様書** であり、読者がどちらの言語でも読めるよう、意図的に英語・日本語の二言語で記述している。英語と日本語の記述が食い違う場合は **英語版を正** とする。この重複は本書のみに適用される。これは docai のルールではない: 生成される docai ドキュメントは **単一言語** で記述され、同じ内容を複数言語で繰り返すことはない(第7節を参照)。
 
 ---
 
@@ -19,9 +19,10 @@ This README is intentionally bilingual (English / Japanese) because it is a **sp
 - [3. File Structure](#3-file-structure)
 - [4. Endpoint Definition Format](#4-endpoint-definition-format)
 - [5. Workflow Definitions](#5-workflow-definitions-workflows-optional)
-- [6. Writing Style Rules](#6-writing-style-rules)
-- [7. Relationship with OpenAPI](#7-relationship-with-openapi)
-- [8. Compliance Checklist](#8-compliance-checklist)
+- [6. Webhook Definitions](#6-webhook-definitions-webhooks-optional)
+- [7. Writing Style Rules](#7-writing-style-rules)
+- [8. Relationship with OpenAPI](#8-relationship-with-openapi)
+- [9. Compliance Checklist](#9-compliance-checklist)
 - [docai(日本語)](#docai日本語)
 
 ---
@@ -65,9 +66,11 @@ docs/
     orders.md
   workflows/
     checkout.md     # Optional: procedures spanning multiple endpoints
+  webhooks/
+    payment-completed.md  # Optional: webhooks the API sends (OpenAPI 3.1 `webhooks`)
 ```
 
-Because files are loaded **individually**(that is the point of splitting), freshness cannot live only in INDEX.md. Every file — INDEX.md, CONVENTIONS.md, and each file under resources/ and workflows/ — must begin with a one-line freshness stamp so an LLM that loaded only that file can judge how current it is:
+Because files are loaded **individually**(that is the point of splitting), freshness cannot live only in INDEX.md. Every file — INDEX.md, CONVENTIONS.md, and each file under resources/, workflows/, and webhooks/ — must begin with a one-line freshness stamp so an LLM that loaded only that file can judge how current it is:
 
 ```markdown
 > version: 2026-06-30 | source: openapi.yaml
@@ -90,11 +93,18 @@ The entry point that an LLM reads first. List all endpoints, one endpoint per ro
 | Name | Summary | Details |
 |---|---|---|
 | Checkout | From cart validation to order confirmation | workflows/checkout.md |
+
+## Webhooks
+
+| Name | Summary | Details |
+|---|---|---|
+| payment.completed | Sent when a payment settles | webhooks/payment-completed.md |
 ```
 
 - One endpoint per row. The LLM uses only this table to decide which file to read.
-- Keep the summary within 40 characters.
+- Keep each summary within 80 UTF-8 bytes. The limit is in bytes so it is language-neutral: one token is roughly 4 UTF-8 bytes in any language, so 80 bytes ≈ 20 tokens(about 80 ASCII characters or 26 Japanese characters).
 - If files exist under workflows/, list them in the `Workflows` section.
+- If files exist under webhooks/, list them in the `Webhooks` section.
 
 ### 3.2 CONVENTIONS.md(required)
 
@@ -114,12 +124,13 @@ Write API-wide conventions in **one place only**. This is the only exception tha
 - Handling of `null`, empty arrays, empty objects, empty strings, and omitted fields
 - File upload and file download conventions
 - Rate limits
+- Webhook delivery conventions(signature verification, sender identification), when the API sends webhooks
 
-Each endpoint definition implicitly follows `CONVENTIONS.md`. Only deviations must be described in the endpoint itself.
+Each endpoint definition implicitly follows `CONVENTIONS.md`. Only deviations must be described in the endpoint itself, inside the section they affect and prefixed with the fixed marker `**Deviation**:`(§4.1) so an LLM can locate them.
 
 ## 4. Endpoint Definition Format
 
-In a resource file, define each endpoint using the following template. **Section order and headings are fixed**. Do not omit sections that do not apply. Write `none` instead so that an LLM can distinguish "intentionally none" from "forgotten".
+In a resource file, define each endpoint using the following template. **Section order and headings are fixed**. Do not omit sections that do not apply. Write `none` instead so that an LLM can distinguish "intentionally none" from "forgotten". Request subsections whose entire content is `none` may be collapsed into one-line list items(§4.1).
 
 ````markdown
 ## POST /users
@@ -135,13 +146,8 @@ Creates a user. Email addresses are globally unique across all tenants.
 
 ### Request
 
-#### Path Parameters
-
-none
-
-#### Query Parameters
-
-none
+- Path Parameters: none
+- Query Parameters: none
 
 #### Headers
 
@@ -222,6 +228,7 @@ none
 **Heading(`## METHOD /path`)**
 - Use the method and path directly as the heading. Path parameters use `{id}` format.
 - Immediately after the heading, write 1-2 sentences describing why this endpoint is called. Describe the purpose, not the implementation.
+- If the endpoint is deprecated, put a `**Deprecated**: <replacement endpoint and migration>` line immediately after the heading, before the description, and prefix its INDEX.md summary with `(deprecated)`. Omit the line entirely otherwise — there is no permanent `Deprecated` label.
 
 **Behavior(required)**
 - Use these **four fixed labels in this order** so an LLM can always locate each fact: `Side effects`, `Idempotency`, `Preconditions`, `Authorization`. Write `none` for any that do not apply
@@ -236,15 +243,27 @@ none
 - Use realistic example values(`"taro@example.com"` instead of `"string"` or `"foo"`)
 - Every field in the example must have a corresponding row in the field table
 - Write requests in this order: `Path Parameters`, `Query Parameters`, `Headers`, `Body`. If a part does not apply, write `none`
+- Request subsections whose entire content is `none` may drop the `####` heading and be written as one-line list items directly under `### Request`, keeping the fixed order(see the template). Subsections with content keep their `####` heading. `#### Response Headers` may likewise be collapsed to a one-line `- Response Headers: none`
+- Path parameter tables use the columns `Name | Type | Constraints / Meaning`. There is no `Required` column — path parameters are always required
+- Query parameter tables use the columns `Name | Type | Required | Constraints / Meaning`, with defaults in the constraints column:
+
+  ```markdown
+  | Name | Type | Required | Constraints / Meaning |
+  |---|---|---|---|
+  | page | int | no | 1-based. Defaults to `1` |
+  ```
+
 - If there is no body, write `none. Do not send a request body`
 - If there is no response body, write `none. No response body is returned`
 - Add a `#### Response Headers` table when the caller must read response headers(`Location`, `Set-Cookie`, `Retry-After`, `ETag`, `Link`, etc.). Write `none` when there are none. Document it per status code when it differs(for example, `Retry-After` only on 429)
 - If there are multiple successful responses, split them by status code, such as `### Response 200`, `### Response 202`, and `### Response 204`
 - For asynchronous acceptance such as `202 Accepted`, describe the endpoint used to check completion, polling interval, timeout, and failure-time state
 - **Non-JSON responses**(file download, binary, CSV, Server-Sent Events streaming, etc.): state the `Content-Type` explicitly, and instead of a JSON block give a representative sample fragment plus a prose description of the semantics(for downloads: filename, size limit; for SSE: event names, frame format, terminate condition)
-- Use simple type names: `string` / `int` / `float` / `bool` / `string[]` / `object` / `object[]`. Reference notation such as `$ref` is prohibited
+- Use simple type names: `string` / `int` / `float` / `bool` / `string[]` / `object` / `object[]` / `map<string, T>`. Reference notation such as `$ref` is prohibited
 - Flatten nested objects in the table using dot notation such as `address.city`
 - Flatten objects inside arrays using `[]`, such as `items[].id` and `items[].product.name`
+- Use `map<string, T>` for objects with dynamic keys(OpenAPI `additionalProperties`), such as `map<string, int>`. Dynamic keys cannot be flattened with dot notation, so put the value shape in the type column and show a representative key in the example
+- **Polymorphic fields(OpenAPI `oneOf` / `anyOf`)**: list every value of the discriminator field(such as `type`) as an enum in the table, include one JSON example per variant, and flatten variant-specific fields with the discriminator value as a prefix(such as `card.last4`) — or give each variant its own table. Schema-composition notation must not be used, just like `$ref`
 - List all enum values in the constraints column. For large or standardized enums(ISO 4217 currency, country codes, etc.), reference the standard by name instead of enumerating every value
 - `Required` means "cannot be omitted in a request". Omission and `null` are separate concepts
 - Request field tables must include `Required` and `Nullable` columns
@@ -256,13 +275,16 @@ none
 **Errors(required)**
 - Write only errors specific to this endpoint(common errors belong in CONVENTIONS.md)
 - Always write the "condition" and "what the caller should do", including retryability. This information lets an LLM write error handling code
-- Include at least one concrete error response example
+- Include a concrete error response example when the shape deviates from the common error shape in CONVENTIONS.md, or when the endpoint returns field-level errors. Errors that follow the common shape need only their table row
 - For errors that should be displayed in forms or input UIs, include a field-level error response example
 - For field-level errors, specify the target field name, machine-readable code, and whether the message can be shown to users
 
 **Related(required)**
 - Mention endpoints that are commonly called before or after this endpoint. This helps an LLM assemble the full workflow
 - If a related workflow exists, link to it, such as `Workflow: workflows/checkout.md`
+
+**Deviations from CONVENTIONS.md**
+- Write a deviation inside the section it affects, prefixed with the fixed marker `**Deviation**:`(for example, `**Deviation**: this list API uses offset pagination instead of cursors`). The fixed marker lets an LLM find every deviation in a file
 
 ## 5. Workflow Definitions(workflows/, optional)
 
@@ -285,7 +307,54 @@ Note: If more than 15 minutes pass between steps 2 and 3, the payment expires(41
 - Workflow files must be discoverable from the `Workflows` section in INDEX.md.
 - Related endpoints must also reference the workflow from their `Related` section.
 
-## 6. Writing Style Rules
+## 6. Webhook Definitions(webhooks/, optional)
+
+Webhooks are calls in the reverse direction: the API sends an HTTP request to a URL registered by the client. They correspond to the top-level `webhooks` field in OpenAPI 3.1 and are documented apart from resources — one file per event(or per group of closely related events).
+
+````markdown
+# payment.completed
+
+Sent when a payment settles. Delivered as `POST` to the registered URL.
+
+### Payload
+
+```json
+{
+  "event": "payment.completed",
+  "payment_id": "pay_01HXYZ",
+  "amount": 1200,
+  "occurred_at": "2026-06-11T09:31:00Z"
+}
+```
+
+| Field | Type | Meaning |
+|---|---|---|
+| event | string | Always `payment.completed` |
+| payment_id | string | ULID with `pay_` prefix. Matches the id returned by POST /payments |
+| amount | int | Settled amount in JPY |
+| occurred_at | string (RFC 3339) | When the payment settled |
+
+### Expected Response
+
+Return a `2xx` status within 10 seconds. The response body is ignored.
+
+### Retry
+
+On non-`2xx` or timeout, delivery is retried up to 5 times with exponential backoff, then abandoned.
+
+### Delivery Guarantees
+
+- At-least-once. Deduplicate by `payment_id`
+- Delivery order is not guaranteed
+````
+
+- Write the payload with the same example-first rule as responses: JSON example first, then the field table.
+- Always state what the receiver must return(status code, response deadline) and the retry policy(count, interval, when delivery is abandoned).
+- State delivery guarantees explicitly: at-least-once or at-most-once, ordering, and the field to deduplicate by.
+- Signature verification and other conventions shared by all webhooks belong in CONVENTIONS.md.
+- Webhook files must be discoverable from the `Webhooks` section in INDEX.md, and endpoints that trigger a webhook should mention it in their `Related` section.
+
+## 7. Writing Style Rules
 
 The per-section rules in §4.1 are normative — this section only adds cross-cutting style guidance and does not restate them.
 
@@ -298,30 +367,33 @@ The per-section rules in §4.1 are normative — this section only adds cross-cu
 - Distinguish messages that may be used directly as UI copy from messages intended for logs or developers.
 - Write each generated docai document set in a **single language**. Unlike this README(which is bilingual for human readers), generated docai must not repeat the same content in multiple languages — choose one output language and use it consistently across INDEX.md, CONVENTIONS.md, and all resource and workflow files.
 
-## 7. Relationship with OpenAPI
+## 8. Relationship with OpenAPI
 
 - **Conversion is one-directional: source → docai.** docai is a generated artifact. The authoritative source (OpenAPI document, code, etc.) is the **maintenance source of truth**; docai is the **reference the LLM reads**. Edit the source and regenerate docai — never the other way around.
 - Because the source may be OpenAPI, field tables must carry at least as much information as the OpenAPI schema, so generation loses nothing.
 - docai does not replace OpenAPI. They coexist: OpenAPI continues to serve code generation, validation, and human browsing; docai serves LLM consumption.
 
-## 8. Compliance Checklist
+## 9. Compliance Checklist
 
 A document is docai-compliant if:
 
 - [ ] INDEX.md and CONVENTIONS.md exist
-- [ ] Every file(INDEX.md, CONVENTIONS.md, resources/, workflows/) begins with a freshness stamp(version / source)
+- [ ] Every file(INDEX.md, CONVENTIONS.md, resources/, workflows/, webhooks/) begins with a freshness stamp(version / source)
 - [ ] Every endpoint follows the fixed template section structure and order
-- [ ] Every request, response, and error has a concrete example
-- [ ] Requests are split into path parameters, query parameters, headers, and body
+- [ ] Every request and response has a concrete example; errors include one when §4.1 requires it(shape deviates from CONVENTIONS.md, or field-level errors)
+- [ ] Requests are split into path parameters, query parameters, headers, and body(all-`none` parts may be one-line list items)
 - [ ] Successful responses are documented by status code, and body-less responses explicitly say `none`
 - [ ] Response headers the caller must read are documented(or `none`); non-JSON responses state their `Content-Type`
-- [ ] Reference notation such as `$ref` is not used(except for implicit compliance with CONVENTIONS.md)
+- [ ] Reference notation such as `$ref` is not used
 - [ ] Array, nesting, `null`, omission, and default-value behavior are specified
 - [ ] For update endpoints, non-updatable fields and `PATCH` merge semantics are specified
 - [ ] Every error includes the condition and what the caller should do
 - [ ] Validation errors include a field-level error example
 - [ ] The `Behavior` section uses the fixed labels `Side effects` / `Idempotency` / `Preconditions` / `Authorization`(write `none` when none apply)
+- [ ] Deviations from CONVENTIONS.md are marked with `**Deviation**:` in the affected section
+- [ ] Deprecated endpoints have a `**Deprecated**:` line after the heading and `(deprecated)` in their INDEX.md summary
 - [ ] Files under workflows/ are referenced from INDEX.md and from related endpoints
+- [ ] Files under webhooks/ are listed in the `Webhooks` section of INDEX.md
 
 ---
 
@@ -368,9 +440,11 @@ docs/
     orders.md
   workflows/
     checkout.md     # 任意: 複数エンドポイントをまたぐ手順
+  webhooks/
+    payment-completed.md  # 任意: API が送信する webhook(OpenAPI 3.1 の `webhooks`)
 ```
 
-ファイルは **個別にロードされる**(分割の目的そのもの)ため、鮮度情報を INDEX.md だけに置くことはできない。INDEX.md・CONVENTIONS.md・resources/ と workflows/ 配下の各ファイルは、そのファイルだけをロードした LLM が鮮度を判断できるよう、冒頭に 1 行の鮮度スタンプを置くこと:
+ファイルは **個別にロードされる**(分割の目的そのもの)ため、鮮度情報を INDEX.md だけに置くことはできない。INDEX.md・CONVENTIONS.md・resources/・workflows/・webhooks/ 配下の各ファイルは、そのファイルだけをロードした LLM が鮮度を判断できるよう、冒頭に 1 行の鮮度スタンプを置くこと:
 
 ```markdown
 > version: 2026-06-30 | source: openapi.yaml
@@ -393,11 +467,18 @@ LLM が最初に読むエントリポイント。全エンドポイントを 1 �
 | 名前 | 概要 | 詳細 |
 |---|---|---|
 | チェックアウト | カート検証から注文確定まで | workflows/checkout.md |
+
+## Webhooks
+
+| 名前 | 概要 | 詳細 |
+|---|---|---|
+| payment.completed | 決済確定時に送信 | webhooks/payment-completed.md |
 ```
 
 - 1 エンドポイント 1 行。LLM はこの表だけで「どのファイルを読むべきか」を判断する。
-- 概要は 40 文字以内。
+- 概要は UTF-8 で 80 バイト以内。言語に依存しない上限にするためバイト基準とする: どの言語でも 1 トークン ≈ 4 UTF-8 バイト程度なので、80 バイト ≈ 約 20 トークン(ASCII 約 80 文字、日本語約 26 文字)。
 - workflows/ にファイルが存在する場合は、`Workflows` セクションに必ず列挙する。
+- webhooks/ にファイルが存在する場合は、`Webhooks` セクションに必ず列挙する。
 
 ### 3.2 CONVENTIONS.md(必須)
 
@@ -417,12 +498,13 @@ LLM が最初に読むエントリポイント。全エンドポイントを 1 �
 - `null`、空配列、空オブジェクト、空文字、省略されたフィールドの扱い
 - ファイルアップロード、ファイルダウンロードの規約
 - レート制限
+- Webhook 配信の規約(署名検証、送信元の識別。API が webhook を送信する場合)
 
-各エンドポイント定義は「CONVENTIONS.md に従う」ことを暗黙の前提とし、**逸脱する場合のみ** 個別に記述する。
+各エンドポイント定義は「CONVENTIONS.md に従う」ことを暗黙の前提とし、**逸脱する場合のみ** 個別に記述する。逸脱は影響するセクション内に固定マーカー `**逸脱**:` を付けて書く(§4.1)。LLM がマーカーで逸脱を検出できるようにするためである。
 
 ## 4. エンドポイント定義フォーマット
 
-リソースファイル内で、1 エンドポイントを以下のテンプレートで記述する。**セクションの順序と見出しは固定**。該当なしのセクションは省略せず `なし` と明記する(「書き忘れ」と「該当なし」を LLM が区別できるようにするため)。
+リソースファイル内で、1 エンドポイントを以下のテンプレートで記述する。**セクションの順序と見出しは固定**。該当なしのセクションは省略せず `なし` と明記する(「書き忘れ」と「該当なし」を LLM が区別できるようにするため)。内容が `なし` のみのリクエスト小節は、1 行のリスト項目に畳み込んでよい(§4.1)。
 
 ````markdown
 ## POST /users
@@ -438,13 +520,8 @@ LLM が最初に読むエントリポイント。全エンドポイントを 1 �
 
 ### リクエスト
 
-#### パスパラメータ
-
-なし
-
-#### クエリパラメータ
-
-なし
+- パスパラメータ: なし
+- クエリパラメータ: なし
 
 #### ヘッダ
 
@@ -525,6 +602,7 @@ LLM が最初に読むエントリポイント。全エンドポイントを 1 �
 **見出し(`## METHOD /path`)**
 - メソッドとパスをそのまま見出しにする。パスパラメータは `{id}` 形式。
 - 直後の 1〜2 文でエンドポイントの目的を書く。実装の説明ではなく「何のために呼ぶか」を書く。
+- 廃止予定のエンドポイントは、見出し直後・説明文の前に `**廃止予定**: <代替エンドポイントと移行方法>` の 1 行を置き、INDEX.md の概要欄の先頭に `(廃止予定)` を付ける。該当しない場合はこの行自体を書かない — 常設の `廃止予定` ラベルは設けない。
 
 **振る舞い(必須)**
 - LLM が各情報を常に同じ場所で拾えるよう、**固定ラベルをこの順序で**使う:`副作用`、`冪等性`、`前提条件`、`認可`。該当しないものは `なし` と書く
@@ -539,15 +617,27 @@ LLM が最初に読むエントリポイント。全エンドポイントを 1 �
 - 例は現実的な値を使う(`"string"` や `"foo"` ではなく `"taro@example.com"`)
 - 例の中のすべてのフィールドは表に対応行があること
 - リクエストは `パスパラメータ`、`クエリパラメータ`、`ヘッダ`、`ボディ` の順で書く。該当しないものは `なし` と書く
+- 内容が `なし` のみの小節は `####` 見出しを立てず、`### リクエスト` 直下の 1 行のリスト項目に畳み込んでよい(固定順序は維持。テンプレート参照)。内容がある小節は従来どおり `####` 見出しを使う。`#### レスポンスヘッダ` も同様に `- レスポンスヘッダ: なし` の 1 行に畳み込んでよい
+- パスパラメータの表は `名前 | 型 | 制約・意味` の列を使う。パスパラメータは常に必須のため `必須` 列は置かない
+- クエリパラメータの表は `名前 | 型 | 必須 | 制約・意味` の列を使い、デフォルト値は制約欄に書く:
+
+  ```markdown
+  | 名前 | 型 | 必須 | 制約・意味 |
+  |---|---|---|---|
+  | page | int | no | 1 始まり。省略時 `1` |
+  ```
+
 - ボディがない場合は `なし。リクエストボディは送信しない` と明記する
 - レスポンスボディがない場合は `なし。レスポンスボディは返らない` と明記する
 - 呼び出し側がレスポンスヘッダ(`Location`、`Set-Cookie`、`Retry-After`、`ETag`、`Link` など)を読む必要がある場合は `#### レスポンスヘッダ` の表を追加する。該当なしは `なし`。ステータスごとに異なる場合はステータス単位で書く(例: `Retry-After` は 429 のみ)
 - 成功レスポンスが複数ある場合は `### レスポンス 200`、`### レスポンス 202`、`### レスポンス 204` のようにステータスごとに分ける
 - `202 Accepted` のような非同期受付では、完了確認に使うエンドポイント、ポーリング間隔、タイムアウト、失敗時の状態を明記する
 - **非 JSON レスポンス**(ファイルダウンロード、バイナリ、CSV、Server-Sent Events ストリーミング等)は、`Content-Type` を明記し、JSON ブロックの代わりに代表的なサンプル断片とセマンティクスの散文説明を書く(ダウンロード: ファイル名・サイズ上限。SSE: イベント名・フレーム形式・終了条件)
-- 型は `string` / `int` / `float` / `bool` / `string[]` / `object` / `object[]` の平易な表記とする。`$ref` 等の参照記法は禁止
+- 型は `string` / `int` / `float` / `bool` / `string[]` / `object` / `object[]` / `map<string, T>` の平易な表記とする。`$ref` 等の参照記法は禁止
 - ネストしたオブジェクトは表内で `address.city` のようにドット記法で平坦に書く
 - 配列内のオブジェクトは `items[].id`、`items[].product.name` のように `[]` を使って平坦に書く
+- 動的キーのオブジェクト(OpenAPI の `additionalProperties`)は `map<string, int>` のように `map<string, T>` で表す。動的キーはドット記法で平坦化できないため、値の形を型欄に書き、例には代表的なキーを載せる
+- **多態フィールド(OpenAPI の `oneOf` / `anyOf`)**: 判別フィールド(例: `type`)の全値を表の enum として列挙し、種別ごとに JSON 例を 1 つずつ載せ、種別固有のフィールドは `card.last4` のように判別値をプレフィックスにして平坦に書く(または種別ごとに表を分ける)。`$ref` と同様、スキーマ合成記法は使わない
 - enum は制約欄に全値を列挙する。大規模または標準化された enum(ISO 4217 通貨、国コード等)は、全値を列挙せず標準名を参照する
 - `必須` は「リクエスト時に省略できない」ことを表す。省略可否と `null` 可否は別物として扱う
 - リクエストのフィールド表には `必須` と `null可` の列を置く
@@ -559,13 +649,16 @@ LLM が最初に読むエントリポイント。全エンドポイントを 1 �
 **エラー(必須)**
 - このエンドポイント固有のエラーのみ書く(共通エラーは CONVENTIONS.md)
 - 「発生条件」と「**呼び出し側がすべき対応**(リトライ可否を含む)」を必ず書く。LLM がエラーハンドリングコードを書くための情報である
-- エラーレスポンスの具体例を 1 つ以上含める
+- エラーレスポンスの具体例は、形が CONVENTIONS.md の共通エラー形から逸脱する場合、またはフィールド単位エラーを返す場合に含める。共通形どおりのエラーは表の行だけでよい
 - フォームや入力 UI に表示すべきエラーは、フィールド単位エラーのレスポンス例を含める
 - フィールド単位エラーでは、対象フィールド名、機械判定用 code、ユーザー表示可能な message の有無を明記する
 
 **関連(必須)**
 - 前後に呼ぶことになるエンドポイントへの言及。LLM がワークフロー全体を組み立てる手がかりになる
 - 関連する workflow がある場合は、`ワークフロー: workflows/checkout.md` のようにリンクする
+
+**CONVENTIONS.md からの逸脱**
+- 逸脱は影響するセクション内に、固定マーカー `**逸脱**:` を付けて書く(例: `**逸脱**: この一覧 API はカーソルではなくオフセットページネーションを使う`)。固定マーカーにより LLM がファイル内の逸脱をすべて検出できる
 
 ## 5. ワークフロー定義(workflows/、任意)
 
@@ -588,7 +681,54 @@ LLM が最初に読むエントリポイント。全エンドポイントを 1 �
 - workflow ファイルは INDEX.md の `Workflows` セクションから参照できるようにする。
 - 関係する各エンドポイントの `関連` セクションからも workflow を参照する。
 
-## 6. 記述スタイル規約
+## 6. Webhook 定義(webhooks/、任意)
+
+Webhook は方向が逆の呼び出しである: API がクライアントの登録した URL へ HTTP リクエストを送信する。OpenAPI 3.1 のトップレベルフィールド `webhooks` に対応し、リソースとは分けて記述する — 1 イベント(または密接に関連するイベント群)につき 1 ファイル。
+
+````markdown
+# payment.completed
+
+決済確定時に送信される。登録 URL へ `POST` で配信される。
+
+### ペイロード
+
+```json
+{
+  "event": "payment.completed",
+  "payment_id": "pay_01HXYZ",
+  "amount": 1200,
+  "occurred_at": "2026-06-11T09:31:00Z"
+}
+```
+
+| フィールド | 型 | 意味 |
+|---|---|---|
+| event | string | 常に `payment.completed` |
+| payment_id | string | `pay_` プレフィックス付き ULID。POST /payments が返す id と一致する |
+| amount | int | 確定金額(JPY) |
+| occurred_at | string (RFC 3339) | 決済確定日時 |
+
+### 期待されるレスポンス
+
+10 秒以内に `2xx` を返すこと。レスポンスボディは無視される。
+
+### リトライ
+
+`2xx` 以外またはタイムアウト時は、指数バックオフで最大 5 回リトライし、その後配信を打ち切る。
+
+### 配信保証
+
+- at-least-once。`payment_id` で重複排除すること
+- 配信順序は保証されない
+````
+
+- ペイロードはレスポンスと同じ「例が先」ルールで書く: JSON 例が先、フィールド表が後。
+- 受信側が返すべきもの(ステータスコード、応答期限)とリトライポリシー(回数、間隔、打ち切り条件)を必ず書く。
+- 配信保証を明記する: at-least-once か at-most-once か、順序保証、重複排除に使うフィールド。
+- 署名検証など全 webhook 共通の規約は CONVENTIONS.md に書く。
+- webhook ファイルは INDEX.md の `Webhooks` セクションから参照できるようにし、webhook を発生させるエンドポイントの `関連` セクションからも言及する。
+
+## 7. 記述スタイル規約
 
 各セクションのルール(§4.1)が正(normative)である。本節は横断的なスタイル指針のみを補足し、§4.1 を再掲しない。
 
@@ -601,27 +741,30 @@ LLM が最初に読むエントリポイント。全エンドポイントを 1 �
 - UI 文言としてそのまま使ってよい message と、ログ・開発者向け message は区別して書く
 - 生成される docai ドキュメント一式は **単一言語** で記述する。このREADME(人間向けに二言語併記)とは異なり、生成された docai は同じ内容を複数言語で繰り返してはならない — 出力言語を 1 つ選び、INDEX.md・CONVENTIONS.md・全リソース/ワークフローファイルで一貫して使う
 
-## 7. OpenAPI との関係
+## 8. OpenAPI との関係
 
 - **変換は一方向(ソース → docai)とする。** docai は生成物である。正本(OpenAPI ドキュメント、コード等)が **保守上の source of truth** であり、docai は **LLM が読む参照用** である。ソースを編集して docai を再生成する。逆向きの編集は行わない。
 - ソースが OpenAPI であり得るため、フィールド表の情報量は OpenAPI スキーマと同等以上を保ち、生成時に情報が失われないようにする。
 - docai は OpenAPI を置き換えない。併存する:OpenAPI は引き続きコード生成・バリデーション・人間の閲覧に使い、docai は LLM 消費に使う。
 
-## 8. 準拠チェックリスト
+## 9. 準拠チェックリスト
 
 ドキュメントが docai 準拠であるための条件:
 
 - [ ] INDEX.md と CONVENTIONS.md が存在する
-- [ ] すべてのファイル(INDEX.md・CONVENTIONS.md・resources/・workflows/)の冒頭に鮮度スタンプ(version / source)がある
+- [ ] すべてのファイル(INDEX.md・CONVENTIONS.md・resources/・workflows/・webhooks/)の冒頭に鮮度スタンプ(version / source)がある
 - [ ] すべてのエンドポイントが固定テンプレートのセクション構成・順序に従っている
-- [ ] すべてのリクエスト・レスポンス・エラーに具体例がある
-- [ ] リクエストがパスパラメータ・クエリパラメータ・ヘッダ・ボディに分けて記述されている
+- [ ] すべてのリクエスト・レスポンスに具体例がある。エラーは §4.1 が要求する場合(共通エラー形からの逸脱、またはフィールド単位エラー)に具体例がある
+- [ ] リクエストがパスパラメータ・クエリパラメータ・ヘッダ・ボディに分けて記述されている(すべて `なし` の部分は 1 行のリスト項目でよい)
 - [ ] 成功レスポンスがステータスごとに記述され、ボディなしの場合は `なし` と明記されている
 - [ ] 呼び出し側が読むべきレスポンスヘッダが記述されている(または `なし`)。非 JSON レスポンスは `Content-Type` を明記している
-- [ ] `$ref` 等の参照記法を使っていない(CONVENTIONS.md への暗黙準拠を除く)
+- [ ] `$ref` 等の参照記法を使っていない
 - [ ] 配列、ネスト、`null`、省略、デフォルト値の扱いが明記されている
 - [ ] 更新系エンドポイントで、更新不可フィールドと `PATCH` のマージ意味論が明記されている
 - [ ] すべてのエラーに「発生条件」と「呼び出し側の対応」がある
 - [ ] バリデーションエラーにフィールド単位エラーの例がある
 - [ ] 「振る舞い」セクションが固定ラベル `副作用` / `冪等性` / `前提条件` / `認可` を使っている(なしの場合も `なし` と記載)
+- [ ] CONVENTIONS.md からの逸脱が、影響するセクション内で `**逸脱**:` マーカー付きで記述されている
+- [ ] 廃止予定のエンドポイントに、見出し直後の `**廃止予定**:` 行と INDEX.md 概要欄の `(廃止予定)` がある
 - [ ] workflows/ のファイルが INDEX.md から参照され、関連エンドポイントからも参照されている
+- [ ] webhooks/ のファイルが INDEX.md の `Webhooks` セクションに列挙されている
