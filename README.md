@@ -147,12 +147,13 @@ A document set is generated per profile: every file in a set carries the same `p
 
 The `compact` profile may apply these reductions:
 
-- Split large response field tables into two tables under the fixed `####` headings `Frontend-visible fields` and `Opaque fields`, in that order(both are canonical tokens, §4.1). `Frontend-visible fields` are documented normally. `Opaque fields` may be summarized by name, type, and one short meaning when the client normally stores or forwards them without inspecting their internals.
+- Split large response field tables into two tables under the fixed `####` headings `Frontend-visible fields` and `Opaque fields`, in that order(both are canonical tokens, §4.1). A single response JSON example still comes first(example-first), followed by the two tables in that order; the example includes the frontend-visible fields and shows each opaque field at its root only. `Frontend-visible fields` are documented normally. `Opaque fields` may be summarized by name, type, and one short meaning when the client normally stores or forwards them without inspecting their internals.
 - For opaque nested objects that the client stores or forwards without inspecting, document only the root field in `Opaque fields` as `object` or `object[]` with a short meaning such as `store/forward only`. Do not flatten opaque leaf fields unless client logic reads them.
 - Use minimal valid request examples. Include only required fields and optional fields that materially affect the call.
 - Use representative response examples. Include common frontend-visible fields and omit rarely used optional fields unless they affect client logic.
+- Leave the `Meaning` cell empty for a field whose name and type are self-explanatory(such as `email` or `name`); fill it only when the meaning adds information the field name does not already convey. This applies to prose meaning only — `Presence` and `Nullable` are still required(§3.3 must-not-omit).
 - For very large enums, standardized enums, or enums irrelevant to client branching, reference the standard or category instead of listing every value. If the client branches on only a small subset, list the branching values explicitly and state how all other values should be handled.
-- Use short `none` lines such as `- Path Parameters: none`, `- Query Parameters: none`, and `- Body: none` as long as the fixed request order is preserved.
+- Collapse `none` request subsections into one-line list items(`- Path Parameters: none`, `- Query Parameters: none`, `- Body: none`) as long as the fixed request order is preserved. This is the §4.1 collapse and is allowed in **both** profiles; it is repeated here only because compact bodies are more often empty.
 - Within one resource file, when a later request or response body is shape-identical to an earlier body in the same file, replace its example and field table with a single `**same_as**:` line(§4.1). Backward references only — the full definition must appear at its first occurrence.
 
 The `compact` profile must not omit information that changes how a caller constructs requests, handles errors, follows workflows, authenticates, retries, paginates, uploads/downloads files, or interprets state transitions.
@@ -172,7 +173,7 @@ Creates a user. Email addresses are globally unique across all tenants.
 
 - side_effects: On successful creation, a confirmation email is sent asynchronously
 - idempotency: not idempotent. Send an `Idempotency-Key` header from the first attempt when the call may be retried
-- preconditions: caller must have the admin role
+- preconditions: a tenant must exist (create it via POST /tenants first)
 - authorization: `users:write` scope
 
 ### Request
@@ -261,7 +262,7 @@ Creates a user. Email addresses are globally unique across all tenants.
 **Heading(`## METHOD /path`)**
 - Use the method and path directly as the heading. Path parameters use `{id}` format.
 - Immediately after the heading, write 1-2 sentences describing why this endpoint is called. Describe the purpose, not the implementation.
-- After the purpose description, a generated file may include one optional `**call_shape**:` line that summarizes how the client calls the endpoint and the most important implementation consequences(auth, returned resource, important endpoint-specific errors, or async/pagination behavior). It should fit on one line. Its role is **in-file navigation**: in a long resource file, an LLM can scan only the `**call_shape**:` lines to find the endpoint it needs before reading it in full. That navigation value is why it is recommended in the `compact` profile even though it repeats facts stated in `Behavior` and `Errors`.
+- After the purpose description, a generated file may include one optional `**call_shape**:` line that summarizes how the client calls the endpoint and the most important implementation consequences(auth, returned resource, important endpoint-specific errors, or async/pagination behavior). It must fit on one line. Its role is **in-file navigation**: in a long resource file, an LLM can scan only the `**call_shape**:` lines to find the endpoint it needs before reading it in full. That navigation value is why it is recommended in the `compact` profile even though it repeats facts stated in `Behavior` and `Errors`.
 - If the endpoint is deprecated, put a `**deprecated**: <replacement endpoint and migration>` line immediately after the heading, before the description, and prefix its INDEX.md summary with `(deprecated)`. Omit the line entirely otherwise — there is no permanent `deprecated` label.
 
 **Behavior(required)**
@@ -299,7 +300,7 @@ Creates a user. Email addresses are globally unique across all tenants.
 - **Redirect responses(3xx)**: document them as `### Response 302`(etc.) with a `#### Response Headers` table containing `Location`, and state whether the client follows the redirect automatically(the `fetch` default) or must read `Location` and act manually(for example, signed download URLs)
 - **Non-JSON responses**(file download, binary, CSV, Server-Sent Events streaming, etc.): state the `Content-Type` explicitly, and instead of a JSON block give a representative sample fragment plus a prose description of the semantics(for downloads: filename, size limit; for SSE: event names, frame format, terminate condition)
 - **Non-JSON request bodies**(`multipart/form-data`, `application/x-www-form-urlencoded`, raw binary upload): state the `Content-Type` explicitly at the top of `#### Body`. For multipart and form-urlencoded bodies, keep the example-first rule — give a representative fragment(part names and sample values) instead of a JSON block, then document the parts/fields in the standard request field table, using the type `file` for file parts with accepted media types, maximum size, and filename rules in the constraints column. For raw binary bodies, describe the expected content and size limit in prose
-- Use simple type names: `string` / `int` / `float` / `bool` / `string[]` / `object` / `object[]` / `map<string, T>` / `file`(multipart file parts only). Reference notation such as `$ref` is prohibited; the only allowed reference is the same-file `**same_as**:` line in the compact profile(§3.3)
+- Use simple type names: the scalars `string` / `int` / `float` / `bool`; their arrays `string[]` / `int[]` / `float[]` / `bool[]`; `object` / `object[]`; `map<string, T>` where `T` is a scalar or `object`; and `file`(multipart file parts only). Nested arrays(`int[][]`) and array-valued map entries(`map<string, T[]>`) are **not** part of the grammar — model such a field as `object` or `object[]` and describe its shape in the constraints/meaning column. Reference notation such as `$ref` is prohibited; the only allowed reference is the same-file `**same_as**:` line in the compact profile(§3.3)
 - `**same_as**: <METHOD> <path> Request` or `**same_as**: <METHOD> <path> Response <status>`(compact profile only) declares that this request or response body is identical to an earlier body in the same file, and replaces the JSON example and field table. Use it only for identical shapes — if any field differs, write the full example and table. It must point at the full definition, never at another `**same_as**:` line. The `full` profile never uses `**same_as**:` and always duplicates
 - Flatten nested objects in the table using dot notation such as `address.city`
 - Flatten objects inside arrays using `[]`, such as `items[].id` and `items[].product.name`
@@ -421,10 +422,11 @@ A document is docai-compliant if:
 - [ ] Every non-empty request body and response body has a concrete example(in `compact`, a request or response body may instead carry a `**same_as**:` reference); body-less requests/responses explicitly say `none`; errors include an example when §4.1 requires it(shape deviates from CONVENTIONS.md, or field-level errors)
 - [ ] Requests are split into path parameters, query parameters, headers, and body(all-`none` parts may be one-line list items)
 - [ ] Successful responses are documented by status code, and body-less responses explicitly say `none`
-- [ ] Response headers the caller must read are documented(or `none`); non-JSON responses state their `Content-Type`
+- [ ] Response headers the caller must read are documented(or `none`); non-JSON request and response bodies state their `Content-Type`(§4.1)
 - [ ] Response and webhook payload field tables specify presence and nullability, except compact `Opaque fields` that are documented only for store/forward behavior
 - [ ] No cross-file reference notation such as `$ref` is used; `**same_as**:` appears only in the `compact` profile, only as a backward reference within the same file
 - [ ] Array, nesting, `null`, omission, and default-value behavior are specified
+- [ ] Polymorphic fields(`oneOf` / `anyOf`) list the discriminator enum and give one `**variant**:` example plus field table per value(§4.1)
 - [ ] For update endpoints, non-updatable fields and `PATCH` merge semantics are specified
 - [ ] Every error includes the condition and what the caller should do
 - [ ] Validation errors include a field-level error example
