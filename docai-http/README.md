@@ -27,6 +27,8 @@ DocAI HTTP is designed to be **generated from a single source** (an OpenAPI docu
 
 This document defines only the **format rules**. It does not cover tools or generator implementations.
 
+Terminology used throughout: the **generator**(also called the producer) is the tool that emits a DocAI HTTP document set from the authoritative source. A **reader** is any consumer of a generated set — an LLM loading it as context, or a validation tool. A **document set** is every file produced by one generation run for one profile(§3.4).
+
 ### Why DocAI HTTP is needed instead of only OpenAPI
 
 OpenAPI is difficult for LLMs to read for these reasons:
@@ -40,7 +42,7 @@ DocAI HTTP reverses these tradeoffs: **no cross-file schema/object references, f
 
 ## 2. Core Principles
 
-1. **Self-contained with conventions** — An endpoint definition must be fully understandable when read together with `CONVENTIONS.md`. The normal read order is `INDEX.md` → `CONVENTIONS.md` → the selected resource/workflow/webhook file. Even common schemas and shared domain objects(such as `User`, `Money`, `Address`) must be expanded inline in each endpoint; within a single file, the `compact` profile may replace repeated semantically identical body definitions with a `**same_as**:` back-reference(§3.4). Duplication is acceptable when it lowers the total context needed for a task. Whether duplication or reference resolution is cheaper must be evaluated against representative documents and target models rather than assumed. Consistency across duplicated copies is the **generator's responsibility**(§1); keeping them in sync by hand is discouraged. The only thing factored out of endpoints is API-wide conventions, which live in CONVENTIONS.md(§3.3) — shared *objects* are not conventions and are still inlined.
+1. **Self-contained with conventions** — An endpoint definition must be fully understandable when read together with `CONVENTIONS.md`. The normal read order is `INDEX.md` → `CONVENTIONS.md` → the selected resource/workflow/webhook file. Even common schemas and shared domain objects(such as `User`, `Money`, `Address`) must be expanded inline in each endpoint; within a single file, the `compact` profile may replace repeated semantically identical body definitions with a `**same_as**:` back-reference(§3.4). Duplication is acceptable when it lowers the total context needed for a task. Whether duplication or reference resolution is cheaper must be evaluated against representative documents and target models rather than assumed. Consistency across duplicated copies is the **generator's responsibility**(§1); keeping them in sync by hand is discouraged. The only content factored out of endpoint definitions into another file is API-wide conventions, which live in CONVENTIONS.md(§3.3) — shared *objects* are not conventions and are still inlined.
 2. **Example-first** — Every non-empty request body and response body must include realistic concrete examples. Field tables supplement examples with constraints and presence rules. Body-less requests/responses must explicitly say `none`; in the `compact` profile, a request or response body may use `**same_as**:` instead of repeating a semantically identical earlier definition.
 3. **Markdown-based** — DocAI HTTP uses structured Markdown and fenced code blocks so that examples and implementation guidance remain readable to an LLM and a human. DocAI HTTP must not be a YAML/JSON-only definition file.
 4. **Deterministic structure** — Section order, heading levels, and required section roles are fixed. All structural text — fixed headings, table column headers, canonical keys, markers, and fixed values — is written in English regardless of the document language(§4.1); only prose is written in the document language. An LLM should be able to predict where information exists just from knowing the DocAI HTTP format.
@@ -68,9 +70,11 @@ Because files are loaded **individually**(that is the point of splitting), fresh
 > docai-http: 1.0.0 | profile: full | generated: 2026-06-30 | generation_id: 20260630-abc123 | source: openapi.yaml (OpenAPI 3.1.1) | source_sha: abc123
 ```
 
+The stamp is one Markdown blockquote line of `key: value` pairs separated by ` | `, with the keys in exactly the order shown above. Extension keys must use the `x-` prefix(§3.1) and come after the standard keys.
+
 - `docai-http` is the DocAI HTTP format version in `major.minor.patch` form(§3.1).
 - `profile` is either `full` or `compact`(§3.4).
-- `generated` is the generation date.
+- `generated` is the generation date in ISO 8601 `YYYY-MM-DD` form.
 - `generation_id` identifies one complete generation run. It must be identical in every file in the set and different for every run.
 - `source` is the source document(s) or source system(s) used to generate the file. Include the source specification and exact version when applicable, such as `openapi.yaml (OpenAPI 3.1.1)`.
 - `source_sha` is the stable revision or content hash covering the input(s) used to generate that file, including pass-through inputs such as hand-maintained `CONVENTIONS.md` or workflow content when they are stamped by the generator. Omit it only when no stable revision can be produced.
@@ -85,7 +89,7 @@ DocAI HTTP uses semantic `major.minor.patch` versions:
 - `minor` adds backward-compatible optional structures or capabilities. A reader may process a document with a newer minor version of the same major version by ignoring structures it does not understand.
 - `patch` clarifies wording or fixes examples without changing document meaning or required structure.
 
-A reader must reject an unsupported major version rather than guessing. It must ignore unknown metadata keys, sections, markers, or table columns whose names begin with `x-`. It may also ignore unknown standard structures when the document declares a newer minor version of a supported major version. Producers must not place information required to call the API correctly only in an `x-` extension. A producer that emits unknown non-extension structural text not defined by its declared DocAI HTTP version creates a non-compliant document. Removing or changing the meaning of an existing required item requires a new major version.
+A reader must reject an unsupported major version rather than guessing; for an LLM reader, rejecting means reporting the unsupported version instead of implementing against the document. It must ignore unknown metadata keys, sections, markers, or table columns whose names begin with `x-`(stamp key `x-team`, heading `### x-Team Notes`, marker `**x-audit**:`, column `x-Internal`). It may also ignore unknown standard structures when the document declares a newer minor version of a supported major version. Producers must not place information required to call the API correctly only in an `x-` extension. A producer that emits unknown non-extension structural text not defined by its declared DocAI HTTP version creates a non-compliant document. Removing or changing the meaning of an existing required item requires a new major version.
 
 ### 3.2 INDEX.md(required)
 
@@ -102,8 +106,8 @@ The entry point that an LLM reads first. Endpoints are listed under a fixed `## 
 
 | Method | Path | Task | Summary | Also read |
 |---|---|---|---|---|
-| POST | /users | create user | Create a user; sends a confirmation email | workflows/user-onboarding.md |
-| GET | /users/{id} | read user | Fetch one user by id | none |
+| POST | /users | create user | Sends a confirmation email; email is unique across all tenants | workflows/user-onboarding.md |
+| GET | /users/{id} | read user | Returns the full user object; no side effects | none |
 
 ## Workflows
 
@@ -121,7 +125,7 @@ The entry point that an LLM reads first. Endpoints are listed under a fixed `## 
 - One endpoint per row. The `###` heading names the file to read, so the LLM picks a subsection, then a row. There is no per-row file column — the heading carries the path once.
 - `Endpoints` is always present. If the API exposes no client-callable endpoints, write `none` under it instead of adding resource subsections.
 - `Task` is a short client intent label, usually 1-3 words in languages that use spaces or a similarly short phrase in other languages. It helps an LLM avoid loading unrelated resource files. Reuse the exact same label for every endpoint that serves the same client task(for example, all checkout endpoints use `checkout`); endpoints serving different tasks get different labels(`create user`, `read user`). Do not invent synonyms for one task.
-- `Summary` must add information beyond `Task`(key behavior, side effect, or distinguishing detail) — do not restate the task label. Keep it to one short sentence. A generator may apply a language- and tokenizer-specific budget, but DocAI HTTP does not define a UTF-8 byte limit because byte length is not a language-neutral measure of LLM token cost.
+- `Summary` must add information beyond `Task`(key behavior, side effect, or distinguishing detail) — a summary that only restates the task label is non-compliant. Keep it to one short sentence. A generator may apply a language- and tokenizer-specific budget, but DocAI HTTP does not define a UTF-8 byte limit because byte length is not a language-neutral measure of LLM token cost.
 - `Also read` lists extra docs-root-relative files that should usually be loaded for this endpoint, such as workflows. Separate multiple paths with commas. Write `none` when no extra file is normally needed.
 - `Workflows` and `Webhooks` are always present in that order. If matching files exist, list all of them in the corresponding table; otherwise write `none` under the heading.
 
@@ -132,7 +136,7 @@ Write API-wide conventions in **one place only**. This is the only exception tha
 - `# API Conventions`
 - `## Environments` — Base URLs and environments
 - `## Versioning` — API versioning convention(path, header, or another method)
-- `## Authentication` — Authentication method, token acquisition, authentication state handling, and concrete examples
+- `## Authentication` — Authentication method, token acquisition, authentication state handling, and concrete examples(credential values in examples must be clearly fake placeholders, §7)
 - `## Browser Security` — CORS, Cookie, CSRF, and browser `credentials` conventions
 - `## Request Formats` — JSON, multipart/form-data, application/x-www-form-urlencoded, and other request formats
 - `## Errors` — Common error response shape and handling for 401/403/429/500 and other errors shared by all endpoints
@@ -254,7 +258,7 @@ none
 
 ### Errors
 
-| Status | code | Condition | What the caller should do |
+| Status | code | Condition | Caller action |
 |---|---|---|---|
 | 409 | email_taken | email already exists | Use another email. Do not retry |
 | 422 | validation_failed | Input value is invalid | Show field-level errors in the form. Do not retry |
@@ -295,14 +299,14 @@ none
 ### 4.1 Section Rules
 
 **Heading(`## METHOD /path`)**
-- Use the method and path directly as the heading. Path parameters use `{id}` format.
+- Use the method and path directly as the heading, with the method in uppercase(`GET`, `POST`). Path parameters use `{id}` format.
 - Immediately after the heading, write 1-2 sentences describing why this endpoint is called. Describe the purpose, not the implementation.
 - After the purpose description, a generated file may include one optional `**call_shape**:` line that summarizes how the client calls the endpoint and the most important implementation consequences(auth, returned resource, important endpoint-specific errors, or async/pagination behavior). It must fit on one line. Generate it only when the resource file is large enough that in-file navigation offsets the repeated tokens; it is most useful in large compact-profile files.
 - If the endpoint is deprecated, put a `**deprecated**: <replacement endpoint and migration>` line immediately after the heading, before the description, and prefix its INDEX.md summary with `(deprecated)`. Omit the line entirely otherwise — there is no permanent `deprecated` label.
 
 **Behavior(required)**
 - Use these **four canonical keys in this order** so an LLM and validation tools can always locate each fact: `side_effects`, `idempotency`, `preconditions`, `authorization`. Write `none` for any that do not apply
-- All structural text is always written in English, even when generated prose is written in another language. Structural text is: every fixed heading this format defines(`API Index`, `Endpoints`, `Workflows`, `Webhooks`, `API Conventions`, `Environments`, `Versioning`, `Authentication`, `Browser Security`, `Request Formats`, `Validation Errors`, `Pagination`, `List Operations`, `Data Representation`, `Empty and Omitted Values`, `File Transfer`, `Rate Limits`, `Webhook Delivery`, `Behavior`, `Request`, `Path Parameters`, `Query Parameters`, `Headers`, `Cookie Parameters`, `Body`, `Response <status>`, `Response Headers`, `Errors`, `Related`, `Preconditions`, `Steps`, `State Transitions`, `Failure and Recovery`, `Payload`, `Frontend-visible fields`, `Opaque fields`); every table column header(`Method` / `Path` / `Task` / `Summary` / `Details` / `Also read` / `Name` / `Field` / `Type` / `Required` / `Nullable` / `Presence` / `Constraints / Meaning` / `Meaning` / `Status` / `code` / `Condition` / `What the caller should do` / `From` / `Endpoint / Event` / `To`); the Behavior keys `side_effects` / `idempotency` / `preconditions` / `authorization`; the markers `**call_shape**:`, `**deprecated**:`, `**deviation**:`, `**same_as**:`, `**variant**:`, `**media_type**:`, and `**unsupported**:`; the `(deprecated)` summary prefix and the profile cross-link labels `Full set:` / `Compact set:`(§3.4); the fixed values `none` / `yes` / `no` / `always` / `full` / `compact` and the simple type names; and the metadata stamp keys `docai-http` / `profile` / `generated` / `generation_id` / `source` / `source_sha`. Only prose — descriptions, summaries, and free-text cells such as conditions, constraints, and meanings — is written in the document language(§7)
+- All structural text is always written in English, even when generated prose is written in another language. Structural text is: every fixed heading this format defines(`API Index`, `Endpoints`, `Workflows`, `Webhooks`, `API Conventions`, `Environments`, `Versioning`, `Authentication`, `Browser Security`, `Request Formats`, `Validation Errors`, `Pagination`, `List Operations`, `Data Representation`, `Empty and Omitted Values`, `File Transfer`, `Rate Limits`, `Webhook Delivery`, `Behavior`, `Request`, `Path Parameters`, `Query Parameters`, `Headers`, `Cookie Parameters`, `Body`, `Response <status>`, `Response Headers`, `Errors`, `Related`, `Preconditions`, `Steps`, `State Transitions`, `Failure and Recovery`, `Payload`, `Frontend-visible fields`, `Opaque fields`); every table column header(`Method` / `Path` / `Task` / `Summary` / `Details` / `Also read` / `Name` / `Field` / `Type` / `Required` / `Nullable` / `Presence` / `Constraints / Meaning` / `Meaning` / `Status` / `code` / `Condition` / `Caller action` / `From` / `Endpoint / Event` / `To`); the Behavior keys `side_effects` / `idempotency` / `preconditions` / `authorization`; the markers `**call_shape**:`, `**deprecated**:`, `**deviation**:`, `**same_as**:`, `**variant**:`, `**media_type**:`, and `**unsupported**:`; the `(deprecated)` summary prefix and the profile cross-link labels `Full set:` / `Compact set:`(§3.4); the fixed values `none` / `yes` / `no` / `always` / `full` / `compact` and the simple type names; and the metadata stamp keys `docai-http` / `profile` / `generated` / `generation_id` / `source` / `source_sha`. Only prose — descriptions, summaries, and free-text cells such as conditions, constraints, and meanings — is written in the document language(§7)
 - `side_effects`: list all(email sending, changes to other resources, event publishing, etc.)
 - `idempotency`: state whether the endpoint is idempotent and whether it can be retried safely
 - `preconditions`: earlier APIs that must be called, required resource state, etc.
@@ -311,14 +315,21 @@ none
 - These facts do not have standardized required fields in OpenAPI and are among the facts LLMs are most likely to get wrong. A source may still carry them in descriptions, links, extensions, annotations, or another input to the generator
 
 **Request / Response**
-- For each non-empty body representation, put a `**media_type**: <media type>` line first, then the **concrete example**, then the field table for structured content. The marker is required for JSON and non-JSON bodies even when only one representation exists. Raw binary and unstructured stream representations use the sample-and-prose rules below and do not require a field table
+- For each non-empty body representation, put a `**media_type**: <media type>` line first, then the **concrete example**, then the field table for structured content. The marker is required for JSON and non-JSON bodies even when only one representation exists. This is deliberate: an explicit marker keeps every body self-describing and simple to validate, and DocAI HTTP accepts its per-body line cost instead of defining a convention-level default media type. Raw binary and unstructured stream representations use the sample-and-prose rules below and do not require a field table
 - Use realistic example values(`"taro@example.com"` instead of `"string"` or `"foo"`)
 - In the `full` profile, request examples should be representative valid examples and response examples should show the normal complete shape. In the `compact` profile, request examples should be minimal valid examples, and response examples should be representative examples focused on fields that affect client implementation
 - Every field in the example must have a corresponding row in the field table. Include rows for object and array containers as well as their flattened child fields
 - In the `full` profile, field tables must document every representable field in the source request/response schema, even when a rarely used optional field is absent from the example. Mark any unrepresentable client-relevant schema feature with `**unsupported**:`. In the `compact` profile, field tables may be broader than the representative example, but they must not omit fields that affect client implementation
 - Write requests in this order: `Path Parameters`, `Query Parameters`, `Headers`, `Cookie Parameters`, `Body`. If a part does not apply, write `none`
 - Leading request subsections whose entire content is `none` may drop the `####` heading and be written as one-line list items directly under `### Request`, keeping the fixed order. After the first non-empty `####` subsection, later empty subsections retain their `####` heading and contain `none`; this prevents a collapsed item from being parsed as content of the preceding subsection. `#### Response Headers` may likewise be collapsed to a one-line `- Response Headers: none`
-- Path parameter tables use the columns `Name | Type | Constraints / Meaning`. There is no `Required` column — path parameters are always required
+- Path parameter tables use the columns `Name | Type | Constraints / Meaning`. There is no `Required` column — path parameters are always required:
+
+  ```markdown
+  | Name | Type | Constraints / Meaning |
+  |---|---|---|
+  | id | string | ULID with `usr_` prefix returned at creation(`usr_01HXYZ`) |
+  ```
+
 - Query parameter tables use the columns `Name | Type | Required | Constraints / Meaning`, with defaults in the constraints column:
 
   ```markdown
@@ -359,7 +370,7 @@ none
 
 **Errors(required)**
 - Write only errors specific to this endpoint(common errors belong in CONVENTIONS.md)
-- Always write the "condition" and "what the caller should do", including retryability. This information lets an LLM write error handling code
+- Always fill `Condition` and `Caller action`, including retryability. This information lets an LLM write error handling code
 - Include a concrete error response example and response field table when the shape deviates from the common error shape in CONVENTIONS.md, or when the endpoint returns field-level errors. Put `**media_type**:` before the example. Errors that follow the common shape need only their table row
 - Precede every error response example with a one-line label `<status> <code>:`(for example, `422 validation_failed:`) so the example maps unambiguously to its table row
 - Put endpoint-specific error response headers that the caller must read in a `#### Response Headers` table immediately after that error's example and field table
@@ -471,6 +482,8 @@ The per-section rules in §4.1 are normative — this section only adds cross-cu
 - Keep each file to a measured token budget that loads comfortably in the target model together with the expected code context. Do not use line count as the normative split criterion. Split a large resource into task-oriented resource shards before it exceeds that budget.
 - Prefer tables, lists, and code blocks over prose.
 - Avoid verbose expressions. Write directly and decisively.
+- Escape a literal `|` inside a table cell as `\|`(for example, `` `admin` \| `member` ``).
+- Use clearly fake placeholder values for credentials, tokens, API keys, and other secrets in every example. A generated document set must never contain a real secret.
 - Explicitly state negative facts, such as "this field cannot be updated" or "this API does not paginate". LLMs fill in missing information by guessing, so clearly stating what is not possible prevents hallucination.
 - Put metadata information(DocAI HTTP format version, profile, generation date, generation ID, source, and source revision when available) at the beginning of **every file**, not only INDEX.md(see §3) — files are loaded individually.
 - Do not omit information that affects frontend implementation. Examples: screen transition after authentication failure, retry display, mapping errors to form fields, download file name, upload size limit.
@@ -493,7 +506,7 @@ A document set is DocAI HTTP-compliant if:
 
 - [ ] INDEX.md and CONVENTIONS.md exist
 - [ ] The `docai-http` value uses `major.minor.patch`; no unknown non-`x-` structural text is present(§3.1)
-- [ ] Every file(INDEX.md, CONVENTIONS.md, resources/, workflows/, webhooks/) begins with a metadata stamp containing `docai-http` / `profile` / `generated` / `generation_id` / `source`, and `source_sha` when available
+- [ ] Every file(INDEX.md, CONVENTIONS.md, resources/, workflows/, webhooks/) begins with a metadata stamp in the fixed ` | `-separated key order of §3, containing `docai-http` / `profile` / `generated` / `generation_id` / `source`, and `source_sha` when available
 - [ ] All files in one profile set share the same `profile`, `generated`, and `generation_id`; when both profiles exist, each INDEX.md links the other set's root(§3.4)
 - [ ] INDEX.md includes `Endpoints`, `Workflows`, and `Webhooks` in order; it groups endpoints into one `###` subsection per resource file and fills `Task`, `Summary`, and `Also read` for every endpoint, or writes `none` for an empty section(§3.2)
 - [ ] CONVENTIONS.md uses every fixed heading in §3.3 in order; its common and validation error shapes include examples and field tables
