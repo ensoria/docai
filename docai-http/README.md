@@ -3,12 +3,13 @@
 DocAI HTTP is a documentation format for describing HTTP APIs in a way that is optimized for AI/LLM consumption.
 It is designed so that an AI can read the API documentation as context and efficiently implement an HTTP client that calls the API correctly. Browser-specific requirements are included where they affect web clients, but the format also supports mobile, server, desktop, and CLI clients.
 
-> Specification version: 0.3.0 | status: Draft
+> Specification version: 0.4.0 | status: Draft
 
 This is a pre-1.0 draft. Its structure may change incompatibly while implementation experience and conformance fixtures are collected. Stable compatibility guarantees begin with specification version 1.0.0. Changes are recorded in the repository history until a dedicated changelog is added for the first stable release.
 
 ### Specification History
 
+- `0.4.0`(Draft) — Defines escaped field paths and structured parameter fields, makes object openness and response-header presence explicit, aligns webhook field semantics, and adds compact table and example reductions.
 - `0.3.0`(Draft) — Makes compact projections structurally complete, adds projection coverage and compact field defaults, renames source revision metadata, strengthens minor-version compatibility and canonical syntax, and adds API-wide HTTP semantics.
 - `0.2.0`(Draft) — Makes the full profile required, defines common and inline error-shape mapping, fixes polymorphic representation order, classifies body-nullability requirements, and completes response and parameter wire rules.
 - `0.1.0`(Draft) — Initial public draft. Defines the metadata stamp, full and compact profiles, endpoint/workflow/webhook structures, body semantics, extension rules, and compliance checklist.
@@ -77,7 +78,7 @@ docs/
 Because files are loaded **individually**(that is the point of splitting), freshness cannot live only in INDEX.md. Every file — INDEX.md, CONVENTIONS.md, and each file under resources/, workflows/, and webhooks/ — must begin with a one-line metadata stamp so an LLM that loaded only that file can judge how current it is and how much detail it contains:
 
 ```markdown
-> docai-http: 0.3.0 | profile: full | coverage: complete | generated: 2026-06-30 | generation_id: full-20260630-abc123 | projection_id: 20260630-abc123 | source: openapi.yaml (OpenAPI 3.1.1) | source_revision: sha256:abc123
+> docai-http: 0.4.0 | profile: full | coverage: complete | generated: 2026-06-30 | generation_id: full-20260630-abc123 | projection_id: 20260630-abc123 | source: openapi.yaml (OpenAPI 3.1.1) | source_revision: sha256:abc123
 ```
 
 The stamp is one Markdown blockquote line of `key: value` pairs separated by an unescaped ` | `, with the keys in exactly the order shown above. Parse each pair at its first `: `. Values must not contain a newline. Within a value, escape `\` as `\\` and `|` as `\|`; these are the only valid escape sequences. When locating separators, a pipe is escaped when it is immediately preceded by an odd-length run of backslashes. After splitting the pairs, decode escapes from left to right. An unknown escape or a trailing unescaped backslash makes the stamp invalid. Extension keys must use the `x-` prefix(§3.1) and come after the standard keys.
@@ -116,7 +117,7 @@ Extensions must not disrupt the fixed standard structure. An `x-` metadata key f
 The entry point that an LLM reads first. Endpoints are listed under a fixed `## Endpoints` section, grouped into **one subsection per resource file**: a `###` heading whose text is the file's path from the docs root, followed by a table with one endpoint per row.
 
 ```markdown
-> docai-http: 0.3.0 | profile: full | coverage: complete | generated: 2026-06-30 | generation_id: full-20260630-abc123 | projection_id: 20260630-abc123 | source: openapi.yaml (OpenAPI 3.1.1) | source_revision: sha256:abc123
+> docai-http: 0.4.0 | profile: full | coverage: complete | generated: 2026-06-30 | generation_id: full-20260630-abc123 | projection_id: 20260630-abc123 | source: openapi.yaml (OpenAPI 3.1.1) | source_revision: sha256:abc123
 
 # API Index
 
@@ -202,7 +203,8 @@ After the table, define every non-`none` shape once, in first-use order:
 
 | Field | Type | Presence | Nullable | Meaning |
 |---|---|---|---|---|
-| error | object | always | no | Error envelope |
+| $ | object | always | no | Additional properties forbidden |
+| error | object | always | no | Error envelope; additional properties forbidden |
 | error.code | string | always | no | Machine-readable code; values are listed in the error table |
 | error.message | string | always | no | Developer-facing message; do not display directly to users |
 
@@ -228,15 +230,17 @@ The `compact` profile may apply these reductions:
 - For opaque nested response or webhook objects that the client stores or forwards without inspecting, document the root field in `Opaque fields` as `object` or `object[]` with a short meaning such as `store/forward only`. Opaque descendants may be omitted; do not classify request fields or values that client logic inspects as opaque.
 - Use minimal valid request examples. Include only required fields and optional fields that materially affect the call.
 - Use representative response examples. Include common client-visible fields and omit rarely used optional fields unless they affect client logic.
+- Emit a structured example on one line when doing so remains readable and preserves the exact same value. Pretty-print only when line breaks materially help distinguish nesting, variants, or wire semantics.
 - Compact field tables retain object and array container rows. Only descendants of a root field documented in `Opaque fields` may be omitted.
 - Leave the `Meaning` cell empty for a field whose name and type are self-explanatory(such as `email` or `name`); fill it only when the meaning adds information the field name does not already convey. This applies to prose meaning only — `Presence` and `Nullable` remain subject to the must-not-omit rule below.
-- Use the optional one-line marker `**field_defaults**: <column>=<value>` immediately before a compact field table to omit one or more uniform columns. Separate multiple defaults with ` | `. Only `Required=yes|no`, `Presence=always`, and `Nullable=yes|no` are valid defaults, and every row in that table must have the declared value. Omit each defaulted column from the table; columns not named by the marker remain required and keep their standard order. Do not emit the marker unless it reduces measured tokens for that table. For example, `**field_defaults**: Presence=always | Nullable=no` permits `Field | Type | Meaning` when every field is always present and non-null.
+- Use the optional one-line marker `**field_defaults**: <column>=<value>` immediately before a compact body-field, request-parameter, structured-parameter-field, or response-header table to omit one or more uniform columns. Separate multiple defaults with ` | `. Valid defaults are `Required=yes|no`, `Presence=always`, `Nullable=yes|no`, and `Meaning=none`. A named column must exist in that table's full-profile form, and every row must have the declared value; `Meaning=none` means every Meaning cell would be empty. Omit each defaulted column from the table; columns not named by the marker remain required and keep their standard order. Do not emit the marker unless it reduces measured tokens for that table. For example, `**field_defaults**: Presence=always | Nullable=no` permits `Field | Type | Meaning` when every field is always present and non-null. Adding ` | Meaning=none` permits `Field | Type` when every Meaning cell is also empty. Request-parameter and structured-parameter-field tables may similarly default `Required`, and response-header tables may default `Presence`.
 
   ```markdown
   **field_defaults**: Presence=always | Nullable=no
 
   | Field | Type | Meaning |
   |---|---|---|
+  | $ | object | Additional properties forbidden |
   | id | string | User ID |
   | email | string | |
   | name | string | |
@@ -250,7 +254,7 @@ The `compact` profile may apply these reductions:
 
 The compact reductions apply across the complete set. CONVENTIONS.md may use compact examples, field defaults, and meaning cells; workflow prose may omit explanation already stated in its structured steps and transitions; and webhook payloads may use `Client-visible fields` / `Opaque fields` under the same rules as responses. Required headings, behavior, recovery instructions, delivery semantics, and the complete client-visible contract remain mandatory.
 
-The `compact` profile must retain every request parameter and field; every client-visible response, error, and webhook field; their types, requiredness or presence, nullability, constraints, defaults, and wire semantics; every response status and error row; and all information governing authentication, retries, pagination, file transfer, workflows, and state transitions. It may omit only the reductions explicitly listed above. In particular, a producer must not decide that a client-visible contract item is irrelevant merely because one known client does not currently use it.
+The `compact` profile must retain every request parameter and field; every client-visible response, error, and webhook field; their types, requiredness or presence, nullability, constraints, defaults, and wire semantics; every caller-relevant response header and its presence rule; every response status and error row; and all information governing authentication, retries, pagination, file transfer, workflows, and state transitions. It may omit only the reductions explicitly listed above. In particular, a producer must not decide that a client-visible contract item is irrelevant merely because one known client does not currently use it.
 
 DocAI HTTP is a client-implementation projection, not a replacement serialization for OpenAPI or JSON Schema. When a source feature that affects client correctness cannot be represented faithfully, the generator must place `**unsupported**: <feature and source location>` inside the affected section, set that file's `coverage` to `requires-source`, and set INDEX.md coverage to `requires-source`. It must not silently approximate or omit that feature. Such a file may be format-compliant, but it is not a complete projection and an LLM must consult the authoritative source before implementing the affected operation. A compact document does not use `**unsupported**:` for an allowed compact reduction; matching full content is supplemental rather than a fallback for omitted client-visible contract information.
 
@@ -260,6 +264,7 @@ DocAI HTTP remains readable Markdown, but structural constructs have determinist
 
 - Structural text consists of metadata and profile-link lines; Markdown headings; standard tables and their column headers; bold markers whose line has the form `**name**: value`; collapsed fixed `none` list items; Behavior key list items; and the inline error-shape label defined in §4.1. Other sentences, list items, code blocks, and free-text table cells are prose unless their enclosing rule assigns them a structural role.
 - A standard section begins at its fixed heading and ends at the next heading of the same or higher level. A one-line marker ends at its newline unless its rule explicitly introduces the example, table, or variant blocks that follow. A representation begins at `**media_type**:` or `**same_as**:`. In a request Body it ends at the next representation marker or the next heading at level four or higher; in a response or error it ends at the next representation marker, `#### Response Headers`, or the next heading at level three or higher. `#### Client-visible fields` and `#### Opaque fields` and their tables remain part of the preceding representation. A variant begins at `**variant**:` and ends at the next variant or representation marker, the enclosing representation's Response Headers boundary, or the enclosing Body/Response/Error boundary.
+- A structured-parameter block begins at `**parameter**:` under a `##### Fields` subsection and ends at the next `**parameter**:` marker or heading of level five or higher. Its marker value is the exact parameter name from the containing parameter table; its optional compact `**field_defaults**:` line and field table are part of the block.
 - An inline error-shape label is exactly `<status> <code>:` on one line. `status` follows the status grammar below and `code` is the exact table-cell value. Its block begins with the following `**error_shape**:` marker and ends after that shape's Response Headers content. The label is structural even though its values are operation-specific.
 - A docs-root-relative file path uses `/` separators and one or more ASCII segments matching `[A-Za-z0-9._-]+`. It must not start with `/`, contain an empty, `.` or `..` segment, use `\`, or contain a query or fragment. Resolve it from the root of the set containing the link. A `Full set:` or `Compact set:` value is instead a relative POSIX directory path resolved from the current set root; it ends in `/`, may begin with one or more `../` segments, and otherwise uses the same segment grammar. It must not be absolute or contain `.` or an embedded `..` segment. These restrictions also make comma-separated `Also read` values unambiguous.
 - An endpoint method is an uppercase HTTP token; registered and extension methods are allowed. The endpoint path begins with `/`, excludes a query and fragment, and uses `{name}` for each template parameter. A method and path pair is unique within a set.
@@ -318,6 +323,7 @@ none
 
 | Field | Type | Required | Nullable | Constraints / Meaning |
 |---|---|---|---|---|
+| $ | object | yes | no | Additional properties forbidden |
 | email | string | yes | no | RFC 5322. Unique **globally**, not only within a tenant |
 | name | string | yes | no | 1-100 characters |
 | role | string | no | no | `admin` \| `member`. Defaults to `member` when omitted |
@@ -342,6 +348,7 @@ none
 
 | Field | Type | Presence | Nullable | Meaning |
 |---|---|---|---|---|
+| $ | object | always | no | Additional properties forbidden |
 | id | string | always | no | ULID with `usr_` prefix. Use this in later API calls |
 | email | string | always | no | User email address |
 | name | string | always | no | User name |
@@ -350,9 +357,9 @@ none
 
 #### Response Headers
 
-| Name | Type | Meaning |
-|---|---|---|
-| Location | string | URL of the created user(`/users/usr_01HXYZ`). Use it to fetch the resource |
+| Name | Type | Presence | Meaning |
+|---|---|---|---|
+| Location | string | always | URL of the created user(`/users/usr_01HXYZ`). Use it to fetch the resource |
 
 ### Errors
 
@@ -385,10 +392,11 @@ none
 
 | Field | Type | Presence | Nullable | Meaning |
 |---|---|---|---|---|
-| error | object | always | no | Error envelope |
+| $ | object | always | no | Additional properties forbidden |
+| error | object | always | no | Error envelope; additional properties forbidden |
 | error.code | string | always | no | Always `validation_failed` |
 | error.message | string | always | no | Developer-facing summary; do not display directly to users |
-| error.field_errors | object[] | always | no | Field-level validation failures |
+| error.field_errors | object[] | always | no | Field-level validation failures; array items reject additional properties |
 | error.field_errors[].field | string | always | no | Request field targeted by the error |
 | error.field_errors[].code | string | always | no | Machine-readable validation code |
 | error.field_errors[].message | string | always | no | Safe to display next to the target field |
@@ -412,7 +420,7 @@ none
 
 **Behavior(required)**
 - Use these **four canonical keys in this order** so an LLM and validation tools can always locate each fact: `side_effects`, `idempotency`, `preconditions`, `authorization`. Write `none` for any that do not apply
-- All structural text is always written in English, even when generated prose is written in another language. Structural text is: every fixed heading this format defines(`API Index`, `Endpoints`, `Workflows`, `Webhooks`, `API Conventions`, `Environments`, `Versioning`, `Authentication`, `Browser Security`, `Request Formats`, `HTTP Semantics`, `Validation Errors`, `Pagination`, `List Operations`, `Data Representation`, `Empty and Omitted Values`, `File Transfer`, `Rate Limits`, `Webhook Delivery`, `Behavior`, `Request`, `Path Parameters`, `Query Parameters`, `Headers`, `Cookie Parameters`, `Body`, `Response <status>`, `Response Headers`, `Errors`, `Related`, `Preconditions`, `Steps`, `State Transitions`, `Failure and Recovery`, `Payload`, `Client-visible fields`, `Opaque fields`); every table column header(`Method` / `Path` / `Task` / `Summary` / `Details` / `Also read` / `Conventions` / `Name` / `Field` / `Type` / `Required` / `Nullable` / `Presence` / `Constraints / Meaning` / `Meaning` / `Status` / `code` / `Shape` / `Condition` / `Caller action` / `From` / `Endpoint / Event` / `To`); the Behavior keys `side_effects` / `idempotency` / `preconditions` / `authorization`; the markers `**call_shape**:`, `**deprecated**:`, `**deviation**:`, `**same_as**:`, `**variant**:`, `**error_shape**:`, `**field_defaults**:`, `**body_required**:`, `**body_presence**:`, `**body_nullable**:`, `**media_type**:`, and `**unsupported**:`; the `(deprecated)` summary prefix and the profile cross-link labels `Full set:` / `Compact set:`(§3.4); the fixed root field name `$`; the fixed values `none` / `yes` / `no` / `always` / `full` / `compact` / `complete` / `requires-source` and the simple type names; and the metadata stamp keys `docai-http` / `profile` / `coverage` / `generated` / `generation_id` / `projection_id` / `source` / `source_revision`. Only prose — descriptions, summaries, and free-text cells such as conditions, constraints, and meanings — is written in the document language(§7)
+- All structural text is always written in English, even when generated prose is written in another language. Structural text is: every fixed heading this format defines(`API Index`, `Endpoints`, `Workflows`, `Webhooks`, `API Conventions`, `Environments`, `Versioning`, `Authentication`, `Browser Security`, `Request Formats`, `HTTP Semantics`, `Validation Errors`, `Pagination`, `List Operations`, `Data Representation`, `Empty and Omitted Values`, `File Transfer`, `Rate Limits`, `Webhook Delivery`, `Behavior`, `Request`, `Path Parameters`, `Query Parameters`, `Headers`, `Cookie Parameters`, `Fields`, `Body`, `Response <status>`, `Response Headers`, `Errors`, `Related`, `Preconditions`, `Steps`, `State Transitions`, `Failure and Recovery`, `Payload`, `Client-visible fields`, `Opaque fields`); every table column header(`Method` / `Path` / `Task` / `Summary` / `Details` / `Also read` / `Conventions` / `Name` / `Field` / `Type` / `Required` / `Nullable` / `Presence` / `Constraints / Meaning` / `Meaning` / `Status` / `code` / `Shape` / `Condition` / `Caller action` / `From` / `Endpoint / Event` / `To`); the Behavior keys `side_effects` / `idempotency` / `preconditions` / `authorization`; the markers `**call_shape**:`, `**deprecated**:`, `**deviation**:`, `**same_as**:`, `**variant**:`, `**parameter**:`, `**error_shape**:`, `**field_defaults**:`, `**body_required**:`, `**body_presence**:`, `**body_nullable**:`, `**media_type**:`, and `**unsupported**:`; the `(deprecated)` summary prefix and the profile cross-link labels `Full set:` / `Compact set:`(§3.4); the fixed root field name `$`; the fixed values `none` / `yes` / `no` / `always` / `full` / `compact` / `complete` / `requires-source` and the simple type names; and the metadata stamp keys `docai-http` / `profile` / `coverage` / `generated` / `generation_id` / `projection_id` / `source` / `source_revision`. Only prose — descriptions, summaries, and free-text cells such as conditions, constraints, and meanings — is written in the document language(§7)
 - `side_effects`: list all(email sending, changes to other resources, event publishing, etc.)
 - `idempotency`: state whether the endpoint is idempotent and whether it can be retried safely
 - `preconditions`: earlier APIs that must be called, required resource state, etc.
@@ -447,16 +455,36 @@ none
   | page | int | no | 1-based. Defaults to `1` |
   ```
 
+  In the compact profile, a valid `**field_defaults**:` line may immediately precede a query parameter table. The same rule applies to request-header and cookie-parameter tables.
+
 - Cookie parameter tables use the same columns as query parameter tables. API-wide cookie attributes and browser behavior belong in `CONVENTIONS.md`; endpoint-specific cookie names, requirements, and deviations belong here
 - For every array or object path/query/header/cookie parameter, state the exact wire serialization and give a concrete encoded fragment in `Constraints / Meaning`(for example, `form, explode=true; tag=red&tag=blue`). Also state non-default reserved-character handling. Do not require the caller to infer serialization from the type alone
+- For every object parameter or array parameter whose items are objects, add one `##### Fields` subsection after the containing parameter table. Within it, document each structured parameter in parent-table order as `**parameter**: <exact parameter name>` followed by `Field | Type | Required | Constraints / Meaning`; `Required` is evaluated when the containing parameter is present. The marker value is the parameter name exactly as it appears in the parent table and ends at the newline. Use the body field-path notation and escaping rules for nested fields, and retain object and array container rows. The parent parameter row remains the authoritative location for whole-parameter requiredness, wire serialization, and the concrete encoded fragment. A dynamic-key parameter uses `map<string, T>` and `{key}` paths under the same rules as body fields. A pure dynamic map whose value type has no named object fields needs no `Fields` block because its complete value shape is in `map<string, T>`; when `T` contains object fields, document them with `{key}` paths. In the compact profile, a valid `**field_defaults**:` line may appear between `**parameter**:` and its table
+
+  ```markdown
+  | Name | Type | Required | Constraints / Meaning |
+  |---|---|---|---|
+  | filter | object | no | deepObject; additional properties forbidden; `filter[status]=active&filter[range][min]=10` |
+
+  ##### Fields
+
+  **parameter**: filter
+
+  | Field | Type | Required | Constraints / Meaning |
+  |---|---|---|---|
+  | status | string | no | `active` \| `disabled` |
+  | range | object | no | Additional properties forbidden |
+  | range.min | int | yes | Minimum value when `range` is present |
+  ```
+
 - For every parameter, use `Constraints / Meaning` to distinguish omission, an empty string, an empty collection, and an explicit null-like wire value whenever more than one is accepted or their effects differ. State whether an empty value is rejected when that fact affects construction. Parameter tables intentionally have no `Nullable` column because HTTP parameters do not have one universal null encoding
 - For a query or cookie parameter that may occur more than once, state whether occurrences are repeated, delimited, or last-value-wins and give an encoded example. For a request header, state whether multiple field lines are allowed, whether their values may be combined with commas, and any order semantics. Header names are case-insensitive unless the API is non-conforming; document such behavior with `**deviation**:`. State any scalar-specific percent-encoding or reserved-character rule that differs from the applicable convention
 - If an endpoint uses a base URL or server different from `CONVENTIONS.md`, put a `**deviation**:` line immediately under `### Request`, before the parameter subsections, and give the exact selection rule and URL
 
 - If there is no response body, write `none`
 - Add a `#### Response Headers` table when the caller must read response headers(`Location`, `Set-Cookie`, `Retry-After`, `ETag`, `Link`, etc.). Write `none` when there are none. Document it per status code when it differs(for example, `Retry-After` only on 429)
-- Request header tables use the columns `Name | Required | Type | Constraints / Meaning`. Response header tables use the columns `Name | Type | Meaning`. Header values are strings unless another syntax is stated explicitly in the `Type` or meaning/constraints column
-- Response and webhook payload field tables normally use the columns `Field | Type | Presence | Nullable | Meaning`. `Presence` describes whether the field is `always` present or the condition under which it is omitted. Compact tables, including `Opaque fields`, may omit uniform `Presence` or `Nullable` columns only through a valid `**field_defaults**:` marker(§3.4)
+- Request header tables use the columns `Name | Required | Type | Constraints / Meaning`. Response header tables use the columns `Name | Type | Presence | Meaning`; `Presence` is `always` or the exact condition under which the header is present. Header values are strings unless another syntax is stated explicitly in the `Type` or meaning/constraints column. In the compact profile, a valid `**field_defaults**:` line may immediately precede either table
+- Response and webhook payload field tables normally use the columns `Field | Type | Presence | Nullable | Meaning`. `Presence` describes whether the field is `always` present or the condition under which it is omitted. Compact tables, including `Opaque fields`, may omit applicable uniform columns, including a uniformly empty `Meaning`, only through a valid `**field_defaults**:` marker(§3.4)
 - Both profiles document every response status, literal status range, and `default` response from the authoritative source that a client can observe. Compact may reduce representation tokens only under §3.4; it must not omit a status or error row. Document non-error outcomes as `Response <status>` sections and error outcomes in `Errors`; classify an unusual status by the API's semantics rather than by status class alone
 - Every endpoint has at least one `Response <status>` section. Order exact numeric response headings by ascending status, followed by status ranges in lexical order, then `### Response default` when the source default can represent a non-error outcome. A redirect is a response section. A default with exclusively error semantics belongs in `Errors` as a `default` row; if one source default covers both error and non-error outcomes and cannot be split faithfully, mark it with `**unsupported**:` and direct the reader to the source. When an exact status and a range or default overlap, document both and state which definition takes precedence, matching the authoritative source
 - If there are multiple successful or other non-error responses, split them by status code, such as `### Response 200`, `### Response 202`, and `### Response 204`
@@ -468,7 +496,7 @@ none
 - **Non-JSON request bodies**(`multipart/form-data`, `application/x-www-form-urlencoded`, raw binary upload): after the `**media_type**:` marker and the required `**body_nullable**:` marker when applicable, give a representative fragment(part names and sample values), then document multipart parts or form fields in the standard request field table. Use the type `file` for file parts with accepted media types, maximum size, and filename rules in the constraints column. For raw binary bodies, describe the expected content and size limit in prose
 - Use simple type names: the scalars `string` / `int` / `float` / `bool` / `any`; `object`; and `file`(multipart file parts only). Arrays use recursive `T[]` notation, including nested arrays such as `int[][]`. Dynamic-key objects use recursive `map<string, T>` notation, including `map<string, string[]>`. Put formats and semantic constraints such as RFC 3339 in `Constraints / Meaning` or `Meaning`, not in `Type`. Reference notation such as `$ref` is prohibited; the only allowed body reference is the same-file `**same_as**:` line in the compact profile(§3.4)
 - `**same_as**: <METHOD> <path> Request <media type>` or `**same_as**: <METHOD> <path> Response <status> <media type>`(compact profile only) declares that this entire body representation is semantically identical to an earlier representation in the same file and replaces its media marker, body-nullability marker, example/sample, field table, and representation-specific prose. The containing request's `body_required` or response's `body_presence` marker remains present and may differ because it describes the operation, not the representation. Field types, field required/presence rules, field and body nullability, constraints, defaults, meanings, and wire semantics must all be identical. It must point at the full definition, never at another `**same_as**:` line. The `full` profile never uses `**same_as**:` and always duplicates
-- Use the fixed field name `$` for the complete structured body value when its root is a scalar, array, or dynamic-key map. Use `$[].id` for fields in root-array objects and `$.{key}.amount` for fields in root-map values. The `$` row carries the complete root type and constraints; its explicit or defaulted `Nullable` value must match `body_nullable`, for request tables its explicit or defaulted `Required` value must match `body_required`, and for response tables its explicit or defaulted `Presence` value must match `body_presence`. A root object normally uses its property rows without a `$` row, unless the root object has constraints that cannot be expressed by those rows. For example, a root array response is represented as:
+- Use the fixed field name `$` for the complete structured body value when its root is a scalar, array, or dynamic-key map. Use `$[].id` for fields in root-array objects and `$.{key}.amount` for fields in root-map values. The `$` row carries the complete root type and constraints; its explicit or defaulted `Nullable` value must match `body_nullable`, for request tables its explicit or defaulted `Required` value must match `body_required`, and for response tables its explicit or defaulted `Presence` value must match `body_presence`. In a webhook payload table, the `$` row uses `Presence=always` because field presence is evaluated when the payload body is present; `body_required` separately states whether the sender may omit that body. A root object normally uses its property rows without a `$` row, unless the root object has constraints that cannot be expressed by those rows. For example, a root array response is represented as:
 
   ```json
   ["admin", "member"]
@@ -479,7 +507,9 @@ none
   | $ | string[] | always | no | Roles in display order; may be empty |
 - Flatten nested objects in the table using dot notation such as `address.city`
 - Flatten objects inside arrays using `[]`, such as `items[].id` and `items[].product.name`
+- In a field-name segment, prefix each literal `\`, `.`, `[`, `]`, `{`, `}`, `$`, or `|` character with `\`. Structural separators and placeholders are the unescaped forms only; `\|` also supplies the Markdown-table escape required by §7. Decode field paths by first recognizing unescaped `.`, `[]`, `{key}`, and the root `$`, then removing one escape prefix from each escaped character; compare example property names after this decoding. No other field-path escape is valid. For example, the root property `address.city` is `address\.city`, the root property `$` is `\$`, the property `{key}` is `\{key\}`, and a literal backslash in `a\b` is written `a\\b`. An empty property name or one containing CR or LF cannot be represented and must be marked with `**unsupported**:` and its source location. Apply the same rules to discriminator paths and structured parameter fields
 - Use `map<string, T>` for objects with dynamic keys(OpenAPI `additionalProperties`), such as `map<string, int>`. Dynamic keys cannot be flattened with dot notation, so put the value shape in the type column and show a representative key in the example. When the value type is an object, flatten its fields with a `{key}` placeholder segment, such as `balances.{key}.amount` — `{key}` rows correspond to the representative key shown in the example(the one case where example fields match table rows by placeholder, not by literal name)
+- For every object container in a body or structured parameter, including an object used as an array item, state whether additional properties are forbidden or allowed and, when allowed, their value type. Put the rule in that container row's constraints or meaning cell. For a root body object, use a `$` container row when needed to carry this rule; for a root structured parameter, use its parent parameter row. The rule may instead come from `CONVENTIONS.md` `Data Representation` when it establishes an API-wide default; every exception is then stated on the affected container row with `**deviation**:` in the enclosing Body, Response, Payload, or parameter subsection. A `map<string, T>` is inherently open with values of `T` and needs no additional-properties statement
 - **Tagged polymorphic fields**: after the representation's media-type and body-nullability markers, give each variant its own complete applicable example and field table introduced by `**variant**: <field> = <value>`(for example, `**variant**: type = card`). Each table repeats all common fields used by that variant as well as variant-specific fields; there is no separate common field table. In every variant table, list every allowed discriminator value in the discriminator row's enum constraint, not only that block's value. Order tagged blocks by discriminator value in lexical order
 - **Untagged alternatives**: after the representation markers, give each client-relevant alternative a stable prose label using `**variant**: <label>`, followed immediately by its complete applicable example and field table. Each table includes common and alternative-specific fields; there is no unlabeled common table. Explain in every block's introductory prose or field meanings how the caller distinguishes that alternative. Order untagged blocks by their stable labels. For overlapping alternatives that may be valid simultaneously, explicitly state that combination semantics and add a separately labeled combined `**variant**:` block with a representative combined example; do not present overlapping shapes as mutually exclusive. If the valid set cannot be projected faithfully, use `**unsupported**:` rather than inventing a discriminator
 - A body with polymorphic content therefore has this canonical order:
@@ -497,6 +527,7 @@ none
 
   | Field | Type | Presence | Nullable | Meaning |
   |---|---|---|---|---|
+  | $ | object | always | no | Additional properties forbidden |
   | type | string | always | no | `card` \| `bank`; this variant is `card` |
   | last4 | string | always | no | Last four digits |
 
@@ -508,6 +539,7 @@ none
 
   | Field | Type | Presence | Nullable | Meaning |
   |---|---|---|---|---|
+  | $ | object | always | no | Additional properties forbidden |
   | type | string | always | no | `card` \| `bank`; this variant is `bank` |
   | bank_name | string | always | no | Display name |
   ````
@@ -545,7 +577,7 @@ none
 Operations that require multiple endpoints to be called in a specific order should be written as workflows.
 
 ```markdown
-> docai-http: 0.3.0 | profile: full | coverage: complete | generated: 2026-06-30 | generation_id: full-20260630-abc123 | projection_id: 20260630-abc123 | source: openapi.yaml (OpenAPI 3.1.1) | source_revision: sha256:abc123
+> docai-http: 0.4.0 | profile: full | coverage: complete | generated: 2026-06-30 | generation_id: full-20260630-abc123 | projection_id: 20260630-abc123 | source: openapi.yaml (OpenAPI 3.1.1) | source_revision: sha256:abc123
 
 # Checkout
 
@@ -584,7 +616,7 @@ Procedure until order confirmation.
 Webhooks are calls in the reverse direction: the API sends an HTTP request to a URL registered by the client. They may originate from an OpenAPI top-level `webhooks` field or another source and are documented apart from resources — one file per event(or per group of closely related events). DocAI HTTP is not tied to one OpenAPI version; a generator must identify its exact input in `source` and mark client-relevant input features it cannot project with `**unsupported**:`.
 
 ````markdown
-> docai-http: 0.3.0 | profile: full | coverage: complete | generated: 2026-06-30 | generation_id: full-20260630-abc123 | projection_id: 20260630-abc123 | source: openapi.yaml (OpenAPI 3.1.1) | source_revision: sha256:abc123
+> docai-http: 0.4.0 | profile: full | coverage: complete | generated: 2026-06-30 | generation_id: full-20260630-abc123 | projection_id: 20260630-abc123 | source: openapi.yaml (OpenAPI 3.1.1) | source_revision: sha256:abc123
 
 # payment.completed
 
@@ -616,6 +648,7 @@ none
 
 | Field | Type | Presence | Nullable | Meaning |
 |---|---|---|---|---|
+| $ | object | always | no | Additional properties forbidden |
 | event_id | string | always | no | Unique event identifier. Deduplicate repeated delivery attempts by this field |
 | event | string | always | no | Always `payment.completed` |
 | payment_id | string | always | no | ULID with `pay_` prefix. Matches the id returned by POST /payments |
@@ -629,7 +662,7 @@ none
 
 - Use the fixed headings `Headers`, `Payload`, and `Related` in that order. Write `none` when a section does not apply.
 - Event-specific request headers use `Name | Required | Type | Constraints / Meaning`. API-wide signature headers remain in `CONVENTIONS.md`.
-- Write each payload representation with the same body-required, media-type, body-nullability, example-first, and field-table rules as request bodies.
+- Write each payload representation with the request-body rules for `body_required`, media type, body nullability, examples, constraints, and wire semantics. Webhook payload tables use `Field | Type | Presence | Nullable | Meaning`, as shown above, rather than request tables' `Required` column. `Presence` is evaluated when the payload body is present; `body_required` separately states whether that body may be omitted by the sender.
 - Delivery conventions shared by all webhooks — signature verification, sender identification, what the receiver must return(status code, response deadline), retry policy(count, interval, when delivery is abandoned), and delivery guarantees(at-least-once or at-most-once, ordering) — belong in CONVENTIONS.md(§3.3) and are **not repeated per event**.
 - A webhook file documents only event-specific deviations from those conventions, prefixed with `**deviation**:` and placed directly after the intro description(see the template).
 - Name a unique event or delivery identifier in the payload table's meaning column. Do not use a resource identifier for deduplication when multiple legitimate events can refer to that resource. If no single identifier exists, state the exact composite deduplication strategy.
@@ -640,6 +673,7 @@ none
 The per-section rules in §4.1 are normative — this section only adds cross-cutting style guidance and does not restate them.
 
 - Keep each file to a measured token budget that loads comfortably in the target model together with the expected code context. Do not use line count as the normative split criterion. Split a large resource into task-oriented resource shards before it exceeds that budget.
+- Prioritize retrieval reductions before syntax-level micro-optimizations: select only the task-relevant resource shard and `CONVENTIONS.md` sections, then apply compact examples, `field_defaults`, and `same_as` where measured savings remain. Retrieval choices must still preserve the complete applicable contract.
 - Prefer tables, lists, and code blocks over prose.
 - Avoid verbose expressions. Write directly and decisively.
 - Escape a literal `|` inside a table cell as `\|`(for example, `` `admin` \| `member` ``).
@@ -650,7 +684,7 @@ The per-section rules in §4.1 are normative — this section only adds cross-cu
 - Distinguish messages that may be used directly as UI copy from messages intended for logs or developers.
 - Write each generated DocAI HTTP document set in a **single prose language**. Generated DocAI HTTP must not repeat the same content in multiple languages — choose one output language and use it consistently across INDEX.md, CONVENTIONS.md, and all resource, workflow, and webhook files. Structural text(headings, table column headers, canonical keys, markers, fixed values) is always English(§4.1); the document language applies to prose only.
 - Generate `**call_shape**:` only for files where measured navigation savings justify its duplicated facts.
-- Generate `**field_defaults**:` only when tokenizer measurements show that the marker and shorter header cost fewer tokens than repeating the defaulted columns.
+- Generate `**field_defaults**:` only when tokenizer measurements show that the marker and shorter header cost fewer tokens than repeating the defaulted columns. Use `Meaning=none` only when every omitted Meaning cell would contain no client-relevant information.
 - Use `**same_as**:` only when readers load the complete resource file. If the retrieval system normally loads endpoint-level chunks, keep each chunk self-contained or ensure the referenced earlier representation is retrieved with it; otherwise the saved document tokens become extra retrieval work.
 - Before fixing generator defaults, benchmark representative tasks using both duplication and references. Compare total loaded tokens and correct-call rate for the target models; DocAI HTTP does not assume one strategy is universally cheaper. Maintain a conformance corpus covering each canonical structure and use it for both syntax validation and correct-call evaluations across target models.
 - When a compact set exists, load it first and retrieve full-profile detail only for the selected operation. Do not place both complete sets in context by default.
@@ -677,16 +711,16 @@ A document set is DocAI HTTP-compliant if:
 - [ ] Paths, methods, statuses, media types, structural boundaries, and inline error-shape labels follow §3.5
 - [ ] Every endpoint follows the fixed section structure and order; each endpoint appears in exactly one bounded resource file
 - [ ] Requests are split in order into path parameters, query parameters, headers, cookie parameters, and body; only leading `none` parts are collapsed into one-line list items
-- [ ] Array and object parameters state their exact wire serialization with an encoded example; every parameter distinguishes relevant omitted, empty, and null-like values; repeated query/cookie/header values and non-default scalar encoding are explicit
+- [ ] Array and object parameters state their exact wire serialization with an encoded example; object parameters and arrays of objects have complete `Fields` blocks in parent-table order; every parameter distinguishes relevant omitted, empty, and null-like values; repeated query/cookie/header values and non-default scalar encoding are explicit
 - [ ] Every endpoint documents all required source responses and follows the response-heading ordering, default-classification, and overlap rules in §4.1
 - [ ] Every non-empty request body and webhook payload states `body_required`; every non-empty response and detailed error body states `body_presence`; each representation then starts with `**media_type**:`, followed by `body_nullable` except for raw binary and unstructured streams, and a concrete example; applicable content has the required field table, while raw binary and unstructured streams follow the sample-and-prose exception; compact bodies may instead use a valid `**same_as**:` reference
 - [ ] Body-less requests and responses explicitly say `none`; body omission, whole-body nullability, conditional response-body presence, multiple media types, and response status ranges preserve the caller-visible selection or branching behavior
-- [ ] Response headers the caller must read are documented(or `none`)
-- [ ] Request field tables specify requiredness and nullability; response, endpoint-specific error, and webhook payload field tables specify presence and nullability; a compact table may omit a uniform column only through a valid, token-saving `**field_defaults**:` marker
+- [ ] Response headers the caller must read are documented(or `none`), and each documented header states whether it is always or conditionally present
+- [ ] Request field tables specify requiredness and nullability; response, endpoint-specific error, and webhook payload field tables specify presence and nullability; structured parameter fields specify requiredness relative to the containing parameter; a compact table may omit a uniform column or uniformly empty Meaning column only through a valid, token-saving `**field_defaults**:` marker
 - [ ] Every example field, including object and array containers, has a corresponding field-table row, except for opaque descendants; every opaque root retains its name, type, presence, nullability, and store/forward meaning
 - [ ] Compact retains every request parameter and field, every client-visible response/error/webhook field, every status and error row, and all associated constraints and behavior; only reductions explicitly allowed by §3.4 are used
-- [ ] Types use the defined recursive grammar; formats such as RFC 3339 are written in the constraints or meaning column
-- [ ] Root scalar, array, and dynamic-map bodies use the fixed `$` notation; root-array and root-map child paths follow §4.1
+- [ ] Types use the defined recursive grammar; formats such as RFC 3339 are written in the constraints or meaning column; every object container explicitly or conventionally defines whether and with what type it accepts additional properties
+- [ ] Root scalar, array, and dynamic-map bodies use the fixed `$` notation; root-array and root-map child paths follow §4.1; literal field-name path characters use only the defined backslash escapes
 - [ ] No cross-file schema reference notation such as `$ref` is used; `**same_as**:` appears only in the compact profile as a direct backward reference to a semantically identical representation in the same file and leaves the operation-level body marker present
 - [ ] Array, nesting, `null`, omission, empty-value, and default-value behavior are specified
 - [ ] Polymorphic representations have no unlabeled example or common table; every tagged or untagged `**variant**:` block has a complete applicable example and field table and follows the ordering and overlap rules in §4.1
@@ -697,10 +731,10 @@ A document set is DocAI HTTP-compliant if:
 - [ ] Deviations from CONVENTIONS.md are marked with `**deviation**:` in the affected section
 - [ ] Deprecated endpoints have a `**deprecated**:` line after the heading and `(deprecated)` in their INDEX.md summary
 - [ ] Workflow files use every fixed heading in §5, are referenced from INDEX.md and related endpoints, and document values passed, failure branches, recovery, and relevant state transitions
-- [ ] Webhook files use every fixed heading in §6, are listed in INDEX.md, identify a safe deduplication key or strategy, and are referenced by triggering endpoints
+- [ ] Webhook files use every fixed heading in §6, are listed in INDEX.md, use payload `Presence` independently from body-level `body_required`, identify a safe deduplication key or strategy, and are referenced by triggering endpoints
 
 ### 9.1 Conformance Fixtures
 
-The specification repository should publish at least one complete valid full document set and its compact projection with every draft intended for generator implementation. It must publish a versioned conformance corpus before the first stable release. That corpus must contain the complete example sets and focused valid and invalid fixtures for every canonical marker, table, representation class, error-shape reference, polymorphic form, metadata escape, coverage state, field default, canonical boundary, and extension placement. Fixtures must declare the DocAI HTTP version they test and must not be silently changed after release; a meaning-changing fixture update follows the compatibility rules in §3.1.
+Before publishing a draft as ready for generator implementation, the specification repository must publish at least one complete valid full document set and its matching compact projection. It must publish a versioned conformance corpus before the first stable release. That corpus must contain the complete example sets and focused valid and invalid fixtures for every canonical marker, table, representation class, structured-parameter block, field-path escape, object-openness rule, response-header presence rule, webhook payload rule, error-shape reference, polymorphic form, metadata escape, coverage state, field default, canonical boundary, and extension placement. Fixtures must declare the DocAI HTTP version they test and must not be silently changed after release; a meaning-changing fixture update follows the compatibility rules in §3.1.
 
 Syntax validators should run the valid and invalid fixtures. LLM evaluations should use the same valid corpus to measure correct request construction, response/error handling, workflow completion, and tokens loaded per task. A document set's compliance is determined by this specification; absence of a fixture does not make otherwise non-compliant syntax valid.
