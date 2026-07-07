@@ -3,12 +3,15 @@
 DocAI HTTP is a documentation format for describing HTTP APIs in a way that is optimized for AI/LLM consumption.
 It is designed so that an AI can read the API documentation as context and efficiently implement an HTTP client that calls the API correctly. Browser-specific requirements are included where they affect web clients, but the format also supports mobile, server, desktop, and CLI clients.
 
-> Specification version: 0.8.3 | status: Draft
+> Specification version: 0.8.4 | status: Draft
+
+> Publication label: design-review draft only; not generator-implementation-ready or stable.
 
 This is a pre-1.0 design-review draft and is not yet declared ready for generator implementation. Its structure may change incompatibly while implementation experience and conformance fixtures are collected. Stable compatibility guarantees begin with specification version 1.0.0. Changes are recorded in the repository history until a dedicated changelog is added for the first stable release. The readiness requirements are defined in §9.1.
 
 ### Specification History
 
+- `0.8.4`(Draft) — Fixes example navigation consistency, strengthens workflow examples, clarifies compact field-default applicability, and makes the design-review publication label explicit.
 - `0.8.3`(Draft) — Explains why recursive schemas are represented as `unsupported` instead of finite-depth expansion.
 - `0.8.2`(Draft) — Clarifies cross-file convention factoring versus same-file compact reuse, states the compact retrieval-unit self-containment rule in the core principles, declares recursive schemas outside the stable 1.0 supported scope, and adds a non-normative retrieval recipe.
 - `0.8.1`(Draft) — Clarifies compact `same_as` representation exceptions, field-path pipe escaping, nested field presence semantics, Related `none` handling, and recursive-schema publication readiness.
@@ -78,6 +81,7 @@ docs/
     orders.md
   workflows/
     checkout.md     # Optional: procedures spanning multiple endpoints
+    user-onboarding.md
   webhooks/
     payment-completed.md  # Optional: webhooks the API sends
 ```
@@ -85,7 +89,7 @@ docs/
 Because files are loaded **individually**(that is the point of splitting), freshness cannot live only in INDEX.md. Every file — INDEX.md, CONVENTIONS.md, and each file under resources/, workflows/, and webhooks/ — must begin with a one-line metadata stamp so an LLM that loaded only that file can judge how current it is and how much detail it contains:
 
 ```markdown
-> docai-http: 0.8.3 | profile: full | coverage: complete | knowledge: complete | generated: 2026-06-30 | generation_id: full-20260630-abc123 | projection_id: 20260630-abc123 | source: openapi.yaml (OpenAPI 3.1.1) | source_revision: sha256:abc123
+> docai-http: 0.8.4 | profile: full | coverage: complete | knowledge: complete | generated: 2026-06-30 | generation_id: full-20260630-abc123 | projection_id: 20260630-abc123 | source: openapi.yaml (OpenAPI 3.1.1) | source_revision: sha256:abc123
 ```
 
 The stamp is one Markdown blockquote line of `key: value` pairs separated by an unescaped ` | `. The standard keys from `docai-http` through `source` are required and appear in exactly the order shown above. `source_revision` is the only optional standard key; when no stable revision can be produced, omit the entire ` | source_revision: ...` pair rather than writing `none` or `unknown`. Parse each pair at its first `: `. Values must not contain a newline. Within a value, escape `\` as `\\` and `|` as `\|`; these are the only valid escape sequences. When locating separators, a pipe is escaped when it is immediately preceded by an odd-length run of backslashes. After splitting the pairs, decode escapes from left to right. An unknown escape or a trailing unescaped backslash makes the stamp invalid. Extension keys must use the `x-` prefix(§3.1) and come after the standard keys that are present; if `source_revision` is present they follow it, otherwise they follow `source`.
@@ -127,7 +131,7 @@ Extensions must not disrupt the fixed standard structure. An `x-` metadata key f
 The entry point that an LLM reads first. Endpoints are listed under a fixed `## Endpoints` section, grouped into **one subsection per resource file**: a `###` heading whose text is the file's path from the docs root, followed by a table with one endpoint per row.
 
 ```markdown
-> docai-http: 0.8.3 | profile: full | coverage: complete | knowledge: complete | generated: 2026-06-30 | generation_id: full-20260630-abc123 | projection_id: 20260630-abc123 | source: openapi.yaml (OpenAPI 3.1.1) | source_revision: sha256:abc123
+> docai-http: 0.8.4 | profile: full | coverage: complete | knowledge: complete | generated: 2026-06-30 | generation_id: full-20260630-abc123 | projection_id: 20260630-abc123 | source: openapi.yaml (OpenAPI 3.1.1) | source_revision: sha256:abc123
 
 # API Index
 
@@ -135,16 +139,17 @@ The entry point that an LLM reads first. Endpoints are listed under a fixed `## 
 
 ### resources/users.md
 
-| Method | Path | Task | Summary | Also read |
-|---|---|---|---|---|
-| POST | /users | create user | Sends a confirmation email; email is unique across all tenants | workflows/user-onboarding.md |
-| GET | /users/{id} | read user | Returns the full user object; no side effects | none |
+| Method | Path | Task | Summary | Also read | Conventions |
+|---|---|---|---|---|---|
+| POST | /users | create user | Sends a confirmation email; email is unique across all tenants | workflows/user-onboarding.md | Authentication, HTTP Semantics, Errors |
+| GET | /users/{id} | read user | Returns the full user object; no side effects | none | Authentication, Data Representation, Errors |
 
 ## Workflows
 
 | Name | Summary | Details |
 |---|---|---|
 | Checkout | From cart validation to order confirmation | workflows/checkout.md |
+| User onboarding | Create a user and complete confirmation flow | workflows/user-onboarding.md |
 
 ## Webhooks
 
@@ -156,7 +161,7 @@ The entry point that an LLM reads first. Endpoints are listed under a fixed `## 
 When a matching compact or full profile set exists, the INDEX.md profile-link line appears directly after the metadata stamp:
 
 ```markdown
-> docai-http: 0.8.3 | profile: full | coverage: complete | knowledge: complete | generated: 2026-06-30 | generation_id: full-20260630-abc123 | projection_id: 20260630-abc123 | source: openapi.yaml (OpenAPI 3.1.1) | source_revision: sha256:abc123
+> docai-http: 0.8.4 | profile: full | coverage: complete | knowledge: complete | generated: 2026-06-30 | generation_id: full-20260630-abc123 | projection_id: 20260630-abc123 | source: openapi.yaml (OpenAPI 3.1.1) | source_revision: sha256:abc123
 Compact set: ../docs-compact/
 
 # API Index
@@ -255,7 +260,7 @@ The `compact` profile may apply these reductions:
 - Emit a structured example on one line when doing so remains readable and preserves the exact same value. Pretty-print only when line breaks materially help distinguish nesting, variants, or wire semantics.
 - Compact field tables retain object and array container rows. Only descendants of a root field documented in `Opaque fields` may be omitted.
 - Leave the `Meaning` cell empty for a field whose name and type are self-explanatory(such as `email` or `name`); fill it only when the meaning adds information the field name does not already convey. This applies to prose meaning only — `Presence` and `Nullable` remain subject to the must-not-omit rule below.
-- Use the optional one-line marker `**field_defaults**: <column>=<value>` immediately before a compact body-field, request-parameter, structured-parameter-field, or response-header table to omit one or more uniform columns. Separate multiple defaults with ` | `. Valid defaults are `Required=yes|no`, `Presence=always`, `Nullable=yes|no`, and `Meaning=none`. `Required=conditional` is not a valid field default because each affected row must retain its exact condition. A named column must exist in that table's full-profile form, and every row must have the declared value; `Meaning=none` means every Meaning cell would be empty. Omit each defaulted column from the table; columns not named by the marker remain required and keep their standard order. Do not emit the marker unless it reduces measured tokens for that table. For example, `**field_defaults**: Presence=always | Nullable=no` permits `Field | Type | Meaning` when every field is always present and non-null. Adding ` | Meaning=none` permits `Field | Type` when every Meaning cell is also empty. Request-parameter and structured-parameter-field tables may similarly default `Required`, and response-header tables may default `Presence`.
+- Use the optional one-line marker `**field_defaults**: <column>=<value>` immediately before a compact body-field, request-parameter, structured-parameter-field, or response-header table to omit one or more uniform columns. Separate multiple defaults with ` | `. Valid defaults are `Required=yes|no`, `Presence=always`, `Nullable=yes|no`, and `Meaning=none`. A default is valid only when the named column exists in that table's full-profile form: `Required` applies to request body-field, request-parameter, and structured-parameter-field tables; `Presence` applies to response body-field, webhook payload, and response-header tables; `Nullable` applies to request body-field, response body-field, and webhook payload tables; and `Meaning=none` applies only to tables whose column is exactly `Meaning`, not `Constraints / Meaning`. `Required=conditional` is not a valid field default because each affected row must retain its exact condition. Every row must have the declared value; `Meaning=none` means every Meaning cell would be empty. Omit each defaulted column from the table; columns not named by the marker remain required and keep their standard order. Do not emit the marker unless it reduces measured tokens for that table. For example, `**field_defaults**: Presence=always | Nullable=no` permits `Field | Type | Meaning` when every field is always present and non-null. Adding ` | Meaning=none` permits `Field | Type` when every Meaning cell is also empty. Request-parameter and structured-parameter-field tables may similarly default `Required`, and response-header tables may default `Presence`.
 
   ```markdown
   **field_defaults**: Presence=always | Nullable=no
@@ -322,7 +327,7 @@ If one source `default` response combines error and non-error outcomes and canno
 
 Missing authoritative knowledge is different from an unrepresentable source feature. When a fact required by DocAI HTTP is absent from all authoritative inputs, the generator must put `unknown` in the affected canonical value or prose location and add `**unknown**: <missing fact and expected authoritative input or source location>` inside the smallest affected standard section. For constrained marker values or table cells, `unknown` is the canonical value when that specific fact is missing; this includes `**body_required**: unknown`, `**body_presence**: unknown`, `**body_nullable**: unknown`, `Required=unknown`, `Presence=unknown`, and `Nullable=unknown`. A compact table must not use `**field_defaults**:` for a column that contains any `unknown` value. A standard section or subsection for which this specification permits the complete content `none` may instead contain `unknown` followed immediately by its `**unknown**:` marker when none of that section's content is established; this includes parameter, header, body, Errors, Related, convention, workflow, and webhook sections where applicable. Otherwise, the marker follows the affected section's required standard content and does not by itself replace a required key, table, example, or representation. Multiple unknown cells in one table may share one `**unknown**:` marker immediately after that table, but the marker must identify the affected column(s), row names or statuses, missing facts, and expected authoritative input. Set that file's `knowledge` to `requires-input` and set INDEX.md knowledge to `requires-input`; otherwise use `knowledge: complete`. A reader must not interpret `unknown` as `none`, invent the fact, or assume a safe default. It must obtain the named input or report that implementation of the affected behavior is blocked. `coverage` and `knowledge` are independent: a file may simultaneously contain `**unsupported**:` and `**unknown**:`.
 
-DocAI HTTP 0.8.3 has no recursive-schema reference syntax. Directly or indirectly recursive request, response, error, parameter, or webhook shapes are deliberately outside the stable 1.0 supported scope. They cannot be represented by finite inline expansion. The generator must use the smallest applicable localized or replacement `**unsupported**:` form above and apply `coverage: requires-source`; it must not truncate the recursion at an arbitrary depth or invent a non-recursive shape.
+DocAI HTTP 0.8.4 has no recursive-schema reference syntax. Directly or indirectly recursive request, response, error, parameter, or webhook shapes are deliberately outside the stable 1.0 supported scope. They cannot be represented by finite inline expansion. The generator must use the smallest applicable localized or replacement `**unsupported**:` form above and apply `coverage: requires-source`; it must not truncate the recursion at an arbitrary depth or invent a non-recursive shape.
 
 This is a deliberate reliability choice. Expanding a recursive shape to an arbitrary finite depth would make the generated document appear complete while hiding deeper valid values from the LLM. That would violate the DocAI HTTP requirement to preserve the complete client-visible contract and could cause generated clients to reject, omit, or mishandle valid nested data. Marking the recursive unit as `unsupported` and directing the reader to the authoritative source is preferable to a partial expansion that looks self-contained but is not. Future recursive-schema support would add a new finite representation under the compatibility rules in §3.1; if existing readers must understand that representation to call the API correctly, it requires a new major version.
 
@@ -737,7 +742,7 @@ none
 Operations that require multiple endpoints to be called in a specific order should be written as workflows.
 
 ```markdown
-> docai-http: 0.8.3 | profile: full | coverage: complete | knowledge: complete | generated: 2026-06-30 | generation_id: full-20260630-abc123 | projection_id: 20260630-abc123 | source: openapi.yaml (OpenAPI 3.1.1) | source_revision: sha256:abc123
+> docai-http: 0.8.4 | profile: full | coverage: complete | knowledge: complete | generated: 2026-06-30 | generation_id: full-20260630-abc123 | projection_id: 20260630-abc123 | source: openapi.yaml (OpenAPI 3.1.1) | source_revision: sha256:abc123
 
 # Checkout
 
@@ -749,9 +754,9 @@ Procedure until order confirmation.
 
 ## Steps
 
-1. POST /carts/{id}/validate — Check inventory. If 409 occurs, adjust quantities and retry
-2. POST /payments — Pass `cart_id`. Keep the returned `payment_id`
-3. POST /orders — Pass `payment_id`. Inventory is reserved only at this step
+1. POST /carts/{id}/validate — Pass the cart `id`. If 409 occurs, adjust quantities and retry this step. Pass the same `cart_id` to step 2 after validation succeeds
+2. POST /payments — Pass `cart_id`. Keep the returned `payment_id`. If 402 occurs, collect a different payment method and retry this step
+3. POST /orders — Pass `cart_id` and `payment_id`. If 410 occurs, the payment expired; restart from step 2. Inventory is reserved only when this step succeeds
 
 ## State Transitions
 
@@ -777,7 +782,7 @@ Procedure until order confirmation.
 Webhooks are calls in the reverse direction: the API sends an HTTP request to a URL registered by the client. They may originate from an OpenAPI top-level `webhooks` field or another source and are documented apart from resources — one file per event(or per group of closely related events). DocAI HTTP is not tied to one OpenAPI version; a generator must identify its exact input in `source` and mark client-relevant input features it cannot project with `**unsupported**:`.
 
 ````markdown
-> docai-http: 0.8.3 | profile: full | coverage: complete | knowledge: complete | generated: 2026-06-30 | generation_id: full-20260630-abc123 | projection_id: 20260630-abc123 | source: openapi.yaml (OpenAPI 3.1.1) | source_revision: sha256:abc123
+> docai-http: 0.8.4 | profile: full | coverage: complete | knowledge: complete | generated: 2026-06-30 | generation_id: full-20260630-abc123 | projection_id: 20260630-abc123 | source: openapi.yaml (OpenAPI 3.1.1) | source_revision: sha256:abc123
 
 # payment.completed
 
