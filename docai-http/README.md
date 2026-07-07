@@ -3,12 +3,13 @@
 DocAI HTTP is a documentation format for describing HTTP APIs in a way that is optimized for AI/LLM consumption.
 It is designed so that an AI can read the API documentation as context and efficiently implement an HTTP client that calls the API correctly. Browser-specific requirements are included where they affect web clients, but the format also supports mobile, server, desktop, and CLI clients.
 
-> Specification version: 0.8.1 | status: Draft
+> Specification version: 0.8.2 | status: Draft
 
 This is a pre-1.0 design-review draft and is not yet declared ready for generator implementation. Its structure may change incompatibly while implementation experience and conformance fixtures are collected. Stable compatibility guarantees begin with specification version 1.0.0. Changes are recorded in the repository history until a dedicated changelog is added for the first stable release. The readiness requirements are defined in §9.1.
 
 ### Specification History
 
+- `0.8.2`(Draft) — Clarifies cross-file convention factoring versus same-file compact reuse, states the compact retrieval-unit self-containment rule in the core principles, declares recursive schemas outside the stable 1.0 supported scope, and adds a non-normative retrieval recipe.
 - `0.8.1`(Draft) — Clarifies compact `same_as` representation exceptions, field-path pipe escaping, nested field presence semantics, Related `none` handling, and recursive-schema publication readiness.
 - `0.8.0`(Draft) — Defines table-cell normalization for validation, clarifies empty compact `Opaque fields` output, sharpens generator-readiness publication labels, and clarifies compact omission wording.
 - `0.7.0`(Draft) — Defines canonical replacement forms for unrepresentable required content, removes heading-boundary ambiguity, distinguishes format compliance from implementation readiness, clarifies optional revision stamps and unknown/body-less forms, and adds safe compact-generation optimizations.
@@ -58,7 +59,7 @@ DocAI HTTP reverses these tradeoffs: **no cross-file schema/object references, f
 
 ## 2. Core Principles
 
-1. **Self-contained with conventions** — An endpoint definition must be fully understandable when read together with `CONVENTIONS.md`. The normal read order is `INDEX.md` → `CONVENTIONS.md` → the selected resource/workflow/webhook file. An INDEX may identify only the convention sections needed for an endpoint; when it does, the CONVENTIONS.md metadata stamp and those sections replace the whole file in the normal read order(§3.2). Even common schemas and shared domain objects(such as `User`, `Money`, `Address`) must be expanded inline in each endpoint; within a single file, the `compact` profile may replace repeated semantically identical body definitions with a `**same_as**:` back-reference(§3.4). Duplication is acceptable when it lowers the total context needed for a task. Whether duplication or reference resolution is cheaper must be evaluated against representative documents and target models rather than assumed. Consistency across duplicated copies is the **generator's responsibility**(§1); keeping them in sync by hand is discouraged. The only content factored out of endpoint definitions into another file is API-wide conventions, which live in CONVENTIONS.md(§3.3) — shared *objects* are not conventions and are still inlined.
+1. **Self-contained with conventions** — An endpoint definition must be fully understandable when read together with `CONVENTIONS.md`. The normal read order is `INDEX.md` → `CONVENTIONS.md` → the selected resource/workflow/webhook file. An INDEX may identify only the convention sections needed for an endpoint; when it does, the CONVENTIONS.md metadata stamp and those sections replace the whole file in the normal read order(§3.2). Even common schemas and shared domain objects(such as `User`, `Money`, `Address`) must be expanded inline in each endpoint; within a single file, the `compact` profile may replace repeated semantically identical body definitions with a `**same_as**:` back-reference(§3.4). When `**same_as**:` is used, self-containment is guaranteed at the producer's intended retrieval-unit level, not necessarily at the single-endpoint chunk level: that retrieval unit must include the referenced earlier representation with the referring operation. Duplication is acceptable when it lowers the total context needed for a task. Whether duplication or reference resolution is cheaper must be evaluated against representative documents and target models rather than assumed. Consistency across duplicated copies is the **generator's responsibility**(§1); keeping them in sync by hand is discouraged. The only content factored out of endpoint definitions into another file is API-wide conventions, which live in CONVENTIONS.md(§3.3) — shared *objects* are not conventions and are still inlined.
 2. **Example-first** — Every representable non-empty request body and response body must include realistic concrete examples. Field tables supplement examples with constraints and presence rules. A body representation that cannot be emitted faithfully uses the explicit `unsupported` replacement form in §3.4 rather than a guessed example. Authoritatively established body-less requests/responses must explicitly say `none`; missing body knowledge uses the `unknown` form in §3.4. In the `compact` profile, a request or response body may use `**same_as**:` instead of repeating a semantically identical earlier definition.
 3. **Markdown-based** — DocAI HTTP uses structured Markdown and fenced code blocks so that examples and implementation guidance remain readable to an LLM and a human. DocAI HTTP must not be a YAML/JSON-only definition file.
 4. **Deterministic structure** — Section order, heading levels, and required section roles are fixed. All structural text — fixed headings, table column headers, canonical keys, markers, and fixed values — is written in English regardless of the document language(§4.1); only prose is written in the document language. An LLM should be able to predict where information exists just from knowing the DocAI HTTP format.
@@ -83,7 +84,7 @@ docs/
 Because files are loaded **individually**(that is the point of splitting), freshness cannot live only in INDEX.md. Every file — INDEX.md, CONVENTIONS.md, and each file under resources/, workflows/, and webhooks/ — must begin with a one-line metadata stamp so an LLM that loaded only that file can judge how current it is and how much detail it contains:
 
 ```markdown
-> docai-http: 0.8.1 | profile: full | coverage: complete | knowledge: complete | generated: 2026-06-30 | generation_id: full-20260630-abc123 | projection_id: 20260630-abc123 | source: openapi.yaml (OpenAPI 3.1.1) | source_revision: sha256:abc123
+> docai-http: 0.8.2 | profile: full | coverage: complete | knowledge: complete | generated: 2026-06-30 | generation_id: full-20260630-abc123 | projection_id: 20260630-abc123 | source: openapi.yaml (OpenAPI 3.1.1) | source_revision: sha256:abc123
 ```
 
 The stamp is one Markdown blockquote line of `key: value` pairs separated by an unescaped ` | `. The standard keys from `docai-http` through `source` are required and appear in exactly the order shown above. `source_revision` is the only optional standard key; when no stable revision can be produced, omit the entire ` | source_revision: ...` pair rather than writing `none` or `unknown`. Parse each pair at its first `: `. Values must not contain a newline. Within a value, escape `\` as `\\` and `|` as `\|`; these are the only valid escape sequences. When locating separators, a pipe is escaped when it is immediately preceded by an odd-length run of backslashes. After splitting the pairs, decode escapes from left to right. An unknown escape or a trailing unescaped backslash makes the stamp invalid. Extension keys must use the `x-` prefix(§3.1) and come after the standard keys that are present; if `source_revision` is present they follow it, otherwise they follow `source`.
@@ -125,7 +126,7 @@ Extensions must not disrupt the fixed standard structure. An `x-` metadata key f
 The entry point that an LLM reads first. Endpoints are listed under a fixed `## Endpoints` section, grouped into **one subsection per resource file**: a `###` heading whose text is the file's path from the docs root, followed by a table with one endpoint per row.
 
 ```markdown
-> docai-http: 0.8.1 | profile: full | coverage: complete | knowledge: complete | generated: 2026-06-30 | generation_id: full-20260630-abc123 | projection_id: 20260630-abc123 | source: openapi.yaml (OpenAPI 3.1.1) | source_revision: sha256:abc123
+> docai-http: 0.8.2 | profile: full | coverage: complete | knowledge: complete | generated: 2026-06-30 | generation_id: full-20260630-abc123 | projection_id: 20260630-abc123 | source: openapi.yaml (OpenAPI 3.1.1) | source_revision: sha256:abc123
 
 # API Index
 
@@ -154,7 +155,7 @@ The entry point that an LLM reads first. Endpoints are listed under a fixed `## 
 When a matching compact or full profile set exists, the INDEX.md profile-link line appears directly after the metadata stamp:
 
 ```markdown
-> docai-http: 0.8.1 | profile: full | coverage: complete | knowledge: complete | generated: 2026-06-30 | generation_id: full-20260630-abc123 | projection_id: 20260630-abc123 | source: openapi.yaml (OpenAPI 3.1.1) | source_revision: sha256:abc123
+> docai-http: 0.8.2 | profile: full | coverage: complete | knowledge: complete | generated: 2026-06-30 | generation_id: full-20260630-abc123 | projection_id: 20260630-abc123 | source: openapi.yaml (OpenAPI 3.1.1) | source_revision: sha256:abc123
 Compact set: ../docs-compact/
 
 # API Index
@@ -170,7 +171,7 @@ Compact set: ../docs-compact/
 
 ### 3.3 CONVENTIONS.md(required)
 
-Write API-wide conventions in **one place only**. This is the only exception that allows repetition to be removed from endpoint definitions. Use the following fixed headings in this order; write `none` under a heading that does not apply:
+Write API-wide conventions in **one place only**. This is the only cross-file exception that allows repetition to be removed from endpoint definitions. Same-file compact body reuse with `**same_as**:` is governed separately by §3.4 and §4.1. Use the following fixed headings in this order; write `none` under a heading that does not apply:
 
 - `# API Conventions`
 - `## Environments` — Base URLs and environments
@@ -320,7 +321,7 @@ If one source `default` response combines error and non-error outcomes and canno
 
 Missing authoritative knowledge is different from an unrepresentable source feature. When a fact required by DocAI HTTP is absent from all authoritative inputs, the generator must put `unknown` in the affected canonical value or prose location and add `**unknown**: <missing fact and expected authoritative input or source location>` inside the smallest affected standard section. For constrained marker values or table cells, `unknown` is the canonical value when that specific fact is missing; this includes `**body_required**: unknown`, `**body_presence**: unknown`, `**body_nullable**: unknown`, `Required=unknown`, `Presence=unknown`, and `Nullable=unknown`. A compact table must not use `**field_defaults**:` for a column that contains any `unknown` value. A standard section or subsection for which this specification permits the complete content `none` may instead contain `unknown` followed immediately by its `**unknown**:` marker when none of that section's content is established; this includes parameter, header, body, Errors, Related, convention, workflow, and webhook sections where applicable. Otherwise, the marker follows the affected section's required standard content and does not by itself replace a required key, table, example, or representation. Multiple unknown cells in one table may share one `**unknown**:` marker immediately after that table, but the marker must identify the affected column(s), row names or statuses, missing facts, and expected authoritative input. Set that file's `knowledge` to `requires-input` and set INDEX.md knowledge to `requires-input`; otherwise use `knowledge: complete`. A reader must not interpret `unknown` as `none`, invent the fact, or assume a safe default. It must obtain the named input or report that implementation of the affected behavior is blocked. `coverage` and `knowledge` are independent: a file may simultaneously contain `**unsupported**:` and `**unknown**:`.
 
-DocAI HTTP 0.8.1 has no recursive-schema reference syntax. A directly or indirectly recursive request, response, error, parameter, or webhook shape cannot be represented by finite inline expansion. The generator must use the smallest applicable localized or replacement `**unsupported**:` form above and apply `coverage: requires-source`; it must not truncate the recursion at an arbitrary depth or invent a non-recursive shape. A representation strategy or a deliberate permanent exclusion for recursive schemas must be settled before a release is advertised as ready for generator implementation or stable(§9.1).
+DocAI HTTP 0.8.2 has no recursive-schema reference syntax. Directly or indirectly recursive request, response, error, parameter, or webhook shapes are deliberately outside the stable 1.0 supported scope. They cannot be represented by finite inline expansion. The generator must use the smallest applicable localized or replacement `**unsupported**:` form above and apply `coverage: requires-source`; it must not truncate the recursion at an arbitrary depth or invent a non-recursive shape. Future recursive-schema support would add a new finite representation under the compatibility rules in §3.1; if existing readers must understand that representation to call the API correctly, it requires a new major version.
 
 ### 3.5 Canonical Syntax and Boundaries
 
@@ -733,7 +734,7 @@ none
 Operations that require multiple endpoints to be called in a specific order should be written as workflows.
 
 ```markdown
-> docai-http: 0.8.1 | profile: full | coverage: complete | knowledge: complete | generated: 2026-06-30 | generation_id: full-20260630-abc123 | projection_id: 20260630-abc123 | source: openapi.yaml (OpenAPI 3.1.1) | source_revision: sha256:abc123
+> docai-http: 0.8.2 | profile: full | coverage: complete | knowledge: complete | generated: 2026-06-30 | generation_id: full-20260630-abc123 | projection_id: 20260630-abc123 | source: openapi.yaml (OpenAPI 3.1.1) | source_revision: sha256:abc123
 
 # Checkout
 
@@ -773,7 +774,7 @@ Procedure until order confirmation.
 Webhooks are calls in the reverse direction: the API sends an HTTP request to a URL registered by the client. They may originate from an OpenAPI top-level `webhooks` field or another source and are documented apart from resources — one file per event(or per group of closely related events). DocAI HTTP is not tied to one OpenAPI version; a generator must identify its exact input in `source` and mark client-relevant input features it cannot project with `**unsupported**:`.
 
 ````markdown
-> docai-http: 0.8.1 | profile: full | coverage: complete | knowledge: complete | generated: 2026-06-30 | generation_id: full-20260630-abc123 | projection_id: 20260630-abc123 | source: openapi.yaml (OpenAPI 3.1.1) | source_revision: sha256:abc123
+> docai-http: 0.8.2 | profile: full | coverage: complete | knowledge: complete | generated: 2026-06-30 | generation_id: full-20260630-abc123 | projection_id: 20260630-abc123 | source: openapi.yaml (OpenAPI 3.1.1) | source_revision: sha256:abc123
 
 # payment.completed
 
@@ -852,6 +853,20 @@ The per-section rules in §4.1 are normative. This section adds cross-cutting re
 - When a compact set exists, load it first and retrieve full-profile detail only for the selected operation. Do not place both complete sets in context by default.
 - A producer may add ignorable `x-` metadata such as a tokenizer identifier and measured file-token count after all standard stamp keys(§3.1) when a retrieval system can use it for shard selection, for example `x-tokenizer: o200k_base | x-tokens: 1840`. Token counts without an exact tokenizer identifier are not comparable; omit this metadata when its routing value does not repay its own token cost.
 
+### 7.1 Recommended Retrieval Recipe (non-normative)
+
+This subsection is guidance for LLM tools and retrieval systems; it does not add compliance requirements beyond the normative rules above.
+
+For a task that targets one endpoint:
+
+1. Load the compact set's `INDEX.md` when a compact set exists; otherwise load the full set's `INDEX.md`.
+2. Select the endpoint row by `Task`, `Method`, `Path`, and `Summary`.
+3. Load the selected `CONVENTIONS.md` sections named by the optional `Conventions` column, or all of `CONVENTIONS.md` when the column is absent, `all`, or not trusted by the reader.
+4. Load the resource file named by the selected `###` resource subsection, using the producer's intended retrieval unit when the file contains `**same_as**:` references.
+5. Load every `Also read` file that is relevant to the task, especially workflows that define call order or recovery.
+6. Consult the matching full set only for expanded examples, prose, or opaque response internals for the selected operation; do not load both full and compact sets by default.
+7. Stop and report the affected operation as blocked when the selected content contains `**unknown**:` for a fact needed by the implementation, or consult the authoritative source when it contains `**unsupported**:` for a feature needed by the implementation.
+
 ## 8. Relationship with OpenAPI
 
 - **Conversion is one-directional: source → DocAI HTTP.** DocAI HTTP is a generated artifact. The authoritative source(OpenAPI document, code, etc.) is the **maintenance source of truth**; DocAI HTTP is the client-implementation projection the LLM reads. Edit the source and regenerate DocAI HTTP — never the other way around.
@@ -891,7 +906,7 @@ A document set is DocAI HTTP-compliant if:
 - [ ] Represented polymorphic forms have no unlabeled example or common table; every tagged or untagged `**variant**:` block has a complete applicable example and field table and follows the ordering and overlap rules in §4.1; an unrepresentable polymorphic form instead uses `**unsupported**:`
 - [ ] Client-relevant source features that cannot be projected faithfully are marked with `**unsupported**:` and a source location, and the affected file and INDEX.md use `coverage: requires-source`
 - [ ] Missing authoritative facts are written as `unknown`, have a `**unknown**:` marker naming the missing fact and expected input or source location(or one table-level marker identifying all affected unknown cells), and cause the affected file and INDEX.md to use `knowledge: requires-input`; `none` is used only for an authoritatively established negative fact
-- [ ] Recursive shapes are not finitely truncated or approximated; they use `**unsupported**:` and `coverage: requires-source` until the recursive-schema support-or-exclusion decision in §9.1 is complete
+- [ ] Recursive shapes are not finitely truncated or approximated; because they are outside the stable 1.0 supported scope, they use `**unsupported**:` and `coverage: requires-source`
 - [ ] For update endpoints, non-updatable fields and `PATCH` merge semantics are specified
 - [ ] Every represented endpoint-specific error uses `Status | code | Shape | Condition | Caller action`; each represented shape resolves to `common:<label>`, one matching `inline:<label>` block with a `<status> <code> inline:<label>:` label, or `none`; every represented error includes its condition, caller action, and retryability, and field-level errors identify the target, machine code, and UI-display policy
 - [ ] The `Behavior` section uses `side_effects` / `idempotency` / `preconditions` / `authorization` in order, writes `none` only when non-applicability is established, and uses `unknown` plus its marker when a required fact is absent from authoritative inputs
@@ -902,11 +917,11 @@ A document set is DocAI HTTP-compliant if:
 
 ### 9.1 Conformance Fixtures
 
-Before publishing a draft as ready for generator implementation, the specification repository must publish at least one complete valid full document set and its matching compact projection, and must settle whether recursive schemas have a finite self-contained representation or are deliberately outside the supported stable scope. Those example sets must include INDEX.md, CONVENTIONS.md, at least one resource file, one workflow file, and one webhook file, and they must demonstrate selective conventions, common and inline errors, non-JSON representation rules, `unknown`, `unsupported`, `field_defaults`, `same_as`, and both non-empty and omitted `Opaque fields` compact cases. Until those example sets exist and the recursive-schema decision is made, a public release may be labeled as a design-review draft, but must not be advertised as ready for generator implementation.
+Before publishing a draft as ready for generator implementation, the specification repository must publish at least one complete valid full document set and its matching compact projection. Those example sets must include INDEX.md, CONVENTIONS.md, at least one resource file, one workflow file, and one webhook file, and they must demonstrate selective conventions, common and inline errors, non-JSON representation rules, `unknown`, `unsupported`, recursive-schema `unsupported`, `field_defaults`, `same_as`, and both non-empty and omitted `Opaque fields` compact cases. Until those example sets exist, a public release may be labeled as a design-review draft, but must not be advertised as ready for generator implementation.
 
-The repository must publish a versioned conformance corpus before the first stable release. That corpus must contain the complete example sets and focused valid and invalid fixtures for every canonical marker, table, table-cell normalization rule, representation class, structured-parameter block, conditional-requiredness rule, field-path escape, object-openness rule, response-header presence and repetition rule, webhook payload rule, error-shape reference, polymorphic form, metadata escape, coverage state, knowledge state, localized and replacement unsupported form, field default, compact opaque-field form, canonical boundary, extension placement, generated-example validity rule, and format-specific non-JSON requirement. It must also include a recursive-schema source fixture whose generated projection demonstrates the settled recursive-schema decision, either the required unsupported form when recursive schemas remain outside the supported scope or the required finite representation when they are supported. Fixtures must declare the DocAI HTTP version they test and must not be silently changed after release; a meaning-changing fixture update follows the compatibility rules in §3.1.
+The repository must publish a versioned conformance corpus before the first stable release. That corpus must contain the complete example sets and focused valid and invalid fixtures for every canonical marker, table, table-cell normalization rule, representation class, structured-parameter block, conditional-requiredness rule, field-path escape, object-openness rule, response-header presence and repetition rule, webhook payload rule, error-shape reference, polymorphic form, metadata escape, coverage state, knowledge state, localized and replacement unsupported form, field default, compact opaque-field form, canonical boundary, extension placement, generated-example validity rule, and format-specific non-JSON requirement. It must also include directly and indirectly recursive-schema source fixtures whose generated projections demonstrate the required `unsupported` forms. Fixtures must declare the DocAI HTTP version they test and must not be silently changed after release; a meaning-changing fixture update follows the compatibility rules in §3.1.
 
-Before a release is advertised as ready for generator implementation, and in all cases before 1.0.0, the project must either define and fixture a finite, self-contained representation for directly and indirectly recursive schemas or explicitly declare recursive schemas outside the stable format's supported scope. This decision must be reflected in the compatibility contract; it must not be deferred as an unspecified post-1.0 addition.
+Recursive schemas are deliberately outside the stable 1.0 supported scope. A future version may define a finite, self-contained representation, but that addition must follow the compatibility rules in §3.1 and must include versioned fixtures before it is advertised as implementation-ready.
 
 Syntax validators should run the valid and invalid fixtures. LLM evaluations should use the same valid corpus to measure correct request construction, response/error handling, workflow completion, and tokens loaded per task. A document set's compliance is determined by this specification; absence of a fixture does not make otherwise non-compliant syntax valid.
 
