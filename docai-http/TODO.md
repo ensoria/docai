@@ -42,7 +42,7 @@ Exit criteria:
 ## P0: Strengthen The Core Validator
 
 - [x] Decide whether `tools/check-core-fixtures.mjs` remains a fixture checker or becomes a reusable validator. Decision: keep it as a corpus-specific fixture expectation checker for the next target; revisit reusable validator extraction after parser units and release packaging are clearer.
-- [ ] Split parser logic into named units: metadata stamp parser, table parser, heading parser, section parser, field-path parser, and type parser.
+- [x] Split parser logic into named units: metadata stamp parser, table parser, heading parser, section parser, field-path parser, and type parser.
 - [x] Validate metadata stamp escaping, duplicate keys, missing keys, key order, optional `source_revision`, and extension-key placement more exhaustively.
 - [x] Validate that all files in one full-profile set share `profile`, `generated`, `generation_id`, and `projection_id`.
 - [x] Validate that INDEX endpoint rows exactly match resource endpoint headings.

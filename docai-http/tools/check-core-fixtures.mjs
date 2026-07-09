@@ -165,161 +165,240 @@ function listFiles(dir) {
     .sort();
 }
 
-function splitUnescapedPipePairs(value) {
-  const pairs = [];
-  let current = "";
-  for (let i = 0; i < value.length; i += 1) {
-    if (value.slice(i, i + 3) === " | " && !isEscaped(value, i)) {
-      pairs.push(current);
-      current = "";
-      i += 2;
-    } else {
-      current += value[i];
-    }
-  }
-  pairs.push(current);
-  return pairs;
-}
-
 function isEscaped(value, index) {
   let count = 0;
   for (let i = index - 1; i >= 0 && value[i] === "\\"; i -= 1) count += 1;
   return count % 2 === 1;
 }
 
-function decodeStampValue(value) {
-  let out = "";
-  for (let i = 0; i < value.length; i += 1) {
-    const ch = value[i];
-    if (ch !== "\\") {
-      out += ch;
-      continue;
+const MetadataStampParser = {
+  splitPairs(value) {
+    const pairs = [];
+    let current = "";
+    for (let i = 0; i < value.length; i += 1) {
+      if (value.slice(i, i + 3) === " | " && !isEscaped(value, i)) {
+        pairs.push(current);
+        current = "";
+        i += 2;
+      } else {
+        current += value[i];
+      }
     }
-    const next = value[i + 1];
-    if (next !== "\\" && next !== "|") {
-      throw new Error("unknown or trailing stamp escape");
+    pairs.push(current);
+    return pairs;
+  },
+
+  decodeValue(value) {
+    let out = "";
+    for (let i = 0; i < value.length; i += 1) {
+      const ch = value[i];
+      if (ch !== "\\") {
+        out += ch;
+        continue;
+      }
+      const next = value[i + 1];
+      if (next !== "\\" && next !== "|") {
+        throw new Error("unknown or trailing stamp escape");
+      }
+      out += next;
+      i += 1;
     }
-    out += next;
-    i += 1;
-  }
-  return out;
-}
+    return out;
+  },
+
+  parse(markdown) {
+    const first = markdown.split(/\r?\n/, 1)[0] ?? "";
+    if (!first.startsWith("> ")) return null;
+    const rawPairs = MetadataStampParser.splitPairs(first.slice(2));
+    const pairs = rawPairs.map((pair) => {
+      const sep = pair.indexOf(": ");
+      if (sep < 0) throw new Error(`stamp pair lacks ': ': ${pair}`);
+      return [pair.slice(0, sep), MetadataStampParser.decodeValue(pair.slice(sep + 2))];
+    });
+
+    const seen = new Map();
+    pairs.forEach(([key, value]) => {
+      if (seen.has(key)) throw new Error(`duplicate stamp key ${key}`);
+      seen.set(key, value);
+    });
+
+    const sourceRevisionIndex = pairs.findIndex(([key]) => key === "source_revision");
+    const required = STANDARD_KEYS.filter((key) => key !== "source_revision");
+    required.forEach((key) => {
+      if (!seen.has(key)) throw new Error(`missing stamp key ${key}`);
+    });
+
+    let expectedIndex = 0;
+    for (const [key] of pairs) {
+      if (key.startsWith("x-")) break;
+      const expected = STANDARD_KEYS[expectedIndex];
+      if (key !== expected) {
+        if (expected === "source_revision" && key.startsWith("x-")) break;
+        if (expected === "source_revision" && sourceRevisionIndex < 0) {
+          expectedIndex += 1;
+        }
+        if (key !== STANDARD_KEYS[expectedIndex]) {
+          throw new Error(`stamp key ${key} appears out of order`);
+        }
+      }
+      expectedIndex += 1;
+    }
+
+    const firstExtension = pairs.findIndex(([key]) => key.startsWith("x-"));
+    if (firstExtension >= 0) {
+      pairs.slice(firstExtension).forEach(([key]) => {
+        if (!key.startsWith("x-")) throw new Error(`standard key ${key} follows extension key`);
+      });
+    }
+
+    if (seen.get("docai-http") !== SPEC_VERSION) throw new Error(`stamp version is not ${SPEC_VERSION}`);
+    if (seen.get("profile") !== "full") throw new Error("core fixture stamp profile must be full");
+    if (!["complete", "requires-source"].includes(seen.get("coverage"))) {
+      throw new Error("invalid coverage value");
+    }
+    if (!["complete", "requires-input"].includes(seen.get("knowledge"))) {
+      throw new Error("invalid knowledge value");
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(seen.get("generated"))) {
+      throw new Error("generated must be YYYY-MM-DD");
+    }
+
+    return Object.fromEntries(pairs);
+  },
+};
+
+const MarkdownTableParser = {
+  splitLine(line) {
+    const trimmed = line.trim();
+    if (!trimmed.startsWith("|") || !trimmed.endsWith("|")) return null;
+    const cells = [];
+    let current = "";
+    for (let i = 1; i < trimmed.length - 1; i += 1) {
+      const ch = trimmed[i];
+      if (ch === "|" && !isEscaped(trimmed, i)) {
+        cells.push(current.trim().replace(/\\\|/g, "|"));
+        current = "";
+      } else {
+        current += ch;
+      }
+    }
+    cells.push(current.trim().replace(/\\\|/g, "|"));
+    return cells;
+  },
+
+  parse(markdown) {
+    const lines = markdown.split(/\r?\n/);
+    const tables = [];
+    for (let i = 0; i < lines.length; i += 1) {
+      const header = MarkdownTableParser.splitLine(lines[i]);
+      const separator = MarkdownTableParser.splitLine(lines[i + 1] ?? "");
+      if (!header || !separator || !separator.every((cell) => /^-+$/.test(cell))) continue;
+      const rows = [];
+      let j = i + 2;
+      for (; j < lines.length; j += 1) {
+        const row = MarkdownTableParser.splitLine(lines[j]);
+        if (!row) break;
+        rows.push(row);
+      }
+      tables.push({ header, separator, rows, line: i + 1 });
+      i = j;
+    }
+    return tables;
+  },
+};
+
+const MarkdownHeadingParser = {
+  matches(markdown) {
+    return [...markdown.matchAll(/^(#{1,6}) (.+)$/gm)];
+  },
+
+  titles(markdown, level) {
+    const prefix = "#".repeat(level);
+    return [...markdown.matchAll(new RegExp(`^${prefix} (.+)$`, "gm"))].map((match) => match[1]);
+  },
+
+  sections(markdown, predicate) {
+    const matches = MarkdownHeadingParser.matches(markdown);
+    const sections = [];
+    matches.forEach((match, index) => {
+      const level = match[1].length;
+      const title = match[2];
+      if (!predicate(title, level)) return;
+      const next = matches.slice(index + 1).find((candidate) => candidate[1].length <= level);
+      const end = next?.index ?? markdown.length;
+      sections.push({
+        title,
+        level,
+        line: markdown.slice(0, match.index).split(/\r?\n/).length,
+        text: markdown.slice(match.index, end),
+      });
+    });
+    return sections;
+  },
+};
+
+const MarkdownSectionParser = {
+  get(markdown, heading) {
+    const start = markdown.indexOf(`${heading}\n`);
+    if (start < 0) return null;
+    const level = heading.match(/^#+/)[0].length;
+    const rest = markdown.slice(start);
+    const boundary = new RegExp(`\\n#{1,${level}} `, "m");
+    const match = boundary.exec(rest.slice(heading.length + 1));
+    return match ? rest.slice(0, heading.length + 1 + match.index) : rest;
+  },
+
+  nonEmptyContentLines(sectionText) {
+    return sectionText
+      .split(/\r?\n/)
+      .slice(1)
+      .map((line) => line.trim())
+      .filter(Boolean);
+  },
+};
+
+const FieldPathParser = {
+  allowedEscapes: new Set(["\\", ".", "[", "]", "{", "}", "$"]),
+
+  validate(value) {
+    for (let i = 0; i < value.length; i += 1) {
+      if (value[i] !== "\\") continue;
+      const next = value[i + 1];
+      if (!FieldPathParser.allowedEscapes.has(next)) throw new Error(`invalid field-path escape in ${value}`);
+      i += 1;
+    }
+  },
+
+  escapeSegment(value) {
+    return value.replace(/[\\.[\]{}$]/g, (ch) => `\\${ch}`);
+  },
+};
+
+const TypeParser = {
+  isType(value) {
+    if (["string", "int", "float", "bool", "null", "any", "object", "file", "unknown"].includes(value)) {
+      return true;
+    }
+    if (value.endsWith("[]")) return TypeParser.isType(value.slice(0, -2));
+    const map = value.match(/^map<string, (.+)>$/);
+    return Boolean(map && TypeParser.isType(map[1]));
+  },
+
+  isMapType(type) {
+    return typeof type === "string" && type.startsWith("map<string, ");
+  },
+};
 
 function parseStamp(markdown) {
-  const first = markdown.split(/\r?\n/, 1)[0] ?? "";
-  if (!first.startsWith("> ")) return null;
-  const rawPairs = splitUnescapedPipePairs(first.slice(2));
-  const pairs = rawPairs.map((pair) => {
-    const sep = pair.indexOf(": ");
-    if (sep < 0) throw new Error(`stamp pair lacks ': ': ${pair}`);
-    return [pair.slice(0, sep), decodeStampValue(pair.slice(sep + 2))];
-  });
-
-  const seen = new Map();
-  pairs.forEach(([key, value]) => {
-    if (seen.has(key)) throw new Error(`duplicate stamp key ${key}`);
-    seen.set(key, value);
-  });
-
-  const sourceRevisionIndex = pairs.findIndex(([key]) => key === "source_revision");
-  const required = STANDARD_KEYS.filter((key) => key !== "source_revision");
-  required.forEach((key) => {
-    if (!seen.has(key)) throw new Error(`missing stamp key ${key}`);
-  });
-
-  let expectedIndex = 0;
-  for (const [key] of pairs) {
-    if (key.startsWith("x-")) break;
-    const expected = STANDARD_KEYS[expectedIndex];
-    if (key !== expected) {
-      if (expected === "source_revision" && key.startsWith("x-")) break;
-      if (expected === "source_revision" && sourceRevisionIndex < 0) {
-        expectedIndex += 1;
-      }
-      if (key !== STANDARD_KEYS[expectedIndex]) {
-        throw new Error(`stamp key ${key} appears out of order`);
-      }
-    }
-    expectedIndex += 1;
-  }
-
-  const firstExtension = pairs.findIndex(([key]) => key.startsWith("x-"));
-  if (firstExtension >= 0) {
-    pairs.slice(firstExtension).forEach(([key]) => {
-      if (!key.startsWith("x-")) throw new Error(`standard key ${key} follows extension key`);
-    });
-  }
-
-  if (seen.get("docai-http") !== SPEC_VERSION) throw new Error(`stamp version is not ${SPEC_VERSION}`);
-  if (seen.get("profile") !== "full") throw new Error("core fixture stamp profile must be full");
-  if (!["complete", "requires-source"].includes(seen.get("coverage"))) {
-    throw new Error("invalid coverage value");
-  }
-  if (!["complete", "requires-input"].includes(seen.get("knowledge"))) {
-    throw new Error("invalid knowledge value");
-  }
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(seen.get("generated"))) {
-    throw new Error("generated must be YYYY-MM-DD");
-  }
-
-  return Object.fromEntries(pairs);
-}
-
-function splitTableLine(line) {
-  const trimmed = line.trim();
-  if (!trimmed.startsWith("|") || !trimmed.endsWith("|")) return null;
-  const cells = [];
-  let current = "";
-  for (let i = 1; i < trimmed.length - 1; i += 1) {
-    const ch = trimmed[i];
-    if (ch === "|" && !isEscaped(trimmed, i)) {
-      cells.push(current.trim().replace(/\\\|/g, "|"));
-      current = "";
-    } else {
-      current += ch;
-    }
-  }
-  cells.push(current.trim().replace(/\\\|/g, "|"));
-  return cells;
+  return MetadataStampParser.parse(markdown);
 }
 
 function parseTables(markdown) {
-  const lines = markdown.split(/\r?\n/);
-  const tables = [];
-  for (let i = 0; i < lines.length; i += 1) {
-    const header = splitTableLine(lines[i]);
-    const separator = splitTableLine(lines[i + 1] ?? "");
-    if (!header || !separator || !separator.every((cell) => /^-+$/.test(cell))) continue;
-    const rows = [];
-    let j = i + 2;
-    for (; j < lines.length; j += 1) {
-      const row = splitTableLine(lines[j]);
-      if (!row) break;
-      rows.push(row);
-    }
-    tables.push({ header, separator, rows, line: i + 1 });
-    i = j;
-  }
-  return tables;
+  return MarkdownTableParser.parse(markdown);
 }
 
 function headingSections(markdown, predicate) {
-  const matches = [...markdown.matchAll(/^(#{1,6}) (.+)$/gm)];
-  const sections = [];
-  matches.forEach((match, index) => {
-    const level = match[1].length;
-    const title = match[2];
-    if (!predicate(title, level)) return;
-    const next = matches.slice(index + 1).find((candidate) => candidate[1].length <= level);
-    const end = next?.index ?? markdown.length;
-    sections.push({
-      title,
-      level,
-      line: markdown.slice(0, match.index).split(/\r?\n/).length,
-      text: markdown.slice(match.index, end),
-    });
-  });
-  return sections;
+  return MarkdownHeadingParser.sections(markdown, predicate);
 }
 
 function validateTables(file, markdown) {
@@ -351,19 +430,11 @@ function hasStandardHeader(header, standard) {
 }
 
 function validateFieldPaths(markdown) {
-  const allowedEscapes = new Set(["\\", ".", "[", "]", "{", "}", "$"]);
   for (const table of parseTables(markdown)) {
     const fieldIndex = table.header.indexOf("Field");
     if (fieldIndex < 0) continue;
     for (const row of table.rows) {
-      const field = row[fieldIndex];
-      for (let i = 0; i < field.length; i += 1) {
-        if (field[i] === "\\") {
-          const next = field[i + 1];
-          if (!allowedEscapes.has(next)) throw new Error(`invalid field-path escape in ${field}`);
-          i += 1;
-        }
-      }
+      FieldPathParser.validate(row[fieldIndex]);
     }
   }
 }
@@ -484,12 +555,7 @@ function escapeRegExp(value) {
 }
 
 function isType(value) {
-  if (["string", "int", "float", "bool", "null", "any", "object", "file", "unknown"].includes(value)) {
-    return true;
-  }
-  if (value.endsWith("[]")) return isType(value.slice(0, -2));
-  const map = value.match(/^map<string, (.+)>$/);
-  return Boolean(map && isType(map[1]));
+  return TypeParser.isType(value);
 }
 
 function validateJsonExamples(markdown) {
@@ -571,11 +637,11 @@ function isPlainObject(value) {
 }
 
 function isMapType(type) {
-  return typeof type === "string" && type.startsWith("map<string, ");
+  return TypeParser.isMapType(type);
 }
 
 function escapeFieldSegment(value) {
-  return value.replace(/[\\.[\]{}$]/g, (ch) => `\\${ch}`);
+  return FieldPathParser.escapeSegment(value);
 }
 
 function validateUnsupported(markdown) {
@@ -684,8 +750,7 @@ function validateCoverageKnowledge(markdown, stamp, indexSummary) {
 }
 
 function headings(markdown, level) {
-  const prefix = "#".repeat(level);
-  return [...markdown.matchAll(new RegExp(`^${prefix} (.+)$`, "gm"))].map((match) => match[1]);
+  return MarkdownHeadingParser.titles(markdown, level);
 }
 
 function validateIndex(markdown) {
@@ -809,13 +874,7 @@ function validatePathParameters(markdown) {
 }
 
 function section(markdown, heading) {
-  const start = markdown.indexOf(`${heading}\n`);
-  if (start < 0) return null;
-  const level = heading.match(/^#+/)[0].length;
-  const rest = markdown.slice(start);
-  const boundary = new RegExp(`\\n#{1,${level}} `, "m");
-  const match = boundary.exec(rest.slice(heading.length + 1));
-  return match ? rest.slice(0, heading.length + 1 + match.index) : rest;
+  return MarkdownSectionParser.get(markdown, heading);
 }
 
 function validateResponseStatusOrder(markdown) {
@@ -999,11 +1058,7 @@ function validateUnsupportedPlacement(markdown) {
 }
 
 function nonEmptyContentLines(sectionText) {
-  return sectionText
-    .split(/\r?\n/)
-    .slice(1)
-    .map((line) => line.trim())
-    .filter(Boolean);
+  return MarkdownSectionParser.nonEmptyContentLines(sectionText);
 }
 
 function isStandardContentHeading(title) {
@@ -1039,9 +1094,7 @@ function validateCommonSuppressionDeviations(markdown) {
 }
 
 function validateHeadingNames(markdown) {
-  const matches = [...markdown.matchAll(/^(#{1,6}) (.+)$/gm)];
-  for (const match of matches) {
-    const level = match[1].length;
+  for (const match of MarkdownHeadingParser.matches(markdown)) {
     const title = match[2];
     if (isKnownHeading(title)) continue;
     if (title.startsWith("x-")) continue;
