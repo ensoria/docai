@@ -13,7 +13,7 @@ Changes are recorded in the repository history and [CHANGELOG.md](CHANGELOG.md).
 
 ### LLM Reader Quick Path (non-normative)
 
-Readers that need to use a generated DocAI HTTP set do not need to load this entire specification. For task implementation, prefer the generated set's own retrieval path: `INDEX.md` → selected `CONVENTIONS.md` sections → selected resource/workflow/webhook files(§7.1).
+Readers that need to use a generated DocAI HTTP set do not need to load this entire specification. For task implementation, prefer the generated set's own retrieval path: `INDEX.md` → `CONVENTIONS.md` → selected resource/workflow/webhook files(§7.1). When a release has explicitly promoted selective convention loading, a reader may load only the selected `CONVENTIONS.md` sections; in the default 0.11.0 Compatibility Core path, load all of `CONVENTIONS.md`.
 
 For understanding this specification with minimal context, load §3.2 for `INDEX.md`, §3.3 for `CONVENTIONS.md`, §4.1 for endpoint structure, and §7.1 for the retrieval recipe. Producers, validators, and specification reviewers should read the full document, especially the compatibility rules(§3.1), output profiles(§3.4), canonical syntax and boundaries(§3.5), and conformance requirements(§9.1).
 
@@ -919,12 +919,12 @@ This subsection is guidance for LLM tools and retrieval systems; it does not add
 
 For a task that targets one endpoint:
 
-1. Load the compact set's `INDEX.md` when a compact set exists; otherwise load the full set's `INDEX.md`.
+1. Load the compact set's `INDEX.md` only when the active compatibility scope includes the compact profile and a matching compact set exists; otherwise load the full set's `INDEX.md`. In the default 0.11.0 Compatibility Core path, load the full set.
 2. Select the endpoint row by `Task`, `Method`, `Path`, and `Summary`.
-3. Load the selected `CONVENTIONS.md` sections named by the optional `Conventions` column. If the value is `none`, load only the `CONVENTIONS.md` metadata stamp; if the column is absent, `all`, or not trusted by the reader, load all of `CONVENTIONS.md`.
+3. Load the selected `CONVENTIONS.md` sections named by the optional `Conventions` column only when the active compatibility scope includes selective convention loading. In the default 0.11.0 Compatibility Core path, or when the column is absent, `all`, or not trusted by the reader, load all of `CONVENTIONS.md`. If a promoted or otherwise trusted column says `none`, load only the `CONVENTIONS.md` metadata stamp.
 4. Load the resource file named by the selected `###` resource subsection, using the producer's intended retrieval unit when the file contains `**same_as**:` references.
 5. Load every `Also read` file that is relevant to the task, especially workflows that define call order or recovery.
-6. Consult the matching full set only for expanded examples, prose, or opaque response internals for the selected operation, resolving the same docs-root-relative file path under the full set root; do not load both full and compact sets by default.
+6. If a compact set was loaded, consult the matching full set only for expanded examples, prose, or opaque response internals for the selected operation, resolving the same docs-root-relative file path under the full set root; do not load both full and compact sets by default.
 7. Stop and report the affected operation as blocked when the selected content contains `**unknown**:` for a fact needed by the implementation, or consult the authoritative source when it contains `**unsupported**:` for a feature needed by the implementation.
 
 This recipe evaluates the selected operation. Markers that appear only in unrelated resource, workflow, or webhook files affect whole-set implementation readiness, but they do not block a selected-operation-ready task.
@@ -981,7 +981,7 @@ A document set is DocAI HTTP-compliant if:
 
 Conformance fixtures are separate versioned example files, not the illustrative snippets in this README. They should be created after the format rules have converged enough that the repository can publish a pre-v1.0.0 release candidate. `pre-v1.0.0` is a repository release label or tag, not a valid `docai-http` metadata-stamp version; generated fixture files still use the numeric draft version they test.
 
-This repository's Compatibility Core fixture corpus for draft `0.11.0` is in [`fixtures/core/v0.11.0/`](fixtures/core/v0.11.0/). It is a core corpus, not the complete generator implementation corpus described below. Run `node tools/check-core-fixtures.mjs` from the `docai-http/` directory, or `node docai-http/tools/check-core-fixtures.mjs` from the repository root, to check the core fixture expectations.
+This repository's Compatibility Core fixture corpus for draft `0.11.0` is in [`fixtures/core/v0.11.0/`](fixtures/core/v0.11.0/), with its source OpenAPI fixture at [`fixtures/core-openapi.yaml`](fixtures/core-openapi.yaml). It is a core corpus, not the complete generator implementation corpus described below. Run `node tools/check-core-fixtures.mjs` from the `docai-http/` directory, or `node docai-http/tools/check-core-fixtures.mjs` from the repository root, to check the core fixture expectations. The checker is a fixture expectation checker for the published core corpus, not a full DocAI HTTP validator or a full source-to-projection validator.
 
 Fixture requirements are staged to match the compatibility scope in §3.1. Before publishing a draft as the first Compatibility Core implementation target, the specification repository must publish at least one valid core full-profile document set and focused valid and invalid fixtures for every structure in the Compatibility Core. That core set must include INDEX.md, CONVENTIONS.md, at least one resource file, ordinary endpoint request/response examples, represented JSON bodies, parameters, response headers, common and inline errors, `none`, `unknown`, localized and core-unit replacement `unsupported`, recursive-schema `unsupported`, metadata escaping, extension placement, table parsing and normalization, field paths, type grammar, status ordering, generated-example validity, and coverage/knowledge states. A Compatibility Core implementation target does not declare the `compact` profile, workflows, webhooks, non-JSON representations, selective convention loading, token-routing metadata, or other non-core structures ready for compatibility-preserving implementation.
 

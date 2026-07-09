@@ -1,0 +1,375 @@
+openapi: 3.1.1
+info:
+  title: DocAI HTTP Core Fixture API
+  version: 0.11.0-core-source
+servers:
+  - url: https://api.example.test/v1
+  - url: https://sandbox.api.example.test/v1
+security:
+  - bearerAuth: []
+paths:
+  /users:
+    post:
+      operationId: createUser
+      summary: Create a user
+      description: Creates a user account and sends a confirmation email asynchronously.
+      x-docai-behavior:
+        side_effects: On successful creation, a confirmation email is sent asynchronously
+        idempotency: conditionally idempotent when the same Idempotency-Key value is reused
+        preconditions: none
+        authorization: users:write scope
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
+          description: Send from the first attempt when the call may be retried.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserCreateRequest"
+            examples:
+              standard:
+                value:
+                  email: taro@example.com
+                  name: Taro Yamada
+                  role: member
+                  metadata:
+                    campaign.code|source: spring
+      responses:
+        "201":
+          description: User created.
+          headers:
+            Location:
+              schema:
+                type: string
+              description: URL of the created user.
+            ETag:
+              schema:
+                type: string
+              description: Validator for later updates.
+          x-dynamic-response-headers:
+            pattern: "^X-Audit-"
+            client_requirement: log all audit-correlation headers
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+              examples:
+                standard:
+                  value:
+                    id: usr_01J0CORE
+                    email: taro@example.com
+                    name: Taro Yamada
+                    role: member
+                    created_at: "2026-07-09T03:00:00Z"
+        "409":
+          $ref: "#/components/responses/EmailTaken"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+  /users/{id}:
+    get:
+      operationId: getUser
+      summary: Fetch a user
+      description: Fetches a user account by ID.
+      x-docai-behavior:
+        side_effects: none
+        idempotency: idempotent and safe to retry
+        preconditions: the user exists
+        authorization: users:read scope
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+        - name: include
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [summary, profile]
+            default: summary
+          description: profile includes the profile object.
+        - name: If-None-Match
+          in: header
+          required: false
+          schema:
+            type: string
+          description: Send a previously returned ETag to allow a 304 response.
+      responses:
+        "200":
+          description: User found.
+          x-docai-missing-knowledge:
+            - response body presence is not documented
+            - X-Request-ID response header presence is not documented
+          headers:
+            ETag:
+              schema:
+                type: string
+              description: Validator for reads and updates.
+            X-Request-ID:
+              schema:
+                type: string
+              description: Log with support requests.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserReadResponse"
+              examples:
+                withProfile:
+                  value:
+                    id: usr_01J0CORE
+                    email: taro@example.com
+                    name: Taro Yamada
+                    profile:
+                      timezone: Asia/Tokyo
+        "304":
+          description: Representation unchanged.
+          headers:
+            ETag:
+              schema:
+                type: string
+              description: Current validator for the unchanged representation.
+    patch:
+      operationId: updateUser
+      summary: Update a user
+      description: Updates editable user profile fields.
+      x-docai-behavior:
+        side_effects: updates the user resource and records an audit event on success
+        idempotency: not idempotent unless the same request body and If-Match value are reused against the same representation
+        preconditions: fetch the user first and send the returned ETag in If-Match
+        authorization: users:write scope
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+        - name: If-Match
+          in: header
+          required: true
+          schema:
+            type: string
+          description: ETag returned by GET /users/{id}.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserUpdateRequest"
+            examples:
+              standard:
+                value:
+                  name: Taro Yamada Jr.
+                  role: member
+      responses:
+        "200":
+          description: User updated.
+          headers:
+            ETag:
+              schema:
+                type: string
+              description: New validator for the updated representation.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserUpdated"
+              examples:
+                standard:
+                  value:
+                    id: usr_01J0CORE
+                    email: taro@example.com
+                    name: Taro Yamada Jr.
+                    role: member
+                    updated_at: "2026-07-09T03:05:00Z"
+        "412":
+          $ref: "#/components/responses/EtagMismatch"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+  /users/{id}/manager-tree:
+    get:
+      operationId: getUserManagerTree
+      summary: Fetch a user management hierarchy
+      description: Fetches the user's management hierarchy.
+      x-docai-behavior:
+        side_effects: none
+        idempotency: idempotent and safe to retry
+        preconditions: the user exists
+        authorization: users:read scope
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      responses:
+        "200":
+          description: User manager tree.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserNode"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  parameters:
+    UserId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: User ID returned by POST /users.
+  responses:
+    EmailTaken:
+      description: Email address already exists.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/StandardError"
+    ValidationFailed:
+      description: Request validation failed.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ValidationError"
+          examples:
+            standard:
+              value:
+                error:
+                  code: validation_failed
+                  message: input is invalid
+                  field_errors:
+                    - field: role
+                      code: invalid_enum
+                      message: role must be admin or member
+    EtagMismatch:
+      description: ETag mismatch.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/EtagError"
+          examples:
+            standard:
+              value:
+                error:
+                  code: etag_mismatch
+                  message: resource was modified
+  schemas:
+    UserCreateRequest:
+      type: object
+      additionalProperties: false
+      required: [email, name]
+      properties:
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        role:
+          type: string
+          enum: [admin, member]
+          default: member
+        metadata:
+          type: object
+          additionalProperties: false
+          properties:
+            campaign.code|source:
+              type: string
+    UserUpdateRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        role:
+          type: string
+          enum: [admin, member]
+        email:
+          type: string
+          readOnly: true
+          description: Not updatable; sending it returns 422.
+    User:
+      type: object
+      additionalProperties: false
+      required: [id, email, name, role, created_at]
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        role:
+          type: string
+          enum: [admin, member]
+        created_at:
+          type: string
+          format: date-time
+    UserReadResponse:
+      type: object
+      additionalProperties: false
+      required: [id, email, name]
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        profile:
+          type: object
+          additionalProperties: false
+          required: [timezone]
+          properties:
+            timezone:
+              type: string
+    UserUpdated:
+      type: object
+      additionalProperties: false
+      required: [id, email, name, role, updated_at]
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        role:
+          type: string
+          enum: [admin, member]
+        updated_at:
+          type: string
+          format: date-time
+    StandardError:
+      type: object
+      additionalProperties: false
+      required: [error]
+      properties:
+        error:
+          type: object
+          additionalProperties: false
+          required: [code, message]
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+    ValidationError:
+      allOf:
+        - $ref: "#/components/schemas/StandardError"
+    EtagError:
+      allOf:
+        - $ref: "#/components/schemas/StandardError"
+    UserNode:
+      type: object
+      additionalProperties: false
+      required: [id, reports]
+      properties:
+        id:
+          type: string
+        reports:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserNode"

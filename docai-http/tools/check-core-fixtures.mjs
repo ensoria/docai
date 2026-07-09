@@ -36,6 +36,8 @@ const CONVENTION_HEADINGS = [
   "Webhook Delivery",
 ];
 
+const CORE_UNSUPPORTED_CONVENTION_HEADINGS = new Set(CONVENTION_HEADINGS);
+
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_CORE_DIR = path.resolve(SCRIPT_DIR, "..", "fixtures", "core", `v${SPEC_VERSION}`);
 const CORE_DIR = path.resolve(process.argv[2] ?? DEFAULT_CORE_DIR);
@@ -245,18 +247,107 @@ function isType(value) {
   return Boolean(map && isType(map[1]));
 }
 
+function validateJsonExamples(markdown) {
+  for (const match of markdown.matchAll(/^```json\r?\n([\s\S]*?)^```$/gm)) {
+    try {
+      JSON.parse(match[1]);
+    } catch (error) {
+      throw new Error(`invalid JSON example: ${error.message}`);
+    }
+  }
+}
+
 function validateUnsupported(markdown) {
   const lines = markdown.split(/\r?\n/).filter((line) => line.startsWith("**unsupported**:"));
   for (const line of lines) {
     const value = line.slice("**unsupported**:".length).trim();
     if (value.startsWith("localized:")) continue;
     if (!value.startsWith("replaces ")) throw new Error("unsupported marker lacks canonical prefix");
-    const unit = value.slice("replaces ".length, value.indexOf(": "));
+    const separator = value.indexOf(": ", "replaces ".length);
+    if (separator < 0) throw new Error("unsupported replacement lacks ': ' boundary");
+    const unit = value.slice("replaces ".length, separator);
+    const detail = value.slice(separator + 2).trim();
     if (!unit) throw new Error("unsupported replacement lacks unit");
-    if (unit.startsWith("response representation ")) {
-      if (!/^response representation (?:[1-5][0-9][0-9]|[1-5]XX|default) [^ ]+\/[^ ]+$/.test(unit)) {
-        throw new Error(`invalid response representation replacement unit ${unit}`);
-      }
+    if (!detail) throw new Error("unsupported replacement lacks feature detail");
+    validateCoreUnsupportedUnit(unit);
+  }
+}
+
+function validateCoreUnsupportedUnit(unit) {
+  const requestSubsections = new Set([
+    "request Path Parameters",
+    "request Query Parameters",
+    "request Headers",
+    "request Cookie Parameters",
+    "request Body",
+  ]);
+  if (requestSubsections.has(unit) || unit === "Errors") return;
+
+  let match = unit.match(/^structured parameter (Path Parameters|Query Parameters|Headers|Cookie Parameters) (.+)$/);
+  if (match && match[2].trim()) return;
+
+  match = unit.match(/^request representation (.+)$/);
+  if (match && isJsonMediaType(match[1])) return;
+
+  match = unit.match(/^Response (.+)$/);
+  if (match && isStatus(match[1])) return;
+
+  match = unit.match(/^response representation (.+) (.+)$/);
+  if (match && isStatus(match[1]) && isJsonMediaType(match[2])) return;
+
+  match = unit.match(/^CONVENTIONS (.+)$/);
+  if (match && CORE_UNSUPPORTED_CONVENTION_HEADINGS.has(match[1])) return;
+
+  match = unit.match(/^common error shape ([a-z][a-z0-9_-]*)$/);
+  if (match) return;
+
+  match = unit.match(/^inline error shape (.+) ([^ ]+) inline:([a-z][a-z0-9_-]*)$/);
+  if (match && isStatus(match[1])) return;
+
+  match = unit.match(/^common error representation ([a-z][a-z0-9_-]*) (.+)$/);
+  if (match && isJsonMediaType(match[2])) return;
+
+  match = unit.match(/^inline error representation (.+) ([^ ]+) inline:([a-z][a-z0-9_-]*) (.+)$/);
+  if (match && isStatus(match[1]) && isJsonMediaType(match[4])) return;
+
+  throw new Error(`unsupported replacement unit is outside the core checker scope: ${unit}`);
+}
+
+function isStatus(value) {
+  return /^[1-5][0-9][0-9]$/.test(value) || /^[1-5]XX$/.test(value) || value === "default";
+}
+
+function isJsonMediaType(value) {
+  const type = value.toLowerCase();
+  if (type === "application/json") return true;
+  const [essence] = type.split(";");
+  return essence.startsWith("application/") && essence.endsWith("+json");
+}
+
+function errorShapeLabels(markdown) {
+  return new Set([...markdown.matchAll(/^\*\*error_shape\*\*: ([a-z][a-z0-9_-]*)$/gm)].map((match) => match[1]));
+}
+
+function commonErrorRefs(markdown) {
+  const refs = [];
+  for (const table of parseTables(markdown)) {
+    const shapeIndex = table.header.indexOf("Shape");
+    if (shapeIndex < 0) continue;
+    table.rows.forEach((row) => {
+      const shape = row[shapeIndex];
+      if (shape.startsWith("common:")) refs.push(shape.slice("common:".length));
+    });
+  }
+  return refs;
+}
+
+function validateCommonErrorRefs(markdown, knownCommonShapes) {
+  const refs = commonErrorRefs(markdown);
+  if (refs.length === 0) return;
+  if (!knownCommonShapes) throw new Error("common error references require CONVENTIONS.md shape context");
+  for (const label of refs) {
+    if (!knownCommonShapes.has(label)) {
+      throw new Error(`common error shape ${label} is not defined in CONVENTIONS.md`);
     }
   }
 }
@@ -439,7 +530,9 @@ function validateCoreMarkdown(file, markdown, options = {}) {
   run(() => validateTables(file, markdown));
   run(() => validateFieldPaths(markdown));
   run(() => validateTypes(markdown));
+  run(() => validateJsonExamples(markdown));
   run(() => validateUnsupported(markdown));
+  run(() => validateCommonErrorRefs(markdown, options.commonErrorShapes));
   run(() => validateCoverageKnowledge(markdown, stamp, options.indexSummary));
   run(() => validateIndex(markdown));
   run(() => validateConventions(markdown, options.requireAllConventions ?? false));
@@ -454,13 +547,16 @@ function validateCoreMarkdown(file, markdown, options = {}) {
 function validateFullSet() {
   const fullDir = path.join(CORE_DIR, "valid", "full");
   const files = ["INDEX.md", "CONVENTIONS.md", path.join("resources", "users.md")].map((file) => path.join(fullDir, file));
+  const sourceFile = path.resolve(CORE_DIR, "..", "..", "core-openapi.yaml");
   files.forEach((file) => {
     if (!fs.existsSync(file)) fail(file, "required full-set file is missing");
   });
+  if (!fs.existsSync(sourceFile)) fail(sourceFile, "required source OpenAPI fixture is missing");
   if (failures.length > 0) return;
 
   const contents = Object.fromEntries(files.map((file) => [file, read(file)]));
   const setText = Object.values(contents).join("\n");
+  const commonShapes = errorShapeLabels(contents[files[1]]);
   const indexSummary = {
     coverage: setText.includes("**unsupported**:") ? "requires-source" : "complete",
     knowledge: setText.includes("**unknown**:") ? "requires-input" : "complete",
@@ -482,6 +578,7 @@ function validateFullSet() {
     const errors = validateCoreMarkdown(file, markdown, {
       indexSummary: file.endsWith("INDEX.md") ? indexSummary : undefined,
       requireAllConventions: file.endsWith("CONVENTIONS.md"),
+      commonErrorShapes: file.endsWith(path.join("resources", "users.md")) ? commonShapes : undefined,
     });
     errors.forEach((error) => fail(file, error));
   }

@@ -6,6 +6,7 @@ The current corpus is an initial Compatibility Core corpus for draft `0.11.0`. I
 
 Layout:
 
+- `core-openapi.yaml` is the source OpenAPI fixture referenced by the current core corpus.
 - `core/v0.11.0/valid/full/` contains a valid full-profile document set for the Compatibility Core.
 - `core/v0.11.0/focused/valid/` contains focused valid snippets for individual core syntax rules.
 - `core/v0.11.0/focused/invalid/` contains focused invalid snippets for validator negative tests.
