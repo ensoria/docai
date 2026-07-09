@@ -33,11 +33,11 @@ Exit criteria:
 
 ## Release Rules For This Backlog
 
-- [ ] For every promoted feature, update `README.md`, fixtures, checker behavior, `COVERAGE.md`, and `CHANGELOG.md` in the same change set.
-- [ ] Keep non-core features opt-in until they have positive and negative fixtures.
-- [ ] Treat meaning-changing fixture updates after a release as compatibility-impacting changes.
-- [ ] Keep each release label explicit: Compatibility Core target, complete-generator-ready candidate, or stable.
-- [ ] Before each tag, run `node docai-http/tools/check-core-fixtures.mjs`.
+- [x] For every promoted feature, update `README.md`, fixtures, checker behavior, `COVERAGE.md`, and `CHANGELOG.md` in the same change set. Documented in `RELEASE.md`.
+- [x] Keep non-core features opt-in until they have positive and negative fixtures. Documented in `RELEASE.md`.
+- [x] Treat meaning-changing fixture updates after a release as compatibility-impacting changes. Documented in `RELEASE.md`.
+- [x] Keep each release label explicit: Compatibility Core target, complete-generator-ready candidate, or stable. Documented in `RELEASE.md`.
+- [x] Before each tag, run `node docai-http/tools/check-core-fixtures.mjs`. Documented in `RELEASE.md`.
 
 ## P0: Strengthen The Core Validator
 
@@ -95,12 +95,12 @@ Exit criteria:
 
 ## P1: Strengthen Release Process
 
-- [ ] Add a release checklist document for DocAI HTTP.
-- [ ] Define version bump rules for pre-1.0 Core releases versus non-core draft changes.
-- [ ] Define fixture versioning policy: when to create a new fixture version directory and when to patch existing draft fixtures.
-- [ ] Add a tag checklist: checker passes, changelog has version section, README version matches fixture version, publication label matches evidence.
-- [ ] Add a short release note template for Compatibility Core releases.
-- [ ] Decide whether to add a package/script entry for `check-core-fixtures`.
+- [x] Add a release checklist document for DocAI HTTP.
+- [x] Define version bump rules for pre-1.0 Core releases versus non-core draft changes.
+- [x] Define fixture versioning policy: when to create a new fixture version directory and when to patch existing draft fixtures.
+- [x] Add a tag checklist: checker passes, changelog has version section, README version matches fixture version, publication label matches evidence.
+- [x] Add a short release note template for Compatibility Core releases.
+- [x] Decide whether to add a package/script entry for `check-core-fixtures`. Decision: keep the direct Node command as canonical until the repository has a standard task runner or the checker is published as a package.
 
 ## P2: Prepare Workflow Support
 
