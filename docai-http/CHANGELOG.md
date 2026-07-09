@@ -20,6 +20,7 @@ DocAI HTTP draft history. Specification versioning and compatibility rules are d
 - Adds focused invalid compact-candidate fixtures for `field_defaults` invalid values, invalid table applicability, retained defaulted columns, and unknown-value defaults.
 - Adds compact-candidate token-saving measurement guidance and fixture-level reduction annotations.
 - Adds a compact-candidate fixture checker for profile links, profile identity, `field_defaults` reconstruction, and full/compact table contract comparison.
+- Records the compact profile as a separate opt-in compatibility scope candidate rather than part of the default Compatibility Core.
 
 ## 0.11.0 (Draft - Compatibility Core)
 

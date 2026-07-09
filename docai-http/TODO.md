@@ -91,7 +91,12 @@ Exit criteria:
 - [ ] Add fixtures for compact `Client-visible fields` and `Opaque fields`.
 - [x] Add checker support to compare compact output against the matching full output for client-visible contract preservation.
 - [x] Add token-saving measurement guidance or fixture annotations for compact reductions.
-- [ ] Decide whether compact becomes part of a future Compatibility Core or remains a separate compatibility scope.
+- [x] Decide whether compact becomes part of a future Compatibility Core or remains a separate compatibility scope. Decision: keep compact as a separate opt-in compatibility scope candidate; do not fold it into the default Compatibility Core unless a later release explicitly changes that scope with matching fixtures, checker coverage, and release evidence.
+
+Deferred compact expansion work:
+
+- Keep `same_as`, retrieval-unit discovery, `Client-visible fields`, and `Opaque fields` outside the first compact candidate scope.
+- Promote those reductions only in a later compact-scope change set with valid/invalid fixtures, checker support, coverage notes, and changelog evidence.
 
 ## P1: Strengthen Release Process
 

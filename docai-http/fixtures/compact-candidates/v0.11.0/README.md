@@ -4,6 +4,8 @@ This directory contains candidate fixtures for a future compact-profile promotio
 
 The first compact promotion scope is intentionally narrow: profile pairing, compact examples, and `field_defaults`. This keeps the first compact contract small while fixture and checker evidence is collected. `same_as`, retrieval-unit discovery, `Client-visible fields`, `Opaque fields`, workflow compacting, webhook compacting, and non-JSON compact rules remain outside this candidate scope.
 
+Compatibility-scope decision: compact remains a separate opt-in compatibility scope candidate. It is not folded into the default Compatibility Core unless a later release explicitly changes that scope with matching fixtures, checker coverage, and release evidence.
+
 Layout:
 
 - `valid/full/` contains the canonical full-profile set.
