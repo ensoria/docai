@@ -323,6 +323,23 @@ function validateTypes(markdown) {
   }
 }
 
+function validateObjectOpenness(markdown) {
+  for (const table of parseTables(markdown)) {
+    const fieldIndex = table.header.indexOf("Field");
+    const typeIndex = table.header.indexOf("Type");
+    const meaningIndex = table.header.indexOf("Meaning");
+    const constraintsIndex = table.header.indexOf("Constraints / Meaning");
+    const textIndex = meaningIndex >= 0 ? meaningIndex : constraintsIndex;
+    if (fieldIndex < 0 || typeIndex < 0 || textIndex < 0) continue;
+    for (const row of table.rows) {
+      if (!["object", "object[]"].includes(row[typeIndex])) continue;
+      if (!/\b(additional properties|array items)\b/i.test(row[textIndex])) {
+        throw new Error(`object field ${row[fieldIndex]} lacks openness rule`);
+      }
+    }
+  }
+}
+
 function validateConditionalRequiredness(markdown) {
   for (const table of parseTables(markdown)) {
     const requiredIndex = table.header.indexOf("Required");
@@ -354,6 +371,82 @@ function validateJsonExamples(markdown) {
       throw new Error(`invalid JSON example: ${error.message}`);
     }
   }
+}
+
+function validateJsonExampleFields(markdown) {
+  for (const match of markdown.matchAll(/^```json\r?\n([\s\S]*?)^```$/gm)) {
+    const value = JSON.parse(match[1]);
+    const afterFence = match.index + match[0].length;
+    const representation = markdown.slice(afterFence, afterFence + representationTailLength(markdown.slice(afterFence)));
+    const table = parseTables(representation).find((candidate) => candidate.header[0] === "Field");
+    if (!table) throw new Error("JSON example lacks following field table");
+
+    const fieldIndex = table.header.indexOf("Field");
+    const typeIndex = table.header.indexOf("Type");
+    const rows = new Set(table.rows.map((row) => row[fieldIndex]));
+    const types = new Map(table.rows.map((row) => [row[fieldIndex], row[typeIndex]]));
+    for (const field of jsonExampleFieldPaths(value, types)) {
+      if (!rows.has(field)) throw new Error(`JSON example field ${field} lacks field-table row`);
+    }
+  }
+}
+
+function representationTailLength(markdown) {
+  const match = /\n(?=#{1,4} |\*\*(?:body_required|body_presence|media_type|error_shape|variant|same_as)\*\*: |- Response Headers: none$|#### Response Headers$)/m.exec(markdown);
+  return match ? match.index : markdown.length;
+}
+
+function jsonExampleFieldPaths(value, types) {
+  if (Array.isArray(value)) return jsonArrayPaths(value, "$", types, true);
+  if (isPlainObject(value)) {
+    if (isMapType(types.get("$"))) return jsonMapPaths(value, "$", types, true);
+    return Object.entries(value).flatMap(([key, child]) => jsonValuePaths(child, escapeFieldSegment(key), types));
+  }
+  return ["$"];
+}
+
+function jsonValuePaths(value, path, types) {
+  if (Array.isArray(value)) return jsonArrayPaths(value, path, types, false);
+  if (isPlainObject(value)) {
+    if (isMapType(types.get(path))) return jsonMapPaths(value, path, types, false);
+    return [
+      path,
+      ...Object.entries(value).flatMap(([key, child]) => jsonValuePaths(child, `${path}.${escapeFieldSegment(key)}`, types)),
+    ];
+  }
+  return [path];
+}
+
+function jsonArrayPaths(value, path, types, isRoot) {
+  const paths = [path];
+  const firstObject = value.find((item) => isPlainObject(item));
+  if (firstObject) {
+    const childPrefix = isRoot ? "$[]" : `${path}[]`;
+    paths.push(...Object.entries(firstObject).flatMap(([key, child]) => jsonValuePaths(child, `${childPrefix}.${escapeFieldSegment(key)}`, types)));
+  }
+  return paths;
+}
+
+function jsonMapPaths(value, path, types, isRoot) {
+  const paths = [path];
+  const firstObject = Object.values(value).find((item) => isPlainObject(item));
+  if (firstObject) {
+    const childPrefix = isRoot ? "$.{key}" : `${path}.{key}`;
+    paths.push(...Object.entries(firstObject).flatMap(([key, child]) => jsonValuePaths(child, `${childPrefix}.${escapeFieldSegment(key)}`, types)));
+  }
+  return paths;
+}
+
+function isPlainObject(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function isMapType(type) {
+  return typeof type === "string" && type.startsWith("map<string, ");
+}
+
+function escapeFieldSegment(value) {
+  return value.replace(/[\\.[\]{}$]/g, (ch) => `\\${ch}`);
 }
 
 function validateUnsupported(markdown) {
@@ -819,8 +912,10 @@ function validateCoreMarkdown(file, markdown, options = {}) {
   run(() => validateEndpointExtensionPlacement(markdown));
   run(() => validateFieldPaths(markdown));
   run(() => validateTypes(markdown));
+  run(() => validateObjectOpenness(markdown));
   run(() => validateConditionalRequiredness(markdown));
   run(() => validateJsonExamples(markdown));
+  run(() => validateJsonExampleFields(markdown));
   run(() => validateUnsupported(markdown));
   run(() => validateCommonErrorRefs(markdown, options.commonErrorShapes));
   run(() => validateCoverageKnowledge(markdown, stamp, options.indexSummary));

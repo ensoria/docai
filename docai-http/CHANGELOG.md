@@ -7,6 +7,7 @@ DocAI HTTP draft history. Specification versioning and compatibility rules are d
 - Strengthens the Compatibility Core fixture checker with request-subsection order, body marker order, body-less request/response, conditional requiredness, and deprecated INDEX-summary checks.
 - Expands focused Compatibility Core fixture coverage for body-less requests/responses, `unknown` table/body values, root `$` bodies, exactly-null JSON values, common-error suppression, and deprecated endpoints.
 - Adds checker and focused fixture coverage for core table headers, `x-` extension placement, response status ranges, `default` responses, and overlap precedence prose.
+- Adds checker and focused fixture coverage for JSON example-to-field-table rows and body object-openness rules.
 
 ## 0.11.0 (Draft - Compatibility Core)
 

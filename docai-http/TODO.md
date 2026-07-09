@@ -33,7 +33,7 @@ This backlog tracks work after the first public `0.11.0` Compatibility Core rele
 - [x] Validate path template variables against `Path Parameters`.
 - [x] Validate table column headers for core tables.
 - [x] Validate body marker order: `body_required`, `body_presence`, `media_type`, and `body_nullable`.
-- [ ] Validate JSON body examples against field-table rows where practical.
+- [x] Validate JSON body examples against field-table rows where practical.
 - [x] Validate common and inline error references, including inline label matching.
 - [ ] Validate `none`, `unknown`, and core replacement/localized `unsupported` placement.
 - [ ] Add a clear checker report format that lists fixture name, expected result, actual result, and rule area.
@@ -50,7 +50,7 @@ This backlog tracks work after the first public `0.11.0` Compatibility Core rele
 - [x] Add fixtures for `body_required: unknown`, `body_presence: unknown`, and `body_nullable: unknown`.
 - [x] Add fixtures for root scalar, root array, and root dynamic-map bodies using `$`.
 - [x] Add fixtures for exactly-null JSON values with `Type=null`.
-- [ ] Add fixtures for object openness on root objects, nested objects, and `object[]` rows.
+- [x] Add fixtures for object openness on root objects, nested objects, and `object[]` rows.
 - [ ] Add fixtures for repeated query parameters, repeated headers, and response-header comma-combination rules.
 - [ ] Add fixtures for endpoint-local `none` not suppressing common conventions.
 - [x] Add fixtures for common error suppression with `**deviation**:`.
