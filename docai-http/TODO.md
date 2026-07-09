@@ -36,7 +36,7 @@ This backlog tracks work after the first public `0.11.0` Compatibility Core rele
 - [x] Validate JSON body examples against field-table rows where practical.
 - [x] Validate common and inline error references, including inline label matching.
 - [x] Validate `none`, `unknown`, and core replacement/localized `unsupported` placement.
-- [ ] Add a clear checker report format that lists fixture name, expected result, actual result, and rule area.
+- [x] Add a clear checker report format that lists fixture name, expected result, actual result, and rule area.
 
 ## P0: Expand Core Fixtures
 

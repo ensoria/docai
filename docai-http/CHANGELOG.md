@@ -10,6 +10,7 @@ DocAI HTTP draft history. Specification versioning and compatibility rules are d
 - Adds checker and focused fixture coverage for JSON example-to-field-table rows and body object-openness rules.
 - Adds checker and focused fixture coverage for repeated query/header wire rules and endpoint-local `none` common-convention boundaries.
 - Adds checker and focused fixture coverage for `none`/`unknown`/`unsupported` placement and direct/indirect recursive source fallbacks.
+- Improves the Compatibility Core checker failure report with fixture name, expected result, actual result, rule area, and detail fields.
 
 ## 0.11.0 (Draft - Compatibility Core)
 

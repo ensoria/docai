@@ -92,8 +92,63 @@ const CORE_DIR = path.resolve(process.argv[2] ?? DEFAULT_CORE_DIR);
 
 const failures = [];
 
-function fail(file, message) {
-  failures.push(`${path.relative(process.cwd(), file)}: ${message}`);
+function fail(file, message, details = {}) {
+  failures.push({
+    fixture: path.relative(process.cwd(), file),
+    expected: details.expected ?? expectedResult(file, message),
+    actual: details.actual ?? actualResult(message),
+    ruleArea: details.ruleArea ?? ruleArea(message),
+    detail: normalizeDetail(message),
+  });
+}
+
+function expectedResult(file, message) {
+  if (message.includes("expected invalid")) return "invalid";
+  if (message.includes("required") && message.includes("missing")) return "present";
+  if (file.includes(`${path.sep}focused${path.sep}invalid${path.sep}`)) return "invalid";
+  return "valid";
+}
+
+function actualResult(message) {
+  if (message.includes("checker accepted it")) return "valid";
+  if (message.includes("missing")) return "missing";
+  return "invalid";
+}
+
+function normalizeDetail(message) {
+  return message.replace(/^expected valid but failed: /, "").replace(/^expected invalid but failed: /, "");
+}
+
+function ruleArea(message) {
+  const text = normalizeDetail(message);
+  if (/stamp|metadata|generated|generation_id|projection_id|source_revision|coverage|knowledge/i.test(text)) return "metadata";
+  if (/INDEX|endpoint rows|resource endpoint/i.test(text)) return "index";
+  if (/CONVENTIONS|common convention|common error/i.test(text)) return "conventions";
+  if (/table|column|row|cell/i.test(text)) return "tables";
+  if (/field-path|field-table|JSON example|object field|openness/i.test(text)) return "body fields";
+  if (/type /i.test(text)) return "type grammar";
+  if (/request subsection|Path Parameters|path parameters|query|cookie|request header|conditional requiredness|repeated parameter/i.test(text)) {
+    return "request";
+  }
+  if (/response status|Response |body-less response|response header|repeated response header|overlap/i.test(text)) return "response";
+  if (/body_|media_type|body marker|representation/i.test(text)) return "body representation";
+  if (/unsupported|recursive|replacement/i.test(text)) return "unsupported";
+  if (/unknown/i.test(text)) return "unknown";
+  if (/error|inline|shape/i.test(text)) return "errors";
+  if (/heading|marker|x-/i.test(text)) return "extensions";
+  if (/source .*fixture|source fixture/i.test(text)) return "source fixtures";
+  return "core";
+}
+
+function printFailureReport() {
+  console.error("Core fixture check failed:");
+  failures.forEach((failure, index) => {
+    console.error(`${index + 1}. fixture: ${failure.fixture}`);
+    console.error(`   expected: ${failure.expected}`);
+    console.error(`   actual: ${failure.actual}`);
+    console.error(`   rule area: ${failure.ruleArea}`);
+    console.error(`   detail: ${failure.detail}`);
+  });
 }
 
 function read(file) {
@@ -1147,13 +1202,24 @@ function validateFocused() {
   for (const file of validFiles) {
     const markdown = extractMarkdownFixture(read(file));
     const errors = validateCoreMarkdown(file, markdown);
-    errors.forEach((error) => fail(file, `expected valid but failed: ${error}`));
+    errors.forEach((error) =>
+      fail(file, error, {
+        expected: "valid",
+        actual: "invalid",
+      }),
+    );
   }
 
   for (const file of invalidFiles) {
     const markdown = extractMarkdownFixture(read(file));
     const errors = validateCoreMarkdown(file, markdown);
-    if (errors.length === 0) fail(file, "expected invalid but checker accepted it");
+    if (errors.length === 0) {
+      fail(file, "checker accepted invalid fixture", {
+        expected: "invalid",
+        actual: "valid",
+        ruleArea: "negative fixture expectation",
+      });
+    }
   }
 }
 
@@ -1196,8 +1262,7 @@ validateFocused();
 validateRecursiveSourceFixtures();
 
 if (failures.length > 0) {
-  console.error("Core fixture check failed:");
-  failures.forEach((failure) => console.error(`- ${failure}`));
+  printFailureReport();
   process.exit(1);
 }
 
