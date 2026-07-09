@@ -9,6 +9,7 @@ Layout:
 - `valid/full/` contains the canonical full-profile set.
 - `valid/compact/` contains the matching compact-profile set.
 - `focused/invalid/` contains focused negative snippets for candidate compact-profile links, profile identity rules, and `field_defaults` boundaries.
+- `TOKEN-SAVINGS.md` records candidate measurement guidance and fixture-level reduction annotations.
 - Both sets use identical standard docs-root-relative paths.
 - Both sets share `projection_id: compact-candidate-20260709-001`.
 - The full INDEX links `Compact set: ../compact/`.

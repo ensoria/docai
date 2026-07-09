@@ -18,6 +18,7 @@ DocAI HTTP draft history. Specification versioning and compatibility rules are d
 - Adds focused invalid compact-candidate fixtures for missing, misplaced, and mislabeled `Full set:` / `Compact set:` profile links.
 - Adds focused invalid compact-candidate fixtures for profile-pair `projection_id` mismatch and within-set `generation_id` / `projection_id` mismatch.
 - Adds focused invalid compact-candidate fixtures for `field_defaults` invalid values, invalid table applicability, retained defaulted columns, and unknown-value defaults.
+- Adds compact-candidate token-saving measurement guidance and fixture-level reduction annotations.
 
 ## 0.11.0 (Draft - Compatibility Core)
 

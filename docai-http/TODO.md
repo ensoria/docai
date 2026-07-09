@@ -90,7 +90,7 @@ Exit criteria:
 - [ ] Add fixtures for retrieval-unit discoverability when `same_as` is used.
 - [ ] Add fixtures for compact `Client-visible fields` and `Opaque fields`.
 - [ ] Add checker support to compare compact output against the matching full output for client-visible contract preservation.
-- [ ] Add token-saving measurement guidance or fixture annotations for compact reductions.
+- [x] Add token-saving measurement guidance or fixture annotations for compact reductions.
 - [ ] Decide whether compact becomes part of a future Compatibility Core or remains a separate compatibility scope.
 
 ## P1: Strengthen Release Process
