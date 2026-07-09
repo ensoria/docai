@@ -17,3 +17,5 @@ Layout:
 Only the `core/` corpus is part of the current Compatibility Core evidence. The compact candidate corpus does not declare the compact profile ready for compatibility-preserving implementation. These fixtures do not declare workflows, webhooks, non-JSON representations, selective convention loading, token-routing metadata, or other non-core structures ready for compatibility-preserving implementation.
 
 Run `node tools/check-core-fixtures.mjs` from the `docai-http/` directory, or `node docai-http/tools/check-core-fixtures.mjs` from the repository root, to check the core fixture expectations.
+
+Run `node tools/check-compact-candidates.mjs` from the `docai-http/` directory, or `node docai-http/tools/check-compact-candidates.mjs` from the repository root, to check the compact candidate expectations.

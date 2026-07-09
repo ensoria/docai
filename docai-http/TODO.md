@@ -89,7 +89,7 @@ Exit criteria:
 - [ ] Add valid and invalid fixtures for `same_as`, including same-kind and backward-reference rules.
 - [ ] Add fixtures for retrieval-unit discoverability when `same_as` is used.
 - [ ] Add fixtures for compact `Client-visible fields` and `Opaque fields`.
-- [ ] Add checker support to compare compact output against the matching full output for client-visible contract preservation.
+- [x] Add checker support to compare compact output against the matching full output for client-visible contract preservation.
 - [x] Add token-saving measurement guidance or fixture annotations for compact reductions.
 - [ ] Decide whether compact becomes part of a future Compatibility Core or remains a separate compatibility scope.
 
