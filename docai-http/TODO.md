@@ -84,7 +84,7 @@ Exit criteria:
 - [x] Decide the first compact promotion scope: all compact rules or only `field_defaults` plus compact examples. Decision: first candidate scope is profile pairing, compact examples, and `field_defaults`; defer `same_as`, retrieval-unit discovery, `Client-visible fields`, and `Opaque fields`.
 - [x] Add a matching full/compact fixture pair with identical standard docs-root-relative paths.
 - [x] Add valid and invalid fixtures for `Full set:` and `Compact set:` profile links.
-- [ ] Add valid and invalid fixtures for shared `projection_id` and different profile `generation_id`. Valid candidate pair exists; invalid fixtures remain.
+- [x] Add valid and invalid fixtures for shared `projection_id` and different profile `generation_id`.
 - [ ] Add valid and invalid fixtures for `field_defaults`. Valid candidate pair exists; invalid fixtures remain.
 - [ ] Add valid and invalid fixtures for `same_as`, including same-kind and backward-reference rules.
 - [ ] Add fixtures for retrieval-unit discoverability when `same_as` is used.

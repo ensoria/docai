@@ -16,6 +16,7 @@ DocAI HTTP draft history. Specification versioning and compatibility rules are d
 - Adds release-process guidance for labels, version bumps, fixture versioning, tag checks, release notes, and the canonical core checker command.
 - Adds compact-profile candidate fixtures for profile pairing, compact examples, and valid `field_defaults` without promoting compact into the current Compatibility Core.
 - Adds focused invalid compact-candidate fixtures for missing, misplaced, and mislabeled `Full set:` / `Compact set:` profile links.
+- Adds focused invalid compact-candidate fixtures for profile-pair `projection_id` mismatch and within-set `generation_id` / `projection_id` mismatch.
 
 ## 0.11.0 (Draft - Compatibility Core)
 
