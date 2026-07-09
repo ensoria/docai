@@ -23,41 +23,41 @@ This backlog tracks work after the first public `0.11.0` Compatibility Core rele
 
 - [ ] Decide whether `tools/check-core-fixtures.mjs` remains a fixture checker or becomes a reusable validator.
 - [ ] Split parser logic into named units: metadata stamp parser, table parser, heading parser, section parser, field-path parser, and type parser.
-- [ ] Validate metadata stamp escaping, duplicate keys, missing keys, key order, optional `source_revision`, and extension-key placement more exhaustively.
-- [ ] Validate that all files in one full-profile set share `profile`, `generated`, `generation_id`, and `projection_id`.
-- [ ] Validate that INDEX endpoint rows exactly match resource endpoint headings.
-- [ ] Validate `coverage` / `knowledge` against `**unsupported**:` and `**unknown**:` markers at file and set scope.
-- [ ] Validate required `CONVENTIONS.md` headings and common error-shape labels.
-- [ ] Validate endpoint section order, required sections, and response ordering per endpoint.
-- [ ] Validate request subsection order and leading `none` collapse rules.
-- [ ] Validate path template variables against `Path Parameters`.
+- [x] Validate metadata stamp escaping, duplicate keys, missing keys, key order, optional `source_revision`, and extension-key placement more exhaustively.
+- [x] Validate that all files in one full-profile set share `profile`, `generated`, `generation_id`, and `projection_id`.
+- [x] Validate that INDEX endpoint rows exactly match resource endpoint headings.
+- [x] Validate `coverage` / `knowledge` against `**unsupported**:` and `**unknown**:` markers at file and set scope.
+- [x] Validate required `CONVENTIONS.md` headings and common error-shape labels.
+- [x] Validate endpoint section order, required sections, and response ordering per endpoint.
+- [x] Validate request subsection order and leading `none` collapse rules.
+- [x] Validate path template variables against `Path Parameters`.
 - [ ] Validate table column headers for core tables.
-- [ ] Validate body marker order: `body_required`, `body_presence`, `media_type`, and `body_nullable`.
+- [x] Validate body marker order: `body_required`, `body_presence`, `media_type`, and `body_nullable`.
 - [ ] Validate JSON body examples against field-table rows where practical.
-- [ ] Validate common and inline error references, including inline label matching.
+- [x] Validate common and inline error references, including inline label matching.
 - [ ] Validate `none`, `unknown`, and core replacement/localized `unsupported` placement.
 - [ ] Add a clear checker report format that lists fixture name, expected result, actual result, and rule area.
 
 ## P0: Expand Core Fixtures
 
-- [ ] Add valid and invalid fixtures for body-less requests.
-- [ ] Add valid and invalid fixtures for body-less responses, including `204`.
+- [x] Add valid and invalid fixtures for body-less requests.
+- [x] Add valid and invalid fixtures for body-less responses, including `204`.
 - [ ] Add valid and invalid fixtures for response status ranges.
 - [ ] Add valid and invalid fixtures for `default` responses.
 - [ ] Add valid and invalid fixtures for overlapping exact status, range, and default precedence prose.
-- [ ] Add valid and invalid fixtures for `Required=conditional`.
-- [ ] Add valid and invalid fixtures for `Required=unknown`, `Presence=unknown`, `Nullable=unknown`, and `Type=unknown`.
-- [ ] Add fixtures for `body_required: unknown`, `body_presence: unknown`, and `body_nullable: unknown`.
-- [ ] Add fixtures for root scalar, root array, and root dynamic-map bodies using `$`.
-- [ ] Add fixtures for exactly-null JSON values with `Type=null`.
+- [x] Add valid and invalid fixtures for `Required=conditional`.
+- [x] Add valid and invalid fixtures for `Required=unknown`, `Presence=unknown`, `Nullable=unknown`, and `Type=unknown`.
+- [x] Add fixtures for `body_required: unknown`, `body_presence: unknown`, and `body_nullable: unknown`.
+- [x] Add fixtures for root scalar, root array, and root dynamic-map bodies using `$`.
+- [x] Add fixtures for exactly-null JSON values with `Type=null`.
 - [ ] Add fixtures for object openness on root objects, nested objects, and `object[]` rows.
 - [ ] Add fixtures for repeated query parameters, repeated headers, and response-header comma-combination rules.
 - [ ] Add fixtures for endpoint-local `none` not suppressing common conventions.
-- [ ] Add fixtures for common error suppression with `**deviation**:`.
-- [ ] Add fixtures for deprecated endpoints and matching INDEX summary prefix.
+- [x] Add fixtures for common error suppression with `**deviation**:`.
+- [x] Add fixtures for deprecated endpoints and matching INDEX summary prefix.
 - [ ] Add fixtures for valid and invalid `x-` metadata, markers, headings, and table columns inside the Core scope.
 - [ ] Add directly recursive and indirectly recursive source fixtures that demonstrate required `unsupported` output.
-- [ ] Update `fixtures/core/v0.11.0/COVERAGE.md` after each fixture group lands.
+- [x] Update `fixtures/core/v0.11.0/COVERAGE.md` after each fixture group lands.
 
 ## P1: Prepare Compact Profile Promotion
 

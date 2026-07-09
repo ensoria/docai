@@ -200,6 +200,25 @@ function parseTables(markdown) {
   return tables;
 }
 
+function headingSections(markdown, predicate) {
+  const matches = [...markdown.matchAll(/^(#{1,6}) (.+)$/gm)];
+  const sections = [];
+  matches.forEach((match, index) => {
+    const level = match[1].length;
+    const title = match[2];
+    if (!predicate(title, level)) return;
+    const next = matches.slice(index + 1).find((candidate) => candidate[1].length <= level);
+    const end = next?.index ?? markdown.length;
+    sections.push({
+      title,
+      level,
+      line: markdown.slice(0, match.index).split(/\r?\n/).length,
+      text: markdown.slice(match.index, end),
+    });
+  });
+  return sections;
+}
+
 function validateTables(file, markdown) {
   for (const table of parseTables(markdown)) {
     const width = table.header.length;
@@ -234,6 +253,20 @@ function validateTypes(markdown) {
     if (typeIndex < 0) continue;
     for (const row of table.rows) {
       if (!isType(row[typeIndex])) throw new Error(`invalid type ${row[typeIndex]}`);
+    }
+  }
+}
+
+function validateConditionalRequiredness(markdown) {
+  for (const table of parseTables(markdown)) {
+    const requiredIndex = table.header.indexOf("Required");
+    const constraintsIndex = table.header.indexOf("Constraints / Meaning");
+    if (requiredIndex < 0 || constraintsIndex < 0) continue;
+    for (const row of table.rows) {
+      if (row[requiredIndex] !== "conditional") continue;
+      if (!/\b(if|when|unless|required)\b/i.test(row[constraintsIndex])) {
+        throw new Error(`conditional requiredness lacks exact condition in ${row[0]}`);
+      }
     }
   }
 }
@@ -382,6 +415,18 @@ function validateIndex(markdown) {
   }
 }
 
+function indexEndpointRows(markdown) {
+  const table = parseTables(markdown).find((candidate) => candidate.header.join("|") === "Method|Path|Task|Summary|Also read");
+  if (!table) return [];
+  return table.rows.map((row) => ({
+    method: row[0],
+    path: row[1],
+    task: row[2],
+    summary: row[3],
+    alsoRead: row[4],
+  }));
+}
+
 function validateConventions(markdown, requireAll) {
   if (!markdown.includes("# API Conventions") && !CONVENTION_HEADINGS.some((h) => markdown.includes(`## ${h}`))) return;
   const found = headings(markdown, 2).filter((h) => CONVENTION_HEADINGS.includes(h));
@@ -422,6 +467,30 @@ function validateEndpointSectionOrder(markdown) {
     if (expected.some((index) => index < 0)) throw new Error(`${block.method} ${block.path} is missing a required section`);
     for (let i = 1; i < expected.length; i += 1) {
       if (expected[i] <= expected[i - 1]) throw new Error(`${block.method} ${block.path} sections are out of order`);
+    }
+  }
+}
+
+function validateRequestSubsectionOrder(markdown) {
+  const names = ["Path Parameters", "Query Parameters", "Headers", "Cookie Parameters", "Body"];
+  for (const block of endpointBlocks(markdown)) {
+    if (!block.text.includes("### Response ") || !block.text.includes("### Errors")) continue;
+    const request = section(block.text, "### Request");
+    if (!request) continue;
+    const found = [];
+    for (const match of request.matchAll(/^(#### (Path Parameters|Query Parameters|Headers|Cookie Parameters|Body)|- (Path Parameters|Query Parameters|Headers|Cookie Parameters|Body): none)$/gm)) {
+      found.push({
+        name: match[2] ?? match[3],
+        collapsed: Boolean(match[3]),
+      });
+    }
+    if (found.length === 0) throw new Error(`${block.method} ${block.path} request has no request subsections`);
+    if (found.map((item) => item.name).join("|") !== names.join("|")) {
+      throw new Error(`${block.method} ${block.path} request subsections are out of order or incomplete`);
+    }
+    const firstHeading = found.findIndex((item) => !item.collapsed);
+    if (firstHeading >= 0 && found.slice(firstHeading + 1).some((item) => item.collapsed)) {
+      throw new Error(`${block.method} ${block.path} collapses a request subsection after a heading subsection`);
     }
   }
 }
@@ -473,6 +542,71 @@ function validateResponseStatusOrder(markdown) {
   }
 }
 
+function validateBodyMarkerOrder(markdown) {
+  headingSections(markdown, (title) => title === "Body").forEach((body) => {
+    validateBodyRepresentationMarkers(body.text, `${body.title} at line ${body.line}`, "body_required");
+  });
+  headingSections(markdown, (title) => title.startsWith("Response ")).forEach((response) => {
+    validateBodyRepresentationMarkers(response.text, `${response.title} at line ${response.line}`, "body_presence");
+  });
+
+  const shapeMatches = [...markdown.matchAll(/^\*\*error_shape\*\*: .+$/gm)];
+  shapeMatches.forEach((match, index) => {
+    const nextShape = shapeMatches[index + 1]?.index ?? markdown.length;
+    const nextH3 = markdown.slice(match.index + match[0].length).search(/\n#{1,3} /);
+    const end = nextH3 >= 0 ? Math.min(nextShape, match.index + match[0].length + nextH3) : nextShape;
+    const text = markdown.slice(match.index, end);
+    validateBodyRepresentationMarkers(text, `error shape at line ${markdown.slice(0, match.index).split(/\r?\n/).length}`, "body_presence");
+  });
+}
+
+function validateBodyRepresentationMarkers(text, label, presenceMarker) {
+  const markers = [...text.matchAll(/^\*\*(body_required|body_presence|media_type|body_nullable)\*\*: .+$/gm)].map((match) => ({
+    name: match[1],
+  }));
+  if (markers.length === 0) return;
+
+  const presenceIndex = markers.findIndex((marker) => marker.name === presenceMarker);
+  const firstMediaIndex = markers.findIndex((marker) => marker.name === "media_type");
+  const firstNullableIndex = markers.findIndex((marker) => marker.name === "body_nullable");
+
+  if (firstMediaIndex >= 0) {
+    if (presenceIndex < 0) throw new Error(`${label} representation lacks ${presenceMarker}`);
+    if (presenceIndex > firstMediaIndex) throw new Error(`${label} has ${presenceMarker} after media_type`);
+  }
+  if (firstNullableIndex >= 0 && (firstMediaIndex < 0 || firstNullableIndex < firstMediaIndex)) {
+    throw new Error(`${label} has body_nullable before media_type`);
+  }
+
+  markers.forEach((marker, index) => {
+    if (marker.name !== "media_type") return;
+    const next = markers[index + 1];
+    if (!next || next.name !== "body_nullable") {
+      throw new Error(`${label} media_type is not followed by body_nullable`);
+    }
+  });
+}
+
+function validateBodylessResponseHeaders(markdown) {
+  for (const response of headingSections(markdown, (title) => title.startsWith("Response "))) {
+    const body = response.text.split(/\r?\n/).slice(1).find((line) => line.trim() !== "");
+    if (body !== "none") continue;
+    if (!/^#### Response Headers$/m.test(response.text) && !/^- Response Headers: none$/m.test(response.text)) {
+      throw new Error(`${response.title} lacks response headers after body-less response`);
+    }
+  }
+}
+
+function validateBodylessRequestBodies(markdown) {
+  for (const body of headingSections(markdown, (title) => title === "Body")) {
+    const firstContent = body.text.split(/\r?\n/).slice(1).find((line) => line.trim() !== "");
+    if (firstContent !== "none") continue;
+    if (/^\*\*body_required\*\*: /m.test(body.text) || /^\*\*media_type\*\*: /m.test(body.text) || /^\*\*body_nullable\*\*: /m.test(body.text)) {
+      throw new Error(`${body.title} at line ${body.line} has body markers after body-less request`);
+    }
+  }
+}
+
 function statusSortKey(status) {
   if (/^[1-5][0-9][0-9]$/.test(status)) return Number(status);
   if (/^[1-5]XX$/.test(status)) return 1000 + Number(status[0]);
@@ -508,6 +642,19 @@ function validateUnknownMarkers(markdown) {
   if (hasUnknownValue && !markdown.includes("**unknown**:")) throw new Error("unknown value lacks unknown marker");
 }
 
+function validateDeprecatedIndexSummaries(markdown) {
+  const rows = indexEndpointRows(markdown);
+  if (rows.length === 0) return;
+  for (const block of endpointBlocks(markdown)) {
+    if (!/^\*\*deprecated\*\*: /m.test(block.text)) continue;
+    const row = rows.find((candidate) => candidate.method === block.method && candidate.path === block.path);
+    if (!row) continue;
+    if (!row.summary.startsWith("(deprecated)")) {
+      throw new Error(`${block.method} ${block.path} is deprecated but INDEX summary lacks (deprecated) prefix`);
+    }
+  }
+}
+
 function extractMarkdownFixture(markdown) {
   const match = markdown.match(/^(`{3,4})[a-zA-Z-]*\n([\s\S]*?)^\1$/m);
   return match ? match[2] : markdown;
@@ -530,6 +677,7 @@ function validateCoreMarkdown(file, markdown, options = {}) {
   run(() => validateTables(file, markdown));
   run(() => validateFieldPaths(markdown));
   run(() => validateTypes(markdown));
+  run(() => validateConditionalRequiredness(markdown));
   run(() => validateJsonExamples(markdown));
   run(() => validateUnsupported(markdown));
   run(() => validateCommonErrorRefs(markdown, options.commonErrorShapes));
@@ -537,10 +685,15 @@ function validateCoreMarkdown(file, markdown, options = {}) {
   run(() => validateIndex(markdown));
   run(() => validateConventions(markdown, options.requireAllConventions ?? false));
   run(() => validateEndpointSectionOrder(markdown));
+  run(() => validateRequestSubsectionOrder(markdown));
   run(() => validatePathParameters(markdown));
   run(() => validateResponseStatusOrder(markdown));
+  run(() => validateBodyMarkerOrder(markdown));
+  run(() => validateBodylessResponseHeaders(markdown));
+  run(() => validateBodylessRequestBodies(markdown));
   run(() => validateErrorShapes(markdown));
   run(() => validateUnknownMarkers(markdown));
+  run(() => validateDeprecatedIndexSummaries(markdown));
   return errors;
 }
 
@@ -583,9 +736,8 @@ function validateFullSet() {
     errors.forEach((error) => fail(file, error));
   }
 
-  const indexRows = parseTables(contents[files[0]])
-    .find((table) => table.header.join("|") === "Method|Path|Task|Summary|Also read")
-    ?.rows.map((row) => `${row[0]} ${row[1]}`)
+  const indexRows = indexEndpointRows(contents[files[0]])
+    .map((row) => `${row.method} ${row.path}`)
     .sort();
   const resourceHeadings = endpointBlocks(contents[files[2]])
     .map((block) => `${block.method} ${block.path}`)
