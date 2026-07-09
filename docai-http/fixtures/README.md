@@ -1,8 +1,8 @@
 # DocAI HTTP Fixtures
 
-This directory contains versioned conformance fixtures for DocAI HTTP.
+This directory holds DocAI HTTP's versioned fixture corpora.
 
-The current corpus is an initial Compatibility Core corpus for draft `0.11.0`. It is intended to make the pre-1.0 core scope concrete before the complete generator implementation surface is stabilized.
+The current contents are an initial Compatibility Core corpus for draft `0.11.0`. The complete conformance corpus that a stable release requires (README §9.1) does not exist yet; this core corpus is the pre-1.0 subset, intended to make the core scope concrete before the complete generator implementation surface is stabilized.
 
 Layout:
 
