@@ -11,6 +11,7 @@ DocAI HTTP draft history. Specification versioning and compatibility rules are d
 - Adds checker and focused fixture coverage for repeated query/header wire rules and endpoint-local `none` common-convention boundaries.
 - Adds checker and focused fixture coverage for `none`/`unknown`/`unsupported` placement and direct/indirect recursive source fallbacks.
 - Improves the Compatibility Core checker failure report with fixture name, expected result, actual result, rule area, and detail fields.
+- Defines the next pre-1.0 Compatibility Core hardening scope and keeps the core checker positioned as a corpus-specific fixture expectation checker.
 
 ## 0.11.0 (Draft - Compatibility Core)
 

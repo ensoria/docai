@@ -9,7 +9,27 @@ This backlog tracks work after the first public `0.11.0` Compatibility Core rele
 - [x] Tag and publish the first public Compatibility Core release.
 - [x] Provide an initial full-profile core fixture set under `fixtures/core/v0.11.0/`.
 - [x] Provide focused valid/invalid core fixtures and `tools/check-core-fixtures.mjs`.
-- [ ] Define the next target release scope.
+- [x] Define the next target release scope.
+
+## Next Target Release Scope
+
+Target the next pre-1.0 Compatibility Core hardening release. The numeric version is intentionally deferred until the version bump rules below are defined, so this backlog does not accidentally choose between a compatible patch release and a wider draft minor release before the release policy exists.
+
+Scope:
+
+- Preserve the `0.11.0` Compatibility Core surface; do not promote compact, workflows, webhooks, non-JSON representations, selective `Conventions` loading, token-routing metadata, or other non-core structures in this target.
+- Finish the remaining P0 checker hardening while keeping `tools/check-core-fixtures.mjs` a corpus-specific fixture expectation checker, not a public reusable validator.
+- Split parser and structural checks into named units before adding broader feature validation, so future promotions can reuse the internal pieces without changing the public checker promise.
+- Add release-process documentation for version bumps, fixture versioning, tag checks, and release notes before the next tag.
+- Permit README clarifications only when they preserve the current Compatibility Core promise or are backed by matching fixtures, checker behavior, coverage notes, and changelog entries.
+- Prepare compact-profile promotion decisions and fixture plans, but defer compact promotion itself to a later explicitly scoped release unless its fixture and checker evidence is complete.
+
+Exit criteria:
+
+- All P0 core-validator hardening tasks are complete.
+- P1 release-process tasks are complete or explicitly deferred with a reason in this TODO.
+- `node docai-http/tools/check-core-fixtures.mjs` passes from the repository root.
+- `CHANGELOG.md` has a concrete version section before tagging, and no README-visible change remains only under `Unreleased`.
 
 ## Release Rules For This Backlog
 
@@ -21,7 +41,7 @@ This backlog tracks work after the first public `0.11.0` Compatibility Core rele
 
 ## P0: Strengthen The Core Validator
 
-- [ ] Decide whether `tools/check-core-fixtures.mjs` remains a fixture checker or becomes a reusable validator.
+- [x] Decide whether `tools/check-core-fixtures.mjs` remains a fixture checker or becomes a reusable validator. Decision: keep it as a corpus-specific fixture expectation checker for the next target; revisit reusable validator extraction after parser units and release packaging are clearer.
 - [ ] Split parser logic into named units: metadata stamp parser, table parser, heading parser, section parser, field-path parser, and type parser.
 - [x] Validate metadata stamp escaping, duplicate keys, missing keys, key order, optional `source_revision`, and extension-key placement more exhaustively.
 - [x] Validate that all files in one full-profile set share `profile`, `generated`, `generation_id`, and `projection_id`.
