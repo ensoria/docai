@@ -3,11 +3,11 @@
 DocAI HTTP is a documentation format for describing HTTP APIs in a way that is optimized for AI/LLM consumption.
 It is designed so that an AI can read the API documentation as context and efficiently implement an HTTP client that calls the API correctly. Browser-specific requirements are included where they affect web clients, but the format also supports mobile, server, desktop, and CLI clients.
 
-> Specification version: 0.10.1 | status: Draft
+> Specification version: 0.11.0 | status: Draft
 
-> Publication label: initial design-review draft only; not generator-implementation-ready, compatibility-stable, or stable.
+> Publication label: Compatibility Core implementation target; not complete-generator-ready, compatibility-stable, or stable.
 
-This is a pre-1.0 design-review draft and is not yet declared ready for generator implementation. It may be published as an initial public design-review draft only when that label is preserved; it must not be presented as an initial stable release, a 1.0 release, generator-implementation-ready, or an initial compatibility-preserving implementation target. Its structure may change incompatibly while implementation experience and conformance fixtures are collected. Stable compatibility guarantees begin with specification version 1.0.0. A release intended as the first compatibility-preserving implementation target must first declare its compatibility scope, satisfy the matching fixture evidence requirements in §9.1, and use a publication label consistent with that evidence.
+This is a pre-1.0 Compatibility Core implementation target. It may be used as an implementation target only for the Compatibility Core defined in §3.1 and covered by the fixtures in §9.1. It must not be presented as an initial stable release, a 1.0 release, complete-generator-ready, compatibility-stable, or compatibility-preserving for non-core structures. Non-core structures remain design-review draft material and may change incompatibly while implementation experience and conformance fixtures are collected. Stable compatibility guarantees begin with specification version 1.0.0. A later release that expands the compatibility scope must declare that scope, satisfy the matching fixture evidence requirements in §9.1, and use a publication label consistent with that evidence.
 
 Changes are recorded in the repository history and [CHANGELOG.md](CHANGELOG.md). Keeping detailed draft history outside this README reduces tokens for readers that only need the current format rules. Before tagging or publishing a repository release, the specification version in this README, the metadata-stamp examples in this README, and the matching CHANGELOG.md entry for that same version must agree. README-visible changes must not remain only under `Unreleased` in the changelog for a tagged release. The readiness requirements are defined in §9.1.
 
@@ -84,7 +84,7 @@ docs/
 Because files are loaded **individually**(that is the point of splitting), freshness cannot live only in INDEX.md. Every file — INDEX.md, CONVENTIONS.md, and each file under resources/, workflows/, and webhooks/ — must begin with a one-line metadata stamp so an LLM that loaded only that file can judge how current it is and how much detail it contains:
 
 ```markdown
-> docai-http: 0.10.1 | profile: full | coverage: complete | knowledge: complete | generated: 2026-06-30 | generation_id: full-20260630-abc123 | projection_id: 20260630-abc123 | source: openapi.yaml (OpenAPI 3.1.1) | source_revision: sha256:abc123
+> docai-http: 0.11.0 | profile: full | coverage: complete | knowledge: complete | generated: 2026-06-30 | generation_id: full-20260630-abc123 | projection_id: 20260630-abc123 | source: openapi.yaml (OpenAPI 3.1.1) | source_revision: sha256:abc123
 ```
 
 The stamp is one Markdown blockquote line of `key: value` pairs separated by an unescaped ` | `. The standard keys from `docai-http` through `source` are required and appear in exactly the order shown above. `source_revision` is the only optional standard key; when no stable revision can be produced, omit the entire ` | source_revision: ...` pair rather than writing `none` or `unknown`. Parse each pair at its first `: `. Values must not contain a newline. Within a value, escape `\` as `\\` and `|` as `\|`; these are the only valid escape sequences. When locating separators, a pipe is escaped when it is immediately preceded by an odd-length run of backslashes. After splitting the pairs, decode escapes from left to right. An unknown escape or a trailing unescaped backslash makes the stamp invalid. Extension keys must use the `x-` prefix(§3.1) and come after the standard keys that are present; if `source_revision` is present they follow it, otherwise they follow `source`.
@@ -145,7 +145,7 @@ Extensions must not disrupt the fixed standard structure. An `x-` metadata key f
 The entry point that an LLM reads first. Endpoints are listed under a fixed `## Endpoints` section, grouped into **one subsection per resource file**: a `###` heading whose text is the file's path from the docs root, followed by a table with one endpoint per row.
 
 ```markdown
-> docai-http: 0.10.1 | profile: full | coverage: complete | knowledge: complete | generated: 2026-06-30 | generation_id: full-20260630-abc123 | projection_id: 20260630-abc123 | source: openapi.yaml (OpenAPI 3.1.1) | source_revision: sha256:abc123
+> docai-http: 0.11.0 | profile: full | coverage: complete | knowledge: complete | generated: 2026-06-30 | generation_id: full-20260630-abc123 | projection_id: 20260630-abc123 | source: openapi.yaml (OpenAPI 3.1.1) | source_revision: sha256:abc123
 
 # API Index
 
@@ -175,7 +175,7 @@ The entry point that an LLM reads first. Endpoints are listed under a fixed `## 
 When a matching compact or full profile set exists, the INDEX.md profile-link line appears directly after the metadata stamp:
 
 ```markdown
-> docai-http: 0.10.1 | profile: full | coverage: complete | knowledge: complete | generated: 2026-06-30 | generation_id: full-20260630-abc123 | projection_id: 20260630-abc123 | source: openapi.yaml (OpenAPI 3.1.1) | source_revision: sha256:abc123
+> docai-http: 0.11.0 | profile: full | coverage: complete | knowledge: complete | generated: 2026-06-30 | generation_id: full-20260630-abc123 | projection_id: 20260630-abc123 | source: openapi.yaml (OpenAPI 3.1.1) | source_revision: sha256:abc123
 Compact set: ../docs-compact/
 
 # API Index
@@ -358,7 +358,7 @@ Missing authoritative knowledge is different from an unrepresentable source feat
 
 Do not use `unknown` for structural identifiers whose grammar is needed to locate or bound content: endpoint method, endpoint path, response status, file path, table column header, parameter/header/field name, `**error_shape**:` label, `common:<label>`, `inline:<label>`, `**same_as**:` target, or replacement `**unsupported**:` unit name. If one of those identifiers, other than endpoint method or endpoint path, is missing from authoritative inputs and the affected unit cannot otherwise be emitted with a valid identifier, use the smallest applicable whole-section `unknown` form. Endpoint method and endpoint path are the endpoint heading and INDEX routing keys; if either is absent or cannot be represented by this specification, a compliant document set cannot include that operation until the authoritative source is corrected or a future DocAI HTTP version defines a representation. If a source value literally equals a fixed sentinel such as `none` or `unknown` in a structural cell, preserve the value only when the surrounding rule can still distinguish it unambiguously; otherwise use the smallest applicable canonical `**unsupported**:` form and point to the source location.
 
-DocAI HTTP 0.10.1 has no recursive-schema reference syntax. Directly or indirectly recursive request, response, error, parameter, or webhook shapes are deliberately outside the intended 1.0.0 representable scope. This specification chooses the conservative first-stable-release path: recursive shapes remain unsupported for 1.0.0 unless a finite, self-contained representation and versioned fixtures are added before the pre-v1.0.0 release-candidate stage. They cannot be represented by finite inline expansion. The generator must use the smallest applicable localized or replacement `**unsupported**:` form above and apply `coverage: requires-source`; it must not truncate the recursion at an arbitrary depth or invent a non-recursive shape.
+DocAI HTTP 0.11.0 has no recursive-schema reference syntax. Directly or indirectly recursive request, response, error, parameter, or webhook shapes are deliberately outside the intended 1.0.0 representable scope. This specification chooses the conservative first-stable-release path: recursive shapes remain unsupported for 1.0.0 unless a finite, self-contained representation and versioned fixtures are added before the pre-v1.0.0 release-candidate stage. They cannot be represented by finite inline expansion. The generator must use the smallest applicable localized or replacement `**unsupported**:` form above and apply `coverage: requires-source`; it must not truncate the recursion at an arbitrary depth or invent a non-recursive shape.
 
 This is a deliberate reliability choice. Expanding a recursive shape to an arbitrary finite depth would make the generated document appear complete while hiding deeper valid values from the LLM. That would violate the DocAI HTTP requirement to preserve the complete client-visible contract and could cause generated clients to reject, omit, or mishandle valid nested data. Marking the recursive unit as `unsupported` and directing the reader to the authoritative source is preferable to a partial expansion that looks self-contained but is not. Future recursive-schema support would add a new finite representation under the compatibility rules in §3.1; if existing readers must understand that representation to call the API correctly, it requires a new major version.
 
@@ -787,7 +787,7 @@ none
 Operations that require multiple endpoints to be called in a specific order should be written as workflows.
 
 ```markdown
-> docai-http: 0.10.1 | profile: full | coverage: complete | knowledge: complete | generated: 2026-06-30 | generation_id: full-20260630-abc123 | projection_id: 20260630-abc123 | source: openapi.yaml (OpenAPI 3.1.1) | source_revision: sha256:abc123
+> docai-http: 0.11.0 | profile: full | coverage: complete | knowledge: complete | generated: 2026-06-30 | generation_id: full-20260630-abc123 | projection_id: 20260630-abc123 | source: openapi.yaml (OpenAPI 3.1.1) | source_revision: sha256:abc123
 
 # Checkout
 
@@ -831,7 +831,7 @@ Webhooks are calls in the reverse direction: the API sends an HTTP request to a 
 A webhook group file is valid only when the grouped events share the same event-specific headers, delivery deviations, related trigger description, and receiver handling requirements, and when their payload differences can be represented as one payload with `**variant**:` blocks under §4.1. If headers, delivery deviations, related triggers, receiver requirements, or payload selection rules differ in a way that cannot be represented faithfully in that single structure, split the group into one file per event or use the smallest applicable `**unsupported**:` form. Grouping is a token and navigation optimization, not a license to merge distinct event contracts.
 
 ````markdown
-> docai-http: 0.10.1 | profile: full | coverage: complete | knowledge: complete | generated: 2026-06-30 | generation_id: full-20260630-abc123 | projection_id: 20260630-abc123 | source: openapi.yaml (OpenAPI 3.1.1) | source_revision: sha256:abc123
+> docai-http: 0.11.0 | profile: full | coverage: complete | knowledge: complete | generated: 2026-06-30 | generation_id: full-20260630-abc123 | projection_id: 20260630-abc123 | source: openapi.yaml (OpenAPI 3.1.1) | source_revision: sha256:abc123
 
 # payment.completed
 
@@ -981,7 +981,7 @@ A document set is DocAI HTTP-compliant if:
 
 Conformance fixtures are separate versioned example files, not the illustrative snippets in this README. They should be created after the format rules have converged enough that the repository can publish a pre-v1.0.0 release candidate. `pre-v1.0.0` is a repository release label or tag, not a valid `docai-http` metadata-stamp version; generated fixture files still use the numeric draft version they test.
 
-This repository's initial Compatibility Core fixture corpus for draft `0.10.1` is in [`fixtures/core/v0.10.1/`](fixtures/core/v0.10.1/). It is an initial core corpus, not the complete generator implementation corpus described below.
+This repository's Compatibility Core fixture corpus for draft `0.11.0` is in [`fixtures/core/v0.11.0/`](fixtures/core/v0.11.0/). It is a core corpus, not the complete generator implementation corpus described below. Run `node tools/check-core-fixtures.mjs` from the `docai-http/` directory, or `node docai-http/tools/check-core-fixtures.mjs` from the repository root, to check the core fixture expectations.
 
 Fixture requirements are staged to match the compatibility scope in §3.1. Before publishing a draft as the first Compatibility Core implementation target, the specification repository must publish at least one valid core full-profile document set and focused valid and invalid fixtures for every structure in the Compatibility Core. That core set must include INDEX.md, CONVENTIONS.md, at least one resource file, ordinary endpoint request/response examples, represented JSON bodies, parameters, response headers, common and inline errors, `none`, `unknown`, localized and core-unit replacement `unsupported`, recursive-schema `unsupported`, metadata escaping, extension placement, table parsing and normalization, field paths, type grammar, status ordering, generated-example validity, and coverage/knowledge states. A Compatibility Core implementation target does not declare the `compact` profile, workflows, webhooks, non-JSON representations, selective convention loading, token-routing metadata, or other non-core structures ready for compatibility-preserving implementation.
 
