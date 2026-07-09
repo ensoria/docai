@@ -354,6 +354,80 @@ function validateConditionalRequiredness(markdown) {
   }
 }
 
+function validateRepeatedWireRules(markdown) {
+  for (const table of parseTables(markdown)) {
+    if (hasStandardHeader(table.header, ["Name", "Type", "Required", "Constraints / Meaning"])) {
+      validateRepeatedQueryOrCookieRows(table);
+    } else if (hasStandardHeader(table.header, ["Name", "Required", "Type", "Constraints / Meaning"])) {
+      validateRepeatedRequestHeaderRows(table);
+    } else if (hasStandardHeader(table.header, ["Name", "Type", "Presence", "Meaning"])) {
+      validateRepeatedResponseHeaderRows(table);
+    }
+  }
+}
+
+function validateRepeatedQueryOrCookieRows(table) {
+  const nameIndex = table.header.indexOf("Name");
+  const typeIndex = table.header.indexOf("Type");
+  const constraintsIndex = table.header.indexOf("Constraints / Meaning");
+  for (const row of table.rows) {
+    if (!isRepeatedRow(row[typeIndex], row[constraintsIndex])) continue;
+    const detail = row[constraintsIndex];
+    if (!/\b(repeated|delimited|last-value-wins)\b/i.test(detail)) {
+      throw new Error(`repeated parameter ${row[nameIndex]} lacks occurrence strategy`);
+    }
+    if (!new RegExp(`${escapeRegExp(row[nameIndex])}=`).test(detail)) {
+      throw new Error(`repeated parameter ${row[nameIndex]} lacks encoded example`);
+    }
+  }
+}
+
+function validateRepeatedRequestHeaderRows(table) {
+  const nameIndex = table.header.indexOf("Name");
+  const typeIndex = table.header.indexOf("Type");
+  const constraintsIndex = table.header.indexOf("Constraints / Meaning");
+  for (const row of table.rows) {
+    if (!isRepeatedRow(row[typeIndex], row[constraintsIndex])) continue;
+    validateRepeatedHeaderDetail("request header", row[nameIndex], row[constraintsIndex]);
+  }
+}
+
+function validateRepeatedResponseHeaderRows(table) {
+  const nameIndex = table.header.indexOf("Name");
+  const typeIndex = table.header.indexOf("Type");
+  const meaningIndex = table.header.indexOf("Meaning");
+  for (const row of table.rows) {
+    if (!isRepeatedRow(row[typeIndex], row[meaningIndex])) continue;
+    validateRepeatedHeaderDetail("response header", row[nameIndex], row[meaningIndex]);
+  }
+}
+
+function isRepeatedRow(type, detail) {
+  return (
+    type.endsWith("[]") ||
+    /\b(repeated|multiple field lines|field-line|field lines|list-valued|comma-combinable|last-value-wins)\b/i.test(detail)
+  );
+}
+
+function validateRepeatedHeaderDetail(kind, name, detail) {
+  if (!/\b(repeated|multiple field lines|field lines|list-valued)\b/i.test(detail)) {
+    throw new Error(`repeated ${kind} ${name} lacks field-line or list-valued form`);
+  }
+  if (!/comma/i.test(detail)) {
+    throw new Error(`repeated ${kind} ${name} lacks comma-combination rule`);
+  }
+  if (!/\border\b/i.test(detail)) {
+    throw new Error(`repeated ${kind} ${name} lacks order rule`);
+  }
+  if (!new RegExp(`${escapeRegExp(name)}:`, "i").test(detail)) {
+    throw new Error(`repeated ${kind} ${name} lacks wire example`);
+  }
+}
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function isType(value) {
   if (["string", "int", "float", "bool", "null", "any", "object", "file", "unknown"].includes(value)) {
     return true;
@@ -832,6 +906,17 @@ function validateDeprecatedIndexSummaries(markdown) {
   }
 }
 
+function validateCommonSuppressionDeviations(markdown) {
+  const sections = headingSections(markdown, (title) => title === "Request" || title === "Errors" || title.startsWith("Response "));
+  for (const current of sections) {
+    if (/^\*\*deviation\*\*: /m.test(current.text)) continue;
+    if (!/\bnone\b/i.test(current.text)) continue;
+    if (/\b(common|CONVENTIONS\.md|Authentication|Authorization|Rate Limits|Pagination)\b[\s\S]{0,120}\b(does not apply|do not apply|not apply|suppressed|suppress)\b/i.test(current.text)) {
+      throw new Error(`${current.title} suppresses common conventions without deviation marker`);
+    }
+  }
+}
+
 function validateHeadingNames(markdown) {
   const matches = [...markdown.matchAll(/^(#{1,6}) (.+)$/gm)];
   for (const match of matches) {
@@ -914,6 +999,7 @@ function validateCoreMarkdown(file, markdown, options = {}) {
   run(() => validateTypes(markdown));
   run(() => validateObjectOpenness(markdown));
   run(() => validateConditionalRequiredness(markdown));
+  run(() => validateRepeatedWireRules(markdown));
   run(() => validateJsonExamples(markdown));
   run(() => validateJsonExampleFields(markdown));
   run(() => validateUnsupported(markdown));
@@ -932,6 +1018,7 @@ function validateCoreMarkdown(file, markdown, options = {}) {
   run(() => validateErrorShapes(markdown));
   run(() => validateUnknownMarkers(markdown));
   run(() => validateDeprecatedIndexSummaries(markdown));
+  run(() => validateCommonSuppressionDeviations(markdown));
   return errors;
 }
 

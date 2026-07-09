@@ -51,8 +51,8 @@ This backlog tracks work after the first public `0.11.0` Compatibility Core rele
 - [x] Add fixtures for root scalar, root array, and root dynamic-map bodies using `$`.
 - [x] Add fixtures for exactly-null JSON values with `Type=null`.
 - [x] Add fixtures for object openness on root objects, nested objects, and `object[]` rows.
-- [ ] Add fixtures for repeated query parameters, repeated headers, and response-header comma-combination rules.
-- [ ] Add fixtures for endpoint-local `none` not suppressing common conventions.
+- [x] Add fixtures for repeated query parameters, repeated headers, and response-header comma-combination rules.
+- [x] Add fixtures for endpoint-local `none` not suppressing common conventions.
 - [x] Add fixtures for common error suppression with `**deviation**:`.
 - [x] Add fixtures for deprecated endpoints and matching INDEX summary prefix.
 - [x] Add fixtures for valid and invalid `x-` metadata, markers, headings, and table columns inside the Core scope.
