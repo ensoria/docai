@@ -1,0 +1,66 @@
+openapi: 3.1.1
+info:
+  title: Compact Candidate Fixture API
+  version: 0.11.0-compact-candidate-source
+paths:
+  /users:
+    post:
+      summary: Create user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - email
+                - name
+              properties:
+                email:
+                  type: string
+                  format: email
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 100
+                role:
+                  type: string
+                  enum:
+                    - admin
+                    - member
+                  default: member
+      responses:
+        "201":
+          description: User created
+          headers:
+            Location:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - id
+                  - email
+                  - name
+                  - role
+                  - created_at
+                properties:
+                  id:
+                    type: string
+                  email:
+                    type: string
+                    format: email
+                  name:
+                    type: string
+                  role:
+                    type: string
+                    enum:
+                      - admin
+                      - member
+                  created_at:
+                    type: string
+                    format: date-time

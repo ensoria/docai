@@ -14,6 +14,7 @@ DocAI HTTP draft history. Specification versioning and compatibility rules are d
 - Defines the next pre-1.0 Compatibility Core hardening scope and keeps the core checker positioned as a corpus-specific fixture expectation checker.
 - Splits the Compatibility Core checker parsing logic into named metadata-stamp, table, heading, section, field-path, and type parser units.
 - Adds release-process guidance for labels, version bumps, fixture versioning, tag checks, release notes, and the canonical core checker command.
+- Adds compact-profile candidate fixtures for profile pairing, compact examples, and valid `field_defaults` without promoting compact into the current Compatibility Core.
 
 ## 0.11.0 (Draft - Compatibility Core)
 
