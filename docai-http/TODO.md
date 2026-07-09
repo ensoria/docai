@@ -31,7 +31,7 @@ This backlog tracks work after the first public `0.11.0` Compatibility Core rele
 - [x] Validate endpoint section order, required sections, and response ordering per endpoint.
 - [x] Validate request subsection order and leading `none` collapse rules.
 - [x] Validate path template variables against `Path Parameters`.
-- [ ] Validate table column headers for core tables.
+- [x] Validate table column headers for core tables.
 - [x] Validate body marker order: `body_required`, `body_presence`, `media_type`, and `body_nullable`.
 - [ ] Validate JSON body examples against field-table rows where practical.
 - [x] Validate common and inline error references, including inline label matching.
@@ -42,9 +42,9 @@ This backlog tracks work after the first public `0.11.0` Compatibility Core rele
 
 - [x] Add valid and invalid fixtures for body-less requests.
 - [x] Add valid and invalid fixtures for body-less responses, including `204`.
-- [ ] Add valid and invalid fixtures for response status ranges.
-- [ ] Add valid and invalid fixtures for `default` responses.
-- [ ] Add valid and invalid fixtures for overlapping exact status, range, and default precedence prose.
+- [x] Add valid and invalid fixtures for response status ranges.
+- [x] Add valid and invalid fixtures for `default` responses.
+- [x] Add valid and invalid fixtures for overlapping exact status, range, and default precedence prose.
 - [x] Add valid and invalid fixtures for `Required=conditional`.
 - [x] Add valid and invalid fixtures for `Required=unknown`, `Presence=unknown`, `Nullable=unknown`, and `Type=unknown`.
 - [x] Add fixtures for `body_required: unknown`, `body_presence: unknown`, and `body_nullable: unknown`.
@@ -55,7 +55,7 @@ This backlog tracks work after the first public `0.11.0` Compatibility Core rele
 - [ ] Add fixtures for endpoint-local `none` not suppressing common conventions.
 - [x] Add fixtures for common error suppression with `**deviation**:`.
 - [x] Add fixtures for deprecated endpoints and matching INDEX summary prefix.
-- [ ] Add fixtures for valid and invalid `x-` metadata, markers, headings, and table columns inside the Core scope.
+- [x] Add fixtures for valid and invalid `x-` metadata, markers, headings, and table columns inside the Core scope.
 - [ ] Add directly recursive and indirectly recursive source fixtures that demonstrate required `unsupported` output.
 - [x] Update `fixtures/core/v0.11.0/COVERAGE.md` after each fixture group lands.
 

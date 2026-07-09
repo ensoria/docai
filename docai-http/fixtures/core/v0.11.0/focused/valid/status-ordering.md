@@ -26,4 +26,6 @@ none
 none
 
 - Response Headers: none
+
+The exact `200` and `204` sections take precedence over the range response. `default` applies when no exact or range response matches.
 ```

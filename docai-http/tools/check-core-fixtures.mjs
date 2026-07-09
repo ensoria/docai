@@ -37,6 +37,54 @@ const CONVENTION_HEADINGS = [
 ];
 
 const CORE_UNSUPPORTED_CONVENTION_HEADINGS = new Set(CONVENTION_HEADINGS);
+const STANDARD_TABLE_HEADERS = [
+  ["Method", "Path", "Task", "Summary", "Also read"],
+  ["Name", "Summary", "Details"],
+  ["Name", "Type", "Constraints / Meaning"],
+  ["Name", "Type", "Required", "Constraints / Meaning"],
+  ["Name", "Required", "Type", "Constraints / Meaning"],
+  ["Name", "Type", "Presence", "Meaning"],
+  ["Field", "Type", "Required", "Nullable", "Constraints / Meaning"],
+  ["Field", "Type", "Presence", "Nullable", "Meaning"],
+  ["Status", "code", "Shape", "Condition", "Caller action"],
+];
+const KNOWN_MARKERS = new Set([
+  "call_shape",
+  "deprecated",
+  "deviation",
+  "same_as",
+  "variant",
+  "parameter",
+  "error_shape",
+  "field_defaults",
+  "body_required",
+  "body_presence",
+  "body_nullable",
+  "media_type",
+  "unknown",
+  "unsupported",
+]);
+const FIXED_HEADINGS = new Set([
+  "API Index",
+  "Endpoints",
+  "Workflows",
+  "Webhooks",
+  "API Conventions",
+  "Behavior",
+  "Request",
+  "Path Parameters",
+  "Query Parameters",
+  "Headers",
+  "Cookie Parameters",
+  "Fields",
+  "Body",
+  "Response Headers",
+  "Errors",
+  "Related",
+  "Client-visible fields",
+  "Opaque fields",
+  ...CONVENTION_HEADINGS,
+]);
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_CORE_DIR = path.resolve(SCRIPT_DIR, "..", "fixtures", "core", `v${SPEC_VERSION}`);
@@ -229,6 +277,24 @@ function validateTables(file, markdown) {
   }
 }
 
+function validateTableHeaders(markdown) {
+  for (const table of parseTables(markdown)) {
+    if (!standardHeaderPrefix(table.header)) {
+      throw new Error(`unknown or misordered table header at line ${table.line}: ${table.header.join(" | ")}`);
+    }
+  }
+}
+
+function standardHeaderPrefix(header) {
+  return STANDARD_TABLE_HEADERS.find((standard) => hasStandardHeader(header, standard));
+}
+
+function hasStandardHeader(header, standard) {
+  if (header.length < standard.length) return false;
+  if (!standard.every((cell, index) => header[index] === cell)) return false;
+  return header.slice(standard.length).every((cell) => cell.startsWith("x-"));
+}
+
 function validateFieldPaths(markdown) {
   const allowedEscapes = new Set(["\\", ".", "[", "]", "{", "}", "$"]);
   for (const table of parseTables(markdown)) {
@@ -406,8 +472,8 @@ function validateIndex(markdown) {
   if (h2.join("|") !== "Endpoints|Workflows|Webhooks") throw new Error("INDEX sections must be Endpoints, Workflows, Webhooks");
   for (const table of parseTables(markdown)) {
     if (table.header[0] !== "Method") continue;
-    if (table.header.join("|") !== "Method|Path|Task|Summary|Also read") {
-      throw new Error("core INDEX endpoint table must use Method | Path | Task | Summary | Also read");
+    if (!hasStandardHeader(table.header, ["Method", "Path", "Task", "Summary", "Also read"])) {
+      throw new Error("core INDEX endpoint table must use Method | Path | Task | Summary | Also read, followed only by x- columns");
     }
     for (const row of table.rows) {
       if (row[1] === "unknown" || !row[1].startsWith("/")) throw new Error(`invalid INDEX path ${row[1]}`);
@@ -416,7 +482,9 @@ function validateIndex(markdown) {
 }
 
 function indexEndpointRows(markdown) {
-  const table = parseTables(markdown).find((candidate) => candidate.header.join("|") === "Method|Path|Task|Summary|Also read");
+  const table = parseTables(markdown).find((candidate) =>
+    hasStandardHeader(candidate.header, ["Method", "Path", "Task", "Summary", "Also read"]),
+  );
   if (!table) return [];
   return table.rows.map((row) => ({
     method: row[0],
@@ -542,6 +610,22 @@ function validateResponseStatusOrder(markdown) {
   }
 }
 
+function validateResponseOverlapPrecedence(markdown) {
+  const blocks = endpointBlocks(markdown);
+  const scopes = blocks.length > 0 ? blocks.map((block) => block.text) : [markdown];
+  for (const scope of scopes) {
+    const statuses = [...scope.matchAll(/^### Response (.+)$/gm)].map((match) => match[1]);
+    if (statuses.length < 2) continue;
+    const exacts = statuses.filter((status) => /^[1-5][0-9][0-9]$/.test(status));
+    const ranges = statuses.filter((status) => /^[1-5]XX$/.test(status));
+    const exactRangeOverlap = exacts.some((status) => ranges.includes(`${status[0]}XX`));
+    const defaultOverlap = statuses.includes("default") && statuses.length > 1;
+    if ((exactRangeOverlap || defaultOverlap) && !/\b(precedence|takes precedence|applies when no exact|default applies)\b/i.test(scope)) {
+      throw new Error("overlapping exact, range, or default responses lack precedence prose");
+    }
+  }
+}
+
 function validateBodyMarkerOrder(markdown) {
   headingSections(markdown, (title) => title === "Body").forEach((body) => {
     validateBodyRepresentationMarkers(body.text, `${body.title} at line ${body.line}`, "body_required");
@@ -655,6 +739,60 @@ function validateDeprecatedIndexSummaries(markdown) {
   }
 }
 
+function validateHeadingNames(markdown) {
+  const matches = [...markdown.matchAll(/^(#{1,6}) (.+)$/gm)];
+  for (const match of matches) {
+    const level = match[1].length;
+    const title = match[2];
+    if (isKnownHeading(title)) continue;
+    if (title.startsWith("x-")) continue;
+    throw new Error(`unknown non-extension heading ${match[0]}`);
+  }
+}
+
+function isKnownHeading(title) {
+  if (FIXED_HEADINGS.has(title)) return true;
+  if (/^Response (?:[1-5][0-9][0-9]|[1-5]XX|default)$/.test(title)) return true;
+  if (/^[A-Z]+ \/\S*$/.test(title)) return true;
+  if (/^(?:[A-Za-z0-9._-]+\/)*[A-Za-z0-9._-]+\.md$/.test(title)) return true;
+  return false;
+}
+
+function validateMarkerNames(markdown) {
+  for (const match of markdown.matchAll(/^\*\*([^*]+)\*\*: /gm)) {
+    const marker = match[1];
+    if (KNOWN_MARKERS.has(marker) || marker.startsWith("x-")) continue;
+    throw new Error(`unknown non-extension marker ${marker}`);
+  }
+}
+
+function validateEndpointExtensionPlacement(markdown) {
+  for (const block of endpointBlocks(markdown)) {
+    const h3 = [...block.text.matchAll(/^### (.+)$/gm)].map((match) => match[1]);
+    const relatedIndex = h3.indexOf("Related");
+    h3.forEach((title, index) => {
+      if (title.startsWith("x-") && (relatedIndex < 0 || index < relatedIndex)) {
+        throw new Error(`${block.method} ${block.path} has endpoint-level x- heading before required endpoint content`);
+      }
+    });
+  }
+
+  for (const response of headingSections(markdown, (title) => title.startsWith("Response "))) {
+    const lines = response.text.split(/\r?\n/).slice(1).filter((line) => line.trim() !== "");
+    const firstStandardIndex = lines.findIndex(
+      (line) =>
+        line === "none" ||
+        line === "unknown" ||
+        line.startsWith("**body_presence**:") ||
+        line.startsWith("**unsupported**:"),
+    );
+    const firstXIndex = lines.findIndex((line) => line.startsWith("**x-"));
+    if (firstXIndex >= 0 && (firstStandardIndex < 0 || firstXIndex < firstStandardIndex)) {
+      throw new Error(`${response.title} has x- marker before required response content`);
+    }
+  }
+}
+
 function extractMarkdownFixture(markdown) {
   const match = markdown.match(/^(`{3,4})[a-zA-Z-]*\n([\s\S]*?)^\1$/m);
   return match ? match[2] : markdown;
@@ -675,6 +813,10 @@ function validateCoreMarkdown(file, markdown, options = {}) {
     stamp = parseStamp(markdown);
   });
   run(() => validateTables(file, markdown));
+  run(() => validateTableHeaders(markdown));
+  run(() => validateHeadingNames(markdown));
+  run(() => validateMarkerNames(markdown));
+  run(() => validateEndpointExtensionPlacement(markdown));
   run(() => validateFieldPaths(markdown));
   run(() => validateTypes(markdown));
   run(() => validateConditionalRequiredness(markdown));
@@ -688,6 +830,7 @@ function validateCoreMarkdown(file, markdown, options = {}) {
   run(() => validateRequestSubsectionOrder(markdown));
   run(() => validatePathParameters(markdown));
   run(() => validateResponseStatusOrder(markdown));
+  run(() => validateResponseOverlapPrecedence(markdown));
   run(() => validateBodyMarkerOrder(markdown));
   run(() => validateBodylessResponseHeaders(markdown));
   run(() => validateBodylessRequestBodies(markdown));
