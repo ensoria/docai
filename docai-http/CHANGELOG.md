@@ -9,6 +9,7 @@ DocAI HTTP draft history. Specification versioning and compatibility rules are d
 - Adds checker and focused fixture coverage for core table headers, `x-` extension placement, response status ranges, `default` responses, and overlap precedence prose.
 - Adds checker and focused fixture coverage for JSON example-to-field-table rows and body object-openness rules.
 - Adds checker and focused fixture coverage for repeated query/header wire rules and endpoint-local `none` common-convention boundaries.
+- Adds checker and focused fixture coverage for `none`/`unknown`/`unsupported` placement and direct/indirect recursive source fallbacks.
 
 ## 0.11.0 (Draft - Compatibility Core)
 

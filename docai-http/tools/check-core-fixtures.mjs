@@ -845,6 +845,9 @@ function validateBodylessResponseHeaders(markdown) {
     if (!/^#### Response Headers$/m.test(response.text) && !/^- Response Headers: none$/m.test(response.text)) {
       throw new Error(`${response.title} lacks response headers after body-less response`);
     }
+    if (/^\*\*(body_presence|media_type|body_nullable)\*\*: /m.test(response.text)) {
+      throw new Error(`${response.title} has body markers after body-less response`);
+    }
   }
 }
 
@@ -891,6 +894,69 @@ function validateErrorShapes(markdown) {
 function validateUnknownMarkers(markdown) {
   const hasUnknownValue = /\|\s*unknown\s*\||\*\*body_(?:required|presence|nullable)\*\*: unknown|\*\*media_type\*\*: unknown/.test(markdown);
   if (hasUnknownValue && !markdown.includes("**unknown**:")) throw new Error("unknown value lacks unknown marker");
+}
+
+function validateWholeSectionUnknownPlacement(markdown) {
+  for (const current of headingSections(markdown, (title) => isStandardContentHeading(title))) {
+    const lines = nonEmptyContentLines(current.text);
+    const unknownIndex = lines.findIndex((line) => line === "unknown");
+    if (unknownIndex < 0) continue;
+    const next = lines[unknownIndex + 1];
+    if (!next || !next.startsWith("**unknown**:")) {
+      throw new Error(`${current.title} whole-section unknown is not followed by unknown marker`);
+    }
+  }
+}
+
+function validateUnsupportedPlacement(markdown) {
+  for (const current of headingSections(markdown, (title) => isStandardContentHeading(title))) {
+    const lines = nonEmptyContentLines(current.text);
+    const first = lines[0];
+    if (first?.startsWith("**unsupported**: localized:")) {
+      throw new Error(`${current.title} localized unsupported cannot replace required content`);
+    }
+  }
+
+  for (const response of headingSections(markdown, (title) => title.startsWith("Response "))) {
+    const status = response.title.slice("Response ".length);
+    const lines = nonEmptyContentLines(response.text);
+    lines.forEach((line, index) => {
+      const representation = line.match(/^\*\*unsupported\*\*: replaces response representation (.+?) (.+): /);
+      if (representation) {
+        if (representation[1] !== status) {
+          throw new Error(`${response.title} has unsupported response representation for ${representation[1]}`);
+        }
+        if (!lines.slice(0, index).some((candidate) => candidate.startsWith("**body_presence**:"))) {
+          throw new Error(`${response.title} representation unsupported appears before body_presence`);
+        }
+        if (lines.slice(0, index).some((candidate) => candidate.startsWith("**media_type**:"))) {
+          throw new Error(`${response.title} representation unsupported appears after media_type`);
+        }
+      }
+
+      const wholeResponse = line.match(/^\*\*unsupported\*\*: replaces Response (.+?): /);
+      if (wholeResponse) {
+        if (wholeResponse[1] !== status) throw new Error(`${response.title} has unsupported replacement for Response ${wholeResponse[1]}`);
+        if (index !== 0) throw new Error(`${response.title} whole-response unsupported is not first content`);
+      }
+    });
+  }
+}
+
+function nonEmptyContentLines(sectionText) {
+  return sectionText
+    .split(/\r?\n/)
+    .slice(1)
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
+function isStandardContentHeading(title) {
+  return (
+    ["Request", "Path Parameters", "Query Parameters", "Headers", "Cookie Parameters", "Body", "Errors", "Related", "Response Headers"].includes(title) ||
+    title.startsWith("Response ") ||
+    CONVENTION_HEADINGS.includes(title)
+  );
 }
 
 function validateDeprecatedIndexSummaries(markdown) {
@@ -1017,6 +1083,8 @@ function validateCoreMarkdown(file, markdown, options = {}) {
   run(() => validateBodylessRequestBodies(markdown));
   run(() => validateErrorShapes(markdown));
   run(() => validateUnknownMarkers(markdown));
+  run(() => validateWholeSectionUnknownPlacement(markdown));
+  run(() => validateUnsupportedPlacement(markdown));
   run(() => validateDeprecatedIndexSummaries(markdown));
   run(() => validateCommonSuppressionDeviations(markdown));
   return errors;
@@ -1089,8 +1157,43 @@ function validateFocused() {
   }
 }
 
+function validateRecursiveSourceFixtures() {
+  const pairs = [
+    {
+      source: path.join(CORE_DIR, "source", "recursive-direct-openapi.yaml"),
+      projection: path.join(CORE_DIR, "focused", "valid", "recursive-direct-unsupported.md"),
+      sourcePattern: "$ref: \"#/components/schemas/Node\"",
+      projectionPattern: "directly recursive schema at source/recursive-direct-openapi.yaml#/components/schemas/Node",
+    },
+    {
+      source: path.join(CORE_DIR, "source", "recursive-indirect-openapi.yaml"),
+      projection: path.join(CORE_DIR, "focused", "valid", "recursive-indirect-unsupported.md"),
+      sourcePattern: "$ref: \"#/components/schemas/Person\"",
+      projectionPattern: "indirectly recursive schema at source/recursive-indirect-openapi.yaml#/components/schemas/Person",
+    },
+  ];
+
+  pairs.forEach((pair) => {
+    if (!fs.existsSync(pair.source)) {
+      fail(pair.source, "required recursive source fixture is missing");
+      return;
+    }
+    if (!fs.existsSync(pair.projection)) {
+      fail(pair.projection, "required recursive unsupported projection fixture is missing");
+      return;
+    }
+    if (!read(pair.source).includes(pair.sourcePattern)) {
+      fail(pair.source, "recursive source fixture lacks expected recursive reference");
+    }
+    if (!read(pair.projection).includes(pair.projectionPattern)) {
+      fail(pair.projection, "recursive projection fixture lacks expected unsupported source reference");
+    }
+  });
+}
+
 validateFullSet();
 validateFocused();
+validateRecursiveSourceFixtures();
 
 if (failures.length > 0) {
   console.error("Core fixture check failed:");

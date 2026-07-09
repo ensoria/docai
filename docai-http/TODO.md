@@ -35,7 +35,7 @@ This backlog tracks work after the first public `0.11.0` Compatibility Core rele
 - [x] Validate body marker order: `body_required`, `body_presence`, `media_type`, and `body_nullable`.
 - [x] Validate JSON body examples against field-table rows where practical.
 - [x] Validate common and inline error references, including inline label matching.
-- [ ] Validate `none`, `unknown`, and core replacement/localized `unsupported` placement.
+- [x] Validate `none`, `unknown`, and core replacement/localized `unsupported` placement.
 - [ ] Add a clear checker report format that lists fixture name, expected result, actual result, and rule area.
 
 ## P0: Expand Core Fixtures
@@ -56,7 +56,7 @@ This backlog tracks work after the first public `0.11.0` Compatibility Core rele
 - [x] Add fixtures for common error suppression with `**deviation**:`.
 - [x] Add fixtures for deprecated endpoints and matching INDEX summary prefix.
 - [x] Add fixtures for valid and invalid `x-` metadata, markers, headings, and table columns inside the Core scope.
-- [ ] Add directly recursive and indirectly recursive source fixtures that demonstrate required `unsupported` output.
+- [x] Add directly recursive and indirectly recursive source fixtures that demonstrate required `unsupported` output.
 - [x] Update `fixtures/core/v0.11.0/COVERAGE.md` after each fixture group lands.
 
 ## P1: Prepare Compact Profile Promotion
