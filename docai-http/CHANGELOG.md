@@ -7,6 +7,7 @@ DocAI HTTP draft history. Specification versioning and compatibility rules are d
 - Moves draft history from README.md to this changelog and adds a non-normative LLM reader quick path.
 - Clarifies that compact opaque-field reduction applies to response, error-shape, and webhook variants.
 - Defines a pre-1.0 Compatibility Core and stages fixture requirements so early implementation targets can preserve compatibility for core full-profile structures before non-core features stabilize.
+- Adds an initial draft 0.10.1 Compatibility Core fixture corpus with a valid full-profile document set and focused valid/invalid snippets.
 
 ## 0.10.1 (Draft)
 
