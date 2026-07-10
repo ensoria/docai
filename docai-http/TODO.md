@@ -132,14 +132,14 @@ Deferred compact expansion work:
 
 ## P2: Prepare Non-JSON Representation Support
 
-- [ ] Decide the first non-JSON promotion scope: multipart/form-data, form-urlencoded, raw binary, CSV, XML, or SSE.
-- [ ] Add multipart request fixtures with file parts, filenames, content types, size limits, and boundary delegation.
+- [x] Decide the first non-JSON promotion scope: multipart/form-data, form-urlencoded, raw binary, CSV, XML, or SSE. Decision: start with `multipart/form-data` requests as the first non-JSON candidate scope; keep form-urlencoded, raw binary, CSV, XML, and SSE separate until they have their own fixture evidence.
+- [x] Add multipart request fixtures with file parts, filenames, content types, size limits, and boundary delegation.
 - [ ] Add form-urlencoded request fixtures with character encoding and repeated-field rules.
 - [ ] Add raw binary upload/download fixtures with size and integrity metadata.
 - [ ] Add CSV response fixtures with delimiter, record separator, quote/escape, header presence, and column order.
 - [ ] Add XML fixtures with namespaces, attributes, elements, ordering, and encoding.
 - [ ] Add SSE fixtures with event names, frame/data format, reconnection, and termination rules.
-- [ ] Add checker support for media-specific required markers, samples, and prose.
+- [x] Add checker support for media-specific required markers, samples, and prose. Current coverage is scoped to the `multipart/form-data` candidate.
 
 ## P2: Prepare Polymorphism And Variants
 

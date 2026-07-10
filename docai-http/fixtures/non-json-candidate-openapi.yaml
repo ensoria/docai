@@ -1,0 +1,58 @@
+openapi: 3.1.1
+info:
+  title: Non-JSON Candidate Fixture API
+  version: 0.11.0-non-json-candidate-source
+paths:
+  /documents:
+    post:
+      summary: Upload document
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - document
+              properties:
+                document:
+                  type: string
+                  format: binary
+                  description: PDF or PNG file, maximum 10 MiB.
+                metadata:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    title:
+                      type: string
+                    tags:
+                      type: array
+                      items:
+                        type: string
+            encoding:
+              document:
+                contentType: application/pdf, image/png
+                x-docai-filename: required; preserve extension
+                x-docai-max-size: 10485760
+              metadata:
+                contentType: application/json
+                x-docai-max-size: 4096
+      responses:
+        "201":
+          description: Document uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - document_id
+                  - status
+                properties:
+                  document_id:
+                    type: string
+                  status:
+                    type: string
+                    enum:
+                      - uploaded
