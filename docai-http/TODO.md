@@ -214,8 +214,8 @@ Deferred compact expansion work:
     - [x] Add focused fixtures for compact `field_defaults` measured-savings annotations or producer assertions when token-saving evidence is represented.
     - [x] Add focused fixtures for workflow title matching, fixed section order, value passing, failure branches, recovery state, and workflow-specific deviations in the complete-candidate corpus.
     - [x] Add focused fixtures for workflow whole-section `unknown` states, not only replacement `unsupported`.
-    - [ ] Add focused fixtures for webhook title, INDEX listing, event-specific headers, safe deduplication key/strategy, delivery deviations, and triggering endpoint references in the complete-candidate corpus.
-    - [ ] Add focused fixtures for webhook grouped-event incompatibility boundaries beyond payload variants.
+    - [x] Add focused fixtures for webhook title, INDEX listing, event-specific headers, safe deduplication key/strategy, delivery deviations, and triggering endpoint references in the complete-candidate corpus.
+    - [x] Add focused fixtures for webhook grouped-event incompatibility boundaries beyond payload variants.
     - [ ] Add focused fixtures for INDEX/metadata coverage propagation when a focused file contains `**unsupported**:` or `**unknown**:` in a complete-candidate set context.
     - [ ] Add focused fixtures for source-backed generated examples that require `**unknown**:` because no credible valid example can be generated.
     - [ ] Add focused fixtures for response default rows that are exclusively error semantics versus mixed non-error/error defaults.
