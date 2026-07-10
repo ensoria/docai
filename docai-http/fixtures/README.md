@@ -20,10 +20,10 @@ Layout:
 - `webhook-candidates/v0.11.0/valid/full/` contains a full-profile candidate set for single-event and grouped webhook structure.
 - `webhook-candidates/v0.11.0/focused/invalid/` contains focused webhook-candidate negative snippets.
 - `non-json-candidate-openapi.yaml` is the source OpenAPI fixture referenced by the non-JSON candidate corpus.
-- `non-json-candidates/v0.11.0/valid/full/` contains a full-profile candidate set for multipart and form-urlencoded request structure.
+- `non-json-candidates/v0.11.0/valid/full/` contains a full-profile candidate set for multipart, form-urlencoded, and raw binary request/response structure.
 - `non-json-candidates/v0.11.0/focused/invalid/` contains focused non-JSON candidate negative snippets.
 
-Only the `core/` corpus is part of the current Compatibility Core evidence. The compact, workflow, webhook, and non-JSON candidate corpora do not declare those features ready for compatibility-preserving implementation. These fixtures do not declare raw binary, CSV, XML, SSE, selective convention loading, token-routing metadata, or other non-core structures ready for compatibility-preserving implementation.
+Only the `core/` corpus is part of the current Compatibility Core evidence. The compact, workflow, webhook, and non-JSON candidate corpora do not declare those features ready for compatibility-preserving implementation. These fixtures do not declare CSV, XML, SSE, selective convention loading, token-routing metadata, or other non-core structures ready for compatibility-preserving implementation.
 
 Run `node tools/check-core-fixtures.mjs` from the `docai-http/` directory, or `node docai-http/tools/check-core-fixtures.mjs` from the repository root, to check the core fixture expectations.
 

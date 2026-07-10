@@ -4,6 +4,13 @@
 
 ## Endpoints
 
+### resources/binary.md
+
+| Method | Path | Task | Summary | Also read |
+|---|---|---|---|---|
+| PUT | /avatars/{id}/image | upload avatar | Uploads raw PNG bytes for an avatar image. | none |
+| GET | /avatars/{id}/image | download avatar | Downloads raw PNG bytes with filename, size, and digest metadata. | none |
+
 ### resources/forms.md
 
 | Method | Path | Task | Summary | Also read |

@@ -249,6 +249,100 @@ function validateFormUrlencodedBody(markdown) {
   }
 }
 
+function validateRawBinaryUpload(markdown) {
+  const headers = sectionLines(markdown, 4, "Headers")?.join("\n");
+  if (!headers) throw new Error("raw binary upload must document request headers");
+  const headerRows = tableRows(headers, ["Name", "Required", "Type", "Constraints / Meaning"]);
+  const digest = headerRows.find((row) => row.Name === "Digest");
+  if (!digest) throw new Error("raw binary upload must document the Digest request header");
+  if (digest.Required !== "yes") throw new Error("raw binary upload Digest header must be required");
+  const digestMeaning = digest["Constraints / Meaning"];
+  ["sha-256", "exact body bytes", "single field line", "not comma-combinable", "order not significant", "example"].forEach((requiredText) => {
+    if (!digestMeaning.includes(requiredText)) throw new Error(`raw binary upload Digest header must state ${requiredText}`);
+  });
+
+  const bodyLines = sectionLines(markdown, 4, "Body");
+  if (!bodyLines) throw new Error("raw binary upload must include a Body subsection");
+  const body = bodyLines.join("\n");
+  const significant = bodyLines.map((line) => line.trim()).filter(Boolean);
+  const markerOrder = ["**body_required**: yes", "**media_type**: image/png"].map((marker) =>
+    significant.findIndex((line) => line === marker),
+  );
+  if (markerOrder.some((index) => index < 0) || markerOrder.join("|") !== [...markerOrder].sort((a, b) => a - b).join("|")) {
+    throw new Error("raw binary upload must contain body_required and media_type image/png in order");
+  }
+  if (significant.some((line) => line.startsWith("**body_nullable**:"))) {
+    throw new Error("raw binary upload must not use body_nullable");
+  }
+
+  const sample = body.match(/```http\r?\n([\s\S]*?)```/)?.[1];
+  if (!sample) throw new Error("raw binary upload must include an http sample fragment");
+  if (!sample.includes("Content-Type: image/png")) throw new Error("raw binary upload sample must show Content-Type");
+  if (!sample.includes("Content-Length: 524288")) throw new Error("raw binary upload sample must show Content-Length");
+  if (!sample.includes("Digest: sha-256=")) throw new Error("raw binary upload sample must show Digest");
+  if (!sample.includes("maximum 2097152 bytes")) throw new Error("raw binary upload sample must show the size limit");
+
+  const lowerBody = body.toLowerCase();
+  if (!lowerBody.includes("raw binary png bytes")) throw new Error("raw binary upload prose must identify raw binary PNG bytes");
+  if (!body.includes("no multipart wrapper")) throw new Error("raw binary upload prose must state there is no multipart wrapper");
+  if (!body.includes("Maximum size is 2097152 bytes")) throw new Error("raw binary upload prose must state maximum size");
+  if (!body.includes("Digest") || !body.includes("exact body bytes") || !body.includes("SHA-256")) {
+    throw new Error("raw binary upload prose must state integrity metadata");
+  }
+}
+
+function validateRawBinaryDownload(markdown) {
+  const responseLines = sectionLines(markdown, 3, "Response 200");
+  if (!responseLines) throw new Error("raw binary download must include Response 200");
+  const response = responseLines.join("\n");
+  const significant = responseLines.map((line) => line.trim()).filter(Boolean);
+  const markerOrder = ["**body_presence**: always", "**media_type**: image/png"].map((marker) =>
+    significant.findIndex((line) => line === marker),
+  );
+  if (markerOrder.some((index) => index < 0) || markerOrder.join("|") !== [...markerOrder].sort((a, b) => a - b).join("|")) {
+    throw new Error("raw binary download must contain body_presence and media_type image/png in order");
+  }
+  if (significant.some((line) => line.startsWith("**body_nullable**:"))) {
+    throw new Error("raw binary download must not use body_nullable");
+  }
+
+  const sample = response.match(/```http\r?\n([\s\S]*?)```/)?.[1];
+  if (!sample) throw new Error("raw binary download must include an http sample fragment");
+  if (!sample.includes("Content-Type: image/png")) throw new Error("raw binary download sample must show Content-Type");
+  if (!sample.includes('Content-Disposition: attachment; filename="avatar.png"')) {
+    throw new Error("raw binary download sample must show filename metadata");
+  }
+  if (!sample.includes("Content-Length: 524288")) throw new Error("raw binary download sample must show Content-Length");
+  if (!sample.includes("Digest: sha-256=")) throw new Error("raw binary download sample must show Digest");
+  if (!sample.includes("maximum 2097152 bytes")) throw new Error("raw binary download sample must show the size limit");
+
+  if (!response.includes("Filename is obtained from the `Content-Disposition` header")) {
+    throw new Error("raw binary download prose must state how the filename is obtained");
+  }
+  if (!response.includes("Maximum size is 2097152 bytes")) throw new Error("raw binary download prose must state maximum size");
+  if (!response.includes("Verify the `Digest` header") || !response.includes("exact response body bytes") || !response.includes("SHA-256")) {
+    throw new Error("raw binary download prose must state integrity verification");
+  }
+
+  const headerSection = sectionLines(response, 4, "Response Headers")?.join("\n");
+  if (!headerSection) throw new Error("raw binary download must document response headers");
+  const rows = tableRows(headerSection, ["Name", "Type", "Presence", "Meaning"]);
+  const byName = new Map(rows.map((row) => [row.Name, row]));
+  ["Content-Disposition", "Content-Length", "Digest"].forEach((name) => {
+    if (!byName.has(name)) throw new Error(`raw binary download response headers must include ${name}`);
+  });
+  if (!byName.get("Content-Disposition").Meaning.includes("filename")) {
+    throw new Error("raw binary download Content-Disposition must document filename");
+  }
+  if (!byName.get("Content-Length").Meaning.includes("maximum is 2097152")) {
+    throw new Error("raw binary download Content-Length must document size limit");
+  }
+  const digestMeaning = byName.get("Digest").Meaning;
+  if (!digestMeaning.includes("sha-256") || !digestMeaning.includes("exact response body bytes") || !digestMeaning.includes("verify")) {
+    throw new Error("raw binary download Digest header must document integrity verification");
+  }
+}
+
 function indexEndpointRows(markdown) {
   const endpoints = sectionLines(markdown, 2, "Endpoints")?.join("\n") ?? "";
   const lines = endpoints.split(/\r?\n/);
@@ -278,7 +372,13 @@ function endpointHeadings(markdown) {
 
 function validateFullSet() {
   const fullDir = path.join(CANDIDATE_DIR, "valid", "full");
-  const files = ["INDEX.md", "CONVENTIONS.md", path.join("resources", "forms.md"), path.join("resources", "uploads.md")].map((file) =>
+  const files = [
+    "INDEX.md",
+    "CONVENTIONS.md",
+    path.join("resources", "binary.md"),
+    path.join("resources", "forms.md"),
+    path.join("resources", "uploads.md"),
+  ].map((file) =>
     path.join(fullDir, file),
   );
   const sourceFile = path.resolve(CANDIDATE_DIR, "..", "..", "non-json-candidate-openapi.yaml");
@@ -296,7 +396,11 @@ function validateFullSet() {
   const indexFile = path.join(fullDir, "INDEX.md");
   try {
     const indexed = indexEndpointRows(contents[indexFile]).sort().join("|");
-    const resourceHeadings = [path.join(fullDir, "resources", "forms.md"), path.join(fullDir, "resources", "uploads.md")]
+    const resourceHeadings = [
+      path.join(fullDir, "resources", "binary.md"),
+      path.join(fullDir, "resources", "forms.md"),
+      path.join(fullDir, "resources", "uploads.md"),
+    ]
       .flatMap((file) => endpointHeadings(contents[file]))
       .sort()
       .join("|");
@@ -305,6 +409,13 @@ function validateFullSet() {
     }
   } catch (error) {
     fail(indexFile, error.message);
+  }
+
+  try {
+    validateRawBinaryUpload(contents[path.join(fullDir, "resources", "binary.md")]);
+    validateRawBinaryDownload(contents[path.join(fullDir, "resources", "binary.md")]);
+  } catch (error) {
+    fail(path.join(fullDir, "resources", "binary.md"), error.message);
   }
 
   try {
@@ -329,8 +440,13 @@ function validateFocusedInvalid() {
     }
     let accepted = false;
     try {
-      if (path.basename(file).startsWith("form-urlencoded-")) {
+      const name = path.basename(file);
+      if (name.startsWith("form-urlencoded-")) {
         validateFormUrlencodedBody(fixtures[0]);
+      } else if (name.startsWith("raw-binary-download-")) {
+        validateRawBinaryDownload(fixtures[0]);
+      } else if (name.startsWith("raw-binary-upload-")) {
+        validateRawBinaryUpload(fixtures[0]);
       } else {
         validateMultipartBody(fixtures[0]);
       }

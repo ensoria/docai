@@ -3,6 +3,57 @@ info:
   title: Non-JSON Candidate Fixture API
   version: 0.11.0-non-json-candidate-source
 paths:
+  /avatars/{id}/image:
+    put:
+      summary: Upload avatar image
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          image/png:
+            schema:
+              type: string
+              format: binary
+            x-docai-max-size: 2097152
+            x-docai-integrity-header: Digest
+      responses:
+        "204":
+          description: Avatar image stored
+    get:
+      summary: Download avatar image
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Avatar image
+          headers:
+            Content-Disposition:
+              description: Attachment filename for the image.
+              schema:
+                type: string
+            Content-Length:
+              description: Image size in bytes.
+              schema:
+                type: integer
+            Digest:
+              description: SHA-256 digest of the response body bytes.
+              schema:
+                type: string
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+              x-docai-max-size: 2097152
   /reports/search:
     post:
       summary: Search reports
