@@ -12,7 +12,8 @@ Current candidate evidence:
 - That pair includes resources, a workflow, and a webhook with matching standard docs-root-relative paths.
 - Focused complete-surface fixtures have started; current coverage is tracked in `fixtures/complete-candidates/v0.11.0/COVERAGE.md`.
 - A corpus-specific complete-candidate checker exists at `tools/check-complete-candidates.mjs`.
-- Complete §9.1 focused fixture coverage and LLM task evaluation evidence are still missing.
+- A complete-candidate evaluation task packet and local context metrics exist under `fixtures/complete-candidates/v0.11.0/evaluations/`.
+- Complete §9.1 focused fixture coverage and live LLM task evaluation evidence are still missing.
 
 ## Publication Gate
 
@@ -136,5 +137,5 @@ Evaluation results do not need to prove that every LLM succeeds, but they must s
 3. Create the matching compact projection and token-saving notes. Done for the first candidate pair.
 4. Add focused valid and invalid fixtures for every README section 9.1 complete-surface requirement.
 5. Add the complete-surface expectation checker by composing existing candidate checks where practical.
-6. Run the checker and LLM task evaluations.
+6. Run the checker and LLM task evaluations. The corpus-specific checker and local evaluation packet checks exist; live LLM task evaluations remain pending.
 7. Update the README publication label only when all evidence supports the broader claim.

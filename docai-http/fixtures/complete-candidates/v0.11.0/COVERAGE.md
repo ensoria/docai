@@ -46,10 +46,11 @@ This file records evidence for the first complete-surface candidate example pair
 | Focused recursive fallback fixtures | present | `focused/valid/recursive-direct-unsupported.md`, `focused/valid/recursive-indirect-unsupported.md`, `focused/invalid/recursive-truncated-representation.md` |
 | Remaining focused complete-surface fixtures | missing | every remaining README section 9.1 canonical marker, table shape, normalization rule, representation class, and replacement unit |
 | Complete-surface checker coverage | present | `tools/check-complete-candidates.mjs` |
-| LLM task evaluation evidence | missing | future work |
+| LLM task evaluation packet | present | `evaluations/tasks.json`, `evaluations/RESULTS.md`, `tools/check-complete-evaluations.mjs` |
+| Live LLM task evaluation evidence | missing | future work |
 
 ## Publication Impact
 
 This candidate satisfies the TODO item for a full/compact complete example pair that includes resources, workflows, and webhooks. It also expands focused complete-surface fixture coverage for profile pairing, selective conventions, `same_as`, compact `field_defaults`, compact opaque and error-shape reductions, resource/workflow/webhook relations, non-JSON multipart, polymorphic variants, replacement and localized `unsupported`, grouped webhook variants, metadata and extensions, canonical boundaries, coverage/knowledge states, structured parameters, conditional requiredness, response-header repetition, exactly-null values, inline unknown-code labels, generated-example field coverage, table and field-path syntax, media-type uniqueness, error recovery state, and recursive fallback. It does not satisfy the README section 9.1 complete-generator-ready gate by itself.
 
-The README publication label must remain `Compatibility Core implementation target` until focused fixture coverage and LLM task evaluations are also complete.
+The README publication label must remain `Compatibility Core implementation target` until focused fixture coverage and live LLM task evaluations are also complete.

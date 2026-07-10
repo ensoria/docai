@@ -35,6 +35,7 @@ DocAI HTTP draft history. Specification versioning and compatibility rules are d
 - Expands focused complete-candidate fixtures for table and field-path syntax, media-type uniqueness, endpoint-specific error recovery state, common-error suppression deviations, and recursive-schema source fallback.
 - Expands focused complete-candidate fixtures for compact field-default reconstruction, compact error-shape reduction, localized `unsupported`, and canonical extension/non-extension heading boundaries.
 - Adds a complete-candidate fixture checker for full/compact path pairing, INDEX references, compact reductions, focused fixture expectations, and complete-surface evidence, and aligns complete-candidate INDEX separators with the README rules.
+- Adds a complete-candidate LLM evaluation task packet, local context metrics, and an evaluation packet checker without claiming live LLM evaluation evidence.
 
 ## 0.11.0 (Draft - Compatibility Core)
 

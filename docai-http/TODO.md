@@ -185,6 +185,8 @@ Deferred compact expansion work:
   - [ ] Add remaining complete-surface focused fixtures for every §9.1 canonical marker, table shape, normalization rule, representation class, and replacement unit.
 - [x] Add checker coverage for non-core features promoted into the complete surface. Evidence: `tools/check-complete-candidates.mjs` checks the complete-candidate full/compact pair, focused fixture expectations, coverage references, compact reductions, INDEX references, workflow/webhook/resource links, non-JSON, polymorphism, and recursive-source evidence as a corpus-specific expectation checker.
 - [ ] Run LLM task evaluations against the valid corpus for request construction, response handling, error handling, and token load.
+  - [x] Add the complete-candidate evaluation task packet, expected outcomes, local context-metrics results, and `tools/check-complete-evaluations.mjs`.
+  - [ ] Run the task packet against the target LLMs and record model-specific results.
 - [x] Keep the README publication label unchanged until fixture and checker evidence supports the broader claim. Decision: keep the current README publication label as `Compatibility Core implementation target`; do not advertise complete-generator-ready until the evidence gate in `COMPLETE-GENERATOR-READINESS.md` is complete.
 
 ## Parking Lot
