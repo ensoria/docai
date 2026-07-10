@@ -3,6 +3,65 @@ info:
   title: Non-JSON Candidate Fixture API
   version: 0.11.0-non-json-candidate-source
 paths:
+  /reports/search:
+    post:
+      summary: Search reports
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            encoding:
+              q:
+                x-docai-charset: UTF-8
+                x-docai-space-encoding: plus
+              tag:
+                style: form
+                explode: true
+                x-docai-repeated-field: repeat key once per value; order not significant
+              include_archived:
+                x-docai-values:
+                  - "true"
+                  - "false"
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - q
+              properties:
+                q:
+                  type: string
+                  minLength: 1
+                tag:
+                  type: array
+                  items:
+                    type: string
+                include_archived:
+                  type: boolean
+                  default: false
+      responses:
+        "200":
+          description: Matching reports
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - results
+                properties:
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: false
+                      required:
+                        - report_id
+                        - title
+                      properties:
+                        report_id:
+                          type: string
+                        title:
+                          type: string
   /documents:
     post:
       summary: Upload document

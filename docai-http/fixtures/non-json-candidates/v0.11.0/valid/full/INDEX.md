@@ -4,6 +4,12 @@
 
 ## Endpoints
 
+### resources/forms.md
+
+| Method | Path | Task | Summary | Also read |
+|---|---|---|---|---|
+| POST | /reports/search | search reports | Searches reports using a UTF-8 form-urlencoded request. | none |
+
 ### resources/uploads.md
 
 | Method | Path | Task | Summary | Also read |

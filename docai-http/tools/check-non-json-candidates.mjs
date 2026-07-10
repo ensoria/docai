@@ -183,10 +183,91 @@ function validateMultipartBody(markdown) {
   }
 }
 
+function validateFormUrlencodedBody(markdown) {
+  const bodyLines = sectionLines(markdown, 4, "Body");
+  if (!bodyLines) throw new Error("form-urlencoded request must include a Body subsection");
+  const body = bodyLines.join("\n");
+  const significant = bodyLines.map((line) => line.trim()).filter(Boolean);
+
+  const markerOrder = [
+    "**body_required**: yes",
+    "**media_type**: application/x-www-form-urlencoded;charset=UTF-8",
+    "**body_nullable**: no",
+  ].map((marker) => significant.findIndex((line) => line === marker));
+  if (markerOrder.some((index) => index < 0) || markerOrder.join("|") !== [...markerOrder].sort((a, b) => a - b).join("|")) {
+    throw new Error("form-urlencoded body must contain body_required, media_type with UTF-8 charset, and body_nullable in order");
+  }
+
+  const sample = body.match(/```http\r?\n([\s\S]*?)```/)?.[1];
+  if (!sample) throw new Error("form-urlencoded body must include an http sample fragment");
+  if (!sample.includes("Content-Type: application/x-www-form-urlencoded; charset=UTF-8")) {
+    throw new Error("form-urlencoded sample must show UTF-8 Content-Type");
+  }
+  if (!sample.includes("q=quarterly+statement")) {
+    throw new Error("form-urlencoded sample must show space encoding as plus");
+  }
+  if (!sample.includes("tag=finance&tag=quarterly")) {
+    throw new Error("form-urlencoded sample must show repeated field values");
+  }
+
+  const lowerBody = body.toLowerCase();
+  if (!lowerBody.includes("utf-8 before percent-encoding")) {
+    throw new Error("form-urlencoded prose must state the character encoding before percent-encoding");
+  }
+  if (!lowerBody.includes("spaces as `+`")) {
+    throw new Error("form-urlencoded prose must state space encoding");
+  }
+  if (!lowerBody.includes("repeating the `tag` field once per value")) {
+    throw new Error("form-urlencoded prose must state the repeated-field rule");
+  }
+  if (!lowerBody.includes("order is not significant")) {
+    throw new Error("form-urlencoded prose must state repeated-field order significance");
+  }
+
+  const rows = tableRows(body, ["Field", "Type", "Required", "Nullable", "Constraints / Meaning"]);
+  const q = rows.find((row) => row.Field === "q");
+  if (!q) throw new Error("form-urlencoded body must document the q field");
+  if (!q["Constraints / Meaning"].includes("UTF-8 before percent-encoding")) {
+    throw new Error("form-urlencoded q field must state character encoding");
+  }
+  if (!q["Constraints / Meaning"].includes("spaces use `+`")) {
+    throw new Error("form-urlencoded q field must state space encoding");
+  }
+
+  const tag = rows.find((row) => row.Field === "tag");
+  if (!tag) throw new Error("form-urlencoded body must document the repeated tag field");
+  if (tag.Type !== "string[]") throw new Error("form-urlencoded repeated field must use an array type");
+  const tagMeaning = tag["Constraints / Meaning"];
+  if (!tagMeaning.includes("repeat the field once per value")) {
+    throw new Error("form-urlencoded repeated field must state repeat-key encoding");
+  }
+  if (!tagMeaning.includes("order is not significant")) {
+    throw new Error("form-urlencoded repeated field must state order significance");
+  }
+  if (!tagMeaning.includes("omit the field when the list is empty")) {
+    throw new Error("form-urlencoded repeated field must state empty-list behavior");
+  }
+}
+
 function indexEndpointRows(markdown) {
   const endpoints = sectionLines(markdown, 2, "Endpoints")?.join("\n") ?? "";
-  const rows = tableRows(endpoints, ["Method", "Path", "Task", "Summary", "Also read"]);
-  return rows.map((row) => `${row.Method} ${row.Path}`);
+  const lines = endpoints.split(/\r?\n/);
+  const rows = [];
+  for (let index = 0; index < lines.length; index += 1) {
+    const header = splitTableLine(lines[index]);
+    const separator = splitTableLine(lines[index + 1] ?? "");
+    if (!header || !separator?.every((cell) => /^-+$/.test(cell))) continue;
+    if (header.join("|") !== "Method|Path|Task|Summary|Also read") {
+      throw new Error("endpoint table header must be Method | Path | Task | Summary | Also read");
+    }
+    index += 2;
+    for (; index < lines.length; index += 1) {
+      const row = splitTableLine(lines[index]);
+      if (!row) break;
+      rows.push(`${row[0]} ${row[1]}`);
+    }
+  }
+  return rows;
 }
 
 function endpointHeadings(markdown) {
@@ -197,7 +278,7 @@ function endpointHeadings(markdown) {
 
 function validateFullSet() {
   const fullDir = path.join(CANDIDATE_DIR, "valid", "full");
-  const files = ["INDEX.md", "CONVENTIONS.md", path.join("resources", "uploads.md")].map((file) =>
+  const files = ["INDEX.md", "CONVENTIONS.md", path.join("resources", "forms.md"), path.join("resources", "uploads.md")].map((file) =>
     path.join(fullDir, file),
   );
   const sourceFile = path.resolve(CANDIDATE_DIR, "..", "..", "non-json-candidate-openapi.yaml");
@@ -213,9 +294,13 @@ function validateFullSet() {
   if (new Set(stamps.map((stamp) => stamp.projection_id)).size !== 1) fail(fullDir, "full set projection_id values differ");
 
   const indexFile = path.join(fullDir, "INDEX.md");
-  const resourceFile = path.join(fullDir, "resources", "uploads.md");
   try {
-    if (indexEndpointRows(contents[indexFile]).join("|") !== endpointHeadings(contents[resourceFile]).join("|")) {
+    const indexed = indexEndpointRows(contents[indexFile]).sort().join("|");
+    const resourceHeadings = [path.join(fullDir, "resources", "forms.md"), path.join(fullDir, "resources", "uploads.md")]
+      .flatMap((file) => endpointHeadings(contents[file]))
+      .sort()
+      .join("|");
+    if (indexed !== resourceHeadings) {
       throw new Error("INDEX endpoint rows must match resource endpoint headings");
     }
   } catch (error) {
@@ -223,9 +308,15 @@ function validateFullSet() {
   }
 
   try {
-    validateMultipartBody(contents[resourceFile]);
+    validateFormUrlencodedBody(contents[path.join(fullDir, "resources", "forms.md")]);
   } catch (error) {
-    fail(resourceFile, error.message);
+    fail(path.join(fullDir, "resources", "forms.md"), error.message);
+  }
+
+  try {
+    validateMultipartBody(contents[path.join(fullDir, "resources", "uploads.md")]);
+  } catch (error) {
+    fail(path.join(fullDir, "resources", "uploads.md"), error.message);
   }
 }
 
@@ -238,7 +329,11 @@ function validateFocusedInvalid() {
     }
     let accepted = false;
     try {
-      validateMultipartBody(fixtures[0]);
+      if (path.basename(file).startsWith("form-urlencoded-")) {
+        validateFormUrlencodedBody(fixtures[0]);
+      } else {
+        validateMultipartBody(fixtures[0]);
+      }
       accepted = true;
     } catch {
       accepted = false;

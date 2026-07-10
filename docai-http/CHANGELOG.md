@@ -24,7 +24,7 @@ DocAI HTTP draft history. Specification versioning and compatibility rules are d
 - Adds a workflow candidate fixture corpus for minimal workflow discovery and fixed-section structure without promoting workflows into the current Compatibility Core.
 - Adds focused workflow-candidate fixtures and a candidate checker for workflow discovery, required sections, references, passed values, failure branches, deviations, and workflow-section replacement `unsupported`.
 - Adds a webhook candidate fixture corpus and checker for webhook discovery, triggering endpoint references, fixed sections, event-specific headers, single-event payloads, grouped variants, delivery deviations, and deduplication guidance without promoting webhooks into the current Compatibility Core.
-- Adds a non-JSON candidate fixture corpus and checker for `multipart/form-data` request markers, samples, file parts, filename requirements, part content types, size limits, and boundary delegation without promoting non-JSON representations into the current Compatibility Core.
+- Adds a non-JSON candidate fixture corpus and checker for `multipart/form-data` request markers, samples, file parts, filename requirements, part content types, size limits, boundary delegation, and `application/x-www-form-urlencoded` character encoding, percent-encoding, and repeated-field rules without promoting non-JSON representations into the current Compatibility Core.
 
 ## 0.11.0 (Draft - Compatibility Core)
 
