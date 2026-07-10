@@ -106,6 +106,8 @@ const FOCUSED_EXPECTATIONS = {
     "value-omission-empty-defaults.md": ["empty array removes all tags", "explicit `null` disables expiration", "Omitted defaults to `private`"],
     "webhook-payload-presence.md": ["**body_required**: yes", "| error | object | conditional | yes |", "omitted only for legacy deliveries"],
     "workflow-section-replacement-unsupported.md": ["**unsupported**: replaces workflow Steps:"],
+    "workflow-structure-deviation.md": ["| Checkout | Validate cart, create payment, and confirm order. | workflows/checkout.md |", "**deviation**: high-risk carts require manual review", "Pass `cart_id`, `payment_id`, and `review_id`", "retry step 4"],
+    "workflow-whole-section-unknown.md": ["knowledge: requires-input", "## Steps\n\nunknown\n\n**unknown**: settlement step order", "## Failure and Recovery\n\nunknown\n\n**unknown**: recovery actions"],
     "workflow-webhook-related-links.md": ["Workflow: workflows/checkout.md", "Triggers webhook: webhooks/payment-completed.md"],
   },
   invalid: {
@@ -184,6 +186,11 @@ const FOCUSED_EXPECTATIONS = {
     "value-default-behavior-missing.md": ["| visibility | string | no | no | `private` \\| `team` |"],
     "webhook-payload-presence-missing-condition.md": ["| error | object | conditional | yes | Error object |"],
     "workflow-unsupported-wrong-unit.md": ["**unsupported**: replaces webhook Payload:"],
+    "workflow-deviation-wrong-placement-complete.md": ["1. POST /reviews", "**deviation**: manual review may be skipped by staff."],
+    "workflow-section-order-complete.md": ["## Steps\n\n1. POST /payments", "## Preconditions"],
+    "workflow-step-missing-values-failure.md": ["1. POST /payments - Create a pending payment."],
+    "workflow-title-mismatch.md": ["| Checkout | Validate cart, create payment, and confirm order. | workflows/checkout.md |", "# Payment Flow"],
+    "workflow-unknown-missing-marker.md": ["## Steps\n\nunknown", "knowledge: requires-input"],
   },
 };
 

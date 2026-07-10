@@ -48,6 +48,7 @@ DocAI HTTP draft history. Specification versioning and compatibility rules are d
 - Expands focused complete-candidate fixtures for untagged and overlapping polymorphic variants and invalid pre-variant content.
 - Expands focused complete-candidate fixtures for inline error-shape reuse and ordering, field-level error UI policy, and common error `Shape=none` / `Shape=unknown`.
 - Expands focused complete-candidate fixtures for deviation placement and compact contract-preservation, opaque-field omission, and field-default savings evidence.
+- Expands focused complete-candidate fixtures for workflow structure, value passing, recovery, deviations, and whole-section unknown states.
 
 ## 0.11.0 (Draft - Compatibility Core)
 

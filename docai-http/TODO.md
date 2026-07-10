@@ -212,8 +212,8 @@ Deferred compact expansion work:
     - [x] Add focused fixtures for compact contract preservation failures: omitted request parameter, omitted response status, omitted error row, or changed client-visible constraint.
     - [x] Add focused fixtures for compact `Opaque fields` omitted when no opaque root exists and invalid empty `Opaque fields` headings.
     - [x] Add focused fixtures for compact `field_defaults` measured-savings annotations or producer assertions when token-saving evidence is represented.
-    - [ ] Add focused fixtures for workflow title matching, fixed section order, value passing, failure branches, recovery state, and workflow-specific deviations in the complete-candidate corpus.
-    - [ ] Add focused fixtures for workflow whole-section `unknown` states, not only replacement `unsupported`.
+    - [x] Add focused fixtures for workflow title matching, fixed section order, value passing, failure branches, recovery state, and workflow-specific deviations in the complete-candidate corpus.
+    - [x] Add focused fixtures for workflow whole-section `unknown` states, not only replacement `unsupported`.
     - [ ] Add focused fixtures for webhook title, INDEX listing, event-specific headers, safe deduplication key/strategy, delivery deviations, and triggering endpoint references in the complete-candidate corpus.
     - [ ] Add focused fixtures for webhook grouped-event incompatibility boundaries beyond payload variants.
     - [ ] Add focused fixtures for INDEX/metadata coverage propagation when a focused file contains `**unsupported**:` or `**unknown**:` in a complete-candidate set context.
