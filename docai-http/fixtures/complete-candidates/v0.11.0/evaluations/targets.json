@@ -1,0 +1,90 @@
+{
+  "docai_http": "0.11.0",
+  "candidate": "complete-candidates/v0.11.0",
+  "decided_on": "2026-07-11",
+  "status": "target-list-recorded-live-runs-pending",
+  "selection_policy": {
+    "required_targets": "Run every request_construction, response_handling, error_handling, and token_load task against every required target before changing the README publication label.",
+    "optional_targets": "Run optional targets when budget allows to compare frontier, balanced, and cost-sensitive behavior across providers.",
+    "catalog_refresh": "Before each live run, verify that model IDs are still available in the provider's official model catalog and record any alias or snapshot resolution in RESULTS.md.",
+    "temperature": 0,
+    "tools": "disabled unless a task explicitly requires tool use"
+  },
+  "source_docs": [
+    {
+      "provider": "openai",
+      "url": "https://developers.openai.com/api/docs/models",
+      "checked_on": "2026-07-11"
+    },
+    {
+      "provider": "anthropic",
+      "url": "https://platform.claude.com/docs/en/about-claude/models/overview",
+      "checked_on": "2026-07-11"
+    },
+    {
+      "provider": "google",
+      "url": "https://ai.google.dev/gemini-api/docs/models",
+      "checked_on": "2026-07-11"
+    },
+    {
+      "provider": "google",
+      "url": "https://ai.google.dev/gemini-api/docs/models/gemini-3.5-flash",
+      "checked_on": "2026-07-11"
+    },
+    {
+      "provider": "google",
+      "url": "https://ai.google.dev/gemini-api/docs/models/gemini-3.1-flash-lite",
+      "checked_on": "2026-07-11"
+    }
+  ],
+  "targets": [
+    {
+      "id": "openai-frontier",
+      "provider": "openai",
+      "model": "gpt-5.6-sol",
+      "required": true,
+      "role": "frontier reasoning and coding baseline",
+      "task_groups": ["request_construction", "response_handling", "error_handling", "token_load"]
+    },
+    {
+      "id": "anthropic-balanced",
+      "provider": "anthropic",
+      "model": "claude-sonnet-5",
+      "required": true,
+      "role": "balanced cross-provider long-context baseline",
+      "task_groups": ["request_construction", "response_handling", "error_handling", "token_load"]
+    },
+    {
+      "id": "google-stable-agentic",
+      "provider": "google",
+      "model": "gemini-3.5-flash",
+      "required": true,
+      "role": "stable agentic and coding baseline",
+      "task_groups": ["request_construction", "response_handling", "error_handling", "token_load"]
+    },
+    {
+      "id": "openai-cost",
+      "provider": "openai",
+      "model": "gpt-5.6-luna",
+      "required": false,
+      "role": "cost-sensitive OpenAI comparison",
+      "task_groups": ["request_construction", "response_handling", "error_handling", "token_load"]
+    },
+    {
+      "id": "anthropic-fast",
+      "provider": "anthropic",
+      "model": "claude-haiku-4-5",
+      "required": false,
+      "role": "fast Anthropic comparison",
+      "task_groups": ["request_construction", "response_handling", "error_handling", "token_load"]
+    },
+    {
+      "id": "google-cost",
+      "provider": "google",
+      "model": "gemini-3.1-flash-lite",
+      "required": false,
+      "role": "cost-sensitive Google comparison",
+      "task_groups": ["request_construction", "response_handling", "error_handling", "token_load"]
+    }
+  ]
+}

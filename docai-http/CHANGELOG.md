@@ -55,6 +55,7 @@ DocAI HTTP draft history. Specification versioning and compatibility rules are d
 - Expands focused complete-candidate fixtures for response default classification between exclusively error defaults and mixed error/non-error defaults.
 - Expands focused complete-candidate fixtures for common response-header contracts in `CONVENTIONS.md` and endpoint-level suppression or override deviations.
 - Adds a final complete-candidate focused coverage audit that maps README section 9.1 requirements to fixtures, checker expectations, coverage rows, and changelog evidence.
+- Records the complete-candidate live LLM target list and extends the evaluation checker to validate target coverage.
 
 ## 0.11.0 (Draft - Compatibility Core)
 

@@ -11,6 +11,8 @@ const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_DIR = path.resolve(SCRIPT_DIR, "..", "fixtures", "complete-candidates", `v${SPEC_VERSION}`);
 const CANDIDATE_DIR = path.resolve(process.argv[2] ?? DEFAULT_DIR);
 const TASKS_FILE = path.join(CANDIDATE_DIR, "evaluations", "tasks.json");
+const TARGETS_FILE = path.join(CANDIDATE_DIR, "evaluations", "targets.json");
+const RESULTS_FILE = path.join(CANDIDATE_DIR, "evaluations", "RESULTS.md");
 
 const failures = [];
 const metrics = [];
@@ -142,8 +144,15 @@ function assertEvidence(task, context) {
 try {
   const packet = readJson(TASKS_FILE);
   validateTaskPacket(packet);
+  validateTargets(readJson(TARGETS_FILE), packet);
 } catch (error) {
   fail("evaluation-packet", error.message);
+}
+
+try {
+  validateResultsTargetList(read(RESULTS_FILE), readJson(TARGETS_FILE));
+} catch (error) {
+  fail("evaluation-results", error.message);
 }
 
 if (failures.length > 0) {
@@ -161,3 +170,55 @@ metrics.forEach((row) => {
     `| ${row.task_id} | ${row.label} | ${row.utf8_bytes} | ${row.characters} | ${row.approx_tokens_chars_div_4} |`,
   );
 });
+
+function validateTargets(targetPacket, taskPacket) {
+  if (targetPacket.docai_http !== SPEC_VERSION) throw new Error(`targets docai_http must be ${SPEC_VERSION}`);
+  if (targetPacket.candidate !== taskPacket.candidate) throw new Error("targets candidate must match tasks candidate");
+  if (!targetPacket.decided_on) throw new Error("targets decided_on is required");
+  if (!Array.isArray(targetPacket.source_docs) || targetPacket.source_docs.length < 3) {
+    throw new Error("targets must record official source docs for each provider");
+  }
+  ["openai", "anthropic", "google"].forEach((provider) => {
+    if (!targetPacket.source_docs.some((source) => source.provider === provider && source.url && source.checked_on)) {
+      throw new Error(`targets source_docs must include ${provider}`);
+    }
+  });
+
+  if (!Array.isArray(targetPacket.targets) || targetPacket.targets.length === 0) throw new Error("targets must be non-empty");
+  const ids = new Set();
+  const requiredProviders = new Set();
+  targetPacket.targets.forEach((target) => {
+    validateTarget(target, ids);
+    if (target.required) requiredProviders.add(target.provider);
+  });
+  ["openai", "anthropic", "google"].forEach((provider) => {
+    if (!requiredProviders.has(provider)) throw new Error(`required targets must include ${provider}`);
+  });
+}
+
+function validateTarget(target, ids) {
+  if (!target.id || !/^[a-z0-9-]+$/.test(target.id)) throw new Error("target id must be kebab-case");
+  if (ids.has(target.id)) throw new Error(`duplicate target id ${target.id}`);
+  ids.add(target.id);
+  if (!["openai", "anthropic", "google"].includes(target.provider)) {
+    throw new Error(`unknown target provider ${target.provider}`);
+  }
+  if (!target.model || !/^[A-Za-z0-9._:@-]+$/.test(target.model)) throw new Error(`target ${target.id} has invalid model`);
+  if (typeof target.required !== "boolean") throw new Error(`target ${target.id} required must be boolean`);
+  if (!target.role) throw new Error(`target ${target.id} lacks role`);
+  if (!Array.isArray(target.task_groups) || target.task_groups.length === 0) {
+    throw new Error(`target ${target.id} task_groups must be non-empty`);
+  }
+  REQUIRED_GROUPS.forEach((group) => {
+    if (!target.task_groups.includes(group)) throw new Error(`target ${target.id} must include task group ${group}`);
+  });
+}
+
+function validateResultsTargetList(results, targetPacket) {
+  if (!results.includes("## Target LLM List")) throw new Error("RESULTS.md lacks Target LLM List section");
+  targetPacket.targets.forEach((target) => {
+    if (!results.includes(`| ${target.id} | ${target.provider} | ${target.model} |`)) {
+      throw new Error(`RESULTS.md lacks target row for ${target.id}`);
+    }
+  });
+}

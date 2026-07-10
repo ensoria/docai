@@ -224,7 +224,7 @@ Deferred compact expansion work:
 - [x] Add checker coverage for non-core features promoted into the complete surface. Evidence: `tools/check-complete-candidates.mjs` checks the complete-candidate full/compact pair, focused fixture expectations, coverage references, compact reductions, INDEX references, workflow/webhook/resource links, non-JSON, polymorphism, and recursive-source evidence as a corpus-specific expectation checker.
 - [ ] Run LLM task evaluations against the valid corpus for request construction, response handling, error handling, and token load.
   - [x] Add the complete-candidate evaluation task packet, expected outcomes, local context-metrics results, and `tools/check-complete-evaluations.mjs`.
-  - [ ] Decide and record the target LLM list for live evaluation.
+  - [x] Decide and record the target LLM list for live evaluation.
   - [ ] Run request-construction tasks against each target LLM and record model-specific results.
   - [ ] Run response-handling tasks against each target LLM and record model-specific results.
   - [ ] Run error-handling tasks against each target LLM and record model-specific results.
