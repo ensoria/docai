@@ -40,6 +40,7 @@ DocAI HTTP draft history. Specification versioning and compatibility rules are d
 - Expands focused complete-candidate fixtures for body-less and unknown body states, parameter wire serialization, value omission/default behavior, and webhook payload presence.
 - Expands focused complete-candidate fixtures for INDEX routing, endpoint section/path-parameter structure, and `CONVENTIONS.md` common error-shape contracts, and aligns selective-convention fixture cells with comma-separated `Conventions` syntax.
 - Expands focused complete-candidate fixtures for redirect and async responses, multiple media-type branching, and unknown response-header/body-nullability states, and adds the required `body_nullable` marker to the CSV media-type uniqueness fixture.
+- Expands focused complete-candidate fixtures for single-prose-language output and English-only structural text boundaries.
 
 ## 0.11.0 (Draft - Compatibility Core)
 

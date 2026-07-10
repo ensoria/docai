@@ -187,7 +187,7 @@ Deferred compact expansion work:
   - [x] Add complete-candidate focused fixtures for INDEX routing, endpoint section/path-parameter structure, and `CONVENTIONS.md` common error-shape contracts.
   - [x] Add complete-candidate focused fixtures for redirect/async responses, multiple media-type branching, and unknown response-header/body-nullability states.
   - [ ] Add remaining complete-surface focused fixtures for every §9.1 canonical marker, table shape, normalization rule, representation class, and replacement unit.
-    - [ ] Add focused fixtures for single-prose-language output and English-only structural text boundaries.
+    - [x] Add focused fixtures for single-prose-language output and English-only structural text boundaries.
     - [ ] Add focused fixtures for unsupported or unrepresentable endpoint method/path handling, including the rule that such operations are not emitted as compliant endpoints.
     - [ ] Add focused fixtures for concrete method, status, media-type spelling, standard variable headings, and invalid non-`x-` structural identifiers.
     - [ ] Add focused fixtures for `**media_type**: unknown` with required `**unknown**:` marker and invalid missing-marker cases.
