@@ -43,6 +43,7 @@ DocAI HTTP draft history. Specification versioning and compatibility rules are d
 - Expands focused complete-candidate fixtures for single-prose-language output and English-only structural text boundaries.
 - Expands focused complete-candidate fixtures for unrepresentable endpoint omission, structural identifier spelling, `media_type=unknown`, and resource-file boundaries.
 - Expands focused complete-candidate fixtures for body-marker ordering, conditional response-body presence, conditional response-header presence, and response-specific common-header deviations.
+- Expands focused complete-candidate fixtures for table-cell unknown values, cross-file reference rejection, nested arrays/maps, root-object `$` row usage, and enum documentation.
 
 ## 0.11.0 (Draft - Compatibility Core)
 

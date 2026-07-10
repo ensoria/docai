@@ -195,11 +195,11 @@ Deferred compact expansion work:
     - [x] Add focused fixtures for body marker ordering across request bodies, responses, inline error shapes, common error shapes, and webhook payloads.
     - [x] Add focused fixtures for conditional response-body presence and caller-visible branching separate from body omission.
     - [x] Add focused fixtures for conditional response-header presence and response-specific common-header deviations.
-    - [ ] Add focused fixtures for table-cell `unknown` values across `Required`, `Type`, `Presence`, and `Nullable`, including compact defaulting prohibition for unknown columns.
-    - [ ] Add focused fixtures for invalid cross-file schema reference notation such as `$ref` outside the compact `**same_as**:` rule.
-    - [ ] Add focused fixtures for nested arrays, nested dynamic maps, and array-item object openness beyond the current root-value examples.
-    - [ ] Add focused fixtures for root-object `$` row exception and invalid unnecessary or contradictory `$` rows.
-    - [ ] Add focused fixtures for standardized enum documentation, subset enum documentation, and invalid enum omission where clients must branch.
+    - [x] Add focused fixtures for table-cell `unknown` values across `Required`, `Type`, `Presence`, and `Nullable`, including compact defaulting prohibition for unknown columns.
+    - [x] Add focused fixtures for invalid cross-file schema reference notation such as `$ref` outside the compact `**same_as**:` rule.
+    - [x] Add focused fixtures for nested arrays, nested dynamic maps, and array-item object openness beyond the current root-value examples.
+    - [x] Add focused fixtures for root-object `$` row exception and invalid unnecessary or contradictory `$` rows.
+    - [x] Add focused fixtures for standardized enum documentation, subset enum documentation, and invalid enum omission where clients must branch.
     - [ ] Add focused fixtures for request media-type selection when multiple request representations are available.
     - [ ] Add focused fixtures for complete-candidate non-JSON representation classes beyond multipart: form-urlencoded, raw binary upload/download, CSV, XML, and SSE.
     - [ ] Add focused fixtures for raw binary and unstructured stream sample-and-prose exceptions, including invalid field-table requirements where they do not apply.
