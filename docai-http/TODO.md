@@ -216,7 +216,7 @@ Deferred compact expansion work:
     - [x] Add focused fixtures for workflow whole-section `unknown` states, not only replacement `unsupported`.
     - [x] Add focused fixtures for webhook title, INDEX listing, event-specific headers, safe deduplication key/strategy, delivery deviations, and triggering endpoint references in the complete-candidate corpus.
     - [x] Add focused fixtures for webhook grouped-event incompatibility boundaries beyond payload variants.
-    - [ ] Add focused fixtures for INDEX/metadata coverage propagation when a focused file contains `**unsupported**:` or `**unknown**:` in a complete-candidate set context.
+    - [x] Add focused fixtures for INDEX/metadata coverage propagation when a focused file contains `**unsupported**:` or `**unknown**:` in a complete-candidate set context.
     - [ ] Add focused fixtures for source-backed generated examples that require `**unknown**:` because no credible valid example can be generated.
     - [ ] Add focused fixtures for response default rows that are exclusively error semantics versus mixed non-error/error defaults.
     - [ ] Add focused fixtures for common response-header contracts in `CONVENTIONS.md` and endpoint-level suppression or override.

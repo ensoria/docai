@@ -50,6 +50,7 @@ DocAI HTTP draft history. Specification versioning and compatibility rules are d
 - Expands focused complete-candidate fixtures for deviation placement and compact contract-preservation, opaque-field omission, and field-default savings evidence.
 - Expands focused complete-candidate fixtures for workflow structure, value passing, recovery, deviations, and whole-section unknown states.
 - Expands focused complete-candidate fixtures for webhook structure, delivery contracts, trigger references, and grouped-event incompatibility boundaries.
+- Expands focused complete-candidate fixtures for INDEX and metadata propagation of `unsupported` coverage and `unknown` knowledge states.
 
 ## 0.11.0 (Draft - Compatibility Core)
 
