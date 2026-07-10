@@ -188,10 +188,10 @@ Deferred compact expansion work:
   - [x] Add complete-candidate focused fixtures for redirect/async responses, multiple media-type branching, and unknown response-header/body-nullability states.
   - [ ] Add remaining complete-surface focused fixtures for every §9.1 canonical marker, table shape, normalization rule, representation class, and replacement unit.
     - [x] Add focused fixtures for single-prose-language output and English-only structural text boundaries.
-    - [ ] Add focused fixtures for unsupported or unrepresentable endpoint method/path handling, including the rule that such operations are not emitted as compliant endpoints.
-    - [ ] Add focused fixtures for concrete method, status, media-type spelling, standard variable headings, and invalid non-`x-` structural identifiers.
-    - [ ] Add focused fixtures for `**media_type**: unknown` with required `**unknown**:` marker and invalid missing-marker cases.
-    - [ ] Add focused fixtures for resource-file boundaries: exactly one bounded resource file per endpoint and no resource-level title/prose wrapper.
+    - [x] Add focused fixtures for unsupported or unrepresentable endpoint method/path handling, including the rule that such operations are not emitted as compliant endpoints.
+    - [x] Add focused fixtures for concrete method, status, media-type spelling, standard variable headings, and invalid non-`x-` structural identifiers.
+    - [x] Add focused fixtures for `**media_type**: unknown` with required `**unknown**:` marker and invalid missing-marker cases.
+    - [x] Add focused fixtures for resource-file boundaries: exactly one bounded resource file per endpoint and no resource-level title/prose wrapper.
     - [ ] Add focused fixtures for body marker ordering across request bodies, responses, inline error shapes, common error shapes, and webhook payloads.
     - [ ] Add focused fixtures for conditional response-body presence and caller-visible branching separate from body omission.
     - [ ] Add focused fixtures for conditional response-header presence and response-specific common-header deviations.
