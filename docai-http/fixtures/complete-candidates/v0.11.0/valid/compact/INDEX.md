@@ -9,27 +9,27 @@ Full set: ../full/
 
 | Method | Path | Task | Summary | Also read | Conventions |
 |---|---|---|---|---|---|
-| POST | /users | create user | Creates a user record; email must be unique. | none | Authentication; Request Formats; Errors; Validation Errors |
-| GET | /users/{id} | get user | Gets one user by ID. | none | Authentication; HTTP Semantics; Errors |
+| POST | /users | create user | Creates a user record; email must be unique. | none | Authentication, Request Formats, Errors, Validation Errors |
+| GET | /users/{id} | get user | Gets one user by ID. | none | Authentication, HTTP Semantics, Errors |
 
 ### resources/checkout.md
 
 | Method | Path | Task | Summary | Also read | Conventions |
 |---|---|---|---|---|---|
-| POST | /carts/{id}/validate | checkout | Validates cart inventory before payment. | workflows/checkout.md | Authentication; HTTP Semantics; Errors |
-| POST | /orders | checkout | Confirms an order from a validated cart and pending payment. | workflows/checkout.md | Authentication; Request Formats; Errors |
+| POST | /carts/{id}/validate | checkout | Validates cart inventory before payment. | workflows/checkout.md | Authentication, HTTP Semantics, Errors |
+| POST | /orders | checkout | Confirms an order from a validated cart and pending payment. | workflows/checkout.md | Authentication, Request Formats, Errors |
 
 ### resources/payments.md
 
 | Method | Path | Task | Summary | Also read | Conventions |
 |---|---|---|---|---|---|
-| POST | /payments | checkout; create payment | Creates a pending payment from a card or bank variant and may later trigger settlement delivery. | workflows/checkout.md; webhooks/payment-completed.md | Authentication; Request Formats; Errors |
+| POST | /payments | checkout; create payment | Creates a pending payment from a card or bank variant and may later trigger settlement delivery. | workflows/checkout.md, webhooks/payment-completed.md | Authentication, Request Formats, Errors |
 
 ### resources/documents.md
 
 | Method | Path | Task | Summary | Also read | Conventions |
 |---|---|---|---|---|---|
-| POST | /documents | upload document | Uploads a document file with optional JSON metadata. | none | Authentication; File Transfer; Errors; Validation Errors |
+| POST | /documents | upload document | Uploads a document file with optional JSON metadata. | none | Authentication, File Transfer, Errors, Validation Errors |
 
 ## Workflows
 

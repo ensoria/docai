@@ -11,7 +11,8 @@ Current candidate evidence:
 - A full/compact complete example pair exists at `fixtures/complete-candidates/v0.11.0/valid/`.
 - That pair includes resources, a workflow, and a webhook with matching standard docs-root-relative paths.
 - Focused complete-surface fixtures have started; current coverage is tracked in `fixtures/complete-candidates/v0.11.0/COVERAGE.md`.
-- Complete checker coverage, complete §9.1 focused fixture coverage, and LLM task evaluation evidence are still missing.
+- A corpus-specific complete-candidate checker exists at `tools/check-complete-candidates.mjs`.
+- Complete §9.1 focused fixture coverage and LLM task evaluation evidence are still missing.
 
 ## Publication Gate
 

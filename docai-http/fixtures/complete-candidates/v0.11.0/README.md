@@ -2,7 +2,7 @@
 
 This directory contains the first candidate full/compact example pair for the future complete generator implementation surface. It is not part of the `0.11.0` Compatibility Core and does not make the repository complete-generator-ready.
 
-This corpus is intentionally a candidate example set, not the final complete conformance corpus required by README section 9.1. Focused complete-surface fixtures, complete checker coverage, and LLM task evaluation evidence still need to land before the README publication label can change.
+This corpus is intentionally a candidate example set, not the final complete conformance corpus required by README section 9.1. Remaining focused complete-surface fixtures and LLM task evaluation evidence still need to land before the README publication label can change.
 
 Layout:
 
@@ -29,4 +29,4 @@ Both sets share `projection_id: complete-candidate-20260710-001`. The full INDEX
 
 The compact set demonstrates candidate use of compact examples, `field_defaults`, `same_as` with discoverable retrieval-unit metadata, and webhook payload `Client-visible fields` / `Opaque fields`.
 
-No complete-surface checker exists yet. Run the existing candidate checkers for the still-separate candidate corpora; this complete candidate corpus will need its own checker before it can support a broader publication label.
+Run `node tools/check-complete-candidates.mjs` from the `docai-http/` directory, or `node docai-http/tools/check-complete-candidates.mjs` from the repository root, to check this complete candidate corpus. The checker is corpus-specific expectation coverage, not a public reusable validator.
