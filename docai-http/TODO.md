@@ -160,12 +160,12 @@ Deferred compact expansion work:
 
 ## P3: Move Toward Complete Generator Readiness
 
-- [ ] Define the minimum complete-surface fixture corpus required before advertising complete-generator-ready.
+- [x] Define the minimum complete-surface fixture corpus required before advertising complete-generator-ready. Decision: the minimum corpus, evidence matrix, checker plan, LLM evaluation plan, and publication gate are defined in `COMPLETE-GENERATOR-READINESS.md`; README section 9.1 remains authoritative.
 - [ ] Add full and compact complete example sets that include resources, workflows, and webhooks.
 - [ ] Add focused valid/invalid fixtures for every canonical marker and table shape in §9.1.
 - [ ] Add checker coverage for non-core features promoted into the complete surface.
 - [ ] Run LLM task evaluations against the valid corpus for request construction, response handling, error handling, and token load.
-- [ ] Update README publication label only after fixture and checker evidence supports the broader claim.
+- [x] Keep the README publication label unchanged until fixture and checker evidence supports the broader claim. Decision: keep the current README publication label as `Compatibility Core implementation target`; do not advertise complete-generator-ready until the evidence gate in `COMPLETE-GENERATOR-READINESS.md` is complete.
 
 ## Parking Lot
 

@@ -13,6 +13,14 @@ Use the narrowest publication label supported by evidence:
 
 Do not imply compatibility for structures outside the published label. Non-core structures remain opt-in until they have specification text, positive and negative fixtures, checker behavior, coverage notes, and changelog evidence.
 
+## Complete Generator Readiness Gate
+
+Before using the `Complete-generator-ready candidate` label, complete the evidence gate in `COMPLETE-GENERATOR-READINESS.md`.
+
+The current repository state is not complete-generator-ready. Candidate corpora for compact output, workflows, webhooks, non-JSON representations, and polymorphic variants are preparation work only until a complete-surface corpus, matching checker coverage, LLM task evaluations, and release evidence all land together.
+
+Do not update the README publication label merely because one candidate corpus exists. The label may change only after the complete full-profile set, matching compact projection, focused complete-surface fixtures, checker behavior, evaluation notes, and changelog/release notes support the broader claim.
+
 ## Version Bump Rules
 
 Before `1.0.0`:

@@ -2,7 +2,7 @@
 
 This directory holds DocAI HTTP's versioned fixture corpora.
 
-The current contents are an initial Compatibility Core corpus for draft `0.11.0`, a compact-profile candidate corpus, a workflow candidate corpus, a webhook candidate corpus, a non-JSON candidate corpus, and a polymorphism candidate corpus. The complete conformance corpus that a stable release requires (README §9.1) does not exist yet; the core corpus is the pre-1.0 subset, intended to make the core scope concrete before the complete generator implementation surface is stabilized.
+The current contents are an initial Compatibility Core corpus for draft `0.11.0`, a compact-profile candidate corpus, a workflow candidate corpus, a webhook candidate corpus, a non-JSON candidate corpus, and a polymorphism candidate corpus. The complete conformance corpus that a stable release requires (README §9.1) does not exist yet; the core corpus is the pre-1.0 subset, intended to make the core scope concrete before the complete generator implementation surface is stabilized. The evidence gate for a future complete-generator-ready label is tracked in [`../COMPLETE-GENERATOR-READINESS.md`](../COMPLETE-GENERATOR-READINESS.md).
 
 Layout:
 
