@@ -51,6 +51,7 @@ DocAI HTTP draft history. Specification versioning and compatibility rules are d
 - Expands focused complete-candidate fixtures for workflow structure, value passing, recovery, deviations, and whole-section unknown states.
 - Expands focused complete-candidate fixtures for webhook structure, delivery contracts, trigger references, and grouped-event incompatibility boundaries.
 - Expands focused complete-candidate fixtures for INDEX and metadata propagation of `unsupported` coverage and `unknown` knowledge states.
+- Expands focused complete-candidate fixtures for source-backed generated examples that require `unknown` knowledge when no credible valid example can be generated.
 
 ## 0.11.0 (Draft - Compatibility Core)
 
