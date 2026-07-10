@@ -10,7 +10,7 @@ Layout:
 - `source/recursive-direct-openapi.yaml` and `source/recursive-indirect-openapi.yaml` are recursive source inputs whose generated projections use `unsupported`.
 - `valid/full/` contains the full-profile candidate set.
 - `valid/compact/` contains the matching compact-profile candidate set.
-- `focused/valid/` and `focused/invalid/` contain focused complete-surface snippets for the areas listed in `COVERAGE.md`, including profile pairing, compact reductions, non-JSON, polymorphism, workflow/webhook boundaries, metadata, unknown state, structured parameters, response headers, errors, generated examples, media-type boundaries, and recursive fallback.
+- `focused/valid/` and `focused/invalid/` contain focused complete-surface snippets for the areas listed in `COVERAGE.md`, including profile pairing, compact reductions, non-JSON, polymorphism, workflow/webhook boundaries, metadata, canonical boundaries, unknown state, structured parameters, response headers, errors, generated examples, media-type boundaries, localized/replacement `unsupported`, and recursive fallback.
 - `COVERAGE.md` records which readiness evidence is present and which evidence is still missing.
 - `TOKEN-SAVINGS.md` records compact-profile candidate reduction guidance.
 

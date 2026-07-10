@@ -33,6 +33,7 @@ DocAI HTTP draft history. Specification versioning and compatibility rules are d
 - Expands focused complete-candidate fixtures for non-JSON multipart boundaries, polymorphic variants, workflow and response-header replacement `unsupported`, and grouped webhook payload variants.
 - Expands focused complete-candidate fixtures for metadata and extensions, coverage/knowledge states, structured parameters, conditional requiredness, repeatable response headers, exactly-null values, inline unknown-code labels, and generated-example field coverage.
 - Expands focused complete-candidate fixtures for table and field-path syntax, media-type uniqueness, endpoint-specific error recovery state, common-error suppression deviations, and recursive-schema source fallback.
+- Expands focused complete-candidate fixtures for compact field-default reconstruction, compact error-shape reduction, localized `unsupported`, and canonical extension/non-extension heading boundaries.
 
 ## 0.11.0 (Draft - Compatibility Core)
 

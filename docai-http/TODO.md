@@ -179,6 +179,9 @@ Deferred compact expansion work:
   - [x] Add complete-candidate focused fixtures for table normalization, field-path escaping, object openness, and media-type uniqueness.
   - [x] Add complete-candidate focused fixtures for endpoint-specific common-error deviation/suppression and error-time recovery state.
   - [x] Add complete-candidate source and focused fixtures for direct and indirect recursive-schema `unsupported` fallback.
+  - [x] Add complete-candidate focused fixtures for compact `field_defaults` reconstruction and invalid defaulted-column usage.
+  - [x] Add complete-candidate focused fixtures for compact error-shape field reduction and invalid `same_as` use in error shapes.
+  - [x] Add complete-candidate focused fixtures for localized `unsupported` placement and canonical extension/non-extension heading boundaries.
   - [ ] Add remaining complete-surface focused fixtures for every §9.1 canonical marker, table shape, normalization rule, representation class, and replacement unit.
 - [ ] Add checker coverage for non-core features promoted into the complete surface.
 - [ ] Run LLM task evaluations against the valid corpus for request construction, response handling, error handling, and token load.
