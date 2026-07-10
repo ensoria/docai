@@ -143,7 +143,7 @@ Deferred compact expansion work:
 
 ## P2: Prepare Polymorphism And Variants
 
-- [ ] Add tagged variant fixtures with complete examples and tables per variant.
+- [x] Add tagged variant fixtures with complete examples and tables per variant.
 - [ ] Add untagged variant fixtures with stable labels and selection prose.
 - [ ] Add invalid fixtures for unlabeled common field tables.
 - [ ] Add invalid fixtures for missing discriminator enum values in tagged variants.

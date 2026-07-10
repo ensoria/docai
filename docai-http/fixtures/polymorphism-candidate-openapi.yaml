@@ -1,0 +1,87 @@
+openapi: 3.1.1
+info:
+  title: Polymorphism Candidate Fixture API
+  version: 0.11.0-polymorphism-candidate-source
+paths:
+  /payments:
+    post:
+      summary: Create payment with tagged request variants
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: "#/components/schemas/BankPaymentRequest"
+                - $ref: "#/components/schemas/CardPaymentRequest"
+              discriminator:
+                propertyName: type
+                mapping:
+                  bank: "#/components/schemas/BankPaymentRequest"
+                  card: "#/components/schemas/CardPaymentRequest"
+      responses:
+        "201":
+          description: Payment created
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - payment_id
+                  - status
+                properties:
+                  payment_id:
+                    type: string
+                  status:
+                    type: string
+                    enum:
+                      - pending
+components:
+  schemas:
+    BankPaymentRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - type
+        - amount
+        - currency
+        - bank_account_id
+      properties:
+        type:
+          type: string
+          enum:
+            - bank
+        amount:
+          type: integer
+          minimum: 1
+        currency:
+          type: string
+          enum:
+            - JPY
+            - USD
+        bank_account_id:
+          type: string
+    CardPaymentRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - type
+        - amount
+        - currency
+        - card_token
+      properties:
+        type:
+          type: string
+          enum:
+            - card
+        amount:
+          type: integer
+          minimum: 1
+        currency:
+          type: string
+          enum:
+            - JPY
+            - USD
+        card_token:
+          type: string
