@@ -9,9 +9,9 @@ Expected: invalid complete candidate. A body-less request does not explicitly co
 
 - Path Parameters:
 
-| Name | Type | Required | Constraints / Meaning |
-|---|---|---|---|
-| id | string | yes | Session ID |
+| Name | Type | Constraints / Meaning |
+|---|---|---|
+| id | string | Session ID |
 
 - Query Parameters: none
 - Headers: none

@@ -14,7 +14,7 @@ Compact set: ../compact/
 
 | Method | Path | Task | Summary | Also read | Conventions |
 |---|---|---|---|---|---|
-| POST | /users | create user | Creates a user. | none | Authentication; Request Formats |
+| POST | /users | create user | Creates a user. | none | Authentication, Request Formats |
 
 ## Workflows
 
@@ -37,7 +37,7 @@ Full set: ../full/
 
 | Method | Path | Task | Summary | Also read | Conventions |
 |---|---|---|---|---|---|
-| POST | /users | create user | Creates a user. | none | Authentication; Request Formats |
+| POST | /users | create user | Creates a user. | none | Authentication, Request Formats |
 
 ## Workflows
 

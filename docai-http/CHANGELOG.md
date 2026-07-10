@@ -38,6 +38,7 @@ DocAI HTTP draft history. Specification versioning and compatibility rules are d
 - Adds a complete-candidate LLM evaluation task packet, local context metrics, and an evaluation packet checker without claiming live LLM evaluation evidence.
 - Expands focused complete-candidate fixtures for deprecated endpoint signaling, Behavior unknown facts, PATCH update semantics, root-value bodies, status range/default ordering, and whole-section `CONVENTIONS.md` states.
 - Expands focused complete-candidate fixtures for body-less and unknown body states, parameter wire serialization, value omission/default behavior, and webhook payload presence.
+- Expands focused complete-candidate fixtures for INDEX routing, endpoint section/path-parameter structure, and `CONVENTIONS.md` common error-shape contracts, and aligns selective-convention fixture cells with comma-separated `Conventions` syntax.
 
 ## 0.11.0 (Draft - Compatibility Core)
 
