@@ -10,7 +10,7 @@ Current candidate evidence:
 
 - A full/compact complete example pair exists at `fixtures/complete-candidates/v0.11.0/valid/`.
 - That pair includes resources, a workflow, and a webhook with matching standard docs-root-relative paths.
-- Focused complete-surface fixtures have started for profile pairing, selective conventions, `same_as`, compact opaque fields, and resource/workflow/webhook relations.
+- Focused complete-surface fixtures have started for profile pairing, selective conventions, `same_as`, compact opaque fields, resource/workflow/webhook relations, non-JSON multipart, polymorphic variants, replacement `unsupported`, and grouped webhook variants.
 - Complete checker coverage, complete §9.1 focused fixture coverage, and LLM task evaluation evidence are still missing.
 
 ## Publication Gate

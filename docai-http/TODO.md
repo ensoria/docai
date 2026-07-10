@@ -167,6 +167,10 @@ Deferred compact expansion work:
   - [x] Add complete-candidate focused fixtures for compact `same_as` retrieval boundaries.
   - [x] Add complete-candidate focused fixtures for compact `Client-visible fields` and `Opaque fields`.
   - [x] Add complete-candidate focused fixture for resource, workflow, and webhook related links.
+  - [x] Add complete-candidate focused fixtures for non-JSON multipart representation boundaries.
+  - [x] Add complete-candidate focused fixtures for polymorphic request variants.
+  - [x] Add complete-candidate focused fixtures for workflow-section and response-header replacement `unsupported`.
+  - [x] Add complete-candidate focused fixtures for grouped webhook payload variants.
   - [ ] Add remaining complete-surface focused fixtures for every §9.1 canonical marker, table shape, normalization rule, representation class, and replacement unit.
 - [ ] Add checker coverage for non-core features promoted into the complete surface.
 - [ ] Run LLM task evaluations against the valid corpus for request construction, response handling, error handling, and token load.

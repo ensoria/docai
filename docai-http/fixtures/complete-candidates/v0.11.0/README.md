@@ -9,7 +9,7 @@ Layout:
 - `source/complete-openapi.yaml` is the source OpenAPI fixture referenced by the full and compact candidate sets.
 - `valid/full/` contains the full-profile candidate set.
 - `valid/compact/` contains the matching compact-profile candidate set.
-- `focused/valid/` and `focused/invalid/` contain the first focused complete-surface snippets for profile pairing, selective conventions, `same_as`, compact opaque fields, and resource/workflow/webhook relations.
+- `focused/valid/` and `focused/invalid/` contain the first focused complete-surface snippets for profile pairing, selective conventions, `same_as`, compact opaque fields, resource/workflow/webhook relations, non-JSON multipart, polymorphic variants, replacement `unsupported`, and grouped webhook variants.
 - `COVERAGE.md` records which readiness evidence is present and which evidence is still missing.
 - `TOKEN-SAVINGS.md` records compact-profile candidate reduction guidance.
 
