@@ -1,0 +1,194 @@
+openapi: 3.1.1
+info:
+  title: Webhook Candidate Fixture API
+  version: 0.11.0-webhook-candidate-source
+paths:
+  /payments:
+    post:
+      summary: Create payment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - amount
+              properties:
+                amount:
+                  type: integer
+                  minimum: 1
+      responses:
+        "201":
+          description: Payment created
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - payment_id
+                  - status
+                properties:
+                  payment_id:
+                    type: string
+                  status:
+                    type: string
+                    enum:
+                      - pending
+      x-docai-triggers:
+        - payment.completed
+  /subscriptions/{id}:
+    patch:
+      summary: Update subscription
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                plan:
+                  type: string
+                cancel:
+                  type: boolean
+      responses:
+        "200":
+          description: Subscription updated
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - subscription_id
+                  - status
+                properties:
+                  subscription_id:
+                    type: string
+                  status:
+                    type: string
+                    enum:
+                      - active
+                      - cancelled
+      x-docai-triggers:
+        - subscription.updated
+        - subscription.cancelled
+webhooks:
+  payment.completed:
+    post:
+      summary: Payment completed
+      parameters:
+        - name: X-Payment-Attempt
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - event_id
+                - event
+                - payment_id
+                - amount
+                - occurred_at
+              properties:
+                event_id:
+                  type: string
+                event:
+                  type: string
+                  enum:
+                    - payment.completed
+                payment_id:
+                  type: string
+                amount:
+                  type: integer
+                occurred_at:
+                  type: string
+                  format: date-time
+  subscription.updated:
+    post:
+      summary: Subscription updated
+      parameters:
+        - name: X-Subscription-Event-Version
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - event
+                - subscription_id
+                - plan
+                - status
+                - occurred_at
+              properties:
+                event:
+                  type: string
+                  enum:
+                    - subscription.updated
+                subscription_id:
+                  type: string
+                plan:
+                  type: string
+                status:
+                  type: string
+                occurred_at:
+                  type: string
+                  format: date-time
+  subscription.cancelled:
+    post:
+      summary: Subscription cancelled
+      parameters:
+        - name: X-Subscription-Event-Version
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - event
+                - subscription_id
+                - cancelled_at
+                - reason
+                - occurred_at
+              properties:
+                event:
+                  type: string
+                  enum:
+                    - subscription.cancelled
+                subscription_id:
+                  type: string
+                cancelled_at:
+                  type: string
+                  format: date-time
+                reason:
+                  type: string
+                occurred_at:
+                  type: string
+                  format: date-time

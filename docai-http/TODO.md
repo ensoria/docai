@@ -109,26 +109,26 @@ Deferred compact expansion work:
 
 ## P2: Prepare Workflow Support
 
-- [ ] Decide whether workflows should be promoted as one feature or split into minimal workflow structure and advanced recovery semantics.
-- [ ] Add valid workflow fixture with `Preconditions`, `Steps`, `State Transitions`, and `Failure and Recovery`.
-- [ ] Add invalid fixtures for workflow section order and missing required sections.
-- [ ] Add fixtures for workflow references from INDEX and endpoint `Related`.
-- [ ] Add fixtures for values passed between steps and failure branch recovery.
-- [ ] Add fixtures for workflow-specific `**deviation**:`.
-- [ ] Add fixtures for workflow-section replacement `unsupported`.
-- [ ] Add checker support for workflow discovery and section rules.
+- [x] Decide whether workflows should be promoted as one feature or split into minimal workflow structure and advanced recovery semantics. Decision: split workflow support; first candidate scope is minimal workflow discovery and fixed-section structure, while advanced recovery semantics remain separate.
+- [x] Add valid workflow fixture with `Preconditions`, `Steps`, `State Transitions`, and `Failure and Recovery`.
+- [x] Add invalid fixtures for workflow section order and missing required sections.
+- [x] Add fixtures for workflow references from INDEX and endpoint `Related`.
+- [x] Add fixtures for values passed between steps and failure branch recovery.
+- [x] Add fixtures for workflow-specific `**deviation**:`.
+- [x] Add fixtures for workflow-section replacement `unsupported`.
+- [x] Add checker support for workflow discovery and section rules.
 
 ## P2: Prepare Webhook Support
 
-- [ ] Decide whether webhooks should be promoted before or after workflows.
-- [ ] Add valid single-event webhook fixture.
-- [ ] Add valid grouped webhook fixture using payload variants.
-- [ ] Add invalid fixtures for grouping events with incompatible headers, delivery deviations, or receiver requirements.
-- [ ] Add fixtures for event-specific headers using request-header rules.
-- [ ] Add fixtures for payload `Presence` semantics separate from `body_required`.
-- [ ] Add fixtures for deduplication key and composite deduplication strategy.
-- [ ] Add fixtures for webhook delivery deviations from `CONVENTIONS.md`.
-- [ ] Add checker support for webhook discovery from INDEX and triggering endpoint `Related`.
+- [x] Decide whether webhooks should be promoted before or after workflows. Decision: prepare webhook support after workflow support as a separate candidate scope, without promoting either into the default Compatibility Core.
+- [x] Add valid single-event webhook fixture.
+- [x] Add valid grouped webhook fixture using payload variants.
+- [x] Add invalid fixtures for grouping events with incompatible headers, delivery deviations, or receiver requirements.
+- [x] Add fixtures for event-specific headers using request-header rules.
+- [x] Add fixtures for payload `Presence` semantics separate from `body_required`.
+- [x] Add fixtures for deduplication key and composite deduplication strategy.
+- [x] Add fixtures for webhook delivery deviations from `CONVENTIONS.md`.
+- [x] Add checker support for webhook discovery from INDEX and triggering endpoint `Related`.
 
 ## P2: Prepare Non-JSON Representation Support
 

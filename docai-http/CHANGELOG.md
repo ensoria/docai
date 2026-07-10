@@ -21,6 +21,9 @@ DocAI HTTP draft history. Specification versioning and compatibility rules are d
 - Adds compact-candidate token-saving measurement guidance and fixture-level reduction annotations.
 - Adds a compact-candidate fixture checker for profile links, profile identity, `field_defaults` reconstruction, and full/compact table contract comparison.
 - Records the compact profile as a separate opt-in compatibility scope candidate rather than part of the default Compatibility Core.
+- Adds a workflow candidate fixture corpus for minimal workflow discovery and fixed-section structure without promoting workflows into the current Compatibility Core.
+- Adds focused workflow-candidate fixtures and a candidate checker for workflow discovery, required sections, references, passed values, failure branches, deviations, and workflow-section replacement `unsupported`.
+- Adds a webhook candidate fixture corpus and checker for webhook discovery, triggering endpoint references, fixed sections, event-specific headers, single-event payloads, grouped variants, delivery deviations, and deduplication guidance without promoting webhooks into the current Compatibility Core.
 
 ## 0.11.0 (Draft - Compatibility Core)
 

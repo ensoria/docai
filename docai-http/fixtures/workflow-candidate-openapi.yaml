@@ -1,0 +1,101 @@
+openapi: 3.1.1
+info:
+  title: Workflow Candidate Fixture API
+  version: 0.11.0-workflow-candidate-source
+paths:
+  /carts/{id}/validate:
+    post:
+      summary: Validate cart
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Cart validated
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - cart_id
+                  - status
+                properties:
+                  cart_id:
+                    type: string
+                  status:
+                    type: string
+                    enum:
+                      - validated
+  /payments:
+    post:
+      summary: Create payment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - cart_id
+              properties:
+                cart_id:
+                  type: string
+      responses:
+        "201":
+          description: Payment created
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - payment_id
+                  - status
+                properties:
+                  payment_id:
+                    type: string
+                  status:
+                    type: string
+                    enum:
+                      - pending
+  /orders:
+    post:
+      summary: Create order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - cart_id
+                - payment_id
+              properties:
+                cart_id:
+                  type: string
+                payment_id:
+                  type: string
+      responses:
+        "201":
+          description: Order confirmed
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - order_id
+                  - status
+                properties:
+                  order_id:
+                    type: string
+                  status:
+                    type: string
+                    enum:
+                      - confirmed
