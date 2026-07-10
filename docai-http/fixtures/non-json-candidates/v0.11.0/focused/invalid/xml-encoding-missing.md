@@ -1,0 +1,33 @@
+# invalid: XML encoding missing
+
+Expected: invalid non-JSON candidate. XML responses must state UTF-8 encoding in the media marker, XML declaration, and prose.
+
+````markdown
+### Response 200
+
+**body_presence**: always
+
+**media_type**: application/xml;charset=UTF-8
+
+**body_nullable**: no
+
+```xml
+<report xmlns="https://api.example.com/reports" xmlns:audit="https://api.example.com/audit" id="rpt_01K0XML" status="final">
+  <title>Q2 statement</title>
+  <total currency="JPY">1200</total>
+  <audit:updated_at>2026-07-10T00:00:00Z</audit:updated_at>
+</report>
+```
+
+The default namespace URI is `https://api.example.com/reports`. The audit namespace URI is `https://api.example.com/audit`. Consumers match namespace URIs, not lexical prefixes. Element order is fixed: `title`, `total`, `audit:updated_at`. Attributes are unordered. No mixed content is used.
+
+| Node | Type | Presence | Nullable | Meaning |
+|---|---|---|---|---|
+| /report | object | always | no | Root element in the default namespace |
+| /report/@id | string | always | no | Attribute; report ID |
+| /report/@status | enum(final, draft) | always | no | Attribute; report status |
+| /report/title | string | always | no | First child element in the default namespace |
+| /report/total | int | always | no | Second child element in the default namespace |
+| /report/total/@currency | enum(JPY, USD) | always | no | Attribute; currency code for total |
+| /report/audit:updated_at | datetime | always | no | Third child element in the audit namespace |
+````

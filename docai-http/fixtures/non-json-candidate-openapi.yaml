@@ -29,6 +29,37 @@ paths:
                   - report_id
                   - title
                   - total
+  /reports/{report_id}/summary:
+    get:
+      summary: Get report XML summary
+      parameters:
+        - name: report_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Report XML summary
+          content:
+            application/xml:
+              schema:
+                type: string
+              x-docai-xml:
+                charset: UTF-8
+                declaration: required
+                default_namespace: https://api.example.com/reports
+                namespaces:
+                  audit: https://api.example.com/audit
+                root:
+                  name: report
+                  attributes:
+                    - id
+                    - status
+                  children:
+                    - title
+                    - total
+                    - audit:updated_at
   /avatars/{id}/image:
     put:
       summary: Upload avatar image

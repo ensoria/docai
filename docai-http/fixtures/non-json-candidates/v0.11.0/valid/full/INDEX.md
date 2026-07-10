@@ -17,6 +17,12 @@
 |---|---|---|---|---|
 | GET | /reports/export | export reports | Downloads a UTF-8 CSV report export with fixed column order. | none |
 
+### resources/xml.md
+
+| Method | Path | Task | Summary | Also read |
+|---|---|---|---|---|
+| GET | /reports/{report_id}/summary | get report summary | Returns a UTF-8 XML report summary with namespaces, attributes, and fixed child order. | none |
+
 ### resources/forms.md
 
 | Method | Path | Task | Summary | Also read |

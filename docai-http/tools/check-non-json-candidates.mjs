@@ -397,6 +397,79 @@ function validateCsvResponse(markdown) {
   }
 }
 
+function validateXmlResponse(markdown) {
+  const responseLines = sectionLines(markdown, 3, "Response 200");
+  if (!responseLines) throw new Error("XML response must include Response 200");
+  const response = responseLines.join("\n");
+  const significant = responseLines.map((line) => line.trim()).filter(Boolean);
+  const markerOrder = ["**body_presence**: always", "**media_type**: application/xml;charset=UTF-8", "**body_nullable**: no"].map((marker) =>
+    significant.findIndex((line) => line === marker),
+  );
+  if (markerOrder.some((index) => index < 0) || markerOrder.join("|") !== [...markerOrder].sort((a, b) => a - b).join("|")) {
+    throw new Error("XML response must contain body_presence, media_type application/xml;charset=UTF-8, and body_nullable in order");
+  }
+
+  const sample = response.match(/```xml\r?\n([\s\S]*?)```/)?.[1];
+  if (!sample) throw new Error("XML response must include an xml sample fragment");
+  if (!sample.startsWith('<?xml version="1.0" encoding="UTF-8"?>')) {
+    throw new Error("XML sample must show the UTF-8 XML declaration");
+  }
+  [
+    'xmlns="https://api.example.com/reports"',
+    'xmlns:audit="https://api.example.com/audit"',
+    'id="rpt_01K0XML"',
+    'status="final"',
+    "<title>Q2 statement</title>",
+    '<total currency="JPY">1200</total>',
+    "<audit:updated_at>2026-07-10T00:00:00Z</audit:updated_at>",
+  ].forEach((text) => {
+    if (!sample.includes(text)) throw new Error(`XML sample must show ${text}`);
+  });
+
+  const requiredProse = [
+    "The XML is UTF-8",
+    "XML declaration encoding is UTF-8",
+    "default namespace URI is `https://api.example.com/reports`",
+    "audit namespace URI is `https://api.example.com/audit`",
+    "Consumers match namespace URIs, not lexical prefixes",
+    "Element order is fixed: `title`, `total`, `audit:updated_at`",
+    "Attributes are unordered",
+    "No mixed content is used",
+  ];
+  requiredProse.forEach((text) => {
+    if (!response.includes(text)) throw new Error(`XML response prose must state ${text}`);
+  });
+
+  const rows = tableRows(response, ["Node", "Type", "Presence", "Nullable", "Meaning"]);
+  const nodes = rows.map((row) => row.Node).join("|");
+  const expectedNodes = [
+    "/report",
+    "/report/@id",
+    "/report/@status",
+    "/report/title",
+    "/report/total",
+    "/report/total/@currency",
+    "/report/audit:updated_at",
+  ].join("|");
+  if (nodes !== expectedNodes) throw new Error("XML node table must match the documented element and attribute order");
+  rows.forEach((row) => {
+    if (row.Presence !== "always" || row.Nullable !== "no") {
+      throw new Error("XML node rows must be always present and non-nullable in this fixture");
+    }
+  });
+  [
+    "Root element in the default namespace",
+    "Attribute; report ID",
+    "Attribute; report status",
+    "First child element in the default namespace",
+    "Second child element in the default namespace",
+    "Attribute; currency code for total",
+    "Third child element in the audit namespace",
+  ].forEach((text, index) => {
+    if (!rows[index]["Meaning"].includes(text)) throw new Error(`XML node table must state ${text}`);
+  });
+}
+
 function indexEndpointRows(markdown) {
   const endpoints = sectionLines(markdown, 2, "Endpoints")?.join("\n") ?? "";
   const lines = endpoints.split(/\r?\n/);
@@ -433,6 +506,7 @@ function validateFullSet() {
     path.join("resources", "csv.md"),
     path.join("resources", "forms.md"),
     path.join("resources", "uploads.md"),
+    path.join("resources", "xml.md"),
   ].map((file) =>
     path.join(fullDir, file),
   );
@@ -456,6 +530,7 @@ function validateFullSet() {
       path.join(fullDir, "resources", "csv.md"),
       path.join(fullDir, "resources", "forms.md"),
       path.join(fullDir, "resources", "uploads.md"),
+      path.join(fullDir, "resources", "xml.md"),
     ]
       .flatMap((file) => endpointHeadings(contents[file]))
       .sort()
@@ -478,6 +553,12 @@ function validateFullSet() {
     validateCsvResponse(contents[path.join(fullDir, "resources", "csv.md")]);
   } catch (error) {
     fail(path.join(fullDir, "resources", "csv.md"), error.message);
+  }
+
+  try {
+    validateXmlResponse(contents[path.join(fullDir, "resources", "xml.md")]);
+  } catch (error) {
+    fail(path.join(fullDir, "resources", "xml.md"), error.message);
   }
 
   try {
@@ -507,6 +588,8 @@ function validateFocusedInvalid() {
         validateFormUrlencodedBody(fixtures[0]);
       } else if (name.startsWith("csv-")) {
         validateCsvResponse(fixtures[0]);
+      } else if (name.startsWith("xml-")) {
+        validateXmlResponse(fixtures[0]);
       } else if (name.startsWith("raw-binary-download-")) {
         validateRawBinaryDownload(fixtures[0]);
       } else if (name.startsWith("raw-binary-upload-")) {
