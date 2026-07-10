@@ -185,6 +185,7 @@ Deferred compact expansion work:
   - [x] Add complete-candidate focused fixtures for deprecated endpoint signaling, Behavior unknown facts, PATCH update semantics, root-value bodies, status range/default ordering, and whole-section `CONVENTIONS.md` states.
   - [x] Add complete-candidate focused fixtures for body-less and unknown body states, parameter wire serialization, value omission/default behavior, and webhook payload presence.
   - [x] Add complete-candidate focused fixtures for INDEX routing, endpoint section/path-parameter structure, and `CONVENTIONS.md` common error-shape contracts.
+  - [x] Add complete-candidate focused fixtures for redirect/async responses, multiple media-type branching, and unknown response-header/body-nullability states.
   - [ ] Add remaining complete-surface focused fixtures for every §9.1 canonical marker, table shape, normalization rule, representation class, and replacement unit.
 - [x] Add checker coverage for non-core features promoted into the complete surface. Evidence: `tools/check-complete-candidates.mjs` checks the complete-candidate full/compact pair, focused fixture expectations, coverage references, compact reductions, INDEX references, workflow/webhook/resource links, non-JSON, polymorphism, and recursive-source evidence as a corpus-specific expectation checker.
 - [ ] Run LLM task evaluations against the valid corpus for request construction, response handling, error handling, and token load.

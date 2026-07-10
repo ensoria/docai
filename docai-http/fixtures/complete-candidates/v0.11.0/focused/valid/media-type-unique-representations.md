@@ -22,6 +22,8 @@ Expected: valid complete candidate. Each concrete media type appears at most onc
 
 **media_type**: text/csv;charset=UTF-8
 
+**body_nullable**: no
+
 ```csv
 report_id,total
 rpt_01K0COMPLETE,1200
