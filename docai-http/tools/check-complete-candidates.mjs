@@ -42,6 +42,7 @@ const CONVENTION_HEADINGS = new Set([
 const FOCUSED_EXPECTATIONS = {
   valid: {
     "behavior-unknown-marker.md": ["- side_effects: unknown", "**unknown**: side effects and idempotency"],
+    "body-marker-ordering-all-units.md": ["**body_required**: yes", "**body_presence**: always", "**error_shape**: email-conflict", "## Payload"],
     "bodyless-and-unknown-body.md": ["- Body: none", "### Response 204", "**body_presence**: unknown"],
     "canonical-boundary-extension-heading.md": ["#### x-Trace Notes", "### Errors"],
     "compact-error-shape-client-visible-fields.md": [
@@ -53,6 +54,8 @@ const FOCUSED_EXPECTATIONS = {
     "conventions-common-error-shapes.md": ["**error_shape**: auth-error", "#### Response Headers", "WWW-Authenticate"],
     "conventions-whole-section-states.md": ["## Rate Limits", "unknown", "**unsupported**: replaces CONVENTIONS Webhook Delivery:"],
     "conditional-requiredness.md": ["Required | Nullable", "conditional"],
+    "conditional-response-body-presence.md": ["**body_presence**: present when the request sends `Prefer: return=representation`", "parse JSON only when the body is present"],
+    "conditional-response-header-deviation.md": ["| Retry-After | string | present when `status=processing` |", "**deviation**: this response suppresses the common `X-Request-ID` response header"],
     "deprecated-index-and-endpoint.md": ["(deprecated) Lists legacy users", "**deprecated**: use GET /users instead"],
     "endpoint-section-order-path-parameters.md": ["## GET /users/{id}/devices/{device_id}", "| id | string | User ID", "| device_id | string | Device ID", "**call_shape**:"],
     "error-deviation-and-recovery-state.md": ["**deviation**:", "Fetch the order by client reference"],
@@ -96,11 +99,15 @@ const FOCUSED_EXPECTATIONS = {
     "any-used-for-missing-type.md": ["| payload | any | always | no | Type is not documented"],
     "async-response-missing-polling.md": ["### Response 202", "status_url"],
     "behavior-unknown-missing-marker.md": ["- side_effects: unknown", "- idempotency: unknown"],
+    "body-marker-ordering-wrong.md": ["**media_type**: application/json", "**body_required**: yes"],
     "bodyless-request-missing-none.md": ["- Cookie Parameters: none", "### Response 204"],
     "common-error-suppression-missing-deviation.md": ["common:standard-error"],
     "common-error-shape-missing-response-headers.md": ["**error_shape**: auth-error", "## Validation Errors"],
+    "common-header-suppression-missing-deviation.md": ["Every response includes `X-Request-ID`", "- Response Headers: none"],
     "conventions-unsupported-wrong-unit.md": ["**unsupported**: replaces Webhook Delivery:"],
     "conditional-requiredness-missing-condition.md": ["conditional", "missing"],
+    "conditional-response-header-missing-condition.md": ["| Retry-After | string | conditional |"],
+    "conditional-response-presence-missing-condition.md": ["**body_presence**: conditional"],
     "deprecated-index-summary-missing-prefix.md": ["**deprecated**: use GET /users instead."],
     "duplicate-media-type-representation.md": ["**media_type**: application/json"],
     "exactly-null-nullable-no.md": ["| $ | null | always | no |"],

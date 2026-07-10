@@ -192,9 +192,9 @@ Deferred compact expansion work:
     - [x] Add focused fixtures for concrete method, status, media-type spelling, standard variable headings, and invalid non-`x-` structural identifiers.
     - [x] Add focused fixtures for `**media_type**: unknown` with required `**unknown**:` marker and invalid missing-marker cases.
     - [x] Add focused fixtures for resource-file boundaries: exactly one bounded resource file per endpoint and no resource-level title/prose wrapper.
-    - [ ] Add focused fixtures for body marker ordering across request bodies, responses, inline error shapes, common error shapes, and webhook payloads.
-    - [ ] Add focused fixtures for conditional response-body presence and caller-visible branching separate from body omission.
-    - [ ] Add focused fixtures for conditional response-header presence and response-specific common-header deviations.
+    - [x] Add focused fixtures for body marker ordering across request bodies, responses, inline error shapes, common error shapes, and webhook payloads.
+    - [x] Add focused fixtures for conditional response-body presence and caller-visible branching separate from body omission.
+    - [x] Add focused fixtures for conditional response-header presence and response-specific common-header deviations.
     - [ ] Add focused fixtures for table-cell `unknown` values across `Required`, `Type`, `Presence`, and `Nullable`, including compact defaulting prohibition for unknown columns.
     - [ ] Add focused fixtures for invalid cross-file schema reference notation such as `$ref` outside the compact `**same_as**:` rule.
     - [ ] Add focused fixtures for nested arrays, nested dynamic maps, and array-item object openness beyond the current root-value examples.

@@ -42,6 +42,7 @@ DocAI HTTP draft history. Specification versioning and compatibility rules are d
 - Expands focused complete-candidate fixtures for redirect and async responses, multiple media-type branching, and unknown response-header/body-nullability states, and adds the required `body_nullable` marker to the CSV media-type uniqueness fixture.
 - Expands focused complete-candidate fixtures for single-prose-language output and English-only structural text boundaries.
 - Expands focused complete-candidate fixtures for unrepresentable endpoint omission, structural identifier spelling, `media_type=unknown`, and resource-file boundaries.
+- Expands focused complete-candidate fixtures for body-marker ordering, conditional response-body presence, conditional response-header presence, and response-specific common-header deviations.
 
 ## 0.11.0 (Draft - Compatibility Core)
 
