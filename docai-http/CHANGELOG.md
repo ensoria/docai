@@ -53,6 +53,7 @@ DocAI HTTP draft history. Specification versioning and compatibility rules are d
 - Expands focused complete-candidate fixtures for INDEX and metadata propagation of `unsupported` coverage and `unknown` knowledge states.
 - Expands focused complete-candidate fixtures for source-backed generated examples that require `unknown` knowledge when no credible valid example can be generated.
 - Expands focused complete-candidate fixtures for response default classification between exclusively error defaults and mixed error/non-error defaults.
+- Expands focused complete-candidate fixtures for common response-header contracts in `CONVENTIONS.md` and endpoint-level suppression or override deviations.
 
 ## 0.11.0 (Draft - Compatibility Core)
 

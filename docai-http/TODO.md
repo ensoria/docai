@@ -219,7 +219,7 @@ Deferred compact expansion work:
     - [x] Add focused fixtures for INDEX/metadata coverage propagation when a focused file contains `**unsupported**:` or `**unknown**:` in a complete-candidate set context.
     - [x] Add focused fixtures for source-backed generated examples that require `**unknown**:` because no credible valid example can be generated.
     - [x] Add focused fixtures for response default rows that are exclusively error semantics versus mixed non-error/error defaults.
-    - [ ] Add focused fixtures for common response-header contracts in `CONVENTIONS.md` and endpoint-level suppression or override.
+    - [x] Add focused fixtures for common response-header contracts in `CONVENTIONS.md` and endpoint-level suppression or override.
     - [ ] Add focused fixtures for final coverage audit: each README §9.1 focused requirement is mapped to at least one fixture, checker expectation, `COVERAGE.md` row, and changelog entry.
 - [x] Add checker coverage for non-core features promoted into the complete surface. Evidence: `tools/check-complete-candidates.mjs` checks the complete-candidate full/compact pair, focused fixture expectations, coverage references, compact reductions, INDEX references, workflow/webhook/resource links, non-JSON, polymorphism, and recursive-source evidence as a corpus-specific expectation checker.
 - [ ] Run LLM task evaluations against the valid corpus for request construction, response handling, error handling, and token load.
