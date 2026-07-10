@@ -208,10 +208,10 @@ Deferred compact expansion work:
     - [x] Add focused fixtures for endpoint-specific inline error shape reuse, first-use ordering, mismatched inline labels, and body-less inline error shapes.
     - [x] Add focused fixtures for field-level error target/code/UI-display policy beyond the current generated-example coverage.
     - [x] Add focused fixtures for common error rows with `Shape=none` and `Shape=unknown`, including required unknown markers.
-    - [ ] Add focused fixtures for request, response, body, payload, and parameter `**deviation**:` placement outside endpoint-specific common-error suppression.
-    - [ ] Add focused fixtures for compact contract preservation failures: omitted request parameter, omitted response status, omitted error row, or changed client-visible constraint.
-    - [ ] Add focused fixtures for compact `Opaque fields` omitted when no opaque root exists and invalid empty `Opaque fields` headings.
-    - [ ] Add focused fixtures for compact `field_defaults` measured-savings annotations or producer assertions when token-saving evidence is represented.
+    - [x] Add focused fixtures for request, response, body, payload, and parameter `**deviation**:` placement outside endpoint-specific common-error suppression.
+    - [x] Add focused fixtures for compact contract preservation failures: omitted request parameter, omitted response status, omitted error row, or changed client-visible constraint.
+    - [x] Add focused fixtures for compact `Opaque fields` omitted when no opaque root exists and invalid empty `Opaque fields` headings.
+    - [x] Add focused fixtures for compact `field_defaults` measured-savings annotations or producer assertions when token-saving evidence is represented.
     - [ ] Add focused fixtures for workflow title matching, fixed section order, value passing, failure branches, recovery state, and workflow-specific deviations in the complete-candidate corpus.
     - [ ] Add focused fixtures for workflow whole-section `unknown` states, not only replacement `unsupported`.
     - [ ] Add focused fixtures for webhook title, INDEX listing, event-specific headers, safe deduplication key/strategy, delivery deviations, and triggering endpoint references in the complete-candidate corpus.
