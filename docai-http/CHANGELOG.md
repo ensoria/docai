@@ -31,6 +31,7 @@ DocAI HTTP draft history. Specification versioning and compatibility rules are d
 - Adds a complete-surface candidate full/compact example pair with resources, a workflow, a webhook, compact `field_defaults`, compact `same_as`, and compact opaque webhook payload fields without changing the current Compatibility Core release label.
 - Adds initial focused complete-candidate fixtures for profile pairing, selective conventions, compact `same_as`, compact opaque fields, and resource/workflow/webhook related links.
 - Expands focused complete-candidate fixtures for non-JSON multipart boundaries, polymorphic variants, workflow and response-header replacement `unsupported`, and grouped webhook payload variants.
+- Expands focused complete-candidate fixtures for metadata and extensions, coverage/knowledge states, structured parameters, conditional requiredness, repeatable response headers, exactly-null values, inline unknown-code labels, and generated-example field coverage.
 
 ## 0.11.0 (Draft - Compatibility Core)
 

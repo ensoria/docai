@@ -171,6 +171,11 @@ Deferred compact expansion work:
   - [x] Add complete-candidate focused fixtures for polymorphic request variants.
   - [x] Add complete-candidate focused fixtures for workflow-section and response-header replacement `unsupported`.
   - [x] Add complete-candidate focused fixtures for grouped webhook payload variants.
+  - [x] Add complete-candidate focused fixtures for metadata stamps, `x-` extensions, and token-routing hints.
+  - [x] Add complete-candidate focused fixtures for `unknown`, coverage, and knowledge states.
+  - [x] Add complete-candidate focused fixtures for structured parameters and conditional requiredness.
+  - [x] Add complete-candidate focused fixtures for repeatable response headers.
+  - [x] Add complete-candidate focused fixtures for exactly-null values, inline error labels with `code=unknown`, and generated-example field coverage.
   - [ ] Add remaining complete-surface focused fixtures for every §9.1 canonical marker, table shape, normalization rule, representation class, and replacement unit.
 - [ ] Add checker coverage for non-core features promoted into the complete surface.
 - [ ] Run LLM task evaluations against the valid corpus for request construction, response handling, error handling, and token load.
