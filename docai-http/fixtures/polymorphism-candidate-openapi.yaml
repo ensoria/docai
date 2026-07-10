@@ -3,6 +3,27 @@ info:
   title: Polymorphism Candidate Fixture API
   version: 0.11.0-polymorphism-candidate-source
 paths:
+  /customers/{id}/signals:
+    get:
+      summary: Get customer signals with overlapping response variants
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Customer signals
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/CombinedCustomerSignals"
+                  - $ref: "#/components/schemas/ChurnRiskSignal"
+                  - $ref: "#/components/schemas/HighValueSignal"
+              x-docai-combination:
+                description: high_value and churn_risk may both be true for the same customer; document a combined variant.
   /payment-methods/{id}:
     get:
       summary: Get payment method with untagged response variants
@@ -57,6 +78,64 @@ paths:
                       - pending
 components:
   schemas:
+    CombinedCustomerSignals:
+      type: object
+      additionalProperties: false
+      required:
+        - customer_id
+        - high_value
+        - lifetime_value
+        - churn_risk
+        - churn_probability
+      properties:
+        customer_id:
+          type: string
+        high_value:
+          type: boolean
+          const: true
+        lifetime_value:
+          type: integer
+          minimum: 0
+        churn_risk:
+          type: boolean
+          const: true
+        churn_probability:
+          type: number
+          minimum: 0
+          maximum: 1
+    ChurnRiskSignal:
+      type: object
+      additionalProperties: false
+      required:
+        - customer_id
+        - churn_risk
+        - churn_probability
+      properties:
+        customer_id:
+          type: string
+        churn_risk:
+          type: boolean
+          const: true
+        churn_probability:
+          type: number
+          minimum: 0
+          maximum: 1
+    HighValueSignal:
+      type: object
+      additionalProperties: false
+      required:
+        - customer_id
+        - high_value
+        - lifetime_value
+      properties:
+        customer_id:
+          type: string
+        high_value:
+          type: boolean
+          const: true
+        lifetime_value:
+          type: integer
+          minimum: 0
     BankPaymentMethod:
       type: object
       additionalProperties: false

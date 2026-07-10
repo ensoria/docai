@@ -20,6 +20,22 @@ function read(file) {
   return fs.readFileSync(file, "utf8");
 }
 
+function listMarkdownFiles(dir) {
+  if (!fs.existsSync(dir)) return [];
+  return fs
+    .readdirSync(dir, { withFileTypes: true })
+    .flatMap((entry) => {
+      const full = path.join(dir, entry.name);
+      return entry.isDirectory() ? listMarkdownFiles(full) : [full];
+    })
+    .filter((file) => file.endsWith(".md"))
+    .sort();
+}
+
+function extractMarkdownFixtures(markdown) {
+  return [...markdown.matchAll(/^(`{3,4})markdown\r?\n([\s\S]*?)^\1$/gm)].map((match) => match[2]);
+}
+
 function parseStamp(markdown) {
   const first = markdown.split(/\r?\n/, 1)[0] ?? "";
   if (!first.startsWith("> ")) throw new Error("missing metadata stamp");
@@ -297,6 +313,89 @@ function validateUntaggedResponseVariants(markdown) {
   });
 }
 
+function validateOverlappingResponseVariants(markdown) {
+  const responseLines = sectionLines(markdown, 3, "Response 200");
+  if (!responseLines) throw new Error("overlapping variant response must include Response 200");
+  const response = responseLines.join("\n");
+  const significant = responseLines.map((line) => line.trim()).filter(Boolean);
+  const markerOrder = ["**body_presence**: always", "**media_type**: application/json", "**body_nullable**: no"].map((marker) =>
+    significant.findIndex((line) => line === marker),
+  );
+  if (markerOrder.some((index) => index < 0) || markerOrder.join("|") !== [...markerOrder].sort((a, b) => a - b).join("|")) {
+    throw new Error("overlapping variant response must contain body_presence, media_type, and body_nullable in order");
+  }
+  [
+    "alternatives can both be valid",
+    "Use `both signals` for the combined case",
+    "do not treat these variants as mutually exclusive",
+  ].forEach((text) => {
+    if (!response.includes(text)) throw new Error(`overlapping variants must state ${text}`);
+  });
+
+  const variants = variantBlocks(response);
+  const labels = variants.map((variant) => variant.label).join("|");
+  if (labels !== "both signals|churn risk signal|high value signal") {
+    throw new Error("overlapping variants must include stable labels, including the combined variant, in lexical order");
+  }
+
+  const beforeFirstVariant = response.slice(0, variants[0]?.index ?? response.length);
+  if (beforeFirstVariant.includes("```json") || beforeFirstVariant.includes("| Field |")) {
+    throw new Error("overlapping response must not include an unlabeled common example or field table before variants");
+  }
+
+  const expectations = {
+    "both signals": {
+      fields: ["$", "customer_id", "high_value", "lifetime_value", "churn_risk", "churn_probability"],
+      sampleId: "cus_01K0COMBO",
+      requiredText: "has both `high_value` and `churn_risk`",
+      present: ["high_value", "lifetime_value", "churn_risk", "churn_probability"],
+    },
+    "churn risk signal": {
+      fields: ["$", "customer_id", "churn_risk", "churn_probability"],
+      sampleId: "cus_01K0CHURN",
+      requiredText: "has `churn_risk` and does not have `high_value`",
+      present: ["churn_risk", "churn_probability"],
+      absent: ["high_value", "lifetime_value"],
+    },
+    "high value signal": {
+      fields: ["$", "customer_id", "high_value", "lifetime_value"],
+      sampleId: "cus_01K0VALUE",
+      requiredText: "has `high_value` and does not have `churn_risk`",
+      present: ["high_value", "lifetime_value"],
+      absent: ["churn_risk", "churn_probability"],
+    },
+  };
+
+  variants.forEach((variant) => {
+    const expectation = expectations[variant.label];
+    if (!expectation) throw new Error(`unexpected overlapping variant ${variant.label}`);
+    if (!variant.block.includes(expectation.requiredText)) {
+      throw new Error(`overlapping variant ${variant.label} must include selection prose`);
+    }
+    const sample = variant.block.match(/```json\r?\n([\s\S]*?)```/)?.[1];
+    if (!sample) throw new Error(`overlapping variant ${variant.label} must include a JSON example`);
+    const parsed = JSON.parse(sample);
+    if (parsed.customer_id !== expectation.sampleId) throw new Error(`overlapping variant ${variant.label} example must use the expected ID`);
+    expectation.present.forEach((field) => {
+      if (!(field in parsed)) throw new Error(`overlapping variant ${variant.label} example must include ${field}`);
+    });
+    (expectation.absent ?? []).forEach((field) => {
+      if (field in parsed) throw new Error(`overlapping variant ${variant.label} example must not include ${field}`);
+    });
+
+    const rows = tableRows(variant.block, ["Field", "Type", "Presence", "Nullable", "Meaning"]);
+    const fields = rows.map((row) => row.Field).join("|");
+    if (fields !== expectation.fields.join("|")) {
+      throw new Error(`overlapping variant ${variant.label} table must include complete fields for that variant`);
+    }
+    rows.forEach((row) => {
+      if (row.Presence !== "always" || row.Nullable !== "no") {
+        throw new Error(`overlapping variant ${variant.label} rows must be always present and non-nullable in this fixture`);
+      }
+    });
+  });
+}
+
 function validateCreatedPaymentResponse(markdown) {
   const responseLines = sectionLines(markdown, 3, "Response 201");
   if (!responseLines) throw new Error("payment endpoint must include Response 201");
@@ -348,17 +447,48 @@ function validateFullSet() {
     const payments = contents[path.join(fullDir, "resources", "payments.md")];
     const taggedEndpoint = sectionMarkdown(payments, 2, "POST /payments");
     const untaggedEndpoint = sectionMarkdown(payments, 2, "GET /payment-methods/{id}");
+    const overlappingEndpoint = sectionMarkdown(payments, 2, "GET /customers/{id}/signals");
     if (!taggedEndpoint) throw new Error("tagged payment endpoint is missing");
     if (!untaggedEndpoint) throw new Error("untagged payment method endpoint is missing");
+    if (!overlappingEndpoint) throw new Error("overlapping customer signals endpoint is missing");
     validateRequestTaggedVariants(taggedEndpoint);
     validateUntaggedResponseVariants(untaggedEndpoint);
+    validateOverlappingResponseVariants(overlappingEndpoint);
     validateCreatedPaymentResponse(taggedEndpoint);
   } catch (error) {
     fail(path.join(fullDir, "resources", "payments.md"), error.message);
   }
 }
 
+function validateFocusedInvalid() {
+  listMarkdownFiles(path.join(CANDIDATE_DIR, "focused", "invalid")).forEach((file) => {
+    const fixtures = extractMarkdownFixtures(read(file));
+    if (fixtures.length === 0) {
+      fail(file, "invalid focused fixture lacks markdown code fence");
+      return;
+    }
+    let accepted = false;
+    try {
+      const name = path.basename(file);
+      if (name.startsWith("tagged-")) {
+        validateRequestTaggedVariants(fixtures[0]);
+      } else if (name.startsWith("untagged-")) {
+        validateUntaggedResponseVariants(fixtures[0]);
+      } else if (name.startsWith("overlapping-")) {
+        validateOverlappingResponseVariants(fixtures[0]);
+      } else {
+        throw new Error("unknown focused invalid fixture type");
+      }
+      accepted = true;
+    } catch {
+      accepted = false;
+    }
+    if (accepted) fail(file, "checker accepted invalid polymorphism candidate fixture");
+  });
+}
+
 validateFullSet();
+validateFocusedInvalid();
 
 if (failures.length > 0) {
   console.error("Polymorphism candidate fixture check failed:");

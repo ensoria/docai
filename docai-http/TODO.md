@@ -145,10 +145,10 @@ Deferred compact expansion work:
 
 - [x] Add tagged variant fixtures with complete examples and tables per variant.
 - [x] Add untagged variant fixtures with stable labels and selection prose.
-- [ ] Add invalid fixtures for unlabeled common field tables.
-- [ ] Add invalid fixtures for missing discriminator enum values in tagged variants.
-- [ ] Add fixtures for overlapping alternatives and combined variant semantics.
-- [ ] Add checker support for variant block boundaries and per-variant table completeness.
+- [x] Add invalid fixtures for unlabeled common field tables.
+- [x] Add invalid fixtures for missing discriminator enum values in tagged variants.
+- [x] Add fixtures for overlapping alternatives and combined variant semantics.
+- [x] Add checker support for variant block boundaries and per-variant table completeness.
 
 ## P3: Decide Recursive Schema Future
 

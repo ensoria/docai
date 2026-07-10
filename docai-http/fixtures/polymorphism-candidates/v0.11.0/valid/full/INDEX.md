@@ -8,6 +8,7 @@
 
 | Method | Path | Task | Summary | Also read |
 |---|---|---|---|---|
+| GET | /customers/{id}/signals | get customer signals | Gets customer signals using overlapping response variants and a combined variant. | none |
 | GET | /payment-methods/{id} | get payment method | Gets a payment method using untagged response body variants. | none |
 | POST | /payments | create payment | Creates a payment using tagged request body variants. | none |
 

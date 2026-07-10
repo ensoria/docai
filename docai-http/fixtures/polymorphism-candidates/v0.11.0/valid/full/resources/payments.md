@@ -1,5 +1,99 @@
 > docai-http: 0.11.0 | profile: full | coverage: complete | knowledge: complete | generated: 2026-07-10 | generation_id: polymorphism-candidate-full-20260710-001 | projection_id: polymorphism-candidate-20260710-001 | source: fixtures/polymorphism-candidate-openapi.yaml (OpenAPI 3.1.1) | source_revision: fixture-revision-polymorphism-candidate-001 | x-fixture: polymorphism-candidate
 
+## GET /customers/{id}/signals
+
+Gets customer signals. The response alternatives can overlap.
+
+### Behavior
+
+- side_effects: none
+- idempotency: idempotent and safe to retry
+- preconditions: customer exists
+- authorization: authenticated merchant
+
+### Request
+
+#### Path Parameters
+
+| Name | Type | Required | Meaning |
+|---|---|---|---|
+| id | string | yes | Customer ID |
+
+- Query Parameters: none
+- Headers: none
+- Cookie Parameters: none
+
+#### Body
+
+none
+
+### Response 200
+
+**body_presence**: always
+
+**media_type**: application/json
+
+**body_nullable**: no
+
+The `high_value` and `churn_risk` alternatives can both be valid for the same customer. Use `both signals` for the combined case; do not treat these variants as mutually exclusive.
+
+**variant**: both signals
+
+Use this variant when the response has both `high_value` and `churn_risk`.
+
+```json
+{"customer_id":"cus_01K0COMBO","high_value":true,"lifetime_value":500000,"churn_risk":true,"churn_probability":0.82}
+```
+
+| Field | Type | Presence | Nullable | Meaning |
+|---|---|---|---|---|
+| $ | object | always | no | Additional properties forbidden |
+| customer_id | string | always | no | Customer ID |
+| high_value | bool | always | no | Always `true`; high-value signal is present |
+| lifetime_value | int | always | no | Lifetime value in JPY |
+| churn_risk | bool | always | no | Always `true`; churn-risk signal is present |
+| churn_probability | float | always | no | Churn probability from 0 to 1 |
+
+**variant**: churn risk signal
+
+Use this variant when the response has `churn_risk` and does not have `high_value`.
+
+```json
+{"customer_id":"cus_01K0CHURN","churn_risk":true,"churn_probability":0.82}
+```
+
+| Field | Type | Presence | Nullable | Meaning |
+|---|---|---|---|---|
+| $ | object | always | no | Additional properties forbidden |
+| customer_id | string | always | no | Customer ID |
+| churn_risk | bool | always | no | Always `true`; churn-risk signal is present |
+| churn_probability | float | always | no | Churn probability from 0 to 1 |
+
+**variant**: high value signal
+
+Use this variant when the response has `high_value` and does not have `churn_risk`.
+
+```json
+{"customer_id":"cus_01K0VALUE","high_value":true,"lifetime_value":500000}
+```
+
+| Field | Type | Presence | Nullable | Meaning |
+|---|---|---|---|---|
+| $ | object | always | no | Additional properties forbidden |
+| customer_id | string | always | no | Customer ID |
+| high_value | bool | always | no | Always `true`; high-value signal is present |
+| lifetime_value | int | always | no | Lifetime value in JPY |
+
+- Response Headers: none
+
+### Errors
+
+none
+
+### Related
+
+none
+
 ## GET /payment-methods/{id}
 
 Gets one payment method. The response body is polymorphic without a discriminator field.
