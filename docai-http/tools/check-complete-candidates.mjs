@@ -220,6 +220,229 @@ const FOCUSED_EXPECTATIONS = {
   },
 };
 
+const FINAL_AUDIT_REQUIREMENTS = [
+  {
+    name: "Canonical markers",
+    fixtures: [
+      "focused/valid/body-marker-ordering-all-units.md",
+      "focused/valid/deviation-placement.md",
+      "focused/valid/inline-error-shape-reuse-and-bodyless.md",
+    ],
+    coverageRows: ["Focused body marker ordering fixtures", "Focused deviation placement fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for body-marker ordering",
+  },
+  {
+    name: "Table shapes and table-cell normalization",
+    fixtures: [
+      "focused/valid/table-field-path-normalization.md",
+      "focused/valid/table-cell-unknown-values.md",
+      "focused/invalid/field-path-unescaped-pipe.md",
+    ],
+    coverageRows: ["Focused table and field-path fixtures", "Focused table-cell unknown fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for table-cell unknown values",
+  },
+  {
+    name: "Representation classes and media-type uniqueness",
+    fixtures: [
+      "focused/valid/non-json-representation-classes.md",
+      "focused/valid/media-type-unique-representations.md",
+      "focused/invalid/duplicate-media-type-representation.md",
+    ],
+    coverageRows: ["Focused non-JSON representation class fixtures", "Focused media-type uniqueness fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for request media-type selection and non-JSON form, binary, CSV, XML, and SSE representation classes.",
+  },
+  {
+    name: "Structured-parameter block",
+    fixtures: ["focused/valid/structured-parameter-fields.md", "focused/invalid/structured-parameter-missing-fields.md"],
+    coverageRows: ["Focused structured-parameter fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for metadata and extensions, coverage/knowledge states, structured parameters",
+  },
+  {
+    name: "Conditional-requiredness rule",
+    fixtures: ["focused/valid/conditional-requiredness.md", "focused/invalid/conditional-requiredness-missing-condition.md"],
+    coverageRows: ["Focused conditional-requiredness fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for metadata and extensions, coverage/knowledge states, structured parameters",
+  },
+  {
+    name: "Field-path escape",
+    fixtures: ["focused/valid/table-field-path-normalization.md", "focused/invalid/field-path-unescaped-pipe.md"],
+    coverageRows: ["Focused table and field-path fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for table and field-path syntax",
+  },
+  {
+    name: "Object-openness rule",
+    fixtures: ["focused/valid/nested-arrays-maps-openness.md", "focused/invalid/root-object-dollar-contradiction.md"],
+    coverageRows: ["Focused nested arrays, maps, and object-openness fixtures", "Focused root-object `$` row fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for table and field-path syntax, media-type uniqueness",
+  },
+  {
+    name: "Response-header presence and repetition",
+    fixtures: [
+      "focused/valid/conditional-response-header-deviation.md",
+      "focused/valid/response-header-repetition.md",
+      "focused/invalid/repeated-response-header-missing-wire-rule.md",
+    ],
+    coverageRows: ["Focused conditional response-header and deviation fixtures", "Focused repeatable response-header fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for body-marker ordering, conditional response-body presence, conditional response-header presence",
+  },
+  {
+    name: "Response-header replacement unit",
+    fixtures: ["focused/valid/response-header-replacement-unsupported.md", "focused/invalid/response-header-unsupported-wrong-unit.md"],
+    coverageRows: ["Focused replacement `unsupported` fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for non-JSON multipart boundaries, polymorphic variants, workflow and response-header replacement `unsupported`",
+  },
+  {
+    name: "Workflow-section replacement unit",
+    fixtures: ["focused/valid/workflow-section-replacement-unsupported.md", "focused/invalid/workflow-unsupported-wrong-unit.md"],
+    coverageRows: ["Focused replacement `unsupported` fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for non-JSON multipart boundaries, polymorphic variants, workflow and response-header replacement `unsupported`",
+  },
+  {
+    name: "Webhook payload rule",
+    fixtures: ["focused/valid/webhook-payload-presence.md", "focused/invalid/webhook-payload-presence-missing-condition.md"],
+    coverageRows: ["Focused webhook payload-presence fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for body-less and unknown body states, parameter wire serialization, value omission/default behavior, and webhook payload presence.",
+  },
+  {
+    name: "Webhook grouping boundary",
+    fixtures: ["focused/valid/grouped-webhook-payload-variants.md", "focused/invalid/grouped-webhook-incompatible-headers.md"],
+    coverageRows: ["Focused webhook grouped-event incompatibility fixtures", "Focused grouped webhook variant fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for webhook structure, delivery contracts, trigger references, and grouped-event incompatibility boundaries.",
+  },
+  {
+    name: "Error-shape reference",
+    fixtures: ["focused/valid/conventions-common-error-shapes.md", "focused/invalid/inline-error-label-mismatch.md"],
+    coverageRows: ["Focused common error-shape fixtures", "Focused inline error-shape fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for INDEX routing, endpoint section/path-parameter structure, and `CONVENTIONS.md` common error-shape contracts",
+  },
+  {
+    name: "Endpoint-specific common-error deviation and suppression",
+    fixtures: ["focused/valid/error-deviation-and-recovery-state.md", "focused/invalid/common-error-suppression-missing-deviation.md"],
+    coverageRows: ["Focused error-deviation and recovery-state fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for table and field-path syntax, media-type uniqueness, endpoint-specific error recovery state, common-error suppression deviations",
+  },
+  {
+    name: "Error-time state recovery rule",
+    fixtures: ["focused/valid/error-deviation-and-recovery-state.md"],
+    coverageRows: ["Focused error-deviation and recovery-state fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for table and field-path syntax, media-type uniqueness, endpoint-specific error recovery state",
+  },
+  {
+    name: "Compact error-shape field reduction",
+    fixtures: ["focused/valid/compact-error-shape-client-visible-fields.md", "focused/invalid/same-as-error-shape.md"],
+    coverageRows: ["Focused compact error-shape reduction fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for compact field-default reconstruction, compact error-shape reduction",
+  },
+  {
+    name: "Polymorphic form",
+    fixtures: ["focused/valid/polymorphic-tagged-request-variants.md", "focused/valid/untagged-overlapping-polymorphic-variants.md"],
+    coverageRows: ["Focused polymorphic variant fixtures", "Focused untagged and overlapping polymorphic fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for untagged and overlapping polymorphic variants and invalid pre-variant content.",
+  },
+  {
+    name: "Metadata escape",
+    fixtures: ["focused/valid/metadata-extension-token-routing.md", "focused/invalid/metadata-unknown-escape.md"],
+    coverageRows: ["Focused metadata and extension fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for metadata and extensions",
+  },
+  {
+    name: "Optional token-routing x metadata",
+    fixtures: ["focused/valid/metadata-extension-token-routing.md"],
+    coverageRows: ["Focused metadata and extension fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for metadata and extensions",
+  },
+  {
+    name: "Coverage state",
+    fixtures: ["focused/valid/unknown-coverage-knowledge-state.md", "focused/valid/index-metadata-propagation.md"],
+    coverageRows: ["Focused coverage and knowledge fixtures", "Focused INDEX and metadata propagation fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for INDEX and metadata propagation of `unsupported` coverage and `unknown` knowledge states.",
+  },
+  {
+    name: "Knowledge state",
+    fixtures: ["focused/valid/unknown-coverage-knowledge-state.md", "focused/invalid/unknown-marker-missing.md"],
+    coverageRows: ["Focused coverage and knowledge fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for INDEX and metadata propagation of `unsupported` coverage and `unknown` knowledge states.",
+  },
+  {
+    name: "Localized unsupported form",
+    fixtures: ["focused/valid/localized-unsupported-smallest-unit.md"],
+    coverageRows: ["Focused localized `unsupported` fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for compact field-default reconstruction, compact error-shape reduction, localized `unsupported`",
+  },
+  {
+    name: "Replacement unsupported form",
+    fixtures: ["focused/valid/response-header-replacement-unsupported.md", "focused/valid/workflow-section-replacement-unsupported.md"],
+    coverageRows: ["Focused replacement `unsupported` fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for non-JSON multipart boundaries, polymorphic variants, workflow and response-header replacement `unsupported`",
+  },
+  {
+    name: "Field default",
+    fixtures: ["focused/valid/field-defaults-reconstruction.md", "focused/invalid/field-defaults-retained-column.md"],
+    coverageRows: ["Focused compact `field_defaults` fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for compact field-default reconstruction",
+  },
+  {
+    name: "Compact opaque-field form",
+    fixtures: ["focused/valid/compact-opaque-webhook-payload.md", "focused/valid/compact-opaque-fields-omitted.md"],
+    coverageRows: ["Focused compact opaque-field fixtures", "Focused compact opaque-fields omission fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for deviation placement and compact contract-preservation, opaque-field omission",
+  },
+  {
+    name: "Full/compact same-path profile pairing",
+    fixtures: ["focused/valid/profile-pair-selective-conventions.md", "focused/invalid/profile-pair-missing-standard-path.md"],
+    coverageRows: ["Focused full/compact profile-pair fixtures"],
+    changelog: "Adds initial focused complete-candidate fixtures for profile pairing",
+  },
+  {
+    name: "Exactly-null value representation",
+    fixtures: ["focused/valid/exactly-null-body.md", "focused/invalid/exactly-null-nullable-no.md"],
+    coverageRows: ["Focused exactly-null fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for metadata and extensions, coverage/knowledge states, structured parameters, conditional requiredness, repeatable response headers, exactly-null values",
+  },
+  {
+    name: "same_as same-kind and retrieval-unit discoverability",
+    fixtures: ["focused/valid/same-as-resource-file-retrieval-unit.md", "focused/invalid/same-as-cross-kind.md", "focused/invalid/same-as-missing-retrieval-unit.md"],
+    coverageRows: ["Focused compact `same_as` fixtures"],
+    changelog: "Adds initial focused complete-candidate fixtures for profile pairing, selective conventions, compact `same_as`",
+  },
+  {
+    name: "Inline error labels with unknown code token",
+    fixtures: ["focused/valid/inline-error-unknown-code.md", "focused/invalid/inline-error-unknown-code-missing-marker.md"],
+    coverageRows: ["Focused inline unknown-code fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for metadata and extensions, coverage/knowledge states, structured parameters, conditional requiredness, repeatable response headers, exactly-null values, inline unknown-code labels",
+  },
+  {
+    name: "Canonical boundary and extension placement",
+    fixtures: ["focused/valid/canonical-boundary-extension-heading.md", "focused/invalid/non-extension-heading.md"],
+    coverageRows: ["Focused canonical boundary fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for compact field-default reconstruction, compact error-shape reduction, localized `unsupported`, and canonical extension/non-extension heading boundaries.",
+  },
+  {
+    name: "Generated-example validity rule",
+    fixtures: ["focused/valid/generated-example-field-coverage.md", "focused/valid/generated-example-unknown-values.md", "focused/invalid/generated-example-violates-source-constraint.md"],
+    coverageRows: ["Focused generated-example fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for source-backed generated examples that require `unknown` knowledge when no credible valid example can be generated.",
+  },
+  {
+    name: "Format-specific non-JSON requirement",
+    fixtures: ["focused/valid/non-json-representation-classes.md", "focused/invalid/raw-binary-field-table.md", "focused/invalid/unstructured-stream-field-table.md"],
+    coverageRows: ["Focused non-JSON representation class fixtures", "Focused raw/stream sample-and-prose exception fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for request media-type selection and non-JSON form, binary, CSV, XML, and SSE representation classes.",
+  },
+  {
+    name: "Direct recursive-schema source fallback",
+    fixtures: ["source/recursive-direct-openapi.yaml", "focused/valid/recursive-direct-unsupported.md"],
+    coverageRows: ["Recursive source fixtures", "Focused recursive fallback fixtures"],
+    changelog: "Records the recursive-schema future decision",
+  },
+  {
+    name: "Indirect recursive-schema source fallback",
+    fixtures: ["source/recursive-indirect-openapi.yaml", "focused/valid/recursive-indirect-unsupported.md"],
+    coverageRows: ["Recursive source fixtures", "Focused recursive fallback fixtures"],
+    changelog: "Records the recursive-schema future decision",
+  },
+];
+
 const failures = [];
 
 function fail(file, area, detail) {
@@ -730,6 +953,63 @@ function validateCoverageReferences() {
   });
 }
 
+function validateFinalFocusedAudit() {
+  const coverageFile = path.join(CANDIDATE_DIR, "COVERAGE.md");
+  const coverage = read(coverageFile);
+  const changelogFile = path.resolve(SCRIPT_DIR, "..", "CHANGELOG.md");
+  const changelog = read(changelogFile);
+
+  if (!coverage.includes("## Final Focused Requirement Audit")) {
+    fail(coverageFile, "coverage-audit", "final focused requirement audit section is missing");
+    return;
+  }
+
+  FINAL_AUDIT_REQUIREMENTS.forEach((requirement) => {
+    if (!coverage.includes(`| ${requirement.name} |`)) {
+      fail(coverageFile, "coverage-audit", `audit row is missing for ${requirement.name}`);
+    }
+
+    requirement.fixtures.forEach((relativePath) => {
+      const file = path.join(CANDIDATE_DIR, relativePath);
+      requireExists(file, "coverage-audit");
+      if (!coverage.includes(`\`${relativePath}\``)) {
+        fail(coverageFile, "coverage-audit", `${requirement.name} does not reference ${relativePath}`);
+      }
+      validateAuditedFixtureExpectation(coverageFile, requirement.name, relativePath);
+    });
+
+    requirement.coverageRows.forEach((rowLabel) => {
+      if (!coverage.includes(`| ${rowLabel} |`)) {
+        fail(coverageFile, "coverage-audit", `${requirement.name} references missing coverage row ${rowLabel}`);
+      }
+      if (!coverage.includes(rowLabel)) {
+        fail(coverageFile, "coverage-audit", `${requirement.name} does not cite coverage row ${rowLabel}`);
+      }
+    });
+
+    if (!coverage.includes(requirement.changelog)) {
+      fail(coverageFile, "coverage-audit", `${requirement.name} does not cite changelog evidence`);
+    }
+    if (!changelog.includes(requirement.changelog)) {
+      fail(changelogFile, "coverage-audit", `${requirement.name} changelog evidence is not present`);
+    }
+  });
+}
+
+function validateAuditedFixtureExpectation(coverageFile, requirementName, relativePath) {
+  const parts = relativePath.split("/");
+  if (parts[0] === "source") return;
+  if (parts[0] !== "focused" || !["valid", "invalid"].includes(parts[1])) {
+    fail(coverageFile, "coverage-audit", `${requirementName} fixture path is not auditable: ${relativePath}`);
+    return;
+  }
+  const kind = parts[1];
+  const name = parts.at(-1);
+  if (!FOCUSED_EXPECTATIONS[kind][name]) {
+    fail(coverageFile, "coverage-audit", `${requirementName} fixture ${relativePath} has no FOCUSED_EXPECTATIONS entry`);
+  }
+}
+
 function validateFocusedFixtures() {
   ["valid", "invalid"].forEach((kind) => {
     const dir = path.join(CANDIDATE_DIR, "focused", kind);
@@ -856,6 +1136,7 @@ try {
 }
 
 validateCoverageReferences();
+validateFinalFocusedAudit();
 validateFocusedFixtures();
 
 if (failures.length > 0) {

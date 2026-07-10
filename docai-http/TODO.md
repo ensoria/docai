@@ -162,7 +162,7 @@ Deferred compact expansion work:
 
 - [x] Define the minimum complete-surface fixture corpus required before advertising complete-generator-ready. Decision: the minimum corpus, evidence matrix, checker plan, LLM evaluation plan, and publication gate are defined in `COMPLETE-GENERATOR-READINESS.md`; README section 9.1 remains authoritative.
 - [x] Add full and compact complete example sets that include resources, workflows, and webhooks. Evidence: `fixtures/complete-candidates/v0.11.0/valid/full/` and `fixtures/complete-candidates/v0.11.0/valid/compact/` share the same standard paths and include resources, `workflows/checkout.md`, and `webhooks/payment-completed.md`.
-- [ ] Add focused valid/invalid fixtures for every canonical marker and table shape in §9.1.
+- [x] Add focused valid/invalid fixtures for every canonical marker and table shape in §9.1.
   - [x] Add complete-candidate focused fixtures for full/compact profile pairing and selective `Conventions` loading.
   - [x] Add complete-candidate focused fixtures for compact `same_as` retrieval boundaries.
   - [x] Add complete-candidate focused fixtures for compact `Client-visible fields` and `Opaque fields`.
@@ -186,7 +186,7 @@ Deferred compact expansion work:
   - [x] Add complete-candidate focused fixtures for body-less and unknown body states, parameter wire serialization, value omission/default behavior, and webhook payload presence.
   - [x] Add complete-candidate focused fixtures for INDEX routing, endpoint section/path-parameter structure, and `CONVENTIONS.md` common error-shape contracts.
   - [x] Add complete-candidate focused fixtures for redirect/async responses, multiple media-type branching, and unknown response-header/body-nullability states.
-  - [ ] Add remaining complete-surface focused fixtures for every §9.1 canonical marker, table shape, normalization rule, representation class, and replacement unit.
+  - [x] Add remaining complete-surface focused fixtures for every §9.1 canonical marker, table shape, normalization rule, representation class, and replacement unit.
     - [x] Add focused fixtures for single-prose-language output and English-only structural text boundaries.
     - [x] Add focused fixtures for unsupported or unrepresentable endpoint method/path handling, including the rule that such operations are not emitted as compliant endpoints.
     - [x] Add focused fixtures for concrete method, status, media-type spelling, standard variable headings, and invalid non-`x-` structural identifiers.
@@ -220,7 +220,7 @@ Deferred compact expansion work:
     - [x] Add focused fixtures for source-backed generated examples that require `**unknown**:` because no credible valid example can be generated.
     - [x] Add focused fixtures for response default rows that are exclusively error semantics versus mixed non-error/error defaults.
     - [x] Add focused fixtures for common response-header contracts in `CONVENTIONS.md` and endpoint-level suppression or override.
-    - [ ] Add focused fixtures for final coverage audit: each README §9.1 focused requirement is mapped to at least one fixture, checker expectation, `COVERAGE.md` row, and changelog entry.
+    - [x] Add focused fixtures for final coverage audit: each README §9.1 focused requirement is mapped to at least one fixture, checker expectation, `COVERAGE.md` row, and changelog entry.
 - [x] Add checker coverage for non-core features promoted into the complete surface. Evidence: `tools/check-complete-candidates.mjs` checks the complete-candidate full/compact pair, focused fixture expectations, coverage references, compact reductions, INDEX references, workflow/webhook/resource links, non-JSON, polymorphism, and recursive-source evidence as a corpus-specific expectation checker.
 - [ ] Run LLM task evaluations against the valid corpus for request construction, response handling, error handling, and token load.
   - [x] Add the complete-candidate evaluation task packet, expected outcomes, local context-metrics results, and `tools/check-complete-evaluations.mjs`.
