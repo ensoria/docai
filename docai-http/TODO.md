@@ -176,6 +176,9 @@ Deferred compact expansion work:
   - [x] Add complete-candidate focused fixtures for structured parameters and conditional requiredness.
   - [x] Add complete-candidate focused fixtures for repeatable response headers.
   - [x] Add complete-candidate focused fixtures for exactly-null values, inline error labels with `code=unknown`, and generated-example field coverage.
+  - [x] Add complete-candidate focused fixtures for table normalization, field-path escaping, object openness, and media-type uniqueness.
+  - [x] Add complete-candidate focused fixtures for endpoint-specific common-error deviation/suppression and error-time recovery state.
+  - [x] Add complete-candidate source and focused fixtures for direct and indirect recursive-schema `unsupported` fallback.
   - [ ] Add remaining complete-surface focused fixtures for every §9.1 canonical marker, table shape, normalization rule, representation class, and replacement unit.
 - [ ] Add checker coverage for non-core features promoted into the complete surface.
 - [ ] Run LLM task evaluations against the valid corpus for request construction, response handling, error handling, and token load.

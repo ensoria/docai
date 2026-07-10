@@ -35,12 +35,17 @@ This file records evidence for the first complete-surface candidate example pair
 | Focused exactly-null fixtures | present | `focused/valid/exactly-null-body.md`, `focused/invalid/exactly-null-nullable-no.md` |
 | Focused inline unknown-code fixtures | present | `focused/valid/inline-error-unknown-code.md`, `focused/invalid/inline-error-unknown-code-missing-marker.md` |
 | Focused generated-example fixtures | present | `focused/valid/generated-example-field-coverage.md`, `focused/invalid/generated-example-field-missing-row.md` |
+| Focused table and field-path fixtures | present | `focused/valid/table-field-path-normalization.md`, `focused/invalid/field-path-unescaped-pipe.md` |
+| Focused media-type uniqueness fixtures | present | `focused/valid/media-type-unique-representations.md`, `focused/invalid/duplicate-media-type-representation.md` |
+| Focused error-deviation and recovery-state fixtures | present | `focused/valid/error-deviation-and-recovery-state.md`, `focused/invalid/common-error-suppression-missing-deviation.md` |
+| Recursive source fixtures | present | `source/recursive-direct-openapi.yaml`, `source/recursive-indirect-openapi.yaml` |
+| Focused recursive fallback fixtures | present | `focused/valid/recursive-direct-unsupported.md`, `focused/valid/recursive-indirect-unsupported.md`, `focused/invalid/recursive-truncated-representation.md` |
 | Remaining focused complete-surface fixtures | missing | every remaining README section 9.1 canonical marker, table shape, normalization rule, representation class, and replacement unit |
 | Complete-surface checker coverage | missing | future work |
 | LLM task evaluation evidence | missing | future work |
 
 ## Publication Impact
 
-This candidate satisfies the TODO item for a full/compact complete example pair that includes resources, workflows, and webhooks. It also expands focused complete-surface fixture coverage for profile pairing, selective conventions, `same_as`, opaque fields, resource/workflow/webhook relations, non-JSON multipart, polymorphic variants, replacement `unsupported`, grouped webhook variants, metadata and extensions, coverage/knowledge states, structured parameters, conditional requiredness, response-header repetition, exactly-null values, inline unknown-code labels, and generated-example field coverage. It does not satisfy the README section 9.1 complete-generator-ready gate by itself.
+This candidate satisfies the TODO item for a full/compact complete example pair that includes resources, workflows, and webhooks. It also expands focused complete-surface fixture coverage for profile pairing, selective conventions, `same_as`, opaque fields, resource/workflow/webhook relations, non-JSON multipart, polymorphic variants, replacement `unsupported`, grouped webhook variants, metadata and extensions, coverage/knowledge states, structured parameters, conditional requiredness, response-header repetition, exactly-null values, inline unknown-code labels, generated-example field coverage, table and field-path syntax, media-type uniqueness, error recovery state, and recursive fallback. It does not satisfy the README section 9.1 complete-generator-ready gate by itself.
 
 The README publication label must remain `Compatibility Core implementation target` until focused fixture coverage, checker coverage, and LLM task evaluations are also complete.

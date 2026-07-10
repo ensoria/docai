@@ -1,0 +1,40 @@
+openapi: 3.1.1
+info:
+  title: Complete Candidate Indirect Recursive Fixture
+  version: 0.11.0-complete-recursive-indirect-source
+paths:
+  /people/{id}:
+    get:
+      operationId: getPerson
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Indirectly recursive person graph.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Person"
+components:
+  schemas:
+    Person:
+      type: object
+      required:
+        - id
+        - manager
+      properties:
+        id:
+          type: string
+        manager:
+          $ref: "#/components/schemas/Manager"
+    Manager:
+      type: object
+      required:
+        - person
+      properties:
+        person:
+          $ref: "#/components/schemas/Person"

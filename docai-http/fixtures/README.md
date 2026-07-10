@@ -27,6 +27,7 @@ Layout:
 - `polymorphism-candidates/v0.11.0/valid/full/` contains a full-profile candidate set for tagged request body variants, untagged response body variants, and overlapping alternatives with a combined variant.
 - `polymorphism-candidates/v0.11.0/focused/invalid/` contains focused polymorphism-candidate negative snippets.
 - `complete-candidates/v0.11.0/source/complete-openapi.yaml` is the source OpenAPI fixture referenced by the complete-surface candidate example pair.
+- `complete-candidates/v0.11.0/source/recursive-direct-openapi.yaml` and `complete-candidates/v0.11.0/source/recursive-indirect-openapi.yaml` are recursive source fixtures whose complete-candidate projections use the required `unsupported` fallback.
 - `complete-candidates/v0.11.0/valid/full/` and `complete-candidates/v0.11.0/valid/compact/` contain a matching full/compact candidate pair that includes resources, workflows, and webhooks.
 - `complete-candidates/v0.11.0/focused/valid/` and `complete-candidates/v0.11.0/focused/invalid/` contain focused complete-candidate snippets for the areas listed in `complete-candidates/v0.11.0/COVERAGE.md`.
 
