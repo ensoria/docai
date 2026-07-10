@@ -5,11 +5,13 @@ This directory contains the initial Compatibility Core fixture corpus for DocAI 
 - `valid/full/` is a full-profile document set that exercises the core read path: `INDEX.md` -> `CONVENTIONS.md` -> `resources/users.md`.
 - `focused/valid/` contains small valid snippets for individual core syntax rules.
 - `focused/invalid/` contains small invalid snippets for validator negative tests.
-- `source/` contains focused OpenAPI source inputs for recursive-schema fallback fixtures.
+- `source/` contains focused OpenAPI source inputs for recursive-schema fallback fixtures: direct recursion in `recursive-direct-openapi.yaml` and indirect recursion in `recursive-indirect-openapi.yaml`.
 - `../../core-openapi.yaml` is the source OpenAPI fixture referenced by the valid full-profile set.
 
 The `valid/full/` set deliberately exercises the incomplete-signaling markers that the core corpus must demonstrate (README §9.1): `**unknown**:`, localized and replacement `**unsupported**:`, and the recursive-schema fallback. Because of those markers its `INDEX.md` reports `coverage: requires-source | knowledge: requires-input`, so the set is intentionally **not** implementation-ready under README §3. It shows that the core structures are expressible, not that a projection is complete. A fully clean, implementation-ready core endpoint shape (no `unknown` or `unsupported`) is shown by `focused/valid/endpoint-basic.md`.
 
 This corpus intentionally excludes non-core draft features such as the compact profile, workflows, webhooks, non-JSON bodies, selective convention loading, and token-routing metadata.
+
+Recursive schema future: recursive schemas remain explicitly unsupported for the intended `1.0.0` stable contract unless a finite, self-contained representation and versioned fixture evidence are added before the pre-v1.0.0 release-candidate stage. Post-`1.0.0` recursive-schema support is compatibility-impacting when existing readers must understand it to call the API correctly.
 
 Run `node ../../../tools/check-core-fixtures.mjs` from this directory, `node tools/check-core-fixtures.mjs` from `docai-http/`, or `node docai-http/tools/check-core-fixtures.mjs` from the repository root.

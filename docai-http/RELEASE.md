@@ -48,6 +48,24 @@ For every promoted feature, update all applicable release evidence in the same c
 
 If one of these does not apply, state why in the change or release notes. A feature is not promoted merely because draft text exists; promotion requires the release label or release notes to say that readers/producers may rely on the feature inside the advertised compatibility scope.
 
+## Recursive Schema Policy
+
+Keep recursive schemas explicitly unsupported for the intended `1.0.0` stable contract unless a finite, self-contained representation and versioned fixture evidence land before the pre-v1.0.0 release-candidate stage.
+
+Current evidence:
+
+- Direct recursive source: `fixtures/core/v0.11.0/source/recursive-direct-openapi.yaml`
+- Indirect recursive source: `fixtures/core/v0.11.0/source/recursive-indirect-openapi.yaml`
+- Direct recursive projection fallback: `fixtures/core/v0.11.0/focused/valid/recursive-direct-unsupported.md`
+- Indirect recursive projection fallback: `fixtures/core/v0.11.0/focused/valid/recursive-indirect-unsupported.md`
+- Full-profile fallback example: `fixtures/core/v0.11.0/valid/full/resources/users.md`
+
+Compatibility impact:
+
+- A future recursive representation changes the contract for APIs that currently require an `unsupported` source fallback.
+- After `1.0.0`, treat recursive-schema support as requiring a new major version by default when existing readers must understand the new representation to call the API correctly.
+- A minor version is acceptable only for optional, self-bounding recursive metadata or capabilities that older readers can ignore while still relying on the existing `unsupported` fallback.
+
 ## Tag Checklist
 
 Before tagging:

@@ -152,11 +152,11 @@ Deferred compact expansion work:
 
 ## P3: Decide Recursive Schema Future
 
-- [ ] Keep recursive schemas explicitly unsupported for the first stable release unless a strong finite representation is designed.
-- [ ] Add source fixtures for direct recursion and indirect recursion.
-- [ ] Add generated projection fixtures showing smallest applicable `unsupported` forms.
-- [ ] Document the compatibility impact if recursive representation is ever added.
-- [ ] Decide whether recursive support would require a new major version after 1.0.
+- [x] Keep recursive schemas explicitly unsupported for the first stable release unless a strong finite representation is designed. Decision: keep recursive schemas outside the intended `1.0.0` representable scope unless a finite, self-contained representation and versioned fixtures land before the pre-v1.0.0 release-candidate stage; see README §3.4 and `RELEASE.md`.
+- [x] Add source fixtures for direct recursion and indirect recursion. Evidence: `fixtures/core/v0.11.0/source/recursive-direct-openapi.yaml` and `fixtures/core/v0.11.0/source/recursive-indirect-openapi.yaml`.
+- [x] Add generated projection fixtures showing smallest applicable `unsupported` forms. Evidence: `fixtures/core/v0.11.0/focused/valid/recursive-direct-unsupported.md`, `fixtures/core/v0.11.0/focused/valid/recursive-indirect-unsupported.md`, and `fixtures/core/v0.11.0/valid/full/resources/users.md`.
+- [x] Document the compatibility impact if recursive representation is ever added. Decision: adding a recursive representation after `1.0.0` is compatibility-impacting when existing readers must understand it to call the API correctly; see README §3.4 and `RELEASE.md`.
+- [x] Decide whether recursive support would require a new major version after 1.0. Decision: treat post-`1.0.0` recursive-schema support as requiring a new major version by default when it replaces the current required `unsupported` fallback for implementation-ready projections; a minor version is only acceptable for optional, self-bounding metadata or capabilities that older readers can ignore without losing the existing fallback.
 
 ## P3: Move Toward Complete Generator Readiness
 

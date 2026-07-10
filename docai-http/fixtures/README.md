@@ -10,6 +10,7 @@ Layout:
 - `core/v0.11.0/valid/full/` contains a valid full-profile document set for the Compatibility Core.
 - `core/v0.11.0/focused/valid/` contains focused valid snippets for individual core syntax rules.
 - `core/v0.11.0/focused/invalid/` contains focused invalid snippets for validator negative tests.
+- `core/v0.11.0/source/` contains direct and indirect recursive OpenAPI inputs whose generated projections use the required `unsupported` fallback.
 - `compact-candidate-openapi.yaml` is the source OpenAPI fixture referenced by the compact candidate corpus.
 - `compact-candidates/v0.11.0/valid/full/` and `compact-candidates/v0.11.0/valid/compact/` contain a matching full/compact candidate pair for future compact-profile promotion work.
 - `compact-candidates/v0.11.0/focused/invalid/` contains focused compact-candidate negative snippets.
