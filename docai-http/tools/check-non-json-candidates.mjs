@@ -470,6 +470,66 @@ function validateXmlResponse(markdown) {
   });
 }
 
+function validateSseResponse(markdown) {
+  const responseLines = sectionLines(markdown, 3, "Response 200");
+  if (!responseLines) throw new Error("SSE response must include Response 200");
+  const response = responseLines.join("\n");
+  const significant = responseLines.map((line) => line.trim()).filter(Boolean);
+  const markerOrder = ["**body_presence**: always", "**media_type**: text/event-stream;charset=UTF-8"].map((marker) =>
+    significant.findIndex((line) => line === marker),
+  );
+  if (markerOrder.some((index) => index < 0) || markerOrder.join("|") !== [...markerOrder].sort((a, b) => a - b).join("|")) {
+    throw new Error("SSE response must contain body_presence and media_type text/event-stream;charset=UTF-8 in order");
+  }
+  if (significant.some((line) => line.startsWith("**body_nullable**:"))) {
+    throw new Error("SSE response must omit body_nullable because it is an unstructured stream");
+  }
+
+  const sample = response.match(/```sse\r?\n([\s\S]*?)```/)?.[1];
+  if (!sample) throw new Error("SSE response must include an sse sample fragment");
+  [
+    "retry: 5000",
+    "id: evt_01K0SSE001",
+    "event: report.progress",
+    'data: {"report_id":"rpt_01K0SSE","state":"processing","percent":40}',
+    "id: evt_01K0SSE002",
+    "event: report.complete",
+    'data: {"report_id":"rpt_01K0SSE","state":"complete","download_url":"https://api.example.com/reports/rpt_01K0SSE"}',
+    "id: evt_01K0SSE003",
+    "event: stream.end",
+    'data: {"reason":"complete"}',
+  ].forEach((text) => {
+    if (!sample.includes(text)) throw new Error(`SSE sample must show ${text}`);
+  });
+  if (!sample.includes("retry: 5000\n\nid: evt_01K0SSE001")) {
+    throw new Error("SSE sample must show a blank line before the first event frame");
+  }
+  if (!sample.includes("percent\":40}\n\nid: evt_01K0SSE002")) {
+    throw new Error("SSE sample must show blank-line frame termination after progress");
+  }
+  if (!sample.includes("SSE\"}\n\nid: evt_01K0SSE003")) {
+    throw new Error("SSE sample must show blank-line frame termination after completion");
+  }
+
+  const requiredProse = [
+    "The stream is UTF-8",
+    "Each SSE frame is terminated by a blank line",
+    "Each event frame uses exactly one `id:` line, exactly one `event:` line, and one `data:` line",
+    "The `data:` line contains one compact JSON object",
+    "Multiple `data:` lines are not used in this fixture",
+    "Event names are exactly `report.progress`, `report.complete`, and `stream.end`",
+    "The `retry:` field is 5000 milliseconds",
+    "Clients reconnect after transport errors using the `Last-Event-ID` request header",
+    "Events after the supplied ID may be replayed",
+    "The `stream.end` event is terminal",
+    "clients must not reconnect for this stream",
+    "The server closes the connection after `stream.end`",
+  ];
+  requiredProse.forEach((text) => {
+    if (!response.includes(text)) throw new Error(`SSE response prose must state ${text}`);
+  });
+}
+
 function indexEndpointRows(markdown) {
   const endpoints = sectionLines(markdown, 2, "Endpoints")?.join("\n") ?? "";
   const lines = endpoints.split(/\r?\n/);
@@ -505,6 +565,7 @@ function validateFullSet() {
     path.join("resources", "binary.md"),
     path.join("resources", "csv.md"),
     path.join("resources", "forms.md"),
+    path.join("resources", "sse.md"),
     path.join("resources", "uploads.md"),
     path.join("resources", "xml.md"),
   ].map((file) =>
@@ -529,6 +590,7 @@ function validateFullSet() {
       path.join(fullDir, "resources", "binary.md"),
       path.join(fullDir, "resources", "csv.md"),
       path.join(fullDir, "resources", "forms.md"),
+      path.join(fullDir, "resources", "sse.md"),
       path.join(fullDir, "resources", "uploads.md"),
       path.join(fullDir, "resources", "xml.md"),
     ]
@@ -562,6 +624,12 @@ function validateFullSet() {
   }
 
   try {
+    validateSseResponse(contents[path.join(fullDir, "resources", "sse.md")]);
+  } catch (error) {
+    fail(path.join(fullDir, "resources", "sse.md"), error.message);
+  }
+
+  try {
     validateFormUrlencodedBody(contents[path.join(fullDir, "resources", "forms.md")]);
   } catch (error) {
     fail(path.join(fullDir, "resources", "forms.md"), error.message);
@@ -590,6 +658,8 @@ function validateFocusedInvalid() {
         validateCsvResponse(fixtures[0]);
       } else if (name.startsWith("xml-")) {
         validateXmlResponse(fixtures[0]);
+      } else if (name.startsWith("sse-")) {
+        validateSseResponse(fixtures[0]);
       } else if (name.startsWith("raw-binary-download-")) {
         validateRawBinaryDownload(fixtures[0]);
       } else if (name.startsWith("raw-binary-upload-")) {

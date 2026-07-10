@@ -60,6 +60,38 @@ paths:
                     - title
                     - total
                     - audit:updated_at
+  /reports/{report_id}/events:
+    get:
+      summary: Stream report events
+      parameters:
+        - name: report_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: Last-Event-ID
+          in: header
+          required: false
+          description: Last received SSE event ID used for reconnect resume.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Report event stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+              x-docai-sse:
+                charset: UTF-8
+                retry: 5000
+                event_names:
+                  - report.progress
+                  - report.complete
+                  - stream.end
+                data_format: single compact JSON object in one data field
+                last_event_id: supported
+                termination_event: stream.end
   /avatars/{id}/image:
     put:
       summary: Upload avatar image

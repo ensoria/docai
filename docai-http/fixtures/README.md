@@ -20,10 +20,10 @@ Layout:
 - `webhook-candidates/v0.11.0/valid/full/` contains a full-profile candidate set for single-event and grouped webhook structure.
 - `webhook-candidates/v0.11.0/focused/invalid/` contains focused webhook-candidate negative snippets.
 - `non-json-candidate-openapi.yaml` is the source OpenAPI fixture referenced by the non-JSON candidate corpus.
-- `non-json-candidates/v0.11.0/valid/full/` contains a full-profile candidate set for multipart, form-urlencoded, raw binary, CSV, and XML request/response structure.
+- `non-json-candidates/v0.11.0/valid/full/` contains a full-profile candidate set for multipart, form-urlencoded, raw binary, CSV, XML, and SSE request/response structure.
 - `non-json-candidates/v0.11.0/focused/invalid/` contains focused non-JSON candidate negative snippets.
 
-Only the `core/` corpus is part of the current Compatibility Core evidence. The compact, workflow, webhook, and non-JSON candidate corpora do not declare those features ready for compatibility-preserving implementation. The non-JSON candidate corpus now includes CSV and XML response fixture evidence, but CSV and XML remain candidate-only. These fixtures do not declare SSE, selective convention loading, token-routing metadata, or other non-core structures ready for compatibility-preserving implementation.
+Only the `core/` corpus is part of the current Compatibility Core evidence. The compact, workflow, webhook, and non-JSON candidate corpora do not declare those features ready for compatibility-preserving implementation. The non-JSON candidate corpus now includes CSV, XML, and SSE response fixture evidence, but CSV, XML, and SSE remain candidate-only. These fixtures do not declare selective convention loading, token-routing metadata, or other non-core structures ready for compatibility-preserving implementation.
 
 Run `node tools/check-core-fixtures.mjs` from the `docai-http/` directory, or `node docai-http/tools/check-core-fixtures.mjs` from the repository root, to check the core fixture expectations.
 

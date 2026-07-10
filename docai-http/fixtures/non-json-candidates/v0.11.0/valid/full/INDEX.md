@@ -23,6 +23,12 @@
 |---|---|---|---|---|
 | GET | /reports/{report_id}/summary | get report summary | Returns a UTF-8 XML report summary with namespaces, attributes, and fixed child order. | none |
 
+### resources/sse.md
+
+| Method | Path | Task | Summary | Also read |
+|---|---|---|---|---|
+| GET | /reports/{report_id}/events | stream report events | Streams UTF-8 SSE report events with reconnect and terminal-event rules. | none |
+
 ### resources/forms.md
 
 | Method | Path | Task | Summary | Also read |
