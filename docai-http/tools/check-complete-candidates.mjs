@@ -41,6 +41,7 @@ const CONVENTION_HEADINGS = new Set([
 
 const FOCUSED_EXPECTATIONS = {
   valid: {
+    "behavior-unknown-marker.md": ["- side_effects: unknown", "**unknown**: side effects and idempotency"],
     "canonical-boundary-extension-heading.md": ["#### x-Trace Notes", "### Errors"],
     "compact-error-shape-client-visible-fields.md": [
       "inline:payment-conflict",
@@ -48,7 +49,9 @@ const FOCUSED_EXPECTATIONS = {
       "#### Opaque fields",
     ],
     "compact-opaque-webhook-payload.md": ["#### Client-visible fields", "#### Opaque fields"],
+    "conventions-whole-section-states.md": ["## Rate Limits", "unknown", "**unsupported**: replaces CONVENTIONS Webhook Delivery:"],
     "conditional-requiredness.md": ["Required | Nullable", "conditional"],
+    "deprecated-index-and-endpoint.md": ["(deprecated) Lists legacy users", "**deprecated**: use GET /users instead"],
     "error-deviation-and-recovery-state.md": ["**deviation**:", "Fetch the order by client reference"],
     "exactly-null-body.md": ["**body_nullable**: yes", "| $ | null | always | yes |"],
     "field-defaults-reconstruction.md": ["**field_defaults**: Presence=always | Nullable=no"],
@@ -65,16 +68,23 @@ const FOCUSED_EXPECTATIONS = {
     "recursive-indirect-unsupported.md": ["**unsupported**: replaces response representation 200 application/json"],
     "response-header-repetition.md": ["Set-Cookie", "repeated field lines"],
     "response-header-replacement-unsupported.md": ["**unsupported**: replaces Response Headers:"],
+    "root-values-and-any-type.md": ["| $ | map<string, bool> | yes | no |", "| $ | string[] | always | no |", "| payload | any | always | no |"],
     "same-as-resource-file-retrieval-unit.md": ["x-retrieval-unit: resource-file", "**same_as**: POST /users Response 201 application/json"],
+    "status-range-default-ordering.md": ["### Response 2XX", "### Response default", "exact status definitions take precedence"],
     "structured-parameter-fields.md": ["**parameter**: filter", "##### Fields"],
     "table-field-path-normalization.md": ["metadata.campaign\\.code\\|source", "Additional properties forbidden"],
     "unknown-coverage-knowledge-state.md": ["knowledge: requires-input", "coverage: requires-source"],
+    "update-patch-semantics.md": ["JSON Merge Patch semantics", "non-updatable and must not be sent"],
     "workflow-section-replacement-unsupported.md": ["**unsupported**: replaces workflow Steps:"],
     "workflow-webhook-related-links.md": ["Workflow: workflows/checkout.md", "Triggers webhook: webhooks/payment-completed.md"],
   },
   invalid: {
+    "any-used-for-missing-type.md": ["| payload | any | always | no | Type is not documented"],
+    "behavior-unknown-missing-marker.md": ["- side_effects: unknown", "- idempotency: unknown"],
     "common-error-suppression-missing-deviation.md": ["common:standard-error"],
+    "conventions-unsupported-wrong-unit.md": ["**unsupported**: replaces Webhook Delivery:"],
     "conditional-requiredness-missing-condition.md": ["conditional", "missing"],
+    "deprecated-index-summary-missing-prefix.md": ["**deprecated**: use GET /users instead."],
     "duplicate-media-type-representation.md": ["**media_type**: application/json"],
     "exactly-null-nullable-no.md": ["| $ | null | always | no |"],
     "field-defaults-retained-column.md": ["**field_defaults**: Presence=always | Nullable=no", "| Field | Type | Presence | Meaning |"],
@@ -98,8 +108,10 @@ const FOCUSED_EXPECTATIONS = {
     "same-as-forward-reference.md": ["**same_as**: POST /users Response 201 application/json"],
     "same-as-missing-retrieval-unit.md": ["**same_as**: POST /users Response 201 application/json"],
     "selective-conventions-unknown-section.md": ["Billing Rules"],
+    "status-order-default-before-range.md": ["### Response default", "### Response 4XX"],
     "structured-parameter-missing-fields.md": ["filter | object"],
     "unknown-marker-missing.md": ["unknown"],
+    "update-patch-semantics-missing.md": ["## PATCH /users/{id}", "| name | string | no | no |"],
     "workflow-unsupported-wrong-unit.md": ["**unsupported**: replaces webhook Payload:"],
   },
 };
