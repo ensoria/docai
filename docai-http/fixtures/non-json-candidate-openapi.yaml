@@ -3,6 +3,32 @@ info:
   title: Non-JSON Candidate Fixture API
   version: 0.11.0-non-json-candidate-source
 paths:
+  /reports/export:
+    get:
+      summary: Export reports CSV
+      responses:
+        "200":
+          description: Reports CSV export
+          headers:
+            Content-Disposition:
+              description: Attachment filename for the CSV export.
+              schema:
+                type: string
+          content:
+            text/csv:
+              schema:
+                type: string
+              x-docai-csv:
+                charset: UTF-8
+                delimiter: ","
+                record_separator: CRLF
+                header: present
+                quote: "\""
+                escape: "\"\""
+                columns:
+                  - report_id
+                  - title
+                  - total
   /avatars/{id}/image:
     put:
       summary: Upload avatar image

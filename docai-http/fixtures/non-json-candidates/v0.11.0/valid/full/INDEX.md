@@ -11,6 +11,12 @@
 | PUT | /avatars/{id}/image | upload avatar | Uploads raw PNG bytes for an avatar image. | none |
 | GET | /avatars/{id}/image | download avatar | Downloads raw PNG bytes with filename, size, and digest metadata. | none |
 
+### resources/csv.md
+
+| Method | Path | Task | Summary | Also read |
+|---|---|---|---|---|
+| GET | /reports/export | export reports | Downloads a UTF-8 CSV report export with fixed column order. | none |
+
 ### resources/forms.md
 
 | Method | Path | Task | Summary | Also read |

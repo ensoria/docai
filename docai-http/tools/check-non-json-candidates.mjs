@@ -343,6 +343,60 @@ function validateRawBinaryDownload(markdown) {
   }
 }
 
+function validateCsvResponse(markdown) {
+  const responseLines = sectionLines(markdown, 3, "Response 200");
+  if (!responseLines) throw new Error("CSV response must include Response 200");
+  const response = responseLines.join("\n");
+  const significant = responseLines.map((line) => line.trim()).filter(Boolean);
+  const markerOrder = ["**body_presence**: always", "**media_type**: text/csv;charset=UTF-8", "**body_nullable**: no"].map((marker) =>
+    significant.findIndex((line) => line === marker),
+  );
+  if (markerOrder.some((index) => index < 0) || markerOrder.join("|") !== [...markerOrder].sort((a, b) => a - b).join("|")) {
+    throw new Error("CSV response must contain body_presence, media_type text/csv;charset=UTF-8, and body_nullable in order");
+  }
+
+  const sample = response.match(/```csv\r?\n([\s\S]*?)```/)?.[1];
+  if (!sample) throw new Error("CSV response must include a csv sample fragment");
+  if (!sample.startsWith("report_id,title,total")) throw new Error("CSV sample must show the header row");
+  if (!sample.includes('rpt_01K0CSV,"Q2, statement",1200')) {
+    throw new Error("CSV sample must show delimiter and quoting behavior");
+  }
+
+  const requiredProse = [
+    "The CSV is UTF-8",
+    "delimiter is comma",
+    "record separator on the wire is CRLF",
+    "first record is a header row",
+    "column order is exactly `report_id`, `title`, `total`",
+    "quoted with double quotes",
+    "escaped as two double quotes",
+  ];
+  requiredProse.forEach((text) => {
+    if (!response.includes(text)) throw new Error(`CSV response prose must state ${text}`);
+  });
+
+  const rows = tableRows(response, ["Field", "Type", "Presence", "Nullable", "Meaning"]);
+  const columns = rows.map((row) => row.Field).join("|");
+  if (columns !== "report_id|title|total") throw new Error("CSV field table must match the documented column order");
+  rows.forEach((row) => {
+    if (row.Presence !== "always" || row.Nullable !== "no") {
+      throw new Error("CSV field rows must be always present and non-nullable in this fixture");
+    }
+  });
+  ["First column", "Second column", "Third column"].forEach((text, index) => {
+    if (!rows[index]["Meaning"].includes(text)) throw new Error(`CSV field table must state ${text}`);
+  });
+
+  const headerSection = sectionLines(response, 4, "Response Headers")?.join("\n");
+  if (!headerSection) throw new Error("CSV response must document response headers");
+  const headers = tableRows(headerSection, ["Name", "Type", "Presence", "Meaning"]);
+  const contentDisposition = headers.find((row) => row.Name === "Content-Disposition");
+  if (!contentDisposition) throw new Error("CSV response must include Content-Disposition response header");
+  if (!contentDisposition.Meaning.includes("filename") || !contentDisposition.Meaning.includes("reports.csv")) {
+    throw new Error("CSV Content-Disposition header must document the download filename");
+  }
+}
+
 function indexEndpointRows(markdown) {
   const endpoints = sectionLines(markdown, 2, "Endpoints")?.join("\n") ?? "";
   const lines = endpoints.split(/\r?\n/);
@@ -376,6 +430,7 @@ function validateFullSet() {
     "INDEX.md",
     "CONVENTIONS.md",
     path.join("resources", "binary.md"),
+    path.join("resources", "csv.md"),
     path.join("resources", "forms.md"),
     path.join("resources", "uploads.md"),
   ].map((file) =>
@@ -398,6 +453,7 @@ function validateFullSet() {
     const indexed = indexEndpointRows(contents[indexFile]).sort().join("|");
     const resourceHeadings = [
       path.join(fullDir, "resources", "binary.md"),
+      path.join(fullDir, "resources", "csv.md"),
       path.join(fullDir, "resources", "forms.md"),
       path.join(fullDir, "resources", "uploads.md"),
     ]
@@ -416,6 +472,12 @@ function validateFullSet() {
     validateRawBinaryDownload(contents[path.join(fullDir, "resources", "binary.md")]);
   } catch (error) {
     fail(path.join(fullDir, "resources", "binary.md"), error.message);
+  }
+
+  try {
+    validateCsvResponse(contents[path.join(fullDir, "resources", "csv.md")]);
+  } catch (error) {
+    fail(path.join(fullDir, "resources", "csv.md"), error.message);
   }
 
   try {
@@ -443,6 +505,8 @@ function validateFocusedInvalid() {
       const name = path.basename(file);
       if (name.startsWith("form-urlencoded-")) {
         validateFormUrlencodedBody(fixtures[0]);
+      } else if (name.startsWith("csv-")) {
+        validateCsvResponse(fixtures[0]);
       } else if (name.startsWith("raw-binary-download-")) {
         validateRawBinaryDownload(fixtures[0]);
       } else if (name.startsWith("raw-binary-upload-")) {
