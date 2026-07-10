@@ -1,5 +1,80 @@
 > docai-http: 0.11.0 | profile: full | coverage: complete | knowledge: complete | generated: 2026-07-10 | generation_id: polymorphism-candidate-full-20260710-001 | projection_id: polymorphism-candidate-20260710-001 | source: fixtures/polymorphism-candidate-openapi.yaml (OpenAPI 3.1.1) | source_revision: fixture-revision-polymorphism-candidate-001 | x-fixture: polymorphism-candidate
 
+## GET /payment-methods/{id}
+
+Gets one payment method. The response body is polymorphic without a discriminator field.
+
+### Behavior
+
+- side_effects: none
+- idempotency: idempotent and safe to retry
+- preconditions: payment method exists
+- authorization: authenticated merchant
+
+### Request
+
+#### Path Parameters
+
+| Name | Type | Required | Meaning |
+|---|---|---|---|
+| id | string | yes | Payment method ID |
+
+- Query Parameters: none
+- Headers: none
+- Cookie Parameters: none
+
+#### Body
+
+none
+
+### Response 200
+
+**body_presence**: always
+
+**media_type**: application/json
+
+**body_nullable**: no
+
+**variant**: bank account method
+
+Use this variant when the response has `bank_account_id`. This variant never has `card_last4`.
+
+```json
+{"id":"pm_01K0UNTAGBANK","label":"Primary bank account","bank_account_id":"ba_01K0UNTAG"}
+```
+
+| Field | Type | Presence | Nullable | Meaning |
+|---|---|---|---|---|
+| $ | object | always | no | Additional properties forbidden |
+| id | string | always | no | Payment method ID |
+| label | string | always | no | Merchant-visible payment method label |
+| bank_account_id | string | always | no | Present only for the bank account method variant |
+
+**variant**: card method
+
+Use this variant when the response has `card_last4`. This variant never has `bank_account_id`.
+
+```json
+{"id":"pm_01K0UNTAGCARD","label":"Primary card","card_last4":"4242"}
+```
+
+| Field | Type | Presence | Nullable | Meaning |
+|---|---|---|---|---|
+| $ | object | always | no | Additional properties forbidden |
+| id | string | always | no | Payment method ID |
+| label | string | always | no | Merchant-visible payment method label |
+| card_last4 | string | always | no | Present only for the card method variant |
+
+- Response Headers: none
+
+### Errors
+
+none
+
+### Related
+
+none
+
 ## POST /payments
 
 Creates a payment from one of the supported tagged request variants.

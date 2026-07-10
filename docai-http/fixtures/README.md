@@ -23,9 +23,9 @@ Layout:
 - `non-json-candidates/v0.11.0/valid/full/` contains a full-profile candidate set for multipart, form-urlencoded, raw binary, CSV, XML, and SSE request/response structure.
 - `non-json-candidates/v0.11.0/focused/invalid/` contains focused non-JSON candidate negative snippets.
 - `polymorphism-candidate-openapi.yaml` is the source OpenAPI fixture referenced by the polymorphism candidate corpus.
-- `polymorphism-candidates/v0.11.0/valid/full/` contains a full-profile candidate set for tagged request body variants.
+- `polymorphism-candidates/v0.11.0/valid/full/` contains a full-profile candidate set for tagged request body variants and untagged response body variants.
 
-Only the `core/` corpus is part of the current Compatibility Core evidence. The compact, workflow, webhook, non-JSON, and polymorphism candidate corpora do not declare those features ready for compatibility-preserving implementation. The non-JSON candidate corpus now includes CSV, XML, and SSE response fixture evidence, but CSV, XML, and SSE remain candidate-only. The polymorphism candidate corpus now includes tagged request body variant fixture evidence, but polymorphic variants remain candidate-only. These fixtures do not declare selective convention loading, token-routing metadata, or other non-core structures ready for compatibility-preserving implementation.
+Only the `core/` corpus is part of the current Compatibility Core evidence. The compact, workflow, webhook, non-JSON, and polymorphism candidate corpora do not declare those features ready for compatibility-preserving implementation. The non-JSON candidate corpus now includes CSV, XML, and SSE response fixture evidence, but CSV, XML, and SSE remain candidate-only. The polymorphism candidate corpus now includes tagged request body and untagged response body variant fixture evidence, but polymorphic variants remain candidate-only. These fixtures do not declare selective convention loading, token-routing metadata, or other non-core structures ready for compatibility-preserving implementation.
 
 Run `node tools/check-core-fixtures.mjs` from the `docai-http/` directory, or `node docai-http/tools/check-core-fixtures.mjs` from the repository root, to check the core fixture expectations.
 

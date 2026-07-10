@@ -64,6 +64,15 @@ function sectionLines(markdown, level, title) {
   return lines.slice(heading.line + 1, next?.line);
 }
 
+function sectionMarkdown(markdown, level, title) {
+  const lines = markdown.split(/\r?\n/);
+  const headings = headingRows(markdown);
+  const heading = headings.find((candidate) => candidate.level === level && candidate.title === title);
+  if (!heading) return null;
+  const next = headings.find((candidate) => candidate.line > heading.line && candidate.level <= level);
+  return lines.slice(heading.line, next?.line).join("\n");
+}
+
 function splitTableLine(line) {
   const trimmed = line.trim();
   if (!trimmed.startsWith("|") || !trimmed.endsWith("|")) return null;
@@ -214,7 +223,81 @@ function validateRequestTaggedVariants(markdown) {
   });
 }
 
-function validateResponse(markdown) {
+function validateUntaggedResponseVariants(markdown) {
+  const responseLines = sectionLines(markdown, 3, "Response 200");
+  if (!responseLines) throw new Error("untagged variant response must include Response 200");
+  const response = responseLines.join("\n");
+  const significant = responseLines.map((line) => line.trim()).filter(Boolean);
+  const markerOrder = ["**body_presence**: always", "**media_type**: application/json", "**body_nullable**: no"].map((marker) =>
+    significant.findIndex((line) => line === marker),
+  );
+  if (markerOrder.some((index) => index < 0) || markerOrder.join("|") !== [...markerOrder].sort((a, b) => a - b).join("|")) {
+    throw new Error("untagged variant response must contain body_presence, media_type, and body_nullable in order");
+  }
+
+  const variants = variantBlocks(response);
+  const labels = variants.map((variant) => variant.label).join("|");
+  if (labels !== "bank account method|card method") {
+    throw new Error("untagged response variants must use stable labels in lexical order");
+  }
+
+  const beforeFirstVariant = response.slice(0, variants[0]?.index ?? response.length);
+  if (beforeFirstVariant.includes("```json") || beforeFirstVariant.includes("| Field |")) {
+    throw new Error("untagged response must not include an unlabeled common example or field table before variants");
+  }
+
+  const expectations = {
+    "bank account method": {
+      selector: "bank_account_id",
+      excluded: "card_last4",
+      fields: ["$", "id", "label", "bank_account_id"],
+      sampleId: "pm_01K0UNTAGBANK",
+    },
+    "card method": {
+      selector: "card_last4",
+      excluded: "bank_account_id",
+      fields: ["$", "id", "label", "card_last4"],
+      sampleId: "pm_01K0UNTAGCARD",
+    },
+  };
+
+  variants.forEach((variant) => {
+    const expectation = expectations[variant.label];
+    if (!expectation) throw new Error(`unexpected untagged variant ${variant.label}`);
+    if (!variant.block.includes(`Use this variant when the response has \`${expectation.selector}\``)) {
+      throw new Error(`untagged variant ${variant.label} must include selection prose`);
+    }
+    if (!variant.block.includes(`never has \`${expectation.excluded}\``)) {
+      throw new Error(`untagged variant ${variant.label} must state the excluded alternative field`);
+    }
+
+    const sample = variant.block.match(/```json\r?\n([\s\S]*?)```/)?.[1];
+    if (!sample) throw new Error(`untagged variant ${variant.label} must include a JSON example`);
+    const parsed = JSON.parse(sample);
+    if (parsed.id !== expectation.sampleId) throw new Error(`untagged variant ${variant.label} example must use the expected ID`);
+    if (!(expectation.selector in parsed)) throw new Error(`untagged variant ${variant.label} example must include ${expectation.selector}`);
+    if (expectation.excluded in parsed) {
+      throw new Error(`untagged variant ${variant.label} example must not include ${expectation.excluded}`);
+    }
+
+    const rows = tableRows(variant.block, ["Field", "Type", "Presence", "Nullable", "Meaning"]);
+    const fields = rows.map((row) => row.Field).join("|");
+    if (fields !== expectation.fields.join("|")) {
+      throw new Error(`untagged variant ${variant.label} table must include complete common and variant-specific fields`);
+    }
+    rows.forEach((row) => {
+      if (row.Presence !== "always" || row.Nullable !== "no") {
+        throw new Error(`untagged variant ${variant.label} rows must be always present and non-nullable in this fixture`);
+      }
+    });
+    const selector = rows.find((row) => row.Field === expectation.selector);
+    if (!selector.Meaning.includes(`Present only for the ${variant.label} variant`)) {
+      throw new Error(`untagged variant ${variant.label} selector row must identify the variant boundary`);
+    }
+  });
+}
+
+function validateCreatedPaymentResponse(markdown) {
   const responseLines = sectionLines(markdown, 3, "Response 201");
   if (!responseLines) throw new Error("payment endpoint must include Response 201");
   const response = responseLines.join("\n");
@@ -262,8 +345,14 @@ function validateFullSet() {
   }
 
   try {
-    validateRequestTaggedVariants(contents[path.join(fullDir, "resources", "payments.md")]);
-    validateResponse(contents[path.join(fullDir, "resources", "payments.md")]);
+    const payments = contents[path.join(fullDir, "resources", "payments.md")];
+    const taggedEndpoint = sectionMarkdown(payments, 2, "POST /payments");
+    const untaggedEndpoint = sectionMarkdown(payments, 2, "GET /payment-methods/{id}");
+    if (!taggedEndpoint) throw new Error("tagged payment endpoint is missing");
+    if (!untaggedEndpoint) throw new Error("untagged payment method endpoint is missing");
+    validateRequestTaggedVariants(taggedEndpoint);
+    validateUntaggedResponseVariants(untaggedEndpoint);
+    validateCreatedPaymentResponse(taggedEndpoint);
   } catch (error) {
     fail(path.join(fullDir, "resources", "payments.md"), error.message);
   }

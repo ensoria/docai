@@ -3,6 +3,24 @@ info:
   title: Polymorphism Candidate Fixture API
   version: 0.11.0-polymorphism-candidate-source
 paths:
+  /payment-methods/{id}:
+    get:
+      summary: Get payment method with untagged response variants
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Payment method
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/BankPaymentMethod"
+                  - $ref: "#/components/schemas/CardPaymentMethod"
   /payments:
     post:
       summary: Create payment with tagged request variants
@@ -39,6 +57,34 @@ paths:
                       - pending
 components:
   schemas:
+    BankPaymentMethod:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - label
+        - bank_account_id
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+        bank_account_id:
+          type: string
+    CardPaymentMethod:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - label
+        - card_last4
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+        card_last4:
+          type: string
     BankPaymentRequest:
       type: object
       additionalProperties: false
