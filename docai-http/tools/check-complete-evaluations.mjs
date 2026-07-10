@@ -6,7 +6,13 @@ import process from "node:process";
 import { fileURLToPath } from "node:url";
 
 const SPEC_VERSION = "0.11.0";
-const REQUIRED_GROUPS = new Set(["request_construction", "response_handling", "error_handling", "token_load"]);
+const REQUIRED_GROUPS = new Set([
+  "request_construction",
+  "response_handling",
+  "error_handling",
+  "workflow_completion",
+  "token_load",
+]);
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_DIR = path.resolve(SCRIPT_DIR, "..", "fixtures", "complete-candidates", `v${SPEC_VERSION}`);
 const CANDIDATE_DIR = path.resolve(process.argv[2] ?? DEFAULT_DIR);

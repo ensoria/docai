@@ -5,6 +5,7 @@
     "request_construction",
     "response_handling",
     "error_handling",
+    "workflow_completion",
     "token_load"
   ],
   "tasks": [
@@ -151,6 +152,72 @@
         "| 401 | token_expired | standard-error | Access token has expired | Refresh once, then retry once |",
         "**error_shape**: email-taken",
         "**error_shape**: validation-error"
+      ]
+    },
+    {
+      "id": "workflow-complete-checkout-compact",
+      "group": "workflow_completion",
+      "profile": "compact",
+      "load": [
+        "INDEX.md",
+        "CONVENTIONS.md",
+        "resources/checkout.md",
+        "resources/payments.md",
+        "workflows/checkout.md",
+        "webhooks/payment-completed.md"
+      ],
+      "user_task": "Complete checkout for cart_01K0COMPLETE with a card payment for JPY 1200, then describe what state to preserve if POST /orders fails retryably and how to reconcile an early payment.completed webhook.",
+      "expected_outcome": {
+        "steps": [
+          {
+            "method": "POST",
+            "path": "/carts/{id}/validate",
+            "pass": [
+              "id"
+            ],
+            "keep": [
+              "cart_id"
+            ],
+            "state_after_success": "cart.validated"
+          },
+          {
+            "method": "POST",
+            "path": "/payments",
+            "pass": [
+              "cart_id",
+              "amount",
+              "currency",
+              "type=card",
+              "card_token"
+            ],
+            "keep": [
+              "payment_id"
+            ],
+            "state_after_success": "payment.pending"
+          },
+          {
+            "method": "POST",
+            "path": "/orders",
+            "pass": [
+              "cart_id",
+              "payment_id"
+            ],
+            "keep": [
+              "order_id"
+            ],
+            "state_after_success": "order.confirmed"
+          }
+        ],
+        "retryable_order_failure": "Keep the same cart_id and payment_id, remain in payment.pending, and retry POST /orders.",
+        "early_webhook_reconciliation": "Match payment.completed by payment_id."
+      },
+      "evidence": [
+        "1. POST /carts/{id}/validate - Pass `id`; keep `cart_id`; fix cart and restart on validation failure.",
+        "2. POST /payments - Pass `cart_id`, `amount`, `currency`, and one payment-method variant; keep `payment_id`; collect another method and retry this step on payment failure.",
+        "3. POST /orders - Pass `cart_id` and `payment_id`; keep `order_id`; on retryable failure, keep both values and retry this step.",
+        "| payment.pending | POST /orders fails with retryable error | payment.pending |",
+        "Retry step 3 with the same `cart_id` and `payment_id` when the error is retryable.",
+        "Reconcile early `payment.completed` delivery by `payment_id`."
       ]
     },
     {

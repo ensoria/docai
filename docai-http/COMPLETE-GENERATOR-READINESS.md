@@ -24,7 +24,7 @@ Do not update the README publication label to `Complete-generator-ready candidat
 - The full and compact sets include `INDEX.md`, `CONVENTIONS.md`, at least one resource file, at least one workflow file, and at least one webhook file.
 - Focused valid and invalid fixtures cover every canonical marker, table shape, table-cell normalization rule, and representation boundary named by README section 9.1.
 - Checker coverage exists for every non-core feature promoted into the complete surface.
-- LLM task evaluations have been run against the valid corpus for request construction, response handling, error handling, and token load.
+- LLM task evaluations have been run against the valid corpus for request construction, response handling, error handling, workflow completion, and token load.
 - `README.md`, `fixtures/README.md`, `RELEASE.md`, and `CHANGELOG.md` describe the same publication label, scope, evidence, and known limits.
 
 Until those conditions are met, complete-surface fixtures and checkers are candidate evidence only. They must not imply stable compatibility for non-core structures.
@@ -121,11 +121,12 @@ Required checker behavior before promotion:
 
 ## LLM Evaluation Plan
 
-Run the valid complete corpus through four task groups before changing the publication label:
+Run the valid complete corpus through five task groups before changing the publication label:
 
 - Request construction: build correct path, query, header, cookie, and body values from resource files and conventions.
 - Response handling: interpret status selection, response headers, response body presence, nullability, variants, and non-JSON forms.
 - Error handling: identify common and inline errors, retryability, caller action, field-level errors, and error-time recovery state.
+- Workflow completion: follow workflow steps, pass values between endpoints, preserve state on failure branches, and reconcile webhook delivery.
 - Token load: compare full and compact task context, record loaded files and token counts, and verify that compact reductions do not remove behavior needed by the task.
 
 Evaluation results do not need to prove that every LLM succeeds, but they must show that the corpus supports the intended retrieval path and that failures are not caused by missing or contradictory documentation.

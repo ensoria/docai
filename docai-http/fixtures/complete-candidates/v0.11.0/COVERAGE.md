@@ -94,7 +94,7 @@ This file records evidence for the first complete-surface candidate example pair
 | Focused recursive fallback fixtures | present | `focused/valid/recursive-direct-unsupported.md`, `focused/valid/recursive-indirect-unsupported.md`, `focused/invalid/recursive-truncated-representation.md` |
 | Final focused complete-surface audit | present | `Final Focused Requirement Audit` below; `tools/check-complete-candidates.mjs` verifies fixture, checker expectation, coverage-row, and changelog references |
 | Complete-surface checker coverage | present | `tools/check-complete-candidates.mjs` |
-| LLM task evaluation packet | present | `evaluations/tasks.json`, `evaluations/RESULTS.md`, `tools/check-complete-evaluations.mjs` |
+| LLM task evaluation packet | present | `evaluations/tasks.json`, `evaluations/targets.json`, `evaluations/RESULTS.md`, `tools/check-complete-evaluations.mjs`, `tools/build-complete-evaluation-prompts.mjs` |
 | Live LLM task evaluation evidence | missing | future work |
 
 ## Final Focused Requirement Audit
