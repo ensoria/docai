@@ -200,9 +200,9 @@ Deferred compact expansion work:
     - [x] Add focused fixtures for nested arrays, nested dynamic maps, and array-item object openness beyond the current root-value examples.
     - [x] Add focused fixtures for root-object `$` row exception and invalid unnecessary or contradictory `$` rows.
     - [x] Add focused fixtures for standardized enum documentation, subset enum documentation, and invalid enum omission where clients must branch.
-    - [ ] Add focused fixtures for request media-type selection when multiple request representations are available.
-    - [ ] Add focused fixtures for complete-candidate non-JSON representation classes beyond multipart: form-urlencoded, raw binary upload/download, CSV, XML, and SSE.
-    - [ ] Add focused fixtures for raw binary and unstructured stream sample-and-prose exceptions, including invalid field-table requirements where they do not apply.
+    - [x] Add focused fixtures for request media-type selection when multiple request representations are available.
+    - [x] Add focused fixtures for complete-candidate non-JSON representation classes beyond multipart: form-urlencoded, raw binary upload/download, CSV, XML, and SSE.
+    - [x] Add focused fixtures for raw binary and unstructured stream sample-and-prose exceptions, including invalid field-table requirements where they do not apply.
     - [ ] Add focused fixtures for untagged polymorphic alternatives and overlapping/combined variant semantics in the complete-candidate corpus.
     - [ ] Add focused fixtures for invalid unlabeled examples or common tables before polymorphic `**variant**:` blocks.
     - [ ] Add focused fixtures for endpoint-specific inline error shape reuse, first-use ordering, mismatched inline labels, and body-less inline error shapes.
