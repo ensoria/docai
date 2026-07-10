@@ -45,6 +45,7 @@ DocAI HTTP draft history. Specification versioning and compatibility rules are d
 - Expands focused complete-candidate fixtures for body-marker ordering, conditional response-body presence, conditional response-header presence, and response-specific common-header deviations.
 - Expands focused complete-candidate fixtures for table-cell unknown values, cross-file reference rejection, nested arrays/maps, root-object `$` row usage, and enum documentation.
 - Expands focused complete-candidate fixtures for request media-type selection and non-JSON form, binary, CSV, XML, and SSE representation classes.
+- Expands focused complete-candidate fixtures for untagged and overlapping polymorphic variants and invalid pre-variant content.
 
 ## 0.11.0 (Draft - Compatibility Core)
 

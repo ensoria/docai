@@ -203,8 +203,8 @@ Deferred compact expansion work:
     - [x] Add focused fixtures for request media-type selection when multiple request representations are available.
     - [x] Add focused fixtures for complete-candidate non-JSON representation classes beyond multipart: form-urlencoded, raw binary upload/download, CSV, XML, and SSE.
     - [x] Add focused fixtures for raw binary and unstructured stream sample-and-prose exceptions, including invalid field-table requirements where they do not apply.
-    - [ ] Add focused fixtures for untagged polymorphic alternatives and overlapping/combined variant semantics in the complete-candidate corpus.
-    - [ ] Add focused fixtures for invalid unlabeled examples or common tables before polymorphic `**variant**:` blocks.
+    - [x] Add focused fixtures for untagged polymorphic alternatives and overlapping/combined variant semantics in the complete-candidate corpus.
+    - [x] Add focused fixtures for invalid unlabeled examples or common tables before polymorphic `**variant**:` blocks.
     - [ ] Add focused fixtures for endpoint-specific inline error shape reuse, first-use ordering, mismatched inline labels, and body-less inline error shapes.
     - [ ] Add focused fixtures for field-level error target/code/UI-display policy beyond the current generated-example coverage.
     - [ ] Add focused fixtures for common error rows with `Shape=none` and `Shape=unknown`, including required unknown markers.
