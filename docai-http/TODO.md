@@ -187,10 +187,50 @@ Deferred compact expansion work:
   - [x] Add complete-candidate focused fixtures for INDEX routing, endpoint section/path-parameter structure, and `CONVENTIONS.md` common error-shape contracts.
   - [x] Add complete-candidate focused fixtures for redirect/async responses, multiple media-type branching, and unknown response-header/body-nullability states.
   - [ ] Add remaining complete-surface focused fixtures for every §9.1 canonical marker, table shape, normalization rule, representation class, and replacement unit.
+    - [ ] Add focused fixtures for single-prose-language output and English-only structural text boundaries.
+    - [ ] Add focused fixtures for unsupported or unrepresentable endpoint method/path handling, including the rule that such operations are not emitted as compliant endpoints.
+    - [ ] Add focused fixtures for concrete method, status, media-type spelling, standard variable headings, and invalid non-`x-` structural identifiers.
+    - [ ] Add focused fixtures for `**media_type**: unknown` with required `**unknown**:` marker and invalid missing-marker cases.
+    - [ ] Add focused fixtures for resource-file boundaries: exactly one bounded resource file per endpoint and no resource-level title/prose wrapper.
+    - [ ] Add focused fixtures for body marker ordering across request bodies, responses, inline error shapes, common error shapes, and webhook payloads.
+    - [ ] Add focused fixtures for conditional response-body presence and caller-visible branching separate from body omission.
+    - [ ] Add focused fixtures for conditional response-header presence and response-specific common-header deviations.
+    - [ ] Add focused fixtures for table-cell `unknown` values across `Required`, `Type`, `Presence`, and `Nullable`, including compact defaulting prohibition for unknown columns.
+    - [ ] Add focused fixtures for invalid cross-file schema reference notation such as `$ref` outside the compact `**same_as**:` rule.
+    - [ ] Add focused fixtures for nested arrays, nested dynamic maps, and array-item object openness beyond the current root-value examples.
+    - [ ] Add focused fixtures for root-object `$` row exception and invalid unnecessary or contradictory `$` rows.
+    - [ ] Add focused fixtures for standardized enum documentation, subset enum documentation, and invalid enum omission where clients must branch.
+    - [ ] Add focused fixtures for request media-type selection when multiple request representations are available.
+    - [ ] Add focused fixtures for complete-candidate non-JSON representation classes beyond multipart: form-urlencoded, raw binary upload/download, CSV, XML, and SSE.
+    - [ ] Add focused fixtures for raw binary and unstructured stream sample-and-prose exceptions, including invalid field-table requirements where they do not apply.
+    - [ ] Add focused fixtures for untagged polymorphic alternatives and overlapping/combined variant semantics in the complete-candidate corpus.
+    - [ ] Add focused fixtures for invalid unlabeled examples or common tables before polymorphic `**variant**:` blocks.
+    - [ ] Add focused fixtures for endpoint-specific inline error shape reuse, first-use ordering, mismatched inline labels, and body-less inline error shapes.
+    - [ ] Add focused fixtures for field-level error target/code/UI-display policy beyond the current generated-example coverage.
+    - [ ] Add focused fixtures for common error rows with `Shape=none` and `Shape=unknown`, including required unknown markers.
+    - [ ] Add focused fixtures for request, response, body, payload, and parameter `**deviation**:` placement outside endpoint-specific common-error suppression.
+    - [ ] Add focused fixtures for compact contract preservation failures: omitted request parameter, omitted response status, omitted error row, or changed client-visible constraint.
+    - [ ] Add focused fixtures for compact `Opaque fields` omitted when no opaque root exists and invalid empty `Opaque fields` headings.
+    - [ ] Add focused fixtures for compact `field_defaults` measured-savings annotations or producer assertions when token-saving evidence is represented.
+    - [ ] Add focused fixtures for workflow title matching, fixed section order, value passing, failure branches, recovery state, and workflow-specific deviations in the complete-candidate corpus.
+    - [ ] Add focused fixtures for workflow whole-section `unknown` states, not only replacement `unsupported`.
+    - [ ] Add focused fixtures for webhook title, INDEX listing, event-specific headers, safe deduplication key/strategy, delivery deviations, and triggering endpoint references in the complete-candidate corpus.
+    - [ ] Add focused fixtures for webhook grouped-event incompatibility boundaries beyond payload variants.
+    - [ ] Add focused fixtures for INDEX/metadata coverage propagation when a focused file contains `**unsupported**:` or `**unknown**:` in a complete-candidate set context.
+    - [ ] Add focused fixtures for source-backed generated examples that require `**unknown**:` because no credible valid example can be generated.
+    - [ ] Add focused fixtures for response default rows that are exclusively error semantics versus mixed non-error/error defaults.
+    - [ ] Add focused fixtures for common response-header contracts in `CONVENTIONS.md` and endpoint-level suppression or override.
+    - [ ] Add focused fixtures for final coverage audit: each README §9.1 focused requirement is mapped to at least one fixture, checker expectation, `COVERAGE.md` row, and changelog entry.
 - [x] Add checker coverage for non-core features promoted into the complete surface. Evidence: `tools/check-complete-candidates.mjs` checks the complete-candidate full/compact pair, focused fixture expectations, coverage references, compact reductions, INDEX references, workflow/webhook/resource links, non-JSON, polymorphism, and recursive-source evidence as a corpus-specific expectation checker.
 - [ ] Run LLM task evaluations against the valid corpus for request construction, response handling, error handling, and token load.
   - [x] Add the complete-candidate evaluation task packet, expected outcomes, local context-metrics results, and `tools/check-complete-evaluations.mjs`.
-  - [ ] Run the task packet against the target LLMs and record model-specific results.
+  - [ ] Decide and record the target LLM list for live evaluation.
+  - [ ] Run request-construction tasks against each target LLM and record model-specific results.
+  - [ ] Run response-handling tasks against each target LLM and record model-specific results.
+  - [ ] Run error-handling tasks against each target LLM and record model-specific results.
+  - [ ] Run workflow-completion tasks against each target LLM and record model-specific results.
+  - [ ] Record token-load measurements for each task/model/profile combination.
+  - [ ] Summarize failures, fixture gaps found by the evaluations, and publication impact in the evaluation results.
 - [x] Keep the README publication label unchanged until fixture and checker evidence supports the broader claim. Decision: keep the current README publication label as `Compatibility Core implementation target`; do not advertise complete-generator-ready until the evidence gate in `COMPLETE-GENERATOR-READINESS.md` is complete.
 
 ## Parking Lot
