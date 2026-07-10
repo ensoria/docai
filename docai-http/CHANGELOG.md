@@ -28,6 +28,8 @@ DocAI HTTP draft history. Specification versioning and compatibility rules are d
 - Adds a polymorphism candidate fixture corpus and checker for tagged, untagged, and overlapping body variants, including invalid snippets for unlabeled common tables, missing discriminator enum values, incomplete per-variant tables, and missing combined variants, without promoting polymorphic body variants into the current Compatibility Core.
 - Records the recursive-schema future decision: keep recursive schemas unsupported for the intended `1.0.0` stable contract unless finite representation fixtures land before the pre-v1.0.0 release-candidate stage, and treat post-`1.0.0` recursive support as major-version work when existing readers must understand it.
 - Adds a complete-generator-readiness evidence plan and publication gate without changing the current Compatibility Core release label.
+- Adds a complete-surface candidate full/compact example pair with resources, a workflow, a webhook, compact `field_defaults`, compact `same_as`, and compact opaque webhook payload fields without changing the current Compatibility Core release label.
+- Adds initial focused complete-candidate fixtures for profile pairing, selective conventions, compact `same_as`, compact opaque fields, and resource/workflow/webhook related links.
 
 ## 0.11.0 (Draft - Compatibility Core)
 

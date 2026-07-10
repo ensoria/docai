@@ -17,7 +17,7 @@ Do not imply compatibility for structures outside the published label. Non-core 
 
 Before using the `Complete-generator-ready candidate` label, complete the evidence gate in `COMPLETE-GENERATOR-READINESS.md`.
 
-The current repository state is not complete-generator-ready. Candidate corpora for compact output, workflows, webhooks, non-JSON representations, and polymorphic variants are preparation work only until a complete-surface corpus, matching checker coverage, LLM task evaluations, and release evidence all land together.
+The current repository state is not complete-generator-ready. Candidate corpora for compact output, workflows, webhooks, non-JSON representations, polymorphic variants, and the complete-surface example pair are preparation work only until complete focused fixtures, matching checker coverage, LLM task evaluations, and release evidence all land together.
 
 Do not update the README publication label merely because one candidate corpus exists. The label may change only after the complete full-profile set, matching compact projection, focused complete-surface fixtures, checker behavior, evaluation notes, and changelog/release notes support the broader claim.
 

@@ -161,8 +161,13 @@ Deferred compact expansion work:
 ## P3: Move Toward Complete Generator Readiness
 
 - [x] Define the minimum complete-surface fixture corpus required before advertising complete-generator-ready. Decision: the minimum corpus, evidence matrix, checker plan, LLM evaluation plan, and publication gate are defined in `COMPLETE-GENERATOR-READINESS.md`; README section 9.1 remains authoritative.
-- [ ] Add full and compact complete example sets that include resources, workflows, and webhooks.
+- [x] Add full and compact complete example sets that include resources, workflows, and webhooks. Evidence: `fixtures/complete-candidates/v0.11.0/valid/full/` and `fixtures/complete-candidates/v0.11.0/valid/compact/` share the same standard paths and include resources, `workflows/checkout.md`, and `webhooks/payment-completed.md`.
 - [ ] Add focused valid/invalid fixtures for every canonical marker and table shape in §9.1.
+  - [x] Add complete-candidate focused fixtures for full/compact profile pairing and selective `Conventions` loading.
+  - [x] Add complete-candidate focused fixtures for compact `same_as` retrieval boundaries.
+  - [x] Add complete-candidate focused fixtures for compact `Client-visible fields` and `Opaque fields`.
+  - [x] Add complete-candidate focused fixture for resource, workflow, and webhook related links.
+  - [ ] Add remaining complete-surface focused fixtures for every §9.1 canonical marker, table shape, normalization rule, representation class, and replacement unit.
 - [ ] Add checker coverage for non-core features promoted into the complete surface.
 - [ ] Run LLM task evaluations against the valid corpus for request construction, response handling, error handling, and token load.
 - [x] Keep the README publication label unchanged until fixture and checker evidence supports the broader claim. Decision: keep the current README publication label as `Compatibility Core implementation target`; do not advertise complete-generator-ready until the evidence gate in `COMPLETE-GENERATOR-READINESS.md` is complete.

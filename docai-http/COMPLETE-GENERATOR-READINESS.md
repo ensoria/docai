@@ -6,6 +6,13 @@ It is planning guidance for maintainers, not a separate normative source. `READM
 
 Current status: not complete-generator-ready. The current public label remains `Compatibility Core implementation target`.
 
+Current candidate evidence:
+
+- A full/compact complete example pair exists at `fixtures/complete-candidates/v0.11.0/valid/`.
+- That pair includes resources, a workflow, and a webhook with matching standard docs-root-relative paths.
+- Focused complete-surface fixtures have started for profile pairing, selective conventions, `same_as`, compact opaque fields, and resource/workflow/webhook relations.
+- Complete checker coverage, complete §9.1 focused fixture coverage, and LLM task evaluation evidence are still missing.
+
 ## Publication Gate
 
 Do not update the README publication label to `Complete-generator-ready candidate` until all of the following are complete:
@@ -123,9 +130,9 @@ Evaluation results do not need to prove that every LLM succeeds, but they must s
 
 ## Work Breakdown
 
-1. Create the complete-surface fixture skeleton and source fixture.
-2. Merge promoted candidate examples into one full-profile document set.
-3. Create the matching compact projection and token-saving notes.
+1. Create the complete-surface fixture skeleton and source fixture. Done for the first candidate pair in `fixtures/complete-candidates/v0.11.0/`.
+2. Merge promoted candidate examples into one full-profile document set. Done for the first candidate pair, without promoting the candidate-only structures.
+3. Create the matching compact projection and token-saving notes. Done for the first candidate pair.
 4. Add focused valid and invalid fixtures for every README section 9.1 complete-surface requirement.
 5. Add the complete-surface expectation checker by composing existing candidate checks where practical.
 6. Run the checker and LLM task evaluations.

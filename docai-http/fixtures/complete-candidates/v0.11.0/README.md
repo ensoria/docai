@@ -1,0 +1,31 @@
+# DocAI HTTP 0.11.0 Complete Candidate Fixtures
+
+This directory contains the first candidate full/compact example pair for the future complete generator implementation surface. It is not part of the `0.11.0` Compatibility Core and does not make the repository complete-generator-ready.
+
+This corpus is intentionally a candidate example set, not the final complete conformance corpus required by README section 9.1. Focused complete-surface fixtures, complete checker coverage, and LLM task evaluation evidence still need to land before the README publication label can change.
+
+Layout:
+
+- `source/complete-openapi.yaml` is the source OpenAPI fixture referenced by the full and compact candidate sets.
+- `valid/full/` contains the full-profile candidate set.
+- `valid/compact/` contains the matching compact-profile candidate set.
+- `focused/valid/` and `focused/invalid/` contain the first focused complete-surface snippets for profile pairing, selective conventions, `same_as`, compact opaque fields, and resource/workflow/webhook relations.
+- `COVERAGE.md` records which readiness evidence is present and which evidence is still missing.
+- `TOKEN-SAVINGS.md` records compact-profile candidate reduction guidance.
+
+The full and compact sets use identical standard docs-root-relative paths:
+
+- `INDEX.md`
+- `CONVENTIONS.md`
+- `resources/users.md`
+- `resources/checkout.md`
+- `resources/payments.md`
+- `resources/documents.md`
+- `workflows/checkout.md`
+- `webhooks/payment-completed.md`
+
+Both sets share `projection_id: complete-candidate-20260710-001`. The full INDEX links `Compact set: ../compact/`; the compact INDEX links `Full set: ../full/`.
+
+The compact set demonstrates candidate use of compact examples, `field_defaults`, `same_as` with discoverable retrieval-unit metadata, and webhook payload `Client-visible fields` / `Opaque fields`.
+
+No complete-surface checker exists yet. Run the existing candidate checkers for the still-separate candidate corpora; this complete candidate corpus will need its own checker before it can support a broader publication label.
