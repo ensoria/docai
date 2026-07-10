@@ -19,6 +19,8 @@ const CANDIDATE_DIR = path.resolve(process.argv[2] ?? DEFAULT_DIR);
 const TASKS_FILE = path.join(CANDIDATE_DIR, "evaluations", "tasks.json");
 const TARGETS_FILE = path.join(CANDIDATE_DIR, "evaluations", "targets.json");
 const RESULTS_FILE = path.join(CANDIDATE_DIR, "evaluations", "RESULTS.md");
+const RUNS_DIR = path.join(CANDIDATE_DIR, "evaluations", "runs");
+const RUN_STATUSES = new Set(["pass", "fail", "inconclusive", "blocked"]);
 
 const failures = [];
 const metrics = [];
@@ -148,9 +150,11 @@ function assertEvidence(task, context) {
 }
 
 try {
-  const packet = readJson(TASKS_FILE);
-  validateTaskPacket(packet);
-  validateTargets(readJson(TARGETS_FILE), packet);
+  const taskPacket = readJson(TASKS_FILE);
+  const targetPacket = readJson(TARGETS_FILE);
+  validateTaskPacket(taskPacket);
+  validateTargets(targetPacket, taskPacket);
+  validateRunRecords(taskPacket, targetPacket);
 } catch (error) {
   fail("evaluation-packet", error.message);
 }
@@ -227,4 +231,90 @@ function validateResultsTargetList(results, targetPacket) {
       throw new Error(`RESULTS.md lacks target row for ${target.id}`);
     }
   });
+}
+
+function validateRunRecords(taskPacket, targetPacket) {
+  if (!fs.existsSync(RUNS_DIR)) throw new Error("evaluations/runs directory is required");
+
+  const tasksById = new Map(taskPacket.tasks.map((task) => [task.id, task]));
+  const targetsById = new Map(targetPacket.targets.map((target) => [target.id, target]));
+  const seenRunIds = new Set();
+  runRecordFiles().forEach((file) => {
+    read(file)
+      .split(/\r?\n/)
+      .forEach((line, index) => {
+        if (!line.trim()) return;
+        const record = parseJsonLine(file, line, index + 1);
+        validateRunRecord(record, tasksById, targetsById, seenRunIds);
+      });
+  });
+}
+
+function runRecordFiles() {
+  return fs
+    .readdirSync(RUNS_DIR)
+    .filter((name) => name.endsWith(".jsonl") && !name.endsWith(".example.jsonl"))
+    .map((name) => path.join(RUNS_DIR, name));
+}
+
+function parseJsonLine(file, line, lineNumber) {
+  try {
+    return JSON.parse(line);
+  } catch (error) {
+    throw new Error(`${path.relative(CANDIDATE_DIR, file)}:${lineNumber} is not valid JSON: ${error.message}`);
+  }
+}
+
+function validateRunRecord(record, tasksById, targetsById, seenRunIds) {
+  if (!record.run_id || !/^[a-z0-9-]+__[a-z0-9-]+$/.test(record.run_id)) {
+    throw new Error("run record run_id must be <target-id>__<task-id>");
+  }
+  if (seenRunIds.has(record.run_id)) throw new Error(`duplicate run record ${record.run_id}`);
+  seenRunIds.add(record.run_id);
+
+  const target = targetsById.get(record.target_id);
+  if (!target) throw new Error(`run record ${record.run_id} has unknown target_id ${record.target_id}`);
+  const task = tasksById.get(record.task_id);
+  if (!task) throw new Error(`run record ${record.run_id} has unknown task_id ${record.task_id}`);
+  if (record.run_id !== `${record.target_id}__${record.task_id}`) {
+    throw new Error(`run record ${record.run_id} does not match target_id/task_id`);
+  }
+  if (record.provider !== target.provider) throw new Error(`run record ${record.run_id} provider does not match target`);
+  if (record.model !== target.model) throw new Error(`run record ${record.run_id} model does not match target`);
+  if (!target.task_groups.includes(task.group)) {
+    throw new Error(`run record ${record.run_id} uses target that does not include task group ${task.group}`);
+  }
+  if (!record.executed_at || Number.isNaN(Date.parse(record.executed_at))) {
+    throw new Error(`run record ${record.run_id} executed_at must be an ISO-compatible timestamp`);
+  }
+  if (!RUN_STATUSES.has(record.status)) throw new Error(`run record ${record.run_id} has invalid status ${record.status}`);
+  validateRunReview(record);
+}
+
+function validateRunReview(record) {
+  if (!record.review || typeof record.review !== "object") throw new Error(`run record ${record.run_id} lacks review object`);
+  if (typeof record.review.fixture_gap !== "boolean") {
+    throw new Error(`run record ${record.run_id} review.fixture_gap must be boolean`);
+  }
+  if (typeof record.review.notes !== "string" || record.review.notes.trim() === "") {
+    throw new Error(`run record ${record.run_id} review.notes is required`);
+  }
+  if (record.status === "blocked") {
+    if (typeof record.blocked_reason !== "string" || record.blocked_reason.trim() === "") {
+      throw new Error(`blocked run record ${record.run_id} requires blocked_reason`);
+    }
+    return;
+  }
+  if (typeof record.review.matches_expected_outcome !== "boolean") {
+    throw new Error(`run record ${record.run_id} review.matches_expected_outcome must be boolean`);
+  }
+  if (record.status === "pass" && !record.review.matches_expected_outcome) {
+    throw new Error(`pass run record ${record.run_id} must match expected outcome`);
+  }
+  if (record.status === "fail" && record.review.matches_expected_outcome) {
+    throw new Error(`fail run record ${record.run_id} must not match expected outcome`);
+  }
+  if (!record.response || typeof record.response !== "object") {
+    throw new Error(`run record ${record.run_id} lacks response object`);
+  }
 }

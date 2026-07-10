@@ -227,6 +227,7 @@ Deferred compact expansion work:
   - [x] Decide and record the target LLM list for live evaluation.
   - [x] Add deterministic request-construction prompt export for required and optional target runs without leaking `expected_outcome`.
   - [x] Add the missing workflow-completion task group to the evaluation packet and required target coverage.
+  - [x] Add live result JSONL record format and checker validation before executing provider calls.
   - [ ] Run request-construction tasks against each target LLM and record model-specific results.
   - [ ] Run response-handling tasks against each target LLM and record model-specific results.
   - [ ] Run error-handling tasks against each target LLM and record model-specific results.

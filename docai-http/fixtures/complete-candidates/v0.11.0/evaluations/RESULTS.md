@@ -23,7 +23,7 @@ Before live execution, verify each model ID against the provider's official mode
 
 Request-construction prompt records can be generated with `node docai-http/tools/build-complete-evaluation-prompts.mjs request_construction` from the repository root. The command emits required targets by default and can include optional targets with `--include-optional`.
 
-This preparation does not count as live LLM evidence. A request-construction run is complete only after each required target response is captured, reviewed against `tasks.json` expected outcomes, and summarized below.
+Live result records belong in `runs/*.jsonl` and are checked by `node docai-http/tools/check-complete-evaluations.mjs`. This preparation does not count as live LLM evidence. A request-construction run is complete only after each required target response is captured, reviewed against `tasks.json` expected outcomes, checked from the JSONL record, and summarized below.
 
 ## Local Context Metrics
 
