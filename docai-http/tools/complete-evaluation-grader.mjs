@@ -11,6 +11,7 @@ export function gradeEvaluationResponse(response, task) {
   if (task.group === "response_handling") return gradeResponseHandlingResponse(response, task);
   if (task.group === "error_handling") return gradeErrorHandlingResponse(response, task);
   if (task.group === "workflow_completion") return gradeWorkflowCompletionResponse(response, task);
+  if (task.group === "token_load") return gradeTokenLoadResponse(response, task);
   return { pass: false, reasons: [`no automated grader for task group ${task.group}`] };
 }
 
@@ -103,6 +104,54 @@ export function gradeWorkflowCompletionResponse(response, task) {
     pass: reasons.length === 0,
     reasons: reasons.length === 0 ? ["matched workflow completion expected outcome"] : reasons,
   };
+}
+
+export function gradeTokenLoadResponse(response, task) {
+  if (task.group !== "token_load") {
+    return { pass: false, reasons: [`no automated grader for task group ${task.group}`] };
+  }
+  if (!response || typeof response !== "object") {
+    return { pass: false, reasons: ["response.content_json is required"] };
+  }
+
+  const reasons = [];
+  const metrics = normalizeProfileMetrics(response.loaded_contexts ?? response.metrics_by_profile);
+  const full = metrics.get("full");
+  const compact = metrics.get("compact");
+  if (!full) reasons.push("token_load metrics must include full context");
+  if (!compact) reasons.push("token_load metrics must include compact context");
+  [full, compact].filter(Boolean).forEach((metric) => validateTokenMetric(metric, reasons));
+  if (
+    full &&
+    compact &&
+    task.expected_outcome.compact_chars_must_not_exceed_full_chars &&
+    Number(compact.characters) > Number(full.characters)
+  ) {
+    reasons.push("compact context must not exceed full context characters");
+  }
+
+  return {
+    pass: reasons.length === 0,
+    reasons: reasons.length === 0 ? ["matched token-load expected outcome"] : reasons,
+  };
+}
+
+function normalizeProfileMetrics(value) {
+  if (Array.isArray(value)) {
+    return new Map(value.map((metric) => [metric.profile ?? metric.context ?? metric.label, metric]));
+  }
+  if (value && typeof value === "object") {
+    return new Map(Object.entries(value).map(([profile, metric]) => [profile, { profile, ...metric }]));
+  }
+  return new Map();
+}
+
+function validateTokenMetric(metric, reasons) {
+  ["utf8_bytes", "characters", "approx_tokens_chars_div_4"].forEach((field) => {
+    if (!Number.isInteger(Number(metric[field])) || Number(metric[field]) <= 0) {
+      reasons.push(`token_load ${metric.profile ?? "metric"} must include positive ${field}`);
+    }
+  });
 }
 
 function normalizeWorkflowSteps(value) {

@@ -25,8 +25,9 @@ Live result は、すべての target model が成功することを証明する
 - `fixtures/complete-candidates/v0.11.0/evaluations/tasks.json`: task group、task prompt、expected outcome、context file、evidence string。
 - `fixtures/complete-candidates/v0.11.0/evaluations/targets.json`: required target model と optional target model。
 - `tools/build-complete-evaluation-prompts.mjs`: deterministic JSONL prompt export。
+- `tools/record-complete-token-load.mjs`: deterministic local token-load metric recorder。
 - `fixtures/complete-candidates/v0.11.0/evaluations/runs/*.jsonl`: live result record。
-- `tools/check-complete-evaluations.mjs`: task packet、target list、result record、local metric、request construction、response handling、error handling、workflow completion の automated grading check。
+- `tools/check-complete-evaluations.mjs`: task packet、target list、result record、local metric、request construction、response handling、error handling、workflow completion、token load の automated grading check。
 - `fixtures/complete-candidates/v0.11.0/evaluations/RESULTS.md`: 人が読める status summary。
 
 各 live run の前に、provider 公式の model page と pricing page を再確認してください。Model availability、alias、context limit、pricing、usage accounting は provider 側が管理しており、DocAI HTTP の変更なしに変わる可能性があります。
@@ -133,9 +134,16 @@ Failure が missing workflow link、missing value-passing guidance、不明瞭�
 
 ### Gate 5: Token-Load And Usage Recording
 
-Task/model/profile combination ごとに token-load measurement を記録します。
+Task/model/profile combination ごとに token-load measurement を記録します。現在の required gate は deterministic local context metric を使うため、外部 provider は呼び出しません。
 
-公開しても安全で、full/compact tradeoff の評価に十分役立つ場合は、provider-reported usage を使用します。`check-complete-evaluations.mjs` の local context metric は、deterministic baseline evidence として保持します。
+```sh
+node docai-http/tools/record-complete-token-load.mjs
+node docai-http/tools/check-complete-evaluations.mjs
+```
+
+Recorder は required target について `runs/token-load.jsonl` を書き出します。各 full/compact comparison task について、UTF-8 byte count、character count、`characters / 4` の approximate token count を記録します。
+
+公開しても安全で、full/compact tradeoff の評価に十分役立つ場合にのみ、provider-reported usage を optional comparison evidence として使用します。`check-complete-evaluations.mjs` と `record-complete-token-load.mjs` の local context metric は、deterministic baseline evidence として保持します。
 
 Tokenizer と accounting method が文書化されていない限り、provider 間で token count を完全に比較可能なものとして扱わないでください。Universal measurement ではなく、各 target model に対する practical evidence として使います。
 
@@ -244,7 +252,7 @@ node docai-http/tools/build-complete-evaluation-prompts.mjs request_construction
 - Non-blocked run では `review.matches_expected_outcome`
 - Non-blocked run では `response`、blocked run では `blocked_reason`
 
-Request-construction、response-handling、error-handling、workflow-completion record については、`check-complete-evaluations.mjs` が `review.matches_expected_outcome` と対応する automated grader の一致も検証します。Error-handling grader は、`common:` reference prefix の有無が異なる common shape label を同等として扱い、caller-visible behavior が揃っている error case が `endpoint_errors` と `common_errors` のどちらに出ていても許容します。
+Request-construction、response-handling、error-handling、workflow-completion、token-load record については、`check-complete-evaluations.mjs` が `review.matches_expected_outcome` と対応する automated grader の一致も検証します。Error-handling grader は、`common:` reference prefix の有無が異なる common shape label を同等として扱い、caller-visible behavior が揃っている error case が `endpoint_errors` と `common_errors` のどちらに出ていても許容します。
 
 Provider prompt は引き続き strict JSON を要求しますが、runner は Markdown-fenced JSON と前後に prose が付いた JSON object を許容します。これにより、内容として review 可能な result が wrapper text だけで破棄されないようにします。
 

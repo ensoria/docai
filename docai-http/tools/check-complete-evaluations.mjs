@@ -250,6 +250,7 @@ function validateRunRecords(taskPacket, targetPacket) {
         validateRunRecord(record, tasksById, targetsById, seenRunIds);
       });
   });
+  validateRequiredRunCoverage(taskPacket, targetPacket, seenRunIds);
 }
 
 function runRecordFiles() {
@@ -293,6 +294,18 @@ function validateRunRecord(record, tasksById, targetsById, seenRunIds) {
   validateRunReview(record, task);
 }
 
+function validateRequiredRunCoverage(taskPacket, targetPacket, seenRunIds) {
+  targetPacket.targets
+    .filter((target) => target.required)
+    .forEach((target) => {
+      taskPacket.tasks.forEach((task) => {
+        if (!target.task_groups.includes(task.group)) return;
+        const runId = `${target.id}__${task.id}`;
+        if (!seenRunIds.has(runId)) throw new Error(`missing required run record ${runId}`);
+      });
+    });
+}
+
 function validateRunReview(record, task) {
   if (!record.review || typeof record.review !== "object") throw new Error(`run record ${record.run_id} lacks review object`);
   if (typeof record.review.fixture_gap !== "boolean") {
@@ -327,7 +340,8 @@ function validateAutomatedOutcome(record, task) {
     task.group === "request_construction" ||
     task.group === "response_handling" ||
     task.group === "error_handling" ||
-    task.group === "workflow_completion"
+    task.group === "workflow_completion" ||
+    task.group === "token_load"
   ) {
     if (record.status === "inconclusive" && record.review.fixture_gap) return;
     const result = gradeEvaluationRecord(record, task);

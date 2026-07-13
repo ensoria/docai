@@ -222,7 +222,7 @@ Deferred compact expansion work:
     - [x] Add focused fixtures for common response-header contracts in `CONVENTIONS.md` and endpoint-level suppression or override.
     - [x] Add focused fixtures for final coverage audit: each README §9.1 focused requirement is mapped to at least one fixture, checker expectation, `COVERAGE.md` row, and changelog entry.
 - [x] Add checker coverage for non-core features promoted into the complete surface. Evidence: `tools/check-complete-candidates.mjs` checks the complete-candidate full/compact pair, focused fixture expectations, coverage references, compact reductions, INDEX references, workflow/webhook/resource links, non-JSON, polymorphism, and recursive-source evidence as a corpus-specific expectation checker.
-- [ ] Run LLM task evaluations against the valid corpus for request construction, response handling, error handling, workflow completion, and token load.
+- [x] Run LLM task evaluations against the valid corpus for request construction, response handling, error handling, workflow completion, and token load.
   - [x] Add the complete-candidate evaluation task packet, expected outcomes, local context-metrics results, and `tools/check-complete-evaluations.mjs`.
   - [x] Decide and record the target LLM list for live evaluation.
   - [x] Add deterministic request-construction prompt export for required and optional target runs without leaking `expected_outcome`.
@@ -254,8 +254,8 @@ Deferred compact expansion work:
   - [x] Increase the Anthropic runner output budget for workflow-completion responses that exceed the previous 2048-token limit.
   - [x] Re-run the Anthropic workflow-completion task locally after fenced-JSON parser normalization and the Anthropic output-budget increase.
   - [x] Run workflow-completion tasks locally against each required target and record model-specific results.
-  - [ ] Record token-load measurements for each task/model/profile combination.
-  - [ ] Summarize failures, fixture gaps found by the evaluations, and publication impact in the evaluation results.
+  - [x] Record token-load measurements for each task/model/profile combination.
+  - [x] Summarize failures, fixture gaps found by the evaluations, and publication impact in the evaluation results.
 - [x] Keep the README publication label unchanged until fixture and checker evidence supports the broader claim. Decision: keep the current README publication label as `Compatibility Core implementation target`; do not advertise complete-generator-ready until the evidence gate in `COMPLETE-GENERATOR-READINESS.md` is complete.
 
 ## Parking Lot

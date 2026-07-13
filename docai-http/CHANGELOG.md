@@ -78,6 +78,9 @@ DocAI HTTP draft history. Specification versioning and compatibility rules are d
 - Increases the Anthropic live runner output budget to reduce workflow-completion JSON truncation.
 - Records passing Google and OpenAI workflow-completion live results while Anthropic awaits a rerun after parser normalization.
 - Records passing workflow-completion live results for all required complete-candidate target models.
+- Adds automated token-load grading, required-run coverage checks, and a local recorder for deterministic complete-candidate full/compact context metrics.
+- Records passing token-load metric results for all required complete-candidate target models.
+- Summarizes required complete-candidate evaluation gates, fixture gaps, and publication impact after all required task groups pass.
 
 ## 0.11.0 (Draft - Compatibility Core)
 

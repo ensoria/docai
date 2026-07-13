@@ -25,8 +25,9 @@ Use these files for the current complete-candidate evaluation:
 - `fixtures/complete-candidates/v0.11.0/evaluations/tasks.json`: task groups, task prompts, expected outcomes, context files, and evidence strings.
 - `fixtures/complete-candidates/v0.11.0/evaluations/targets.json`: required and optional target models.
 - `tools/build-complete-evaluation-prompts.mjs`: deterministic JSONL prompt export.
+- `tools/record-complete-token-load.mjs`: deterministic local token-load metric recorder.
 - `fixtures/complete-candidates/v0.11.0/evaluations/runs/*.jsonl`: live result records.
-- `tools/check-complete-evaluations.mjs`: task packet, target list, result record, local metric, and automated grading checks for request construction, response handling, error handling, and workflow completion.
+- `tools/check-complete-evaluations.mjs`: task packet, target list, result record, local metric, and automated grading checks for request construction, response handling, error handling, workflow completion, and token load.
 - `fixtures/complete-candidates/v0.11.0/evaluations/RESULTS.md`: human-readable status summary.
 
 Before each live run, refresh the official provider model and pricing pages. Model availability, aliases, context limits, pricing, and usage accounting are provider-controlled and may change without a DocAI HTTP change.
@@ -133,9 +134,16 @@ Stop if a failure indicates missing workflow links, missing value-passing guidan
 
 ### Gate 5: Token-Load And Usage Recording
 
-Record token-load measurements for each task/model/profile combination.
+Record token-load measurements for each task/model/profile combination. The current required gate uses deterministic local context metrics, so it does not call external providers:
 
-Use provider-reported usage when it is safe to publish and comparable enough to help evaluate the full/compact tradeoff. Keep local context metrics from `check-complete-evaluations.mjs` as deterministic baseline evidence.
+```sh
+node docai-http/tools/record-complete-token-load.mjs
+node docai-http/tools/check-complete-evaluations.mjs
+```
+
+The recorder writes `runs/token-load.jsonl` for the required targets. It records UTF-8 byte counts, character counts, and `characters / 4` approximate token counts for each full/compact comparison task.
+
+Use provider-reported usage only as optional comparison evidence when it is safe to publish and comparable enough to help evaluate the full/compact tradeoff. Keep local context metrics from `check-complete-evaluations.mjs` and `record-complete-token-load.mjs` as deterministic baseline evidence.
 
 Do not treat token counts as fully comparable across providers unless the tokenizer and accounting method are documented. Use them as practical evidence for each target model, not as a universal measurement.
 
@@ -244,7 +252,7 @@ Each live result record must include:
 - `review.matches_expected_outcome` for non-blocked runs
 - `response` for non-blocked runs, or `blocked_reason` for blocked runs
 
-For request-construction, response-handling, error-handling, and workflow-completion records, `check-complete-evaluations.mjs` also verifies that `review.matches_expected_outcome` agrees with the corresponding automated grader. The error-handling grader accepts common shape labels with or without the `common:` reference prefix and allows behavior-complete error cases to appear in either `endpoint_errors` or `common_errors`.
+For request-construction, response-handling, error-handling, workflow-completion, and token-load records, `check-complete-evaluations.mjs` also verifies that `review.matches_expected_outcome` agrees with the corresponding automated grader. The error-handling grader accepts common shape labels with or without the `common:` reference prefix and allows behavior-complete error cases to appear in either `endpoint_errors` or `common_errors`.
 
 Provider prompts still request strict JSON, but the runners tolerate Markdown-fenced JSON and JSON objects with surrounding prose so that harmless wrapper text does not discard an otherwise reviewable result.
 
