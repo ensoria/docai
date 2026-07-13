@@ -68,6 +68,7 @@ DocAI HTTP draft history. Specification versioning and compatibility rules are d
 - Omits `temperature` from OpenAI and Anthropic live request-construction runners after the required target models reject that parameter.
 - Records passing request-construction live results for all required complete-candidate target models.
 - Adds response-handling live grading support and records a managed-environment block for the first Google response-handling attempt.
+- Records passing response-handling live results for all required complete-candidate target models.
 
 ## 0.11.0 (Draft - Compatibility Core)
 
