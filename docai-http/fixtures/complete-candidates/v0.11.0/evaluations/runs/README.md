@@ -1,6 +1,6 @@
 # Live Evaluation Run Records
 
-This directory is for live LLM evaluation results. No live results have been recorded yet.
+This directory is for reviewed live LLM evaluation results.
 
 Use JSON Lines files named by task group, for example `request-construction.jsonl`. Each line records one target/task run:
 
@@ -20,4 +20,4 @@ Rules:
 - Do not commit API keys, request authorization headers, provider account identifiers, or full raw provider logs.
 - Keep provider usage fields only when they are useful for token-load comparison and safe to publish.
 - A run is not live evidence until it has a concrete `executed_at`, target ID, task ID, model, status, review notes, and captured response content or a blocking reason.
-- Request-construction run records are checked against `tasks.json` expected outcomes. The checker rejects records where `review.matches_expected_outcome` disagrees with the automated request-construction grader.
+- Request-construction, response-handling, and error-handling run records are checked against `tasks.json` expected outcomes. The checker rejects records where `review.matches_expected_outcome` disagrees with the corresponding automated grader.

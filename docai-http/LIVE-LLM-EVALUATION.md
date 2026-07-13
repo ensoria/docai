@@ -26,7 +26,7 @@ Use these files for the current complete-candidate evaluation:
 - `fixtures/complete-candidates/v0.11.0/evaluations/targets.json`: required and optional target models.
 - `tools/build-complete-evaluation-prompts.mjs`: deterministic JSONL prompt export.
 - `fixtures/complete-candidates/v0.11.0/evaluations/runs/*.jsonl`: live result records.
-- `tools/check-complete-evaluations.mjs`: task packet, target list, result record, local metric, and request-construction grading checks.
+- `tools/check-complete-evaluations.mjs`: task packet, target list, result record, local metric, and automated grading checks for request construction, response handling, and error handling.
 - `fixtures/complete-candidates/v0.11.0/evaluations/RESULTS.md`: human-readable status summary.
 
 Before each live run, refresh the official provider model and pricing pages. Model availability, aliases, context limits, pricing, and usage accounting are provider-controlled and may change without a DocAI HTTP change.
@@ -244,7 +244,7 @@ Each live result record must include:
 - `review.matches_expected_outcome` for non-blocked runs
 - `response` for non-blocked runs, or `blocked_reason` for blocked runs
 
-For request-construction records, `check-complete-evaluations.mjs` also verifies that `review.matches_expected_outcome` agrees with the automated grader.
+For request-construction, response-handling, and error-handling records, `check-complete-evaluations.mjs` also verifies that `review.matches_expected_outcome` agrees with the corresponding automated grader.
 
 ## Publication Impact
 

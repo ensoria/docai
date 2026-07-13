@@ -69,6 +69,7 @@ DocAI HTTP draft history. Specification versioning and compatibility rules are d
 - Records passing request-construction live results for all required complete-candidate target models.
 - Adds response-handling live grading support and records a managed-environment block for the first Google response-handling attempt.
 - Records passing response-handling live results for all required complete-candidate target models.
+- Adds error-handling live grading support and records a managed-environment block for the first Google error-handling attempt.
 
 ## 0.11.0 (Draft - Compatibility Core)
 

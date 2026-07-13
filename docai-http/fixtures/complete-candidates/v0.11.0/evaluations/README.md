@@ -29,9 +29,17 @@ node docai-http/tools/run-anthropic-complete-evaluation.mjs response_handling --
 node docai-http/tools/run-openai-complete-evaluation.mjs response_handling --target openai-frontier
 ```
 
+For the error-handling gate, run the same provider-specific commands with `error_handling`; the records merge into `runs/error-handling.jsonl`:
+
+```sh
+node docai-http/tools/run-google-complete-evaluation.mjs error_handling --target google-stable-agentic
+node docai-http/tools/run-anthropic-complete-evaluation.mjs error_handling --target anthropic-balanced
+node docai-http/tools/run-openai-complete-evaluation.mjs error_handling --target openai-frontier
+```
+
 These commands require `GOOGLE_API_KEY`, `ANTHROPIC_API_KEY`, or `OPENAI_API_KEY` respectively and send the selected evaluation prompts and context to the corresponding external model provider API.
 
-The Google runner sends the configured `temperature` value from `targets.json`. The Anthropic and OpenAI runners omit `temperature` because the current required target models reject that parameter. Determinism for those targets is handled by fixed prompts, no tools, reviewed JSON output, and the request-construction grader.
+The Google runner sends the configured `temperature` value from `targets.json`. The Anthropic and OpenAI runners omit `temperature` because the current required target models reject that parameter. Determinism for those targets is handled by fixed prompts, no tools, reviewed JSON output, and the automated grader for the current gate.
 
 If a managed Codex environment blocks external provider data export, record the affected runs as `blocked` and have a maintainer run the same command locally outside that managed environment. Replace the blocked records with reviewed provider results after local execution.
 

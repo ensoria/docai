@@ -1,6 +1,6 @@
 # Complete Candidate Evaluation Results
 
-Status: all required request-construction and response-handling runs passed on 2026-07-13 after grader policy review and provider-specific runner fixes. Full required live LLM evaluation coverage is still pending for error handling, workflow completion, and token-load measurements.
+Status: all required request-construction and response-handling runs passed on 2026-07-13 after grader policy review and provider-specific runner fixes. Error-handling grading support is in place, but full required live LLM evaluation coverage is still pending for error handling, workflow completion, and token-load measurements.
 
 This file records local context metrics and reviewed live LLM evaluation results for the evaluation packet in `tasks.json`. Local metrics confirm that the retrieval sets are resolvable and give a repeatable token-load proxy. They do not establish model success.
 
@@ -10,9 +10,9 @@ Defined in `targets.json` on 2026-07-11. Required targets must run every task gr
 
 | Target | Provider | Model | Required | Role | Status |
 |---|---|---|---|---|---|
-| openai-frontier | openai | gpt-5.6-sol | yes | frontier reasoning and coding baseline | request-construction and response-handling passed; other groups pending |
-| anthropic-balanced | anthropic | claude-sonnet-5 | yes | balanced cross-provider long-context baseline | request-construction and response-handling passed; other groups pending |
-| google-stable-agentic | google | gemini-3.5-flash | yes | stable agentic and coding baseline | request-construction and response-handling passed; other groups pending |
+| openai-frontier | openai | gpt-5.6-sol | yes | frontier reasoning and coding baseline | request-construction and response-handling passed; error-handling and later groups pending |
+| anthropic-balanced | anthropic | claude-sonnet-5 | yes | balanced cross-provider long-context baseline | request-construction and response-handling passed; error-handling and later groups pending |
+| google-stable-agentic | google | gemini-3.5-flash | yes | stable agentic and coding baseline | request-construction and response-handling passed; error-handling blocked in the Codex managed environment pending local execution; later groups pending |
 | openai-cost | openai | gpt-5.6-luna | no | cost-sensitive OpenAI comparison | optional pending |
 | anthropic-fast | anthropic | claude-haiku-4-5 | no | fast Anthropic comparison | optional pending |
 | google-cost | google | gemini-3.1-flash-lite | no | cost-sensitive Google comparison | optional pending |
@@ -73,3 +73,13 @@ Run records: `runs/response-handling.jsonl`
 | openai-frontier | response-payment-created-compact | pass | no | Matched the reviewed response-handling expected outcome, including body fields, `pending` status value, no response headers, workflow follow-up, and webhook follow-up. |
 
 Publication impact: Gate 2 response-handling evidence is complete for the required targets. The README publication label must remain unchanged until the error-handling, workflow-completion, and token-load gates also have reviewed required-target results.
+
+### Error Handling - Required Target Runs (2026-07-13)
+
+Run records: `runs/error-handling.jsonl`
+
+| Target | Task | Status | Fixture gap | Notes |
+|---|---|---|---|---|
+| google-stable-agentic | error-create-user-compact | blocked | no | Codex environment policy blocked exporting repository-derived error-handling evaluation prompts and fixture context to the Google Gemini API before network execution. |
+
+Publication impact: Gate 3 error-handling grading support is ready, but required-target evidence is not complete. Run the error-handling commands locally for each required target and replace blocked or missing records with reviewed provider results before proceeding to later gates.

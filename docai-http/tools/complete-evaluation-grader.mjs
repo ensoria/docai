@@ -9,6 +9,7 @@ export function gradeEvaluationRecord(record, task) {
 export function gradeEvaluationResponse(response, task) {
   if (task.group === "request_construction") return gradeRequestConstructionResponse(response, task);
   if (task.group === "response_handling") return gradeResponseHandlingResponse(response, task);
+  if (task.group === "error_handling") return gradeErrorHandlingResponse(response, task);
   return { pass: false, reasons: [`no automated grader for task group ${task.group}`] };
 }
 
@@ -53,6 +54,68 @@ export function gradeResponseHandlingResponse(response, task) {
     pass: reasons.length === 0,
     reasons: reasons.length === 0 ? ["matched response handling expected outcome"] : reasons,
   };
+}
+
+export function gradeErrorHandlingResponse(response, task) {
+  if (task.group !== "error_handling") {
+    return { pass: false, reasons: [`no automated grader for task group ${task.group}`] };
+  }
+  if (!response || typeof response !== "object") {
+    return { pass: false, reasons: ["response.content_json is required"] };
+  }
+
+  const reasons = [];
+  validateExpectedErrorSet("endpoint_errors", task.expected_outcome.endpoint_errors ?? [], response.endpoint_errors, reasons);
+  validateExpectedErrorSet("common_errors", task.expected_outcome.common_errors ?? [], response.common_errors, reasons);
+
+  return {
+    pass: reasons.length === 0,
+    reasons: reasons.length === 0 ? ["matched error handling expected outcome"] : reasons,
+  };
+}
+
+function validateExpectedErrorSet(label, expectedErrors, actualErrors, reasons) {
+  const actualList = normalizeErrorList(actualErrors);
+  expectedErrors.forEach((expected) => {
+    const match = actualList.find((actual) => errorMatches(actual, expected));
+    if (!match) {
+      reasons.push(`${label} missing status ${expected.status} code ${expected.code}`);
+      return;
+    }
+    if (expected.shape && !containsToken(searchableText(match), expected.shape)) {
+      reasons.push(`${label} ${expected.code} must include shape ${expected.shape}`);
+    }
+    if (expected.action) {
+      const actionText = searchableText(match.action ?? match.caller_action ?? match.callerAction ?? match);
+      expected.action
+        .split(/[.;]/)
+        .map((part) => part.trim())
+        .filter(Boolean)
+        .forEach((part) => {
+          if (!actionIncludes(actionText, part)) reasons.push(`${label} ${expected.code} action must include ${part}`);
+        });
+    }
+  });
+}
+
+function normalizeErrorList(value) {
+  if (Array.isArray(value)) return value;
+  if (value && typeof value === "object") return Object.values(value).flat();
+  return [];
+}
+
+function errorMatches(actual, expected) {
+  const text = searchableText(actual);
+  return containsToken(text, String(expected.status)) && containsToken(text, expected.code);
+}
+
+function actionIncludes(actionText, expectedPart) {
+  const normalizedExpected = expectedPart.toLowerCase();
+  if (actionText.includes(normalizedExpected)) return true;
+  if (normalizedExpected.includes("do not retry") && actionText.includes("do not retry")) return true;
+  if (normalizedExpected.includes("refresh once") && actionText.includes("refresh") && actionText.includes("once")) return true;
+  if (normalizedExpected.includes("retry once") && actionText.includes("retry") && actionText.includes("once")) return true;
+  return false;
 }
 
 function validateExpectedResponseBodyHandling(task, response, reasons) {

@@ -140,8 +140,8 @@ function outputContract(taskGroup) {
   if (taskGroup === "error_handling") {
     return [
       "Return an object with:",
-      "- `endpoint_errors`: endpoint-specific error cases and caller actions.",
-      "- `common_errors`: common error cases and caller actions.",
+      "- `endpoint_errors`: array of endpoint-specific error objects with `status`, `code`, optional `shape`, and `action`.",
+      "- `common_errors`: array of common error objects with `status`, `code`, optional `shape`, and `action`.",
       "- `retry_policy`: retry or non-retry behavior.",
       "- `evidence`: array of short context quotes or section names used.",
       "- `uncertainties`: array of missing or ambiguous facts, empty when none.",
