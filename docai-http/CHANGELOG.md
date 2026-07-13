@@ -77,6 +77,7 @@ DocAI HTTP draft history. Specification versioning and compatibility rules are d
 - Makes live runners parse Markdown-fenced JSON responses and JSON with surrounding prose.
 - Increases the Anthropic live runner output budget to reduce workflow-completion JSON truncation.
 - Records passing Google and OpenAI workflow-completion live results while Anthropic awaits a rerun after parser normalization.
+- Records passing workflow-completion live results for all required complete-candidate target models.
 
 ## 0.11.0 (Draft - Compatibility Core)
 

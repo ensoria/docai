@@ -252,8 +252,8 @@ Deferred compact expansion work:
   - [x] Normalize workflow-completion grading for concrete path values and surrounding preserved state.
   - [x] Make live runners parse Markdown-fenced JSON responses and JSON with surrounding prose.
   - [x] Increase the Anthropic runner output budget for workflow-completion responses that exceed the previous 2048-token limit.
-  - [ ] Re-run the Anthropic workflow-completion task locally after fenced-JSON parser normalization and the Anthropic output-budget increase.
-  - [ ] Run workflow-completion tasks locally against each required target and record model-specific results.
+  - [x] Re-run the Anthropic workflow-completion task locally after fenced-JSON parser normalization and the Anthropic output-budget increase.
+  - [x] Run workflow-completion tasks locally against each required target and record model-specific results.
   - [ ] Record token-load measurements for each task/model/profile combination.
   - [ ] Summarize failures, fixture gaps found by the evaluations, and publication impact in the evaluation results.
 - [x] Keep the README publication label unchanged until fixture and checker evidence supports the broader claim. Decision: keep the current README publication label as `Compatibility Core implementation target`; do not advertise complete-generator-ready until the evidence gate in `COMPLETE-GENERATOR-READINESS.md` is complete.
