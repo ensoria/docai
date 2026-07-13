@@ -99,7 +99,6 @@ async function callAnthropic(prompt) {
         content: prompt.user,
       },
     ],
-    temperature: Number(targetPacket.selection_policy.temperature ?? 0),
   };
   const response = await fetch(MESSAGES_ENDPOINT, {
     method: "POST",

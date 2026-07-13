@@ -91,7 +91,6 @@ async function callOpenAI(prompt) {
     model: prompt.target.model,
     instructions: prompt.system,
     input: prompt.user,
-    temperature: Number(targetPacket.selection_policy.temperature ?? 0),
   };
   const response = await fetch(RESPONSES_ENDPOINT, {
     method: "POST",

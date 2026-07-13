@@ -89,6 +89,8 @@ node docai-http/tools/run-openai-complete-evaluation.mjs request_construction --
 
 These commands require `GOOGLE_API_KEY`, `ANTHROPIC_API_KEY`, or `OPENAI_API_KEY` respectively and send the selected evaluation prompts and context to the corresponding external model provider API.
 
+The Google runner sends the configured `temperature` value. The Anthropic and OpenAI runners omit `temperature` because the current required target models reject that parameter; use the fixed prompt packet, disabled tools, reviewed JSON result records, and the request-construction grader as the repeatability controls for those providers.
+
 If the Codex managed environment blocks export of repository-derived prompts and fixture context to a provider, record the affected run as `blocked`. A maintainer can then run the same provider command locally outside the managed environment and replace the blocked record with the reviewed provider result.
 
 Record one JSONL line per target/task result under:
