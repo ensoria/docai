@@ -13,4 +13,6 @@ Run `node tools/check-complete-evaluations.mjs` from the `docai-http/` directory
 
 Run `node tools/build-complete-evaluation-prompts.mjs request_construction` from the `docai-http/` directory, or `node docai-http/tools/build-complete-evaluation-prompts.mjs request_construction` from the repository root, to emit JSONL prompt records for the required request-construction target/task combinations. Add `--include-optional` to include optional targets, and `--summary` to print only the record count and selected IDs. These prompt records intentionally omit `expected_outcome` so the live model is not given the grading answer.
 
+Run `node tools/run-google-complete-evaluation.mjs request_construction --target google-stable-agentic` from the `docai-http/` directory, or `node docai-http/tools/run-google-complete-evaluation.mjs request_construction --target google-stable-agentic` from the repository root, to execute the Google required target and merge the reviewed JSONL records into `runs/request-construction.jsonl`. This command requires `GOOGLE_API_KEY` and sends the selected evaluation prompts and context to the Google Gemini API.
+
 The token-load numbers are deterministic local context metrics. They are useful for spotting obvious regressions, but they are not a substitute for model-specific tokenizer counts or live LLM task results.

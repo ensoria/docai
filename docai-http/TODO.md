@@ -230,6 +230,7 @@ Deferred compact expansion work:
   - [x] Add live result JSONL record format and checker validation before executing provider calls.
   - [x] Add automated request-construction result grading against `tasks.json` expected outcomes.
   - [x] Add a live LLM execution procedure with gate order, provider order rationale, stop criteria, authentication, and cost controls.
+  - [x] Add a Google Interactions API runner for the `google-stable-agentic` request-construction smoke run.
   - [ ] Run request-construction tasks against each target LLM and record model-specific results.
   - [ ] Run response-handling tasks against each target LLM and record model-specific results.
   - [ ] Run error-handling tasks against each target LLM and record model-specific results.

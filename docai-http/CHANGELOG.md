@@ -60,6 +60,7 @@ DocAI HTTP draft history. Specification versioning and compatibility rules are d
 - Adds a live result JSONL record format and checker validation for complete-candidate LLM evaluation runs.
 - Adds automated request-construction grading for complete-candidate live result records.
 - Adds a live LLM evaluation procedure covering gate order, target order rationale, stop criteria, authentication, cost controls, result review, and publication impact.
+- Adds a Google Interactions API runner for complete-candidate request-construction live evaluation records.
 
 ## 0.11.0 (Draft - Compatibility Core)
 

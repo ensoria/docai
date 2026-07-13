@@ -79,6 +79,14 @@ Publication gate に必要なのは required target だけです。Optional targ
 node docai-http/tools/build-complete-evaluation-prompts.mjs request_construction
 ```
 
+Prompt export を確認した後、Google required target を直接実行する場合は次を実行します。
+
+```sh
+node docai-http/tools/run-google-complete-evaluation.mjs request_construction --target google-stable-agentic
+```
+
+この command には `GOOGLE_API_KEY` が必要であり、選択された evaluation prompt と context を Google Gemini API に送信します。
+
 Target/task result ごとに1行の JSONL を次の場所に記録します。
 
 ```text
