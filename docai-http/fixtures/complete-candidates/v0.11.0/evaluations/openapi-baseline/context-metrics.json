@@ -1,0 +1,129 @@
+{
+  "docai_http": "0.11.0",
+  "candidate": "complete-candidates/v0.11.0",
+  "baseline": "openapi-comparison",
+  "recorded_at": "2026-07-13T13:16:05.001Z",
+  "source": "docai-http/fixtures/complete-candidates/v0.11.0/source/complete-openapi.yaml",
+  "metrics": [
+    {
+      "task_id": "request-create-user-compact",
+      "task_group": "request_construction",
+      "condition": "raw",
+      "context_utf8_bytes": 5738,
+      "context_characters": 5738,
+      "approx_tokens_chars_div_4": 1435
+    },
+    {
+      "task_id": "request-upload-document-full",
+      "task_group": "request_construction",
+      "condition": "raw",
+      "context_utf8_bytes": 5738,
+      "context_characters": 5738,
+      "approx_tokens_chars_div_4": 1435
+    },
+    {
+      "task_id": "response-payment-created-compact",
+      "task_group": "response_handling",
+      "condition": "raw",
+      "context_utf8_bytes": 5738,
+      "context_characters": 5738,
+      "approx_tokens_chars_div_4": 1435
+    },
+    {
+      "task_id": "error-create-user-compact",
+      "task_group": "error_handling",
+      "condition": "raw",
+      "context_utf8_bytes": 5738,
+      "context_characters": 5738,
+      "approx_tokens_chars_div_4": 1435
+    },
+    {
+      "task_id": "workflow-complete-checkout-compact",
+      "task_group": "workflow_completion",
+      "condition": "raw",
+      "context_utf8_bytes": 5738,
+      "context_characters": 5738,
+      "approx_tokens_chars_div_4": 1435
+    },
+    {
+      "task_id": "request-create-user-compact",
+      "task_group": "request_construction",
+      "condition": "sliced",
+      "context_utf8_bytes": 1445,
+      "context_characters": 1445,
+      "approx_tokens_chars_div_4": 362
+    },
+    {
+      "task_id": "request-upload-document-full",
+      "task_group": "request_construction",
+      "condition": "sliced",
+      "context_utf8_bytes": 696,
+      "context_characters": 696,
+      "approx_tokens_chars_div_4": 174
+    },
+    {
+      "task_id": "response-payment-created-compact",
+      "task_group": "response_handling",
+      "condition": "sliced",
+      "context_utf8_bytes": 2832,
+      "context_characters": 2832,
+      "approx_tokens_chars_div_4": 708
+    },
+    {
+      "task_id": "error-create-user-compact",
+      "task_group": "error_handling",
+      "condition": "sliced",
+      "context_utf8_bytes": 1443,
+      "context_characters": 1443,
+      "approx_tokens_chars_div_4": 361
+    },
+    {
+      "task_id": "workflow-complete-checkout-compact",
+      "task_group": "workflow_completion",
+      "condition": "sliced",
+      "context_utf8_bytes": 3608,
+      "context_characters": 3608,
+      "approx_tokens_chars_div_4": 902
+    },
+    {
+      "task_id": "request-create-user-compact",
+      "task_group": "request_construction",
+      "condition": "enriched",
+      "context_utf8_bytes": 10417,
+      "context_characters": 10417,
+      "approx_tokens_chars_div_4": 2605
+    },
+    {
+      "task_id": "request-upload-document-full",
+      "task_group": "request_construction",
+      "condition": "enriched",
+      "context_utf8_bytes": 8088,
+      "context_characters": 8088,
+      "approx_tokens_chars_div_4": 2022
+    },
+    {
+      "task_id": "response-payment-created-compact",
+      "task_group": "response_handling",
+      "condition": "enriched",
+      "context_utf8_bytes": 14627,
+      "context_characters": 14627,
+      "approx_tokens_chars_div_4": 3657
+    },
+    {
+      "task_id": "error-create-user-compact",
+      "task_group": "error_handling",
+      "condition": "enriched",
+      "context_utf8_bytes": 10415,
+      "context_characters": 10415,
+      "approx_tokens_chars_div_4": 2604
+    },
+    {
+      "task_id": "workflow-complete-checkout-compact",
+      "task_group": "workflow_completion",
+      "condition": "enriched",
+      "context_utf8_bytes": 18424,
+      "context_characters": 18424,
+      "approx_tokens_chars_div_4": 4606
+    }
+  ]
+}

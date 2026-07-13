@@ -15,7 +15,7 @@ Current candidate evidence:
 - A complete-candidate evaluation task packet and local context metrics exist under `fixtures/complete-candidates/v0.11.0/evaluations/`.
 - Live LLM execution procedure and gate rationale are documented in `LIVE-LLM-EVALUATION.md`.
 - Complete §9.1 focused fixture coverage and required-target LLM task evaluation evidence exist for the current complete-candidate task packet.
-- OpenAPI comparison evidence is planned in `OPENAPI-COMPARISON-EVIDENCE.md`, but the OpenAPI baseline has not been run yet.
+- OpenAPI comparison evidence is planned in `OPENAPI-COMPARISON-EVIDENCE.md`; prompt contracts and context metrics exist, but the OpenAPI live task baseline has not been run yet.
 
 ## Publication Gate
 

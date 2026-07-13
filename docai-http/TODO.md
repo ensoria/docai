@@ -263,9 +263,9 @@ Deferred compact expansion work:
 - [ ] Build measured evidence for why an LLM should use DocAI HTTP instead of raw or lightly processed OpenAPI for API-calling tasks.
   - [x] Add the comparison evidence plan and current DocAI-side baseline status in `OPENAPI-COMPARISON-EVIDENCE.md`.
   - [x] Add a top-level README summary that links to the comparison evidence and avoids unsupported claims before the OpenAPI baseline is run.
-  - [ ] Define OpenAPI baseline prompt contracts that reuse the existing complete-candidate evaluation tasks without leaking `expected_outcome`.
-  - [ ] Add OpenAPI context builders for raw OpenAPI, task-sliced OpenAPI, and enriched OpenAPI with required pass-through behavior prose.
-  - [ ] Record deterministic context metrics for each OpenAPI baseline condition and task.
+  - [x] Define OpenAPI baseline prompt contracts that reuse the existing complete-candidate evaluation tasks without leaking `expected_outcome`.
+  - [x] Add OpenAPI context builders for raw OpenAPI, task-sliced OpenAPI, and enriched OpenAPI with required pass-through behavior prose.
+  - [x] Record deterministic context metrics for each OpenAPI baseline condition and task.
   - [ ] Reuse the existing automated graders to compare OpenAPI baseline outputs against the same expected outcomes.
   - [ ] Add separate JSONL run files for OpenAPI baseline results without mixing them into DocAI HTTP conformance evidence.
   - [ ] Run required target models against OpenAPI baseline conditions after explicit provider-send approval.
