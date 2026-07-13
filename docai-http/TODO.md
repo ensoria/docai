@@ -268,7 +268,7 @@ Deferred compact expansion work:
   - [x] Record deterministic context metrics for each OpenAPI baseline condition and task.
   - [x] Reuse the existing automated graders to compare OpenAPI baseline outputs against the same expected outcomes.
   - [x] Add a separate OpenAPI baseline JSONL run-record directory, example format, and checker path without mixing it into DocAI HTTP conformance evidence.
-  - [ ] Add provider runners or local execution commands that write actual OpenAPI baseline JSONL results.
+  - [x] Add provider runners or local execution commands that write actual OpenAPI baseline JSONL results.
   - [ ] Run required target models against OpenAPI baseline conditions after explicit provider-send approval.
   - [ ] Summarize pass rate, fixture-gap rate, selected-context size, provider usage when publishable, and failure categories across DocAI full, DocAI compact, OpenAPI raw, OpenAPI sliced, and OpenAPI enriched conditions.
   - [ ] Update the top-level README with measured comparative claims only after the OpenAPI baseline data exists.

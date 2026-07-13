@@ -43,6 +43,16 @@ These metrics are UTF-8 byte counts, character counts, and `characters / 4` appr
 
 OpenAPI baseline live-run records belong under `runs/*.jsonl`, not under the DocAI HTTP `../runs/*.jsonl` directory. The run record format is documented in `runs/README.md`.
 
+Provider runners are available for local execution after explicit approval to send repository-derived prompts and context to the selected provider:
+
+```sh
+node docai-http/tools/run-google-openapi-comparison.mjs all --condition raw --target google-stable-agentic
+node docai-http/tools/run-anthropic-openapi-comparison.mjs all --condition raw --target anthropic-balanced
+node docai-http/tools/run-openai-openapi-comparison.mjs all --condition raw --target openai-frontier
+```
+
+Replace `raw` with `sliced` or `enriched` to record the other baseline conditions. By default, each runner selects its required target and the `request_construction` group for the `raw` condition; pass `all --condition <condition>` to run every comparable live task group for one condition.
+
 Check context metrics and any non-example run records from the repository root:
 
 ```sh
@@ -53,4 +63,4 @@ The checker reuses the complete-candidate automated graders for request construc
 
 ## Next Evidence Step
 
-After the prompt contracts, context metrics, and run-record checker are reviewed, add provider-runner support or local execution instructions that write OpenAPI baseline JSONL run records.
+Run the required targets against the OpenAPI baseline conditions after provider-send approval, then summarize pass rate, fixture-gap rate, context size, provider usage where publishable, and failure categories.

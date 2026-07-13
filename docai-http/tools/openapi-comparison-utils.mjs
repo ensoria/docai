@@ -55,10 +55,10 @@ export function readJson(file) {
   return JSON.parse(read(file));
 }
 
-export function parseCommonArgs(argv, defaultGroup = "all") {
+export function parseCommonArgs(argv, defaultGroup = "all", defaultCondition = "all") {
   const parsed = {
     group: defaultGroup,
-    condition: "all",
+    condition: defaultCondition,
     target: "required",
     task: null,
     includeOptional: false,

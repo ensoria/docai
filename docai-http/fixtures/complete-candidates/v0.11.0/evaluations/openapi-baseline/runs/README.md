@@ -28,4 +28,14 @@ Recommended filenames:
 - `sliced.jsonl`
 - `enriched.jsonl`
 
+Provider runners write to those files automatically:
+
+```sh
+node docai-http/tools/run-google-openapi-comparison.mjs all --condition raw --target google-stable-agentic
+node docai-http/tools/run-anthropic-openapi-comparison.mjs all --condition raw --target anthropic-balanced
+node docai-http/tools/run-openai-openapi-comparison.mjs all --condition raw --target openai-frontier
+```
+
+Run one condition at a time to keep cost and review scope bounded. Repeat with `--condition sliced` and `--condition enriched` only after the previous condition's records pass the checker.
+
 The checker accepts partial run files so provider runs can be reviewed incrementally. Complete every required target/task record for a condition before treating that condition as comparable evidence.
