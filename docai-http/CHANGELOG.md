@@ -59,6 +59,7 @@ DocAI HTTP draft history. Specification versioning and compatibility rules are d
 - Adds a deterministic complete-candidate evaluation prompt exporter for request-construction live runs and aligns the evaluation packet with the README workflow-completion requirement without claiming live LLM evidence.
 - Adds a live result JSONL record format and checker validation for complete-candidate LLM evaluation runs.
 - Adds automated request-construction grading for complete-candidate live result records.
+- Adds a live LLM evaluation procedure covering gate order, target order rationale, stop criteria, authentication, cost controls, result review, and publication impact.
 
 ## 0.11.0 (Draft - Compatibility Core)
 
