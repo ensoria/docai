@@ -39,6 +39,18 @@ This writes:
 
 These metrics are UTF-8 byte counts, character counts, and `characters / 4` approximate token counts. They are not provider tokenizer counts and are not live LLM results.
 
+## Run Records
+
+OpenAPI baseline live-run records belong under `runs/*.jsonl`, not under the DocAI HTTP `../runs/*.jsonl` directory. The run record format is documented in `runs/README.md`.
+
+Check context metrics and any non-example run records from the repository root:
+
+```sh
+node docai-http/tools/check-openapi-comparison.mjs
+```
+
+The checker reuses the complete-candidate automated graders for request construction, response handling, error handling, and workflow completion, so OpenAPI baseline outputs are compared against the same expected outcomes as the DocAI HTTP runs.
+
 ## Next Evidence Step
 
-After the prompt contracts and context metrics are reviewed, add provider-runner support or local execution instructions that write OpenAPI baseline JSONL run records. Those records should be graded against the same expected outcomes as the DocAI HTTP runs, but they must remain separate from DocAI HTTP conformance records.
+After the prompt contracts, context metrics, and run-record checker are reviewed, add provider-runner support or local execution instructions that write OpenAPI baseline JSONL run records.
