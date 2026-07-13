@@ -20,3 +20,4 @@ Rules:
 - Do not commit API keys, request authorization headers, provider account identifiers, or full raw provider logs.
 - Keep provider usage fields only when they are useful for token-load comparison and safe to publish.
 - A run is not live evidence until it has a concrete `executed_at`, target ID, task ID, model, status, review notes, and captured response content or a blocking reason.
+- Request-construction run records are checked against `tasks.json` expected outcomes. The checker rejects records where `review.matches_expected_outcome` disagrees with the automated request-construction grader.
