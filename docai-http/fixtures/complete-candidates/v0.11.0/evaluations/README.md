@@ -51,6 +51,8 @@ The Google runner sends the configured `temperature` value from `targets.json`. 
 
 The prompt asks for strict JSON only. The result parser still tolerates Markdown-fenced JSON and extracts the first JSON object or array when a provider adds surrounding prose, so minor wrapper text does not by itself invalidate an otherwise reviewable response.
 
+The Anthropic runner requests up to 4096 output tokens so verbose workflow-completion JSON is less likely to truncate before the closing object.
+
 If a managed Codex environment blocks external provider data export, record the affected runs as `blocked` and have a maintainer run the same command locally outside that managed environment. Replace the blocked records with reviewed provider results after local execution.
 
 Request-construction grading normalizes representation choices that are equivalent under the supplied DocAI HTTP context: endpoint paths may include the documented `/v1` base path, `Authorization: Bearer <access_token>` accepts concrete fake bearer-token placeholders, multipart part content types may be represented as either direct `content_type` fields or `headers.Content-Type`, and multipart boundary delegation is evaluated through an explicit boundary-handling field.

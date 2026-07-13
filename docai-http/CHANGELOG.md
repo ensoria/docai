@@ -75,6 +75,7 @@ DocAI HTTP draft history. Specification versioning and compatibility rules are d
 - Adds workflow-completion live grading support and records a managed-environment block for the first Google workflow-completion attempt.
 - Normalizes workflow-completion live grading for concrete path values and surrounding preserved state.
 - Makes live runners parse Markdown-fenced JSON responses and JSON with surrounding prose.
+- Increases the Anthropic live runner output budget to reduce workflow-completion JSON truncation.
 - Records passing Google and OpenAI workflow-completion live results while Anthropic awaits a rerun after parser normalization.
 
 ## 0.11.0 (Draft - Compatibility Core)

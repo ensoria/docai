@@ -1,6 +1,6 @@
 # Complete Candidate Evaluation Results
 
-Status: all required request-construction, response-handling, and error-handling runs passed on 2026-07-13 after grader policy review and provider-specific runner fixes. Workflow-completion runs passed for Google and OpenAI, while Anthropic must be rerun after fenced-JSON parser normalization. Full required live LLM evaluation coverage is still pending for the Anthropic workflow-completion rerun and token-load measurements.
+Status: all required request-construction, response-handling, and error-handling runs passed on 2026-07-13 after grader policy review and provider-specific runner fixes. Workflow-completion runs passed for Google and OpenAI, while Anthropic must be rerun after fenced-JSON parser normalization and the Anthropic output-budget increase. Full required live LLM evaluation coverage is still pending for the Anthropic workflow-completion rerun and token-load measurements.
 
 This file records local context metrics and reviewed live LLM evaluation results for the evaluation packet in `tasks.json`. Local metrics confirm that the retrieval sets are resolvable and give a repeatable token-load proxy. They do not establish model success.
 
@@ -11,7 +11,7 @@ Defined in `targets.json` on 2026-07-11. Required targets must run every task gr
 | Target | Provider | Model | Required | Role | Status |
 |---|---|---|---|---|---|
 | openai-frontier | openai | gpt-5.6-sol | yes | frontier reasoning and coding baseline | request-construction, response-handling, error-handling, and workflow-completion passed; token-load pending |
-| anthropic-balanced | anthropic | claude-sonnet-5 | yes | balanced cross-provider long-context baseline | request-construction, response-handling, and error-handling passed; workflow-completion rerun pending after fenced-JSON parser normalization; token-load pending |
+| anthropic-balanced | anthropic | claude-sonnet-5 | yes | balanced cross-provider long-context baseline | request-construction, response-handling, and error-handling passed; workflow-completion rerun pending after fenced-JSON parser normalization and output-budget increase; token-load pending |
 | google-stable-agentic | google | gemini-3.5-flash | yes | stable agentic and coding baseline | request-construction, response-handling, error-handling, and workflow-completion passed; token-load pending |
 | openai-cost | openai | gpt-5.6-luna | no | cost-sensitive OpenAI comparison | optional pending |
 | anthropic-fast | anthropic | claude-haiku-4-5 | no | fast Anthropic comparison | optional pending |
@@ -96,8 +96,8 @@ Run records: `runs/workflow-completion.jsonl`
 
 | Target | Task | Status | Fixture gap | Notes |
 |---|---|---|---|---|
-| anthropic-balanced | workflow-complete-checkout-compact | blocked | no | The runner parser rejected a Markdown-fenced JSON response before fenced-output normalization was added; rerun is required because the response content was not retained. |
+| anthropic-balanced | workflow-complete-checkout-compact | blocked | no | The previous runner rejected a Markdown-fenced JSON response and did not retain the content; the output may also have exceeded the previous 2048-token Anthropic limit. Rerun after fenced-output normalization and the output-budget increase. |
 | google-stable-agentic | workflow-complete-checkout-compact | pass | no | Matched after workflow-state normalization; retryable order recovery preserves `cart_id` and `payment_id`, retries `POST /orders`, and the workflow context includes `payment.pending`. |
 | openai-frontier | workflow-complete-checkout-compact | pass | no | Matched the reviewed workflow-completion expected outcome, including ordered steps, preserved values, retryable order recovery, and early webhook reconciliation. |
 
-Publication impact: Gate 4 workflow-completion evidence is not complete until the Anthropic run is repeated with the fenced-JSON parser fix and reviewed. The README publication label must remain unchanged until workflow-completion and token-load gates have complete reviewed required-target results.
+Publication impact: Gate 4 workflow-completion evidence is not complete until the Anthropic run is repeated with the fenced-JSON parser and output-budget fixes and reviewed. The README publication label must remain unchanged until workflow-completion and token-load gates have complete reviewed required-target results.

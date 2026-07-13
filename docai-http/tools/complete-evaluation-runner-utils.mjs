@@ -179,7 +179,10 @@ function extractJsonPayload(text) {
   const start = trimmed.search(/[{\[]/);
   if (start === -1) return trimmed;
   const end = findJsonEnd(trimmed, start);
-  return end === -1 ? trimmed : trimmed.slice(start, end + 1);
+  if (end === -1) {
+    throw new Error("Model output did not contain a complete JSON object or array.");
+  }
+  return trimmed.slice(start, end + 1);
 }
 
 function findJsonEnd(text, start) {

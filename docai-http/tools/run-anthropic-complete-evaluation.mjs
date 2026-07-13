@@ -22,7 +22,7 @@ import {
 
 const MESSAGES_ENDPOINT = "https://api.anthropic.com/v1/messages";
 const ANTHROPIC_VERSION = "2023-06-01";
-const MAX_TOKENS = 2048;
+const MAX_TOKENS = 4096;
 
 const args = parseArgs(process.argv.slice(2), "request_construction", "anthropic-balanced");
 const apiKey = process.env.ANTHROPIC_API_KEY;
