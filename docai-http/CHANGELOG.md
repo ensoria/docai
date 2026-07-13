@@ -70,6 +70,8 @@ DocAI HTTP draft history. Specification versioning and compatibility rules are d
 - Adds response-handling live grading support and records a managed-environment block for the first Google response-handling attempt.
 - Records passing response-handling live results for all required complete-candidate target models.
 - Adds error-handling live grading support and records a managed-environment block for the first Google error-handling attempt.
+- Normalizes error-handling live grading for common shape labels and behavior-equivalent endpoint/common grouping.
+- Records passing error-handling live results for all required complete-candidate target models.
 
 ## 0.11.0 (Draft - Compatibility Core)
 

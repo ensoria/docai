@@ -244,7 +244,7 @@ Each live result record must include:
 - `review.matches_expected_outcome` for non-blocked runs
 - `response` for non-blocked runs, or `blocked_reason` for blocked runs
 
-For request-construction, response-handling, and error-handling records, `check-complete-evaluations.mjs` also verifies that `review.matches_expected_outcome` agrees with the corresponding automated grader.
+For request-construction, response-handling, and error-handling records, `check-complete-evaluations.mjs` also verifies that `review.matches_expected_outcome` agrees with the corresponding automated grader. The error-handling grader accepts common shape labels with or without the `common:` reference prefix and allows behavior-complete error cases to appear in either `endpoint_errors` or `common_errors`.
 
 ## Publication Impact
 

@@ -245,7 +245,8 @@ Deferred compact expansion work:
   - [x] Run response-handling tasks locally against each required target and record model-specific results.
   - [x] Add automated error-handling result grading and provider-runner support.
   - [x] Attempt the Google error-handling run from the Codex managed environment and record the external data-export block.
-  - [ ] Run error-handling tasks locally against each required target and record model-specific results.
+  - [x] Normalize error-handling grading for common-shape labels and behavior-equivalent endpoint/common grouping.
+  - [x] Run error-handling tasks locally against each required target and record model-specific results.
   - [ ] Run workflow-completion tasks against each target LLM and record model-specific results.
   - [ ] Record token-load measurements for each task/model/profile combination.
   - [ ] Summarize failures, fixture gaps found by the evaluations, and publication impact in the evaluation results.

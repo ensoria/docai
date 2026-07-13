@@ -45,4 +45,6 @@ If a managed Codex environment blocks external provider data export, record the 
 
 Request-construction grading normalizes representation choices that are equivalent under the supplied DocAI HTTP context: endpoint paths may include the documented `/v1` base path, `Authorization: Bearer <access_token>` accepts concrete fake bearer-token placeholders, multipart part content types may be represented as either direct `content_type` fields or `headers.Content-Type`, and multipart boundary delegation is evaluated through an explicit boundary-handling field.
 
+Error-handling grading normalizes representation choices that preserve caller-visible behavior: an expected `common:<label>` shape may be matched by the referenced `<label>` shape label, and an expected error may be returned in either `endpoint_errors` or `common_errors` when status, code, shape, and caller action are all present.
+
 The token-load numbers are deterministic local context metrics. They are useful for spotting obvious regressions, but they are not a substitute for model-specific tokenizer counts or live LLM task results.

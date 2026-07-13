@@ -65,8 +65,11 @@ export function gradeErrorHandlingResponse(response, task) {
   }
 
   const reasons = [];
-  validateExpectedErrorSet("endpoint_errors", task.expected_outcome.endpoint_errors ?? [], response.endpoint_errors, reasons);
-  validateExpectedErrorSet("common_errors", task.expected_outcome.common_errors ?? [], response.common_errors, reasons);
+  const endpointErrors = normalizeErrorList(response.endpoint_errors);
+  const commonErrors = normalizeErrorList(response.common_errors);
+  const allErrors = [...endpointErrors, ...commonErrors];
+  validateExpectedErrorSet("endpoint_errors", task.expected_outcome.endpoint_errors ?? [], endpointErrors, allErrors, reasons);
+  validateExpectedErrorSet("common_errors", task.expected_outcome.common_errors ?? [], commonErrors, allErrors, reasons);
 
   return {
     pass: reasons.length === 0,
@@ -74,15 +77,16 @@ export function gradeErrorHandlingResponse(response, task) {
   };
 }
 
-function validateExpectedErrorSet(label, expectedErrors, actualErrors, reasons) {
-  const actualList = normalizeErrorList(actualErrors);
+function validateExpectedErrorSet(label, expectedErrors, primaryErrors, fallbackErrors, reasons) {
   expectedErrors.forEach((expected) => {
-    const match = actualList.find((actual) => errorMatches(actual, expected));
+    const match =
+      primaryErrors.find((actual) => errorMatches(actual, expected)) ??
+      fallbackErrors.find((actual) => errorMatches(actual, expected));
     if (!match) {
       reasons.push(`${label} missing status ${expected.status} code ${expected.code}`);
       return;
     }
-    if (expected.shape && !containsToken(searchableText(match), expected.shape)) {
+    if (expected.shape && !shapeMatches(match, expected.shape)) {
       reasons.push(`${label} ${expected.code} must include shape ${expected.shape}`);
     }
     if (expected.action) {
@@ -107,6 +111,13 @@ function normalizeErrorList(value) {
 function errorMatches(actual, expected) {
   const text = searchableText(actual);
   return containsToken(text, String(expected.status)) && containsToken(text, expected.code);
+}
+
+function shapeMatches(actual, expectedShape) {
+  const text = searchableText(actual);
+  if (containsToken(text, expectedShape)) return true;
+  const unscopedShape = String(expectedShape).split(":").pop();
+  return containsToken(text, unscopedShape);
 }
 
 function actionIncludes(actionText, expectedPart) {
