@@ -23,6 +23,8 @@ node docai-http/tools/run-openai-complete-evaluation.mjs request_construction --
 
 These commands require `GOOGLE_API_KEY`, `ANTHROPIC_API_KEY`, or `OPENAI_API_KEY` respectively and send the selected evaluation prompts and context to the corresponding external model provider API.
 
+If a managed Codex environment blocks external provider data export, record the affected runs as `blocked` and have a maintainer run the same command locally outside that managed environment. Replace the blocked records with reviewed provider results after local execution.
+
 Request-construction grading normalizes representation choices that are equivalent under the supplied DocAI HTTP context: endpoint paths may include the documented `/v1` base path, `Authorization: Bearer <access_token>` accepts concrete fake bearer-token placeholders, multipart part content types may be represented as either direct `content_type` fields or `headers.Content-Type`, and multipart boundary delegation is evaluated through an explicit boundary-handling field.
 
 The token-load numbers are deterministic local context metrics. They are useful for spotting obvious regressions, but they are not a substitute for model-specific tokenizer counts or live LLM task results.

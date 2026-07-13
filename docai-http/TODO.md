@@ -235,7 +235,9 @@ Deferred compact expansion work:
   - [x] Review request-construction expected outcomes and grader handling for base paths, bearer-token placeholders, multipart part headers, and boundary delegation before running more providers.
   - [x] Re-run the Google `request_construction` smoke run after grader-policy normalization and record passing results.
   - [x] Add OpenAI and Anthropic request-construction live runners with the same result JSONL format.
-  - [ ] Get explicit approval to send repository-derived evaluation prompts and fixture context to OpenAI and Anthropic, then run the required request-construction targets.
+  - [x] Get explicit approval to send repository-derived evaluation prompts and fixture context to OpenAI and Anthropic.
+  - [x] Record OpenAI and Anthropic request-construction runs as blocked by Codex environment policy before network execution.
+  - [ ] Run the OpenAI and Anthropic request-construction commands locally outside the Codex managed environment and replace the blocked records with provider results.
   - [ ] Run request-construction tasks against each target LLM and record model-specific results.
   - [ ] Run response-handling tasks against each target LLM and record model-specific results.
   - [ ] Run error-handling tasks against each target LLM and record model-specific results.

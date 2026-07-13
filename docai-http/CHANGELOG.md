@@ -64,6 +64,7 @@ DocAI HTTP draft history. Specification versioning and compatibility rules are d
 - Normalizes request-construction live grading for base paths, bearer-token placeholders, multipart part content-type forms, and explicit boundary delegation.
 - Records a passing Google request-construction live smoke run after request-construction grader-policy review.
 - Adds OpenAI and Anthropic live request-construction runners that reuse the shared prompt, grading, and JSONL result format.
+- Records OpenAI and Anthropic request-construction runs as blocked when the Codex managed environment denies external provider data export.
 
 ## 0.11.0 (Draft - Compatibility Core)
 

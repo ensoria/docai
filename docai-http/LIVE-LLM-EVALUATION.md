@@ -89,6 +89,8 @@ node docai-http/tools/run-openai-complete-evaluation.mjs request_construction --
 
 These commands require `GOOGLE_API_KEY`, `ANTHROPIC_API_KEY`, or `OPENAI_API_KEY` respectively and send the selected evaluation prompts and context to the corresponding external model provider API.
 
+If the Codex managed environment blocks export of repository-derived prompts and fixture context to a provider, record the affected run as `blocked`. A maintainer can then run the same provider command locally outside the managed environment and replace the blocked record with the reviewed provider result.
+
 Record one JSONL line per target/task result under:
 
 ```text
