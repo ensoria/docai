@@ -20,13 +20,15 @@ import {
   TASKS_FILE,
 } from "./complete-evaluation-runner-utils.mjs";
 
-const INTERACTIONS_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/interactions";
+const MESSAGES_ENDPOINT = "https://api.anthropic.com/v1/messages";
+const ANTHROPIC_VERSION = "2023-06-01";
+const MAX_TOKENS = 2048;
 
-const args = parseArgs(process.argv.slice(2), "request_construction", "google-stable-agentic");
-const apiKey = process.env.GOOGLE_API_KEY;
+const args = parseArgs(process.argv.slice(2), "request_construction", "anthropic-balanced");
+const apiKey = process.env.ANTHROPIC_API_KEY;
 
 if (!apiKey) {
-  console.error("GOOGLE_API_KEY is required.");
+  console.error("ANTHROPIC_API_KEY is required.");
   process.exit(1);
 }
 
@@ -35,7 +37,7 @@ const targetPacket = readJson(TARGETS_FILE);
 let target;
 let tasks;
 try {
-  target = selectTarget(targetPacket, args.target, "google");
+  target = selectTarget(targetPacket, args.target, "anthropic");
   tasks = selectTasks(taskPacket, args.group, args.task);
 } catch (error) {
   console.error(error.message);
@@ -58,8 +60,8 @@ records.forEach((record) => {
 async function runPrompt(prompt, task) {
   const executedAt = new Date().toISOString();
   try {
-    const interaction = await callGoogle(prompt);
-    const text = extractOutputText(interaction);
+    const message = await callAnthropic(prompt);
+    const text = extractOutputText(message);
     const contentJson = parseModelJson(text);
     const grade = gradeRequestConstructionResponse(contentJson, task);
     return {
@@ -78,7 +80,7 @@ async function runPrompt(prompt, task) {
       response: {
         content_json: contentJson,
         content_text: text,
-        usage: normalizeUsage(interaction),
+        usage: normalizeUsage(message),
       },
     };
   } catch (error) {
@@ -86,27 +88,32 @@ async function runPrompt(prompt, task) {
   }
 }
 
-async function callGoogle(prompt) {
+async function callAnthropic(prompt) {
   const body = {
     model: prompt.target.model,
-    system_instruction: prompt.system,
-    input: prompt.user,
-    generation_config: {
-      temperature: Number(targetPacket.selection_policy.temperature ?? 0),
-    },
+    max_tokens: MAX_TOKENS,
+    system: prompt.system,
+    messages: [
+      {
+        role: "user",
+        content: prompt.user,
+      },
+    ],
+    temperature: Number(targetPacket.selection_policy.temperature ?? 0),
   };
-  const response = await fetch(INTERACTIONS_ENDPOINT, {
+  const response = await fetch(MESSAGES_ENDPOINT, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "x-goog-api-key": apiKey,
+      "x-api-key": apiKey,
+      "anthropic-version": ANTHROPIC_VERSION,
     },
     body: JSON.stringify(body),
   });
   const text = await response.text();
   const parsed = parseJsonOrText(text);
   if (!response.ok) {
-    throw new Error(`Google API HTTP ${response.status}: ${summarizeProviderError(parsed)}`);
+    throw new Error(`Anthropic API HTTP ${response.status}: ${summarizeProviderError(parsed)}`);
   }
   return parsed;
 }
@@ -116,29 +123,22 @@ function summarizeProviderError(value) {
   return redact(text, apiKey).slice(0, 600);
 }
 
-function extractOutputText(interaction) {
-  if (typeof interaction.output_text === "string") return interaction.output_text;
-  if (Array.isArray(interaction.output)) {
-    return interaction.output
-      .map((item) => item.text ?? item.content ?? "")
+function extractOutputText(message) {
+  if (Array.isArray(message.content)) {
+    const text = message.content
+      .map((content) => (content.type === "text" ? content.text : ""))
       .filter(Boolean)
       .join("\n");
+    if (text) return text;
   }
-  if (Array.isArray(interaction.steps)) {
-    return interaction.steps
-      .flatMap((step) => step.output ?? step.content ?? [])
-      .map((item) => item.text ?? "")
-      .filter(Boolean)
-      .join("\n");
-  }
-  throw new Error("Google response did not include output_text");
+  throw new Error("Anthropic response did not include text content");
 }
 
-function normalizeUsage(interaction) {
-  const usage = interaction.usage_metadata ?? interaction.usageMetadata ?? interaction.usage ?? {};
+function normalizeUsage(message) {
+  const usage = message.usage ?? {};
   return {
-    input_tokens: usage.input_token_count ?? usage.promptTokenCount ?? usage.input_tokens ?? null,
-    output_tokens: usage.output_token_count ?? usage.candidatesTokenCount ?? usage.output_tokens ?? null,
-    total_tokens: usage.total_token_count ?? usage.totalTokenCount ?? usage.total_tokens ?? null,
+    input_tokens: usage.input_tokens ?? null,
+    output_tokens: usage.output_tokens ?? null,
+    total_tokens: usage.input_tokens && usage.output_tokens ? usage.input_tokens + usage.output_tokens : null,
   };
 }

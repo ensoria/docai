@@ -79,13 +79,15 @@ Run:
 node docai-http/tools/build-complete-evaluation-prompts.mjs request_construction
 ```
 
-To execute the Google required target directly after reviewing the prompt export, run:
+To execute each required target directly after reviewing the prompt export, run the provider-specific command:
 
 ```sh
 node docai-http/tools/run-google-complete-evaluation.mjs request_construction --target google-stable-agentic
+node docai-http/tools/run-anthropic-complete-evaluation.mjs request_construction --target anthropic-balanced
+node docai-http/tools/run-openai-complete-evaluation.mjs request_construction --target openai-frontier
 ```
 
-This command requires `GOOGLE_API_KEY` and sends the selected evaluation prompts and context to the Google Gemini API.
+These commands require `GOOGLE_API_KEY`, `ANTHROPIC_API_KEY`, or `OPENAI_API_KEY` respectively and send the selected evaluation prompts and context to the corresponding external model provider API.
 
 Record one JSONL line per target/task result under:
 

@@ -79,13 +79,15 @@ Publication gate に必要なのは required target だけです。Optional targ
 node docai-http/tools/build-complete-evaluation-prompts.mjs request_construction
 ```
 
-Prompt export を確認した後、Google required target を直接実行する場合は次を実行します。
+Prompt export を確認した後、各 required target を直接実行する場合は provider-specific command を実行します。
 
 ```sh
 node docai-http/tools/run-google-complete-evaluation.mjs request_construction --target google-stable-agentic
+node docai-http/tools/run-anthropic-complete-evaluation.mjs request_construction --target anthropic-balanced
+node docai-http/tools/run-openai-complete-evaluation.mjs request_construction --target openai-frontier
 ```
 
-この command には `GOOGLE_API_KEY` が必要であり、選択された evaluation prompt と context を Google Gemini API に送信します。
+これらの command には、それぞれ `GOOGLE_API_KEY`、`ANTHROPIC_API_KEY`、または `OPENAI_API_KEY` が必要であり、選択された evaluation prompt と context を対応する外部 model provider API に送信します。
 
 Target/task result ごとに1行の JSONL を次の場所に記録します。
 

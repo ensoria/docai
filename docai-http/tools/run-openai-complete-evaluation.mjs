@@ -20,13 +20,13 @@ import {
   TASKS_FILE,
 } from "./complete-evaluation-runner-utils.mjs";
 
-const INTERACTIONS_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/interactions";
+const RESPONSES_ENDPOINT = "https://api.openai.com/v1/responses";
 
-const args = parseArgs(process.argv.slice(2), "request_construction", "google-stable-agentic");
-const apiKey = process.env.GOOGLE_API_KEY;
+const args = parseArgs(process.argv.slice(2), "request_construction", "openai-frontier");
+const apiKey = process.env.OPENAI_API_KEY;
 
 if (!apiKey) {
-  console.error("GOOGLE_API_KEY is required.");
+  console.error("OPENAI_API_KEY is required.");
   process.exit(1);
 }
 
@@ -35,7 +35,7 @@ const targetPacket = readJson(TARGETS_FILE);
 let target;
 let tasks;
 try {
-  target = selectTarget(targetPacket, args.target, "google");
+  target = selectTarget(targetPacket, args.target, "openai");
   tasks = selectTasks(taskPacket, args.group, args.task);
 } catch (error) {
   console.error(error.message);
@@ -58,8 +58,8 @@ records.forEach((record) => {
 async function runPrompt(prompt, task) {
   const executedAt = new Date().toISOString();
   try {
-    const interaction = await callGoogle(prompt);
-    const text = extractOutputText(interaction);
+    const response = await callOpenAI(prompt);
+    const text = extractOutputText(response);
     const contentJson = parseModelJson(text);
     const grade = gradeRequestConstructionResponse(contentJson, task);
     return {
@@ -78,7 +78,7 @@ async function runPrompt(prompt, task) {
       response: {
         content_json: contentJson,
         content_text: text,
-        usage: normalizeUsage(interaction),
+        usage: normalizeUsage(response),
       },
     };
   } catch (error) {
@@ -86,27 +86,25 @@ async function runPrompt(prompt, task) {
   }
 }
 
-async function callGoogle(prompt) {
+async function callOpenAI(prompt) {
   const body = {
     model: prompt.target.model,
-    system_instruction: prompt.system,
+    instructions: prompt.system,
     input: prompt.user,
-    generation_config: {
-      temperature: Number(targetPacket.selection_policy.temperature ?? 0),
-    },
+    temperature: Number(targetPacket.selection_policy.temperature ?? 0),
   };
-  const response = await fetch(INTERACTIONS_ENDPOINT, {
+  const response = await fetch(RESPONSES_ENDPOINT, {
     method: "POST",
     headers: {
+      Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
-      "x-goog-api-key": apiKey,
     },
     body: JSON.stringify(body),
   });
   const text = await response.text();
   const parsed = parseJsonOrText(text);
   if (!response.ok) {
-    throw new Error(`Google API HTTP ${response.status}: ${summarizeProviderError(parsed)}`);
+    throw new Error(`OpenAI API HTTP ${response.status}: ${summarizeProviderError(parsed)}`);
   }
   return parsed;
 }
@@ -116,29 +114,24 @@ function summarizeProviderError(value) {
   return redact(text, apiKey).slice(0, 600);
 }
 
-function extractOutputText(interaction) {
-  if (typeof interaction.output_text === "string") return interaction.output_text;
-  if (Array.isArray(interaction.output)) {
-    return interaction.output
-      .map((item) => item.text ?? item.content ?? "")
+function extractOutputText(response) {
+  if (typeof response.output_text === "string") return response.output_text;
+  if (Array.isArray(response.output)) {
+    const text = response.output
+      .flatMap((item) => item.content ?? [])
+      .map((content) => content.text ?? "")
       .filter(Boolean)
       .join("\n");
+    if (text) return text;
   }
-  if (Array.isArray(interaction.steps)) {
-    return interaction.steps
-      .flatMap((step) => step.output ?? step.content ?? [])
-      .map((item) => item.text ?? "")
-      .filter(Boolean)
-      .join("\n");
-  }
-  throw new Error("Google response did not include output_text");
+  throw new Error("OpenAI response did not include output text");
 }
 
-function normalizeUsage(interaction) {
-  const usage = interaction.usage_metadata ?? interaction.usageMetadata ?? interaction.usage ?? {};
+function normalizeUsage(response) {
+  const usage = response.usage ?? {};
   return {
-    input_tokens: usage.input_token_count ?? usage.promptTokenCount ?? usage.input_tokens ?? null,
-    output_tokens: usage.output_token_count ?? usage.candidatesTokenCount ?? usage.output_tokens ?? null,
-    total_tokens: usage.total_token_count ?? usage.totalTokenCount ?? usage.total_tokens ?? null,
+    input_tokens: usage.input_tokens ?? null,
+    output_tokens: usage.output_tokens ?? null,
+    total_tokens: usage.total_tokens ?? null,
   };
 }
