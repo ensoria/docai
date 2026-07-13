@@ -3,7 +3,7 @@
 import path from "node:path";
 import process from "node:process";
 
-import { gradeRequestConstructionResponse } from "./complete-evaluation-grader.mjs";
+import { gradeEvaluationResponse } from "./complete-evaluation-grader.mjs";
 import {
   buildPromptRecord,
   blockedRecord,
@@ -63,7 +63,7 @@ async function runPrompt(prompt, task) {
     const message = await callAnthropic(prompt);
     const text = extractOutputText(message);
     const contentJson = parseModelJson(text);
-    const grade = gradeRequestConstructionResponse(contentJson, task);
+    const grade = gradeEvaluationResponse(contentJson, task);
     return {
       run_id: prompt.run_id,
       target_id: prompt.target.id,

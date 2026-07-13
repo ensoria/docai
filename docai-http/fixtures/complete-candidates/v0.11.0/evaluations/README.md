@@ -21,6 +21,14 @@ node docai-http/tools/run-anthropic-complete-evaluation.mjs request_construction
 node docai-http/tools/run-openai-complete-evaluation.mjs request_construction --target openai-frontier
 ```
 
+For the response-handling gate, run the same provider-specific commands with `response_handling`; the records merge into `runs/response-handling.jsonl`:
+
+```sh
+node docai-http/tools/run-google-complete-evaluation.mjs response_handling --target google-stable-agentic
+node docai-http/tools/run-anthropic-complete-evaluation.mjs response_handling --target anthropic-balanced
+node docai-http/tools/run-openai-complete-evaluation.mjs response_handling --target openai-frontier
+```
+
 These commands require `GOOGLE_API_KEY`, `ANTHROPIC_API_KEY`, or `OPENAI_API_KEY` respectively and send the selected evaluation prompts and context to the corresponding external model provider API.
 
 The Google runner sends the configured `temperature` value from `targets.json`. The Anthropic and OpenAI runners omit `temperature` because the current required target models reject that parameter. Determinism for those targets is handled by fixed prompts, no tools, reviewed JSON output, and the request-construction grader.

@@ -240,7 +240,9 @@ Deferred compact expansion work:
   - [x] Remove `temperature` from the OpenAI and Anthropic request-construction runners after both required target models rejected that parameter.
   - [x] Re-run the OpenAI and Anthropic request-construction commands locally and replace the `temperature` blocked records with provider results.
   - [x] Run request-construction tasks against each target LLM and record model-specific results.
-  - [ ] Run response-handling tasks against each target LLM and record model-specific results.
+  - [x] Add automated response-handling result grading and provider-runner support.
+  - [x] Attempt the Google response-handling run from the Codex managed environment and record the external data-export block.
+  - [ ] Run response-handling tasks locally against each required target and record model-specific results.
   - [ ] Run error-handling tasks against each target LLM and record model-specific results.
   - [ ] Run workflow-completion tasks against each target LLM and record model-specific results.
   - [ ] Record token-load measurements for each task/model/profile combination.

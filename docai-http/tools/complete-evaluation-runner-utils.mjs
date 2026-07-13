@@ -130,9 +130,9 @@ function outputContract(taskGroup) {
     return [
       "Return an object with:",
       "- `success_status`: selected success status code.",
-      "- `body_handling`: fields, nullability, and body-presence behavior to handle.",
+      "- `body_handling`: object with `fields`, `status_value` when the response documents a fixed status value, and any nullability/body-presence behavior to handle.",
       "- `headers`: response headers to read, or `none`.",
-      "- `related_followups`: related workflow or webhook files to consider.",
+      "- `related_followups`: array of docs-root-relative workflow or webhook file paths to consider.",
       "- `evidence`: array of short context quotes or section names used.",
       "- `uncertainties`: array of missing or ambiguous facts, empty when none.",
     ].join("\n");

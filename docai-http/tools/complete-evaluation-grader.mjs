@@ -2,6 +2,16 @@ export function gradeRequestConstructionRecord(record, task) {
   return gradeRequestConstructionResponse(record.response?.content_json, task);
 }
 
+export function gradeEvaluationRecord(record, task) {
+  return gradeEvaluationResponse(record.response?.content_json, task);
+}
+
+export function gradeEvaluationResponse(response, task) {
+  if (task.group === "request_construction") return gradeRequestConstructionResponse(response, task);
+  if (task.group === "response_handling") return gradeResponseHandlingResponse(response, task);
+  return { pass: false, reasons: [`no automated grader for task group ${task.group}`] };
+}
+
 export function gradeRequestConstructionResponse(response, task) {
   if (task.group !== "request_construction") {
     return { pass: false, reasons: [`no automated grader for task group ${task.group}`] };
@@ -21,6 +31,64 @@ export function gradeRequestConstructionResponse(response, task) {
     pass: reasons.length === 0,
     reasons: reasons.length === 0 ? ["matched request construction expected outcome"] : reasons,
   };
+}
+
+export function gradeResponseHandlingResponse(response, task) {
+  if (task.group !== "response_handling") {
+    return { pass: false, reasons: [`no automated grader for task group ${task.group}`] };
+  }
+  if (!response || typeof response !== "object") {
+    return { pass: false, reasons: ["response.content_json is required"] };
+  }
+
+  const reasons = [];
+  if (Number(response.success_status) !== Number(task.expected_outcome.success_status)) {
+    reasons.push(`success_status expected ${task.expected_outcome.success_status}`);
+  }
+  validateExpectedResponseBodyHandling(task, response, reasons);
+  validateExpectedResponseHeaders(task, response, reasons);
+  validateExpectedRelatedFollowups(task, response, reasons);
+
+  return {
+    pass: reasons.length === 0,
+    reasons: reasons.length === 0 ? ["matched response handling expected outcome"] : reasons,
+  };
+}
+
+function validateExpectedResponseBodyHandling(task, response, reasons) {
+  const bodyText = searchableText(response.body_handling);
+  (task.expected_outcome.body_fields ?? []).forEach((field) => {
+    if (!containsToken(bodyText, field)) reasons.push(`body_handling must include field ${field}`);
+  });
+  if (task.expected_outcome.status_value && !containsToken(bodyText, task.expected_outcome.status_value)) {
+    reasons.push(`body_handling must include status value ${task.expected_outcome.status_value}`);
+  }
+}
+
+function validateExpectedResponseHeaders(task, response, reasons) {
+  const expected = task.expected_outcome.response_headers;
+  if (expected !== "none") return;
+  const actual = response.headers ?? response.response_headers;
+  if (actual === "none" || actual === null) return;
+  if (Array.isArray(actual) && actual.length === 0) return;
+  if (actual && typeof actual === "object" && Object.keys(actual).length === 0) return;
+  reasons.push("headers expected none");
+}
+
+function validateExpectedRelatedFollowups(task, response, reasons) {
+  const relatedText = searchableText(response.related_followups ?? response.related);
+  (task.expected_outcome.related ?? []).forEach((relativePath) => {
+    if (!containsToken(relatedText, relativePath)) reasons.push(`related_followups must include ${relativePath}`);
+  });
+}
+
+function searchableText(value) {
+  if (typeof value === "string") return value.toLowerCase();
+  return JSON.stringify(value ?? "").toLowerCase();
+}
+
+function containsToken(text, token) {
+  return text.includes(String(token).toLowerCase());
 }
 
 function validateExpectedPath(task, response, reasons) {

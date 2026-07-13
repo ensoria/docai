@@ -5,7 +5,7 @@ import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 
-import { gradeRequestConstructionRecord } from "./complete-evaluation-grader.mjs";
+import { gradeEvaluationRecord } from "./complete-evaluation-grader.mjs";
 
 const SPEC_VERSION = "0.11.0";
 const REQUIRED_GROUPS = new Set([
@@ -323,12 +323,12 @@ function validateRunReview(record, task) {
 }
 
 function validateAutomatedOutcome(record, task) {
-  if (task.group === "request_construction") {
+  if (task.group === "request_construction" || task.group === "response_handling") {
     if (record.status === "inconclusive" && record.review.fixture_gap) return;
-    const result = gradeRequestConstructionRecord(record, task);
+    const result = gradeEvaluationRecord(record, task);
     if (record.review.matches_expected_outcome !== result.pass) {
       throw new Error(
-        `run record ${record.run_id} review.matches_expected_outcome disagrees with request-construction grader: ${result.reasons.join("; ")}`,
+        `run record ${record.run_id} review.matches_expected_outcome disagrees with ${task.group} grader: ${result.reasons.join("; ")}`,
       );
     }
   }
