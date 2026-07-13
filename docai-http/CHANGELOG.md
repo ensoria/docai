@@ -81,6 +81,7 @@ DocAI HTTP draft history. Specification versioning and compatibility rules are d
 - Adds automated token-load grading, required-run coverage checks, and a local recorder for deterministic complete-candidate full/compact context metrics.
 - Records passing token-load metric results for all required complete-candidate target models.
 - Summarizes required complete-candidate evaluation gates, fixture gaps, and publication impact after all required task groups pass.
+- Adds an OpenAPI comparison evidence plan and top-level README evidence summary without publishing unsupported comparative benchmark claims.
 
 ## 0.11.0 (Draft - Compatibility Core)
 

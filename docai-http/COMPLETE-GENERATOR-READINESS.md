@@ -14,7 +14,8 @@ Current candidate evidence:
 - A corpus-specific complete-candidate checker exists at `tools/check-complete-candidates.mjs`.
 - A complete-candidate evaluation task packet and local context metrics exist under `fixtures/complete-candidates/v0.11.0/evaluations/`.
 - Live LLM execution procedure and gate rationale are documented in `LIVE-LLM-EVALUATION.md`.
-- Complete §9.1 focused fixture coverage and live LLM task evaluation evidence are still missing.
+- Complete §9.1 focused fixture coverage and required-target LLM task evaluation evidence exist for the current complete-candidate task packet.
+- OpenAPI comparison evidence is planned in `OPENAPI-COMPARISON-EVIDENCE.md`, but the OpenAPI baseline has not been run yet.
 
 ## Publication Gate
 
@@ -29,6 +30,8 @@ Do not update the README publication label to `Complete-generator-ready candidat
 - `README.md`, `fixtures/README.md`, `RELEASE.md`, and `CHANGELOG.md` describe the same publication label, scope, evidence, and known limits.
 
 Until those conditions are met, complete-surface fixtures and checkers are candidate evidence only. They must not imply stable compatibility for non-core structures.
+
+OpenAPI comparison evidence is not required for the `Complete-generator-ready candidate` label unless the README makes measured comparative claims against OpenAPI. When comparative claims are made, they must be backed by `OPENAPI-COMPARISON-EVIDENCE.md` and should stay scoped to the evaluated fixtures, models, tasks, and run dates.
 
 ## Minimum Complete-Surface Corpus
 
@@ -139,5 +142,5 @@ Evaluation results do not need to prove that every LLM succeeds, but they must s
 3. Create the matching compact projection and token-saving notes. Done for the first candidate pair.
 4. Add focused valid and invalid fixtures for every README section 9.1 complete-surface requirement.
 5. Add the complete-surface expectation checker by composing existing candidate checks where practical.
-6. Run the checker and LLM task evaluations. The corpus-specific checker, local evaluation packet checks, and live execution procedure exist; live LLM task evaluations remain pending.
+6. Run the checker and LLM task evaluations. Done for the current complete-candidate task packet; required-target live task records and token-load records are summarized in `fixtures/complete-candidates/v0.11.0/evaluations/RESULTS.md`.
 7. Update the README publication label only when all evidence supports the broader claim.

@@ -1,0 +1,86 @@
+# OpenAPI Comparison Evidence Plan
+
+This document tracks the evidence needed before DocAI HTTP claims measured advantages over OpenAPI for LLM/API-client implementation tasks.
+
+It is adoption and evaluation guidance, not a normative specification source. `README.md` remains authoritative for DocAI HTTP format rules. Comparative claims in the top-level repository README should cite this file and must not go beyond the data recorded here.
+
+## Purpose
+
+DocAI HTTP is designed to make API behavior easier for LLMs to load, reason about, and use correctly. To support that design claim with data, compare DocAI HTTP against OpenAPI on the same API fixture, task set, target models, output contracts, and grading policy.
+
+The comparison should answer:
+
+- Accuracy: does the model produce the expected request, response-handling, error-handling, and workflow behavior?
+- Context load: how much selected context must be loaded for the task?
+- Reliability: when a model fails, is the cause missing source information, ambiguous source structure, a model-specific mistake, or a DocAI/OpenAPI representation gap?
+- Cost signal: when provider usage is safe to publish, how do input tokens, output tokens, latency, and cost differ for the same task?
+
+## Current Evidence Status
+
+The DocAI HTTP side has complete required-target evidence for the current complete-candidate task packet. The OpenAPI baseline has not been run yet, so the project should not yet publish a measured "DocAI beats OpenAPI" claim.
+
+| Evidence item | Current result | Notes |
+|---|---:|---|
+| DocAI HTTP live task records | 15 / 15 pass | Request construction, response handling, error handling, and workflow completion across the three required target models. |
+| DocAI HTTP token-load records | 6 / 6 pass | Deterministic local full/compact measurements across the three required target models. |
+| DocAI HTTP create-user compact reduction | 748 chars, approx 187 chars/4 tokens | `10147` compact chars vs `10895` full chars; about 6.9% less selected context. |
+| DocAI HTTP checkout compact reduction | 588 chars, approx 147 chars/4 tokens | `16100` compact chars vs `16688` full chars; about 3.5% less selected context. |
+| Raw complete OpenAPI source fixture size | 5691 chars, approx 1423 chars/4 tokens | This raw size is not directly comparable to DocAI task context because the source fixture does not contain all pass-through conventions, workflow recovery guidance, examples, and caller actions required by the same LLM tasks. |
+| OpenAPI baseline task records | pending | Required before publishing measured comparative accuracy or cost claims. |
+
+Source result files:
+
+- DocAI HTTP results: `fixtures/complete-candidates/v0.11.0/evaluations/RESULTS.md`
+- DocAI HTTP run records: `fixtures/complete-candidates/v0.11.0/evaluations/runs/*.jsonl`
+- OpenAPI source fixture: `fixtures/complete-candidates/v0.11.0/source/complete-openapi.yaml`
+
+## Fair Comparison Conditions
+
+Use at least these conditions before drawing conclusions:
+
+| Condition | Context given to the model | Why it matters |
+|---|---|---|
+| OpenAPI raw | The source OpenAPI YAML as authored. | Measures the most direct "just give the LLM OpenAPI" baseline. |
+| OpenAPI task slice | Only the relevant OpenAPI paths/components plus required top-level metadata. | Avoids penalizing OpenAPI only for whole-file loading when a retrieval system can slice it. |
+| OpenAPI enriched | OpenAPI plus the same authoritative pass-through prose needed for conventions, workflows, webhooks, and caller actions. | Avoids penalizing OpenAPI for facts not present in the raw machine-readable source. |
+| DocAI HTTP full | The existing full-profile retrieval path for the same task. | Measures the readable, behavior-explicit baseline. |
+| DocAI HTTP compact | The existing compact-profile retrieval path for tasks where compact exists. | Measures token-saving behavior when compact reductions are available. |
+
+Do not compare raw OpenAPI size alone against DocAI task context as an efficiency result. A smaller source file can still be less useful if task-critical behavior is absent or requires extra external prose.
+
+## Metrics To Record
+
+Record these metrics per task, target, and context condition:
+
+- `status`: `pass`, `fail`, `blocked`, or `inconclusive`.
+- `matches_expected_outcome`: whether the existing task grader accepts the result.
+- `fixture_gap`: whether the failure exposes missing or contradictory documentation.
+- `context_utf8_bytes`, `context_characters`, and `approx_tokens_chars_div_4`.
+- Provider-reported `input_tokens`, `output_tokens`, and `total_tokens` when safe to publish.
+- Latency and cost when the provider terms and account policy allow publication.
+- Failure category: request path/header/body, multipart handling, response body/header, error status/code/action, workflow state, webhook reconciliation, missing source fact, or parser/output-format issue.
+
+Useful aggregate statistics:
+
+- Pass rate by condition and task group.
+- Fixture-gap rate by condition.
+- Mean and median selected-context size by condition.
+- Compact reduction percent versus DocAI full for matching tasks.
+- Provider-token delta versus DocAI full and OpenAPI baselines, when provider usage is recorded.
+
+## Work Plan
+
+- [ ] Define OpenAPI baseline prompt contracts that reuse the existing complete-candidate `tasks.json` user tasks and expected outcomes without leaking the expected answer.
+- [ ] Add an OpenAPI context builder for raw, task-sliced, and enriched OpenAPI conditions.
+- [ ] Add deterministic local context metrics for each OpenAPI condition and task.
+- [ ] Reuse the existing automated graders for request construction, response handling, error handling, and workflow completion.
+- [ ] Add JSONL run files for OpenAPI baseline results without mixing them into DocAI HTTP conformance evidence.
+- [ ] Run required target models against the OpenAPI baseline conditions.
+- [ ] Compare DocAI full, DocAI compact, OpenAPI raw, OpenAPI task slice, and OpenAPI enriched results in a single summary table.
+- [ ] Update the top-level README with only the measured claims supported by the completed comparison.
+
+## Publication Rule
+
+Before the OpenAPI baseline is complete, the README may say that comparative evidence is planned and that DocAI-side task evidence exists. After the baseline is complete, the README may state measured differences only for the evaluated fixture, target models, tasks, and date.
+
+Avoid broad claims such as "DocAI is always more accurate than OpenAPI" unless future evidence covers enough APIs, models, and task classes to support that scope.

@@ -258,6 +258,20 @@ Deferred compact expansion work:
   - [x] Summarize failures, fixture gaps found by the evaluations, and publication impact in the evaluation results.
 - [x] Keep the README publication label unchanged until fixture and checker evidence supports the broader claim. Decision: keep the current README publication label as `Compatibility Core implementation target`; do not advertise complete-generator-ready until the evidence gate in `COMPLETE-GENERATOR-READINESS.md` is complete.
 
+## P3: Compare DocAI HTTP Against OpenAPI For LLM Use
+
+- [ ] Build measured evidence for why an LLM should use DocAI HTTP instead of raw or lightly processed OpenAPI for API-calling tasks.
+  - [x] Add the comparison evidence plan and current DocAI-side baseline status in `OPENAPI-COMPARISON-EVIDENCE.md`.
+  - [x] Add a top-level README summary that links to the comparison evidence and avoids unsupported claims before the OpenAPI baseline is run.
+  - [ ] Define OpenAPI baseline prompt contracts that reuse the existing complete-candidate evaluation tasks without leaking `expected_outcome`.
+  - [ ] Add OpenAPI context builders for raw OpenAPI, task-sliced OpenAPI, and enriched OpenAPI with required pass-through behavior prose.
+  - [ ] Record deterministic context metrics for each OpenAPI baseline condition and task.
+  - [ ] Reuse the existing automated graders to compare OpenAPI baseline outputs against the same expected outcomes.
+  - [ ] Add separate JSONL run files for OpenAPI baseline results without mixing them into DocAI HTTP conformance evidence.
+  - [ ] Run required target models against OpenAPI baseline conditions after explicit provider-send approval.
+  - [ ] Summarize pass rate, fixture-gap rate, selected-context size, provider usage when publishable, and failure categories across DocAI full, DocAI compact, OpenAPI raw, OpenAPI sliced, and OpenAPI enriched conditions.
+  - [ ] Update the top-level README with measured comparative claims only after the OpenAPI baseline data exists.
+
 ## Parking Lot
 
 - [ ] Decide whether `README.ja.md` should remain TODO until after 1.0 or be removed from release artifacts.
