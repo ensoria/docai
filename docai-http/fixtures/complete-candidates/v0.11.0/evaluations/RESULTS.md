@@ -1,6 +1,6 @@
 # Complete Candidate Evaluation Results
 
-Status: Google request-construction runs passed on 2026-07-13 after request-construction grader policy review. Anthropic and OpenAI request-construction runs are currently blocked by provider request errors because the target models reject `temperature`; the runners have been updated to omit `temperature` for those providers, and maintainer reruns are pending. Full required live LLM evaluation coverage is still pending.
+Status: all required request-construction runs passed on 2026-07-13 after request-construction grader policy review and provider-specific runner fixes. Full required live LLM evaluation coverage is still pending for response handling, error handling, workflow completion, and token-load measurements.
 
 This file records local context metrics and reviewed live LLM evaluation results for the evaluation packet in `tasks.json`. Local metrics confirm that the retrieval sets are resolvable and give a repeatable token-load proxy. They do not establish model success.
 
@@ -10,8 +10,8 @@ Defined in `targets.json` on 2026-07-11. Required targets must run every task gr
 
 | Target | Provider | Model | Required | Role | Status |
 |---|---|---|---|---|---|
-| openai-frontier | openai | gpt-5.6-sol | yes | frontier reasoning and coding baseline | request-construction blocked by unsupported `temperature`; runner fixed, rerun pending |
-| anthropic-balanced | anthropic | claude-sonnet-5 | yes | balanced cross-provider long-context baseline | request-construction blocked by deprecated `temperature`; runner fixed, rerun pending |
+| openai-frontier | openai | gpt-5.6-sol | yes | frontier reasoning and coding baseline | request-construction passed; other groups pending |
+| anthropic-balanced | anthropic | claude-sonnet-5 | yes | balanced cross-provider long-context baseline | request-construction passed; other groups pending |
 | google-stable-agentic | google | gemini-3.5-flash | yes | stable agentic and coding baseline | request-construction smoke run passed; other groups pending |
 | openai-cost | openai | gpt-5.6-luna | no | cost-sensitive OpenAI comparison | optional pending |
 | anthropic-fast | anthropic | claude-haiku-4-5 | no | fast Anthropic comparison | optional pending |
@@ -53,11 +53,11 @@ Run records: `runs/request-construction.jsonl`
 
 | Target | Task | Status | Fixture gap | Notes |
 |---|---|---|---|---|
-| anthropic-balanced | request-create-user-compact | blocked | no | Provider rejected `temperature` as deprecated for this model. The Anthropic runner now omits `temperature`; rerun pending. |
-| anthropic-balanced | request-upload-document-full | blocked | no | Provider rejected `temperature` as deprecated for this model. The Anthropic runner now omits `temperature`; rerun pending. |
+| anthropic-balanced | request-create-user-compact | pass | no | Matched the reviewed request-construction expected outcome. |
+| anthropic-balanced | request-upload-document-full | pass | no | Matched the reviewed request-construction expected outcome, including multipart part content types and HTTP-library boundary delegation. |
 | google-stable-agentic | request-create-user-compact | pass | no | Matched the reviewed request-construction expected outcome, including the documented `/v1` base path and bearer authentication. |
 | google-stable-agentic | request-upload-document-full | pass | no | Matched the reviewed request-construction expected outcome, including `/v1`, multipart part content types, and explicit HTTP-library boundary delegation. |
-| openai-frontier | request-create-user-compact | blocked | no | Provider rejected `temperature` as unsupported for this model. The OpenAI runner now omits `temperature`; rerun pending. |
-| openai-frontier | request-upload-document-full | blocked | no | Provider rejected `temperature` as unsupported for this model. The OpenAI runner now omits `temperature`; rerun pending. |
+| openai-frontier | request-create-user-compact | pass | no | Matched the reviewed request-construction expected outcome, including the documented `/v1` base path and bearer authentication. |
+| openai-frontier | request-upload-document-full | pass | no | Matched the reviewed request-construction expected outcome, including `/v1`, multipart part content types, and HTTP-library boundary delegation. |
 
-Publication impact: Google request-construction evidence is usable for that target, but the request-construction gate is not complete. Replace the Anthropic and OpenAI blocked records with provider results from a maintainer-run local execution using the updated no-temperature runners before proceeding to later gates or changing the README publication label.
+Publication impact: Gate 1 request-construction evidence is complete for the required targets. The README publication label must remain unchanged until the response-handling, error-handling, workflow-completion, and token-load gates also have reviewed required-target results.

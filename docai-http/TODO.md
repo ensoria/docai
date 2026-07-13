@@ -238,8 +238,8 @@ Deferred compact expansion work:
   - [x] Get explicit approval to send repository-derived evaluation prompts and fixture context to OpenAI and Anthropic.
   - [x] Attempt OpenAI and Anthropic request-construction runs from the Codex managed environment and document that external provider data export is policy-blocked there.
   - [x] Remove `temperature` from the OpenAI and Anthropic request-construction runners after both required target models rejected that parameter.
-  - [ ] Re-run the OpenAI and Anthropic request-construction commands locally and replace the `temperature` blocked records with provider results.
-  - [ ] Run request-construction tasks against each target LLM and record model-specific results.
+  - [x] Re-run the OpenAI and Anthropic request-construction commands locally and replace the `temperature` blocked records with provider results.
+  - [x] Run request-construction tasks against each target LLM and record model-specific results.
   - [ ] Run response-handling tasks against each target LLM and record model-specific results.
   - [ ] Run error-handling tasks against each target LLM and record model-specific results.
   - [ ] Run workflow-completion tasks against each target LLM and record model-specific results.
