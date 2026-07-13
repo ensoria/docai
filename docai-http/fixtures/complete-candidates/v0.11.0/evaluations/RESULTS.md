@@ -1,6 +1,6 @@
 # Complete Candidate Evaluation Results
 
-Status: a Google request-construction smoke run was recorded on 2026-07-13. Full required live LLM evaluation coverage is still pending.
+Status: a Google request-construction smoke run passed on 2026-07-13 after request-construction grader policy review. Full required live LLM evaluation coverage is still pending.
 
 This file records local context metrics and reviewed live LLM evaluation results for the evaluation packet in `tasks.json`. Local metrics confirm that the retrieval sets are resolvable and give a repeatable token-load proxy. They do not establish model success.
 
@@ -12,7 +12,7 @@ Defined in `targets.json` on 2026-07-11. Required targets must run every task gr
 |---|---|---|---|---|---|
 | openai-frontier | openai | gpt-5.6-sol | yes | frontier reasoning and coding baseline | pending |
 | anthropic-balanced | anthropic | claude-sonnet-5 | yes | balanced cross-provider long-context baseline | pending |
-| google-stable-agentic | google | gemini-3.5-flash | yes | stable agentic and coding baseline | request-construction smoke run inconclusive; fixture/grader review needed |
+| google-stable-agentic | google | gemini-3.5-flash | yes | stable agentic and coding baseline | request-construction smoke run passed; other groups pending |
 | openai-cost | openai | gpt-5.6-luna | no | cost-sensitive OpenAI comparison | optional pending |
 | anthropic-fast | anthropic | claude-haiku-4-5 | no | fast Anthropic comparison | optional pending |
 | google-cost | google | gemini-3.1-flash-lite | no | cost-sensitive Google comparison | optional pending |
@@ -24,6 +24,8 @@ Before live execution, verify each model ID against the provider's official mode
 Request-construction prompt records can be generated with `node docai-http/tools/build-complete-evaluation-prompts.mjs request_construction` from the repository root. The command emits required targets by default and can include optional targets with `--include-optional`.
 
 Live result records belong in `runs/*.jsonl` and are checked by `node docai-http/tools/check-complete-evaluations.mjs`. This preparation does not count as live LLM evidence. A request-construction run is complete only after each required target response is captured, reviewed against `tasks.json` expected outcomes, checked from the JSONL record, and summarized below.
+
+Request-construction grading accepts representation-equivalent answers when the supplied context supports them: endpoint paths may include the documented `/v1` base path, bearer authentication may use concrete fake bearer-token placeholders, multipart part content types may be represented as direct part fields or nested part headers, and multipart boundary delegation must be represented explicitly.
 
 ## Local Context Metrics
 
@@ -51,7 +53,7 @@ Run records: `runs/request-construction.jsonl`
 
 | Target | Task | Status | Fixture gap | Notes |
 |---|---|---|---|---|
-| google-stable-agentic | request-create-user-compact | inconclusive | yes | Automated grading expected `/users` and placeholder `Authorization`, but the model used the documented `/v1` base path and a concrete bearer token. Review the expected outcome and grader before treating this as a model failure. |
-| google-stable-agentic | request-upload-document-full | inconclusive | yes | Automated grading expected `/documents`, top-level part `content_type`, and explicit boundary delegation, but the model used the documented `/v1` base path and nested multipart part headers. Review the expected outcome and grader before treating this as a model failure. |
+| google-stable-agentic | request-create-user-compact | pass | no | Matched the reviewed request-construction expected outcome, including the documented `/v1` base path and bearer authentication. |
+| google-stable-agentic | request-upload-document-full | pass | no | Matched the reviewed request-construction expected outcome, including `/v1`, multipart part content types, and explicit HTTP-library boundary delegation. |
 
-Publication impact: do not continue broad live LLM execution until the request-construction expected outcomes and grader policy are reviewed for base path handling, bearer-token placeholders, multipart part header representation, and multipart boundary delegation.
+Publication impact: Google request-construction smoke evidence is now usable for this target, but the README publication label must remain unchanged until every required target and task group has reviewed live results.

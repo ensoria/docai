@@ -5,6 +5,8 @@ import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 
+import { gradeRequestConstructionRecord } from "./complete-evaluation-grader.mjs";
+
 const SPEC_VERSION = "0.11.0";
 const REQUIRED_GROUPS = new Set([
   "request_construction",
@@ -322,104 +324,12 @@ function validateRunReview(record, task) {
 
 function validateAutomatedOutcome(record, task) {
   if (task.group === "request_construction") {
-    const result = gradeRequestConstruction(record, task);
+    if (record.status === "inconclusive" && record.review.fixture_gap) return;
+    const result = gradeRequestConstructionRecord(record, task);
     if (record.review.matches_expected_outcome !== result.pass) {
       throw new Error(
         `run record ${record.run_id} review.matches_expected_outcome disagrees with request-construction grader: ${result.reasons.join("; ")}`,
       );
     }
   }
-}
-
-function gradeRequestConstruction(record, task) {
-  const response = record.response.content_json;
-  if (!response || typeof response !== "object") return { pass: false, reasons: ["response.content_json is required"] };
-
-  const reasons = [];
-  if (response.method !== task.expected_outcome.method) reasons.push(`method expected ${task.expected_outcome.method}`);
-  if (response.path !== task.expected_outcome.path) reasons.push(`path expected ${task.expected_outcome.path}`);
-  validateExpectedHeaders(task, response, reasons);
-  validateExpectedBody(task, response, reasons);
-  validateExpectedParts(task, response, reasons);
-
-  return {
-    pass: reasons.length === 0,
-    reasons: reasons.length === 0 ? ["matched request construction expected outcome"] : reasons,
-  };
-}
-
-function validateExpectedHeaders(task, response, reasons) {
-  if (!Array.isArray(task.expected_outcome.headers)) return;
-  const actualHeaders = normalizeHeaders(response.headers);
-  task.expected_outcome.headers.forEach((header) => {
-    const separator = header.indexOf(":");
-    const name = header.slice(0, separator).trim().toLowerCase();
-    const expectedValue = header.slice(separator + 1).trim().toLowerCase();
-    const actualValue = actualHeaders.get(name);
-    if (!actualValue) {
-      reasons.push(`missing header ${name}`);
-      return;
-    }
-    if (actualValue !== expectedValue) reasons.push(`header ${name} expected ${expectedValue}`);
-  });
-}
-
-function normalizeHeaders(headers) {
-  if (Array.isArray(headers)) {
-    return new Map(
-      headers.map((header) => {
-        const separator = header.indexOf(":");
-        return [header.slice(0, separator).trim().toLowerCase(), header.slice(separator + 1).trim().toLowerCase()];
-      }),
-    );
-  }
-  if (headers && typeof headers === "object") {
-    return new Map(Object.entries(headers).map(([name, value]) => [name.toLowerCase(), String(value).toLowerCase()]));
-  }
-  return new Map();
-}
-
-function validateExpectedBody(task, response, reasons) {
-  if (!task.expected_outcome.body) return;
-  if (!response.body || typeof response.body !== "object" || Array.isArray(response.body)) {
-    reasons.push("response body object is required");
-    return;
-  }
-  Object.entries(task.expected_outcome.body).forEach(([key, value]) => {
-    if (response.body[key] !== value) reasons.push(`body.${key} expected ${value}`);
-  });
-  (task.expected_outcome.omit_optional_fields ?? []).forEach((field) => {
-    if (Object.prototype.hasOwnProperty.call(response.body, field)) reasons.push(`optional field ${field} should be omitted`);
-  });
-}
-
-function validateExpectedParts(task, response, reasons) {
-  if (!Array.isArray(task.expected_outcome.parts)) return;
-  const actualParts = normalizeParts(response);
-  task.expected_outcome.parts.forEach((expectedPart) => {
-    const actualPart = actualParts.get(expectedPart.name);
-    if (!actualPart) {
-      reasons.push(`missing multipart part ${expectedPart.name}`);
-      return;
-    }
-    if (expectedPart.filename_required && actualPart.filename_required === false) {
-      reasons.push(`multipart part ${expectedPart.name} requires filename`);
-    }
-    if (expectedPart.content_type && actualPart.content_type !== expectedPart.content_type) {
-      reasons.push(`multipart part ${expectedPart.name} content_type expected ${expectedPart.content_type}`);
-    }
-  });
-  if (task.expected_outcome.content_type) {
-    const contentType = String(response.content_type ?? response.headers?.["Content-Type"] ?? response.headers?.["content-type"] ?? "").toLowerCase();
-    if (!contentType.includes("multipart/form-data")) reasons.push("content_type must include multipart/form-data");
-    if (!contentType.includes("boundary") && !String(response.boundary ?? "").toLowerCase().includes("library")) {
-      reasons.push("multipart boundary delegation must be represented");
-    }
-  }
-}
-
-function normalizeParts(response) {
-  const rawParts = response.parts ?? response.body?.parts ?? response.body;
-  if (!Array.isArray(rawParts)) return new Map();
-  return new Map(rawParts.filter((part) => part && part.name).map((part) => [part.name, part]));
 }

@@ -61,7 +61,8 @@ DocAI HTTP draft history. Specification versioning and compatibility rules are d
 - Adds automated request-construction grading for complete-candidate live result records.
 - Adds a live LLM evaluation procedure covering gate order, target order rationale, stop criteria, authentication, cost controls, result review, and publication impact.
 - Adds a Google Interactions API runner for complete-candidate request-construction live evaluation records.
-- Records a Google request-construction live smoke run and flags request-construction expected-outcome/grader gaps before broader provider execution.
+- Normalizes request-construction live grading for base paths, bearer-token placeholders, multipart part content-type forms, and explicit boundary delegation.
+- Records a passing Google request-construction live smoke run after request-construction grader-policy review.
 
 ## 0.11.0 (Draft - Compatibility Core)
 

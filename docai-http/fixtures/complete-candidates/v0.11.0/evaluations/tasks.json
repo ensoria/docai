@@ -22,6 +22,10 @@
       "expected_outcome": {
         "method": "POST",
         "path": "/users",
+        "accepted_paths": [
+          "/users",
+          "/v1/users"
+        ],
         "headers": [
           "Authorization: Bearer <access_token>",
           "Content-Type: application/json",
@@ -56,11 +60,18 @@
       "expected_outcome": {
         "method": "POST",
         "path": "/documents",
+        "accepted_paths": [
+          "/documents",
+          "/v1/documents"
+        ],
         "content_type": "multipart/form-data with library-generated boundary",
+        "boundary_handling": "library-generated",
         "parts": [
           {
             "name": "document",
+            "filename": "statement.pdf",
             "filename_required": true,
+            "content_type": "application/pdf",
             "allowed_content_types": [
               "application/pdf",
               "image/png"

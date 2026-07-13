@@ -232,7 +232,8 @@ Deferred compact expansion work:
   - [x] Add a live LLM execution procedure with gate order, provider order rationale, stop criteria, authentication, and cost controls.
   - [x] Add a Google Interactions API runner for the `google-stable-agentic` request-construction smoke run.
   - [x] Run the Google `request_construction` smoke run and record fixture/grader review findings.
-  - [ ] Review request-construction expected outcomes and grader handling for base paths, bearer-token placeholders, multipart part headers, and boundary delegation before running more providers.
+  - [x] Review request-construction expected outcomes and grader handling for base paths, bearer-token placeholders, multipart part headers, and boundary delegation before running more providers.
+  - [x] Re-run the Google `request_construction` smoke run after grader-policy normalization and record passing results.
   - [ ] Run request-construction tasks against each target LLM and record model-specific results.
   - [ ] Run response-handling tasks against each target LLM and record model-specific results.
   - [ ] Run error-handling tasks against each target LLM and record model-specific results.
