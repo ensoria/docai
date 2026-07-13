@@ -249,6 +249,9 @@ Deferred compact expansion work:
   - [x] Run error-handling tasks locally against each required target and record model-specific results.
   - [x] Add automated workflow-completion result grading and provider-runner support.
   - [x] Attempt the Google workflow-completion run from the Codex managed environment and record the external data-export block.
+  - [x] Normalize workflow-completion grading for concrete path values and surrounding preserved state.
+  - [x] Make live runners parse Markdown-fenced JSON responses and JSON with surrounding prose.
+  - [ ] Re-run the Anthropic workflow-completion task locally after fenced-JSON parser normalization.
   - [ ] Run workflow-completion tasks locally against each required target and record model-specific results.
   - [ ] Record token-load measurements for each task/model/profile combination.
   - [ ] Summarize failures, fixture gaps found by the evaluations, and publication impact in the evaluation results.

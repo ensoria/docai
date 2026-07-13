@@ -168,9 +168,54 @@ function outputContract(taskGroup) {
 }
 
 export function parseModelJson(text) {
+  return JSON.parse(extractJsonPayload(text));
+}
+
+function extractJsonPayload(text) {
   const trimmed = text.trim();
-  const fenced = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/);
-  return JSON.parse(fenced ? fenced[1] : trimmed);
+  const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+  if (fenced) return fenced[1].trim();
+
+  const start = trimmed.search(/[{\[]/);
+  if (start === -1) return trimmed;
+  const end = findJsonEnd(trimmed, start);
+  return end === -1 ? trimmed : trimmed.slice(start, end + 1);
+}
+
+function findJsonEnd(text, start) {
+  const open = text[start];
+  const close = open === "{" ? "}" : "]";
+  const stack = [];
+  let inString = false;
+  let escaped = false;
+  for (let index = start; index < text.length; index += 1) {
+    const char = text[index];
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (char === "\\") {
+        escaped = true;
+      } else if (char === "\"") {
+        inString = false;
+      }
+      continue;
+    }
+    if (char === "\"") {
+      inString = true;
+      continue;
+    }
+    if (char === "{" || char === "[") {
+      stack.push(char);
+      continue;
+    }
+    if (char === "}" || char === "]") {
+      const expected = stack.at(-1) === "{" ? "}" : "]";
+      if (char !== expected) return -1;
+      stack.pop();
+      if (stack.length === 0 && char === close) return index;
+    }
+  }
+  return -1;
 }
 
 export function parseJsonOrText(text) {

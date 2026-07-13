@@ -246,6 +246,8 @@ Each live result record must include:
 
 For request-construction, response-handling, error-handling, and workflow-completion records, `check-complete-evaluations.mjs` also verifies that `review.matches_expected_outcome` agrees with the corresponding automated grader. The error-handling grader accepts common shape labels with or without the `common:` reference prefix and allows behavior-complete error cases to appear in either `endpoint_errors` or `common_errors`.
 
+Provider prompts still request strict JSON, but the runners tolerate Markdown-fenced JSON and JSON objects with surrounding prose so that harmless wrapper text does not discard an otherwise reviewable result.
+
 ## Publication Impact
 
 Do not change the README publication label until:

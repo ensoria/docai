@@ -246,6 +246,8 @@ node docai-http/tools/build-complete-evaluation-prompts.mjs request_construction
 
 Request-construction、response-handling、error-handling、workflow-completion record については、`check-complete-evaluations.mjs` が `review.matches_expected_outcome` と対応する automated grader の一致も検証します。Error-handling grader は、`common:` reference prefix の有無が異なる common shape label を同等として扱い、caller-visible behavior が揃っている error case が `endpoint_errors` と `common_errors` のどちらに出ていても許容します。
 
+Provider prompt は引き続き strict JSON を要求しますが、runner は Markdown-fenced JSON と前後に prose が付いた JSON object を許容します。これにより、内容として review 可能な result が wrapper text だけで破棄されないようにします。
+
 ## Publication Impact
 
 次の条件を満たすまで、README publication label を変更しないでください。

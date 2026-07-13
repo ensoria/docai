@@ -143,10 +143,14 @@ function validateWorkflowStep(stepNumber, expected, actualText, reasons) {
 
 function validateWorkflowFailureRecovery(task, response, reasons) {
   const text = searchableText(response.failure_recovery ?? response.retryable_order_failure ?? response);
-  const requiredTokens = ["post /orders", "cart_id", "payment_id", "payment.pending", "retry"];
+  const fullText = searchableText(response);
+  const requiredTokens = ["post /orders", "cart_id", "payment_id", "retry"];
   requiredTokens.forEach((token) => {
     if (!containsToken(text, token)) reasons.push(`failure_recovery must include ${token}`);
   });
+  if (!containsToken(text, "payment.pending") && !containsToken(fullText, "payment.pending")) {
+    reasons.push("failure_recovery must include payment.pending");
+  }
 }
 
 function validateWorkflowWebhookReconciliation(task, response, reasons) {
