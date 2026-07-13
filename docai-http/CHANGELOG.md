@@ -85,6 +85,8 @@ DocAI HTTP draft history. Specification versioning and compatibility rules are d
 - Adds OpenAPI comparison prompt export and deterministic context metrics for raw, sliced, and enriched baseline conditions.
 - Adds an OpenAPI comparison checker and separate JSONL run-record format that reuse complete-candidate graders without mixing OpenAPI baseline records into DocAI HTTP conformance evidence.
 - Adds Google, Anthropic, and OpenAI provider runners that write OpenAPI comparison live-run records to condition-specific baseline JSONL files.
+- Records OpenAPI comparison live results for all required target models across raw, sliced, and enriched baseline conditions.
+- Summarizes the scoped DocAI HTTP versus OpenAPI comparison results and updates the top-level README with measured, fixture-limited claims.
 
 ## 0.11.0 (Draft - Compatibility Core)
 

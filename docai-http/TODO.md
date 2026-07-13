@@ -260,7 +260,7 @@ Deferred compact expansion work:
 
 ## P3: Compare DocAI HTTP Against OpenAPI For LLM Use
 
-- [ ] Build measured evidence for why an LLM should use DocAI HTTP instead of raw or lightly processed OpenAPI for API-calling tasks.
+- [x] Build measured evidence for why an LLM should use DocAI HTTP instead of raw or lightly processed OpenAPI for API-calling tasks.
   - [x] Add the comparison evidence plan and current DocAI-side baseline status in `OPENAPI-COMPARISON-EVIDENCE.md`.
   - [x] Add a top-level README summary that links to the comparison evidence and avoids unsupported claims before the OpenAPI baseline is run.
   - [x] Define OpenAPI baseline prompt contracts that reuse the existing complete-candidate evaluation tasks without leaking `expected_outcome`.
@@ -269,9 +269,9 @@ Deferred compact expansion work:
   - [x] Reuse the existing automated graders to compare OpenAPI baseline outputs against the same expected outcomes.
   - [x] Add a separate OpenAPI baseline JSONL run-record directory, example format, and checker path without mixing it into DocAI HTTP conformance evidence.
   - [x] Add provider runners or local execution commands that write actual OpenAPI baseline JSONL results.
-  - [ ] Run required target models against OpenAPI baseline conditions after explicit provider-send approval.
-  - [ ] Summarize pass rate, fixture-gap rate, selected-context size, provider usage when publishable, and failure categories across DocAI full, DocAI compact, OpenAPI raw, OpenAPI sliced, and OpenAPI enriched conditions.
-  - [ ] Update the top-level README with measured comparative claims only after the OpenAPI baseline data exists.
+  - [x] Run required target models against OpenAPI baseline conditions after explicit provider-send approval.
+  - [x] Summarize pass rate, fixture-gap rate, selected-context size, provider usage when publishable, and failure categories across DocAI full, DocAI compact, OpenAPI raw, OpenAPI sliced, and OpenAPI enriched conditions.
+  - [x] Update the top-level README with measured comparative claims only after the OpenAPI baseline data exists.
 
 ## Parking Lot
 

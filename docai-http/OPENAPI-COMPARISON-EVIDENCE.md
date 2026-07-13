@@ -17,7 +17,7 @@ The comparison should answer:
 
 ## Current Evidence Status
 
-The DocAI HTTP side has complete required-target evidence for the current complete-candidate task packet. OpenAPI baseline prompt contracts and deterministic context metrics exist, but OpenAPI live task records have not been run yet, so the project should not yet publish a measured "DocAI beats OpenAPI" claim.
+The DocAI HTTP side has complete required-target evidence for the current complete-candidate task packet. OpenAPI baseline prompt contracts, deterministic context metrics, required-target live task records, and a scoped comparison summary now exist. The top-level README may cite the measured results below, but should keep the scope limited to this fixture, target list, and task set.
 
 | Evidence item | Current result | Notes |
 |---|---:|---|
@@ -30,7 +30,7 @@ The DocAI HTTP side has complete required-target evidence for the current comple
 | OpenAPI comparison context metrics | 15 rows | 3 conditions × 5 live task groups; recorded in `fixtures/complete-candidates/v0.11.0/evaluations/openapi-baseline/CONTEXT-METRICS.md`. |
 | OpenAPI comparison run checker | available | `tools/check-openapi-comparison.mjs` validates context metrics and applies the existing complete-candidate graders to any OpenAPI baseline JSONL records. |
 | OpenAPI comparison provider runners | available | Google, Anthropic, and OpenAI runners write condition-specific JSONL records under `openapi-baseline/runs/` after explicit provider-send approval. |
-| OpenAPI baseline task records | pending | Required before publishing measured comparative accuracy or cost claims. |
+| OpenAPI baseline task records | 45 / 45 recorded | Required targets and all raw, sliced, and enriched conditions have run. Pass counts are raw `2 / 15`, sliced `2 / 15`, enriched `14 / 15`. |
 
 Source result files:
 
@@ -40,6 +40,7 @@ Source result files:
 - OpenAPI baseline prompt builder: `tools/build-openapi-comparison-prompts.mjs`
 - OpenAPI baseline context metrics: `fixtures/complete-candidates/v0.11.0/evaluations/openapi-baseline/CONTEXT-METRICS.md`
 - OpenAPI baseline checker: `tools/check-openapi-comparison.mjs`
+- OpenAPI baseline run records: `fixtures/complete-candidates/v0.11.0/evaluations/openapi-baseline/runs/*.jsonl`
 
 ## Fair Comparison Conditions
 
@@ -77,6 +78,43 @@ Useful aggregate statistics:
 - Compact reduction percent versus DocAI full for matching tasks.
 - Provider-token delta versus DocAI full and OpenAPI baselines, when provider usage is recorded.
 
+## Comparison Summary
+
+Recorded on 2026-07-14 for the current `complete-candidates/v0.11.0` fixture, three required target models, and five live task records per target. This is scoped evidence for this fixture and task set, not a general benchmark across all APIs.
+
+### Accuracy
+
+| Context condition | Live records | Pass | Fail | Blocked | Fixture-gap records | Pass rate |
+|---|---:|---:|---:|---:|---:|---:|
+| DocAI HTTP selected profile | 15 | 15 | 0 | 0 | 0 | 100.0% |
+| OpenAPI raw | 15 | 2 | 13 | 0 | 0 | 13.3% |
+| OpenAPI sliced | 15 | 2 | 13 | 0 | 0 | 13.3% |
+| OpenAPI enriched | 15 | 14 | 1 | 0 | 0 | 93.3% |
+
+DocAI HTTP selected profile means the profile used by each task in `tasks.json`: compact for create-user, payment response handling, create-user error handling, and checkout workflow; full for multipart document upload.
+
+### Selected Context Size
+
+| Context condition | Tasks measured | Min chars | Median chars | Mean chars | Max chars | Notes |
+|---|---:|---:|---:|---:|---:|---|
+| DocAI HTTP selected profile | 5 | 9315 | 10147 | 11771 | 16100 | Uses the same retrieval sets as the live DocAI task records. |
+| OpenAPI raw | 5 | 5738 | 5738 | 5738 | 5738 | Smaller because it omits several behavior facts needed by the tasks. |
+| OpenAPI sliced | 5 | 696 | 1445 | 2005 | 3608 | Smaller because it includes only mapped source blocks and still omits convention/recovery/follow-up behavior. |
+| OpenAPI enriched | 5 | 8088 | 10417 | 12394 | 18424 | Adds supplemental behavior prose, making accuracy comparable to DocAI but context size comparable or larger. |
+
+Provider-reported usage is retained in the JSONL run records, but this summary does not publish aggregate cost or cross-provider token totals. Token accounting and billing semantics differ by provider, and this repository has not recorded a normalized cost model.
+
+### Failure Categories
+
+OpenAPI raw and sliced failures were concentrated in facts that are absent or difficult to recover from the baseline OpenAPI context alone:
+
+- Request construction: missing common authorization and `Accept` header behavior; occasional multipart part/content-type details.
+- Response handling: missing response body fields, fixed `pending` status semantics, workflow follow-up, and webhook follow-up.
+- Error handling: missing endpoint-specific and common error status/code/action rows.
+- Workflow completion: missing named state transitions, preserved values, retryable recovery state, and early webhook reconciliation.
+
+OpenAPI enriched reduced those gaps by adding behavior prose; the remaining enriched failure was one Google response-handling run that omitted workflow and webhook follow-up paths.
+
 ## Work Plan
 
 - [x] Define OpenAPI baseline prompt contracts that reuse the existing complete-candidate `tasks.json` user tasks and expected outcomes without leaking the expected answer.
@@ -85,9 +123,9 @@ Useful aggregate statistics:
 - [x] Reuse the existing automated graders for request construction, response handling, error handling, and workflow completion.
 - [x] Add a separate JSONL run-record directory, example format, and checker path without mixing OpenAPI baseline records into DocAI HTTP conformance evidence.
 - [x] Add provider runners or local execution commands that write actual OpenAPI baseline JSONL results.
-- [ ] Run required target models against the OpenAPI baseline conditions.
-- [ ] Compare DocAI full, DocAI compact, OpenAPI raw, OpenAPI task slice, and OpenAPI enriched results in a single summary table.
-- [ ] Update the top-level README with only the measured claims supported by the completed comparison.
+- [x] Run required target models against the OpenAPI baseline conditions.
+- [x] Compare DocAI full, DocAI compact, OpenAPI raw, OpenAPI task slice, and OpenAPI enriched results in a single summary table.
+- [x] Update the top-level README with only the measured claims supported by the completed comparison.
 
 ## Publication Rule
 
