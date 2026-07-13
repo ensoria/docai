@@ -26,7 +26,7 @@ Live result は、すべての target model が成功することを証明する
 - `fixtures/complete-candidates/v0.11.0/evaluations/targets.json`: required target model と optional target model。
 - `tools/build-complete-evaluation-prompts.mjs`: deterministic JSONL prompt export。
 - `fixtures/complete-candidates/v0.11.0/evaluations/runs/*.jsonl`: live result record。
-- `tools/check-complete-evaluations.mjs`: task packet、target list、result record、local metric、request construction、response handling、error handling の automated grading check。
+- `tools/check-complete-evaluations.mjs`: task packet、target list、result record、local metric、request construction、response handling、error handling、workflow completion の automated grading check。
 - `fixtures/complete-candidates/v0.11.0/evaluations/RESULTS.md`: 人が読める status summary。
 
 各 live run の前に、provider 公式の model page と pricing page を再確認してください。Model availability、alias、context limit、pricing、usage accounting は provider 側が管理しており、DocAI HTTP の変更なしに変わる可能性があります。
@@ -244,7 +244,7 @@ node docai-http/tools/build-complete-evaluation-prompts.mjs request_construction
 - Non-blocked run では `review.matches_expected_outcome`
 - Non-blocked run では `response`、blocked run では `blocked_reason`
 
-Request-construction、response-handling、error-handling record については、`check-complete-evaluations.mjs` が `review.matches_expected_outcome` と対応する automated grader の一致も検証します。Error-handling grader は、`common:` reference prefix の有無が異なる common shape label を同等として扱い、caller-visible behavior が揃っている error case が `endpoint_errors` と `common_errors` のどちらに出ていても許容します。
+Request-construction、response-handling、error-handling、workflow-completion record については、`check-complete-evaluations.mjs` が `review.matches_expected_outcome` と対応する automated grader の一致も検証します。Error-handling grader は、`common:` reference prefix の有無が異なる common shape label を同等として扱い、caller-visible behavior が揃っている error case が `endpoint_errors` と `common_errors` のどちらに出ていても許容します。
 
 ## Publication Impact
 

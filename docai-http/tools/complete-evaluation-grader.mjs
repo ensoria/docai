@@ -10,6 +10,7 @@ export function gradeEvaluationResponse(response, task) {
   if (task.group === "request_construction") return gradeRequestConstructionResponse(response, task);
   if (task.group === "response_handling") return gradeResponseHandlingResponse(response, task);
   if (task.group === "error_handling") return gradeErrorHandlingResponse(response, task);
+  if (task.group === "workflow_completion") return gradeWorkflowCompletionResponse(response, task);
   return { pass: false, reasons: [`no automated grader for task group ${task.group}`] };
 }
 
@@ -75,6 +76,102 @@ export function gradeErrorHandlingResponse(response, task) {
     pass: reasons.length === 0,
     reasons: reasons.length === 0 ? ["matched error handling expected outcome"] : reasons,
   };
+}
+
+export function gradeWorkflowCompletionResponse(response, task) {
+  if (task.group !== "workflow_completion") {
+    return { pass: false, reasons: [`no automated grader for task group ${task.group}`] };
+  }
+  if (!response || typeof response !== "object") {
+    return { pass: false, reasons: ["response.content_json is required"] };
+  }
+
+  const reasons = [];
+  const steps = normalizeWorkflowSteps(response.steps);
+  const stepTexts = steps.map((step) => searchableText(step));
+  const expectedSteps = task.expected_outcome.steps ?? [];
+  const matchedIndexes = findWorkflowStepIndexes(stepTexts, expectedSteps, reasons);
+  expectedSteps.forEach((expected, index) => {
+    const actualText = stepTexts[matchedIndexes[index]];
+    if (!actualText) return;
+    validateWorkflowStep(index + 1, expected, actualText, reasons);
+  });
+  validateWorkflowFailureRecovery(task, response, reasons);
+  validateWorkflowWebhookReconciliation(task, response, reasons);
+
+  return {
+    pass: reasons.length === 0,
+    reasons: reasons.length === 0 ? ["matched workflow completion expected outcome"] : reasons,
+  };
+}
+
+function normalizeWorkflowSteps(value) {
+  if (Array.isArray(value)) return value;
+  if (value && typeof value === "object") return Object.values(value);
+  return [];
+}
+
+function findWorkflowStepIndexes(stepTexts, expectedSteps, reasons) {
+  const indexes = [];
+  let searchFrom = 0;
+  expectedSteps.forEach((expected, index) => {
+    const found = stepTexts.findIndex((text, actualIndex) => {
+      return actualIndex >= searchFrom && containsToken(text, expected.method) && workflowPathMatches(text, expected.path);
+    });
+    if (found === -1) {
+      reasons.push(`step ${index + 1} expected ${expected.method} ${expected.path}`);
+      indexes.push(-1);
+      return;
+    }
+    indexes.push(found);
+    searchFrom = found + 1;
+  });
+  return indexes;
+}
+
+function validateWorkflowStep(stepNumber, expected, actualText, reasons) {
+  (expected.pass ?? []).forEach((value) => {
+    if (!workflowValueMatches(actualText, value)) reasons.push(`step ${stepNumber} must pass ${value}`);
+  });
+  (expected.keep ?? []).forEach((value) => {
+    if (!containsToken(actualText, value)) reasons.push(`step ${stepNumber} must keep ${value}`);
+  });
+  if (expected.state_after_success && !containsToken(actualText, expected.state_after_success)) {
+    reasons.push(`step ${stepNumber} must reach ${expected.state_after_success}`);
+  }
+}
+
+function validateWorkflowFailureRecovery(task, response, reasons) {
+  const text = searchableText(response.failure_recovery ?? response.retryable_order_failure ?? response);
+  const requiredTokens = ["post /orders", "cart_id", "payment_id", "payment.pending", "retry"];
+  requiredTokens.forEach((token) => {
+    if (!containsToken(text, token)) reasons.push(`failure_recovery must include ${token}`);
+  });
+}
+
+function validateWorkflowWebhookReconciliation(task, response, reasons) {
+  const text = searchableText(response.webhook_reconciliation ?? response.early_webhook_reconciliation ?? response);
+  ["payment.completed", "payment_id"].forEach((token) => {
+    if (!containsToken(text, token)) reasons.push(`webhook_reconciliation must include ${token}`);
+  });
+}
+
+function workflowPathMatches(text, expectedPath) {
+  if (containsToken(text, expectedPath)) return true;
+  const pattern = escapeRegExp(expectedPath)
+    .replace(/\\\{[^}]+\\\}/g, "[a-z0-9_:-]+")
+    .replace(/\\\//g, "\\/");
+  return new RegExp(pattern, "i").test(text);
+}
+
+function workflowValueMatches(text, expectedValue) {
+  if (containsToken(text, expectedValue)) return true;
+  if (expectedValue === "type=card") return containsToken(text, "type") && containsToken(text, "card");
+  return false;
+}
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function validateExpectedErrorSet(label, expectedErrors, primaryErrors, fallbackErrors, reasons) {

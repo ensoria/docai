@@ -37,6 +37,14 @@ node docai-http/tools/run-anthropic-complete-evaluation.mjs error_handling --tar
 node docai-http/tools/run-openai-complete-evaluation.mjs error_handling --target openai-frontier
 ```
 
+For the workflow-completion gate, run the same provider-specific commands with `workflow_completion`; the records merge into `runs/workflow-completion.jsonl`:
+
+```sh
+node docai-http/tools/run-google-complete-evaluation.mjs workflow_completion --target google-stable-agentic
+node docai-http/tools/run-anthropic-complete-evaluation.mjs workflow_completion --target anthropic-balanced
+node docai-http/tools/run-openai-complete-evaluation.mjs workflow_completion --target openai-frontier
+```
+
 These commands require `GOOGLE_API_KEY`, `ANTHROPIC_API_KEY`, or `OPENAI_API_KEY` respectively and send the selected evaluation prompts and context to the corresponding external model provider API.
 
 The Google runner sends the configured `temperature` value from `targets.json`. The Anthropic and OpenAI runners omit `temperature` because the current required target models reject that parameter. Determinism for those targets is handled by fixed prompts, no tools, reviewed JSON output, and the automated grader for the current gate.

@@ -247,7 +247,9 @@ Deferred compact expansion work:
   - [x] Attempt the Google error-handling run from the Codex managed environment and record the external data-export block.
   - [x] Normalize error-handling grading for common-shape labels and behavior-equivalent endpoint/common grouping.
   - [x] Run error-handling tasks locally against each required target and record model-specific results.
-  - [ ] Run workflow-completion tasks against each target LLM and record model-specific results.
+  - [x] Add automated workflow-completion result grading and provider-runner support.
+  - [x] Attempt the Google workflow-completion run from the Codex managed environment and record the external data-export block.
+  - [ ] Run workflow-completion tasks locally against each required target and record model-specific results.
   - [ ] Record token-load measurements for each task/model/profile combination.
   - [ ] Summarize failures, fixture gaps found by the evaluations, and publication impact in the evaluation results.
 - [x] Keep the README publication label unchanged until fixture and checker evidence supports the broader claim. Decision: keep the current README publication label as `Compatibility Core implementation target`; do not advertise complete-generator-ready until the evidence gate in `COMPLETE-GENERATOR-READINESS.md` is complete.

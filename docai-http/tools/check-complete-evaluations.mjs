@@ -323,7 +323,12 @@ function validateRunReview(record, task) {
 }
 
 function validateAutomatedOutcome(record, task) {
-  if (task.group === "request_construction" || task.group === "response_handling" || task.group === "error_handling") {
+  if (
+    task.group === "request_construction" ||
+    task.group === "response_handling" ||
+    task.group === "error_handling" ||
+    task.group === "workflow_completion"
+  ) {
     if (record.status === "inconclusive" && record.review.fixture_gap) return;
     const result = gradeEvaluationRecord(record, task);
     if (record.review.matches_expected_outcome !== result.pass) {

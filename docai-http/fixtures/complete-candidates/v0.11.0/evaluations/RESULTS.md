@@ -10,9 +10,9 @@ Defined in `targets.json` on 2026-07-11. Required targets must run every task gr
 
 | Target | Provider | Model | Required | Role | Status |
 |---|---|---|---|---|---|
-| openai-frontier | openai | gpt-5.6-sol | yes | frontier reasoning and coding baseline | request-construction, response-handling, and error-handling passed; later groups pending |
-| anthropic-balanced | anthropic | claude-sonnet-5 | yes | balanced cross-provider long-context baseline | request-construction, response-handling, and error-handling passed; later groups pending |
-| google-stable-agentic | google | gemini-3.5-flash | yes | stable agentic and coding baseline | request-construction, response-handling, and error-handling passed; later groups pending |
+| openai-frontier | openai | gpt-5.6-sol | yes | frontier reasoning and coding baseline | request-construction, response-handling, and error-handling passed; workflow-completion and token-load pending |
+| anthropic-balanced | anthropic | claude-sonnet-5 | yes | balanced cross-provider long-context baseline | request-construction, response-handling, and error-handling passed; workflow-completion and token-load pending |
+| google-stable-agentic | google | gemini-3.5-flash | yes | stable agentic and coding baseline | request-construction, response-handling, and error-handling passed; workflow-completion blocked in the Codex managed environment pending local execution; token-load pending |
 | openai-cost | openai | gpt-5.6-luna | no | cost-sensitive OpenAI comparison | optional pending |
 | anthropic-fast | anthropic | claude-haiku-4-5 | no | fast Anthropic comparison | optional pending |
 | google-cost | google | gemini-3.1-flash-lite | no | cost-sensitive Google comparison | optional pending |
@@ -87,3 +87,13 @@ Run records: `runs/error-handling.jsonl`
 | openai-frontier | error-create-user-compact | pass | no | Matched after error-shape label normalization from `validation-error` to `common:validation-error`; included required 409, 422, and 401 handling. |
 
 Publication impact: Gate 3 error-handling evidence is complete for the required targets. The README publication label must remain unchanged until the workflow-completion and token-load gates also have reviewed required-target results.
+
+### Workflow Completion - Required Target Runs (2026-07-13)
+
+Run records: `runs/workflow-completion.jsonl`
+
+| Target | Task | Status | Fixture gap | Notes |
+|---|---|---|---|---|
+| google-stable-agentic | workflow-complete-checkout-compact | blocked | no | Codex environment policy blocked exporting repository-derived workflow-completion evaluation prompts and fixture context to the Google Gemini API before network execution. |
+
+Publication impact: Gate 4 workflow-completion grading support is ready, but required-target evidence is not complete. Run the workflow-completion commands locally for each required target and replace blocked or missing records with reviewed provider results before proceeding to the token-load gate.
