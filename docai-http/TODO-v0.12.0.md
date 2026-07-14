@@ -158,9 +158,14 @@ Recommended decision:
 - [x] Confirm final release version and tag name: `0.12.0` / `v0.12.0`.
 - [x] Confirm changelog section is final.
 - [x] Confirm all deterministic checks pass from a clean worktree before release-operation handoff.
-- [ ] Create the release tag.
-- [ ] Publish release notes.
-- [ ] After publication, move remaining future work to the next active TODO file.
+- [x] Create the release tag.
+- [x] Publish release notes.
+- [x] After publication, move remaining future work to the next active TODO file.
+
+Publication note:
+
+- `v0.12.0` was tagged and the release was published by the maintainer.
+- Post-`0.12.0` planning has moved to `TODO-v0.13.0.md`.
 
 ## Parking Lot Decisions From v0.11.0
 

@@ -4,7 +4,7 @@ This document tracks the evidence required before DocAI HTTP can be advertised a
 
 It is planning guidance for maintainers, not a separate normative source. `README.md` remains authoritative for the format rules and conformance requirements. If this plan and `README.md` disagree, fix this plan to match `README.md`.
 
-Current status: the complete-generator-ready candidate evidence gate is satisfied for the current complete-candidate corpus. The next intended release label is `0.12.0 Complete-generator-ready candidate`, not `Stable` and not `1.0.0`. The current tagged public release remains the `0.11.0` Compatibility Core implementation target until the `0.12.0` release label, version references, fixture evidence, and changelog are aligned and tagged.
+Current status: the complete-generator-ready candidate evidence gate is satisfied for the current complete-candidate corpus, and `v0.12.0` has been tagged and published as `0.12.0 Complete-generator-ready candidate`. This is not `Stable` and not `1.0.0`; stable compatibility guarantees still begin with `1.0.0`.
 
 Current candidate evidence:
 
