@@ -1,0 +1,33 @@
+# invalid: same_as forward reference
+
+Expected: invalid complete candidate. `**same_as**:` must reference an earlier representation in the same file, never a later representation.
+
+````markdown
+> docai-http: 0.12.0 | profile: compact | coverage: complete | knowledge: complete | generated: 2026-07-10 | generation_id: complete-candidate-compact-20260710-001 | projection_id: complete-candidate-20260710-001 | source: fixtures/complete-candidates/v0.12.0/source/complete-openapi.yaml (OpenAPI 3.1.1) | x-retrieval-unit: resource-file
+
+## GET /users/{id}
+
+### Response 200
+
+**body_presence**: always
+
+**same_as**: POST /users Response 201 application/json
+
+## POST /users
+
+### Response 201
+
+**body_presence**: always
+
+**media_type**: application/json
+
+**body_nullable**: no
+
+```json
+{"id":"usr_01K0COMPLETE"}
+```
+
+| Field | Type | Presence | Nullable | Meaning |
+|---|---|---|---|---|
+| id | string | always | no | User ID |
+````

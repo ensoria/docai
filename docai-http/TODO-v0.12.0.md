@@ -18,13 +18,13 @@ stable compatibility.
 ## Current Starting Point
 
 - [x] `0.11.0` Compatibility Core has been published and archived in `TODO-v0.11.0.md`.
-- [x] Complete-candidate full/compact fixtures exist under `fixtures/complete-candidates/v0.11.0/`.
+- [x] Complete-candidate full/compact fixtures have been promoted under `fixtures/complete-candidates/v0.12.0/`.
 - [x] Complete-candidate focused fixtures cover the README section 9.1 complete surface.
 - [x] `tools/check-complete-candidates.mjs` validates the complete-candidate fixture corpus.
 - [x] Required-target LLM task evaluations have been recorded and pass for DocAI HTTP contexts.
 - [x] OpenAPI comparison live baselines have been recorded for raw, sliced, and enriched conditions.
 - [x] Top-level README now contains measured, fixture-scoped DocAI HTTP versus OpenAPI comparison data.
-- [ ] Release label, version references, fixture versioning, changelog sections, and release checklist have not yet been aligned for `0.12.0`.
+- [ ] Changelog sections, release notes, and final release checklist have not yet been aligned for `0.12.0`.
 
 ## P0: Confirm Release Scope
 
@@ -65,10 +65,10 @@ Why:
 
 ## P0: Decide Version And Fixture Alignment
 
-- [ ] Decide whether `0.12.0` changes the DocAI HTTP specification version or only the repository publication label.
-- [ ] Decide whether complete-candidate fixtures should remain under `fixtures/complete-candidates/v0.11.0/` or be copied/promoted to `fixtures/complete-candidates/v0.12.0/`.
-- [ ] If creating `v0.12.0` fixture directories, update metadata stamps, checker `SPEC_VERSION` values, docs, and run-record paths consistently.
-- [ ] If keeping `v0.11.0` fixture directories, explicitly document why `0.12.0` uses `0.11.0` fixture evidence and why that does not create version confusion.
+- [x] Decide that `0.12.0` changes the DocAI HTTP specification version, not only the repository publication label.
+- [x] Decide to copy/promote complete-candidate fixtures to `fixtures/complete-candidates/v0.12.0/`.
+- [x] Create `v0.12.0` fixture directories and update metadata stamps, checker `SPEC_VERSION` values, docs, and run-record paths consistently.
+- [x] Do not use the `v0.11.0` complete-candidate directory as the active `0.12.0` release evidence corpus.
 
 Decision options:
 
@@ -96,16 +96,16 @@ Option B: Keep `fixtures/complete-candidates/v0.11.0/` as the evidence corpus fo
 
 Recommended decision:
 
-- Prefer Option A if `0.12.0` is meant to be a real public candidate release.
-- Use Option B only if `0.12.0` is treated as a repository milestone rather than a format-versioned release.
+- Option A has been selected for the `0.12.0` public candidate release.
+- Option B remains documented only as the rejected alternative.
 
 ## P1: Align Publication Labels
 
-- [ ] Update `docai-http/README.md` header publication label if the release is promoted to `Complete-generator-ready candidate`.
-- [ ] Ensure the README says the release is not stable and not compatibility-stable for all future versions.
-- [ ] Ensure the Compatibility Core language remains true for core-only implementers.
-- [ ] Ensure complete-surface language points to the exact fixture corpus, checker, and evaluation evidence.
-- [ ] Ensure OpenAPI comparison claims stay scoped to the evaluated fixture, target models, tasks, and run dates.
+- [x] Update `docai-http/README.md` header publication label if the release is promoted to `Complete-generator-ready candidate`.
+- [x] Ensure the README says the release is not stable and not compatibility-stable for all future versions.
+- [x] Ensure the Compatibility Core language remains true for core-only implementers.
+- [x] Ensure complete-surface language points to the exact fixture corpus, checker, and evaluation evidence.
+- [x] Ensure OpenAPI comparison claims stay scoped to the evaluated fixture, target models, tasks, and run dates.
 
 ## P1: Changelog And Release Notes
 
@@ -117,24 +117,24 @@ Recommended decision:
 
 ## P1: Evidence Documentation
 
-- [ ] Update `COMPLETE-GENERATOR-READINESS.md` work breakdown to mark the complete-candidate gate as satisfied for `0.12.0`.
-- [ ] Link to complete-candidate fixture corpus, checker, LLM evaluation results, and OpenAPI comparison evidence.
-- [ ] Update `OPENAPI-COMPARISON-EVIDENCE.md` only if additional review changes are needed.
-- [ ] Confirm `fixtures/complete-candidates/v0.11.0/evaluations/RESULTS.md` still reflects the recorded live runs accurately.
-- [ ] Confirm OpenAPI baseline JSONL records are intentionally included as comparison evidence and not conformance evidence.
+- [x] Update `COMPLETE-GENERATOR-READINESS.md` work breakdown to mark the complete-candidate gate as satisfied for `0.12.0`.
+- [x] Link to complete-candidate fixture corpus, checker, LLM evaluation results, and OpenAPI comparison evidence.
+- [x] Update `OPENAPI-COMPARISON-EVIDENCE.md` only if additional review changes are needed.
+- [x] Confirm `fixtures/complete-candidates/v0.12.0/evaluations/RESULTS.md` still reflects the recorded live runs accurately.
+- [x] Confirm OpenAPI baseline JSONL records are intentionally included as comparison evidence and not conformance evidence.
 
 ## P1: Deterministic Validation Checklist
 
-- [ ] Run `node docai-http/tools/check-core-fixtures.mjs`.
-- [ ] Run `node docai-http/tools/check-compact-candidates.mjs`.
-- [ ] Run `node docai-http/tools/check-workflow-candidates.mjs`.
-- [ ] Run `node docai-http/tools/check-webhook-candidates.mjs`.
-- [ ] Run `node docai-http/tools/check-non-json-candidates.mjs`.
-- [ ] Run `node docai-http/tools/check-polymorphism-candidates.mjs`.
-- [ ] Run `node docai-http/tools/check-complete-candidates.mjs`.
-- [ ] Run `node docai-http/tools/check-complete-evaluations.mjs`.
-- [ ] Run `node docai-http/tools/check-openapi-comparison.mjs`.
-- [ ] Run `git diff --check`.
+- [x] Run `node docai-http/tools/check-core-fixtures.mjs`.
+- [x] Run `node docai-http/tools/check-compact-candidates.mjs`.
+- [x] Run `node docai-http/tools/check-workflow-candidates.mjs`.
+- [x] Run `node docai-http/tools/check-webhook-candidates.mjs`.
+- [x] Run `node docai-http/tools/check-non-json-candidates.mjs`.
+- [x] Run `node docai-http/tools/check-polymorphism-candidates.mjs`.
+- [x] Run `node docai-http/tools/check-complete-candidates.mjs`.
+- [x] Run `node docai-http/tools/check-complete-evaluations.mjs`.
+- [x] Run `node docai-http/tools/check-openapi-comparison.mjs`.
+- [x] Run `git diff --check`.
 - [ ] Record the final command results in the release notes or release PR summary.
 
 ## P2: Optional Release Automation

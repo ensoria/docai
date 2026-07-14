@@ -8,11 +8,11 @@ Current status: the complete-generator-ready candidate evidence gate is satisfie
 
 Current candidate evidence:
 
-- A full/compact complete example pair exists at `fixtures/complete-candidates/v0.11.0/valid/`.
+- A full/compact complete example pair exists at `fixtures/complete-candidates/v0.12.0/valid/`.
 - That pair includes resources, a workflow, and a webhook with matching standard docs-root-relative paths.
-- Focused complete-surface fixtures cover the README section 9.1 complete surface; current coverage is tracked in `fixtures/complete-candidates/v0.11.0/COVERAGE.md`.
+- Focused complete-surface fixtures cover the README section 9.1 complete surface; current coverage is tracked in `fixtures/complete-candidates/v0.12.0/COVERAGE.md`.
 - A corpus-specific complete-candidate checker exists at `tools/check-complete-candidates.mjs`.
-- A complete-candidate evaluation task packet and local context metrics exist under `fixtures/complete-candidates/v0.11.0/evaluations/`.
+- A complete-candidate evaluation task packet and local context metrics exist under `fixtures/complete-candidates/v0.12.0/evaluations/`.
 - Live LLM execution procedure and gate rationale are documented in `LIVE-LLM-EVALUATION.md`.
 - Complete §9.1 focused fixture coverage and required-target LLM task evaluation evidence exist for the current complete-candidate task packet.
 - OpenAPI comparison evidence is recorded in `OPENAPI-COMPARISON-EVIDENCE.md`; prompt contracts, context metrics, required-target live baseline records, and a scoped comparison summary exist.
@@ -137,10 +137,10 @@ Evaluation results do not need to prove that every LLM succeeds, but they must s
 
 ## Work Breakdown
 
-1. Create the complete-surface fixture skeleton and source fixture. Done for the first candidate pair in `fixtures/complete-candidates/v0.11.0/`.
+1. Create the complete-surface fixture skeleton and source fixture. Done for the first candidate pair in `fixtures/complete-candidates/v0.12.0/`.
 2. Merge promoted candidate examples into one full-profile document set. Done for the first candidate pair, without promoting the candidate-only structures.
 3. Create the matching compact projection and token-saving notes. Done for the first candidate pair.
 4. Add focused valid and invalid fixtures for every README section 9.1 complete-surface requirement. Done for the current complete-candidate corpus.
 5. Add the complete-surface expectation checker by composing existing candidate checks where practical. Done for the current complete-candidate corpus.
-6. Run the checker and LLM task evaluations. Done for the current complete-candidate task packet; required-target live task records and token-load records are summarized in `fixtures/complete-candidates/v0.11.0/evaluations/RESULTS.md`.
+6. Run the checker and LLM task evaluations. Done for the current complete-candidate task packet; required-target live task records and token-load records are summarized in `fixtures/complete-candidates/v0.12.0/evaluations/RESULTS.md`.
 7. Update the README publication label only when all evidence supports the broader claim and the `0.12.0` release label, fixture versioning decision, changelog, and release notes are aligned.

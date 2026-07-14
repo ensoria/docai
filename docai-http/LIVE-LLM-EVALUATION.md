@@ -2,7 +2,7 @@
 
 This document describes how to run live LLM evaluations for the DocAI HTTP complete-candidate corpus.
 
-It is maintainer guidance, not a normative specification source. `README.md` remains authoritative for DocAI HTTP format rules, and `fixtures/complete-candidates/v0.11.0/evaluations/` remains the source of truth for the current task packet, target list, prompt export, result records, and local metrics.
+It is maintainer guidance, not a normative specification source. `README.md` remains authoritative for DocAI HTTP format rules, and `fixtures/complete-candidates/v0.12.0/evaluations/` remains the source of truth for the current task packet, target list, prompt export, result records, and local metrics.
 
 ## Purpose
 
@@ -16,19 +16,19 @@ The evaluation evidence should answer these questions:
 - Does the compact profile reduce loaded context without removing behavior needed by the task?
 - When a model fails, is the failure caused by model behavior, missing retrieval context, contradictory documentation, or a fixture/specification gap?
 
-Live results do not need to prove that every target model succeeds. They must show that failures are not caused by missing or contradictory DocAI HTTP documentation before the publication label can move beyond the current Compatibility Core claim.
+Live results do not need to prove that every target model succeeds. They must show that failures are not caused by missing or contradictory DocAI HTTP documentation before the publication label can claim complete-generator-ready candidate evidence.
 
 ## Inputs And Evidence Files
 
 Use these files for the current complete-candidate evaluation:
 
-- `fixtures/complete-candidates/v0.11.0/evaluations/tasks.json`: task groups, task prompts, expected outcomes, context files, and evidence strings.
-- `fixtures/complete-candidates/v0.11.0/evaluations/targets.json`: required and optional target models.
+- `fixtures/complete-candidates/v0.12.0/evaluations/tasks.json`: task groups, task prompts, expected outcomes, context files, and evidence strings.
+- `fixtures/complete-candidates/v0.12.0/evaluations/targets.json`: required and optional target models.
 - `tools/build-complete-evaluation-prompts.mjs`: deterministic JSONL prompt export.
 - `tools/record-complete-token-load.mjs`: deterministic local token-load metric recorder.
-- `fixtures/complete-candidates/v0.11.0/evaluations/runs/*.jsonl`: live result records.
+- `fixtures/complete-candidates/v0.12.0/evaluations/runs/*.jsonl`: live result records.
 - `tools/check-complete-evaluations.mjs`: task packet, target list, result record, local metric, and automated grading checks for request construction, response handling, error handling, workflow completion, and token load.
-- `fixtures/complete-candidates/v0.11.0/evaluations/RESULTS.md`: human-readable status summary.
+- `fixtures/complete-candidates/v0.12.0/evaluations/RESULTS.md`: human-readable status summary.
 
 Before each live run, refresh the official provider model and pricing pages. Model availability, aliases, context limits, pricing, and usage accounting are provider-controlled and may change without a DocAI HTTP change.
 
@@ -97,7 +97,7 @@ If the Codex managed environment blocks export of repository-derived prompts and
 Record one JSONL line per target/task result under:
 
 ```text
-fixtures/complete-candidates/v0.11.0/evaluations/runs/request-construction.jsonl
+fixtures/complete-candidates/v0.12.0/evaluations/runs/request-construction.jsonl
 ```
 
 Then run:

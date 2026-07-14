@@ -1,0 +1,245 @@
+openapi: 3.1.1
+info:
+  title: Complete Candidate Fixture API
+  version: 0.12.0-complete-candidate-source
+paths:
+  /users:
+    post:
+      summary: Create user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - email
+                - name
+              properties:
+                email:
+                  type: string
+                  format: email
+                name:
+                  type: string
+                role:
+                  type: string
+                  enum:
+                    - admin
+                    - member
+      responses:
+        "201":
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+  /users/{id}:
+    get:
+      summary: Get user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+  /carts/{id}/validate:
+    post:
+      summary: Validate cart
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Cart validated
+  /payments:
+    post:
+      summary: Create payment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: "#/components/schemas/CardPaymentRequest"
+                - $ref: "#/components/schemas/BankPaymentRequest"
+              discriminator:
+                propertyName: type
+      responses:
+        "201":
+          description: Payment created
+      x-docai-triggers:
+        - payment.completed
+  /orders:
+    post:
+      summary: Confirm order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - cart_id
+                - payment_id
+              properties:
+                cart_id:
+                  type: string
+                payment_id:
+                  type: string
+      responses:
+        "201":
+          description: Order confirmed
+  /documents:
+    post:
+      summary: Upload document
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - document
+              properties:
+                document:
+                  type: string
+                  format: binary
+                metadata:
+                  type: object
+      responses:
+        "201":
+          description: Document uploaded
+webhooks:
+  payment.completed:
+    post:
+      summary: Payment completed
+      parameters:
+        - name: X-Payment-Attempt
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - event_id
+                - event
+                - payment_id
+                - amount
+                - occurred_at
+              properties:
+                event_id:
+                  type: string
+                event:
+                  type: string
+                  enum:
+                    - payment.completed
+                payment_id:
+                  type: string
+                amount:
+                  type: integer
+                occurred_at:
+                  type: string
+                  format: date-time
+                metadata:
+                  type: object
+                  x-docai-opaque: true
+x-docai-workflows:
+  checkout:
+    endpoints:
+      - POST /carts/{id}/validate
+      - POST /payments
+      - POST /orders
+components:
+  schemas:
+    User:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - email
+        - name
+        - role
+        - created_at
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        role:
+          type: string
+          enum:
+            - admin
+            - member
+        created_at:
+          type: string
+          format: date-time
+    CardPaymentRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - type
+        - cart_id
+        - amount
+        - currency
+        - card_token
+      properties:
+        type:
+          const: card
+        cart_id:
+          type: string
+        amount:
+          type: integer
+          minimum: 1
+        currency:
+          type: string
+          enum:
+            - JPY
+            - USD
+        card_token:
+          type: string
+    BankPaymentRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - type
+        - cart_id
+        - amount
+        - currency
+        - bank_account_id
+      properties:
+        type:
+          const: bank
+        cart_id:
+          type: string
+        amount:
+          type: integer
+          minimum: 1
+        currency:
+          type: string
+          enum:
+            - JPY
+            - USD
+        bank_account_id:
+          type: string

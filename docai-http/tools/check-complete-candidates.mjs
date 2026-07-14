@@ -5,7 +5,7 @@ import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 
-const SPEC_VERSION = "0.11.0";
+const SPEC_VERSION = "0.12.0";
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_DIR = path.resolve(SCRIPT_DIR, "..", "fixtures", "complete-candidates", `v${SPEC_VERSION}`);
 const CANDIDATE_DIR = path.resolve(process.argv[2] ?? DEFAULT_DIR);

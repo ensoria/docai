@@ -1,0 +1,33 @@
+# invalid: Opaque fields before Client-visible fields
+
+Expected: invalid complete candidate. In a compact response, error-shape, or webhook payload representation, `Client-visible fields` must appear before `Opaque fields`.
+
+````markdown
+> docai-http: 0.12.0 | profile: compact | coverage: complete | knowledge: complete | generated: 2026-07-10 | generation_id: complete-candidate-compact-20260710-001 | projection_id: complete-candidate-20260710-001 | source: fixtures/complete-candidates/v0.12.0/source/complete-openapi.yaml (OpenAPI 3.1.1)
+
+# payment.completed
+
+## Payload
+
+**body_required**: yes
+
+**media_type**: application/json
+
+**body_nullable**: no
+
+```json
+{"event_id":"evt_01K0COMPLETE","metadata":{"processor_trace":"opaque-store-forward"}}
+```
+
+#### Opaque fields
+
+| Field | Type | Presence | Nullable | Meaning |
+|---|---|---|---|---|
+| metadata | object | always | no | Store or forward only |
+
+#### Client-visible fields
+
+| Field | Type | Presence | Nullable | Meaning |
+|---|---|---|---|---|
+| event_id | string | always | no | Deduplication key |
+````

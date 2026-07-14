@@ -1,0 +1,29 @@
+# valid: unknown response headers and body nullability
+
+Expected: valid complete candidate. Unknown body nullability and unknown response headers use the canonical `unknown` placement and marker.
+
+````markdown
+> docai-http: 0.12.0 | profile: full | coverage: complete | knowledge: requires-input | generated: 2026-07-10 | generation_id: complete-candidate-full-20260710-001 | projection_id: complete-candidate-20260710-001 | source: fixtures/complete-candidates/v0.12.0/source/complete-openapi.yaml (OpenAPI 3.1.1)
+
+### Response 200
+
+**body_presence**: always
+
+**media_type**: application/json
+
+**body_nullable**: unknown
+
+```json
+{"id":"usr_01K0COMPLETE"}
+```
+
+| Field | Type | Presence | Nullable | Meaning |
+|---|---|---|---|---|
+| id | string | always | no | User ID |
+
+#### Response Headers
+
+unknown
+
+**unknown**: response body nullability and caller-relevant response headers are not documented; requires service-owner response contract for GET /users/{id}
+````

@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 
 import { gradeEvaluationRecord } from "./complete-evaluation-grader.mjs";
 
-const SPEC_VERSION = "0.11.0";
+const SPEC_VERSION = "0.12.0";
 const REQUIRED_GROUPS = new Set([
   "request_construction",
   "response_handling",

@@ -3,7 +3,7 @@ import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 
-export const SPEC_VERSION = "0.11.0";
+export const SPEC_VERSION = "0.12.0";
 export const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 export const CANDIDATE_DIR = path.resolve(
   process.env.DOCAI_COMPLETE_CANDIDATE_DIR ?? path.join(SCRIPT_DIR, "..", "fixtures", "complete-candidates", `v${SPEC_VERSION}`),

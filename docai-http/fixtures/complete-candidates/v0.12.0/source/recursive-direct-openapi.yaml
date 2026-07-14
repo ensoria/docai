@@ -1,0 +1,34 @@
+openapi: 3.1.1
+info:
+  title: Complete Candidate Direct Recursive Fixture
+  version: 0.12.0-complete-recursive-direct-source
+paths:
+  /nodes/{id}:
+    get:
+      operationId: getNode
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Directly recursive node.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Node"
+components:
+  schemas:
+    Node:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+        children:
+          type: array
+          items:
+            $ref: "#/components/schemas/Node"
