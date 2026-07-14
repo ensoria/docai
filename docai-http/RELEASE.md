@@ -2,6 +2,43 @@
 
 This document defines the repository release process for DocAI HTTP. It is operational guidance for maintainers; the format rules remain in `README.md`.
 
+## 0.12.0 Draft Release Notes (Complete-generator-ready candidate)
+
+Scope:
+
+- Compatibility scope: the complete draft surface evidenced by `fixtures/complete-candidates/v0.12.0/`.
+- Newly promoted features: complete-surface generator readiness for the evidenced corpus, including the required full profile, matching compact profile, workflows, webhooks, non-JSON representation classes, polymorphic variants, selective convention loading, compact reductions, and complete-surface `unknown` / `unsupported` forms covered by the fixture corpus.
+- Explicitly non-promoted draft areas: stable compatibility, `1.0.0` conformance status, recursive-schema representation support, a standalone public validator package, automated live-provider CI, and `README.ja.md`.
+
+Evidence:
+
+- Fixture corpus: `fixtures/complete-candidates/v0.12.0/`.
+- Complete-candidate checker: `node docai-http/tools/check-complete-candidates.mjs`.
+- Evaluation checker: `node docai-http/tools/check-complete-evaluations.mjs`.
+- OpenAPI comparison checker: `node docai-http/tools/check-openapi-comparison.mjs`.
+- Coverage notes: `fixtures/complete-candidates/v0.12.0/COVERAGE.md`.
+- LLM evaluation results: `fixtures/complete-candidates/v0.12.0/evaluations/RESULTS.md`.
+- OpenAPI comparison evidence: `OPENAPI-COMPARISON-EVIDENCE.md`.
+
+Compatibility:
+
+- Version bump reason: `0.12.0` expands the advertised pre-1.0 implementation target from the `0.11.0` Compatibility Core to an evidenced complete-generator-ready candidate surface.
+- Known compatibility limits: this release is not stable, not `1.0.0`, and not compatibility-stable for future versions. Stable compatibility guarantees still begin at `1.0.0`.
+- Migration notes: implementers targeting only the `0.11.0` Compatibility Core may continue using the core fixture corpus; implementers targeting `0.12.0` should use the `complete-candidates/v0.12.0` corpus and the complete-candidate checkers.
+
+Pre-tag deterministic validation results:
+
+- `node docai-http/tools/check-core-fixtures.mjs`: passed.
+- `node docai-http/tools/check-compact-candidates.mjs`: passed.
+- `node docai-http/tools/check-workflow-candidates.mjs`: passed.
+- `node docai-http/tools/check-webhook-candidates.mjs`: passed.
+- `node docai-http/tools/check-non-json-candidates.mjs`: passed.
+- `node docai-http/tools/check-polymorphism-candidates.mjs`: passed.
+- `node docai-http/tools/check-complete-candidates.mjs`: passed.
+- `node docai-http/tools/check-complete-evaluations.mjs`: passed.
+- `node docai-http/tools/check-openapi-comparison.mjs`: passed.
+- `git diff --check`: passed.
+
 ## Release Labels
 
 Use the narrowest publication label supported by evidence:

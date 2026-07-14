@@ -24,7 +24,7 @@ stable compatibility.
 - [x] Required-target LLM task evaluations have been recorded and pass for DocAI HTTP contexts.
 - [x] OpenAPI comparison live baselines have been recorded for raw, sliced, and enriched conditions.
 - [x] Top-level README now contains measured, fixture-scoped DocAI HTTP versus OpenAPI comparison data.
-- [ ] Changelog sections, release notes, and final release checklist have not yet been aligned for `0.12.0`.
+- [ ] Final pre-tag review checklist has not yet been completed for `0.12.0`.
 
 ## P0: Confirm Release Scope
 
@@ -109,11 +109,11 @@ Recommended decision:
 
 ## P1: Changelog And Release Notes
 
-- [ ] Move release-relevant `Unreleased` entries into a concrete `0.12.0` changelog section.
-- [ ] Keep any unrelated future work under `Unreleased`.
-- [ ] Add release notes using the `RELEASE.md` template.
-- [ ] Include scope, promoted/non-promoted areas, evidence, compatibility posture, and known limits.
-- [ ] Confirm README-visible changes are not left only under `Unreleased`.
+- [x] Move release-relevant `Unreleased` entries into a concrete `0.12.0` changelog section.
+- [x] Keep any unrelated future work under `Unreleased`.
+- [x] Add release notes using the `RELEASE.md` template.
+- [x] Include scope, promoted/non-promoted areas, evidence, compatibility posture, and known limits.
+- [x] Confirm README-visible changes are not left only under `Unreleased`.
 
 ## P1: Evidence Documentation
 
@@ -135,7 +135,7 @@ Recommended decision:
 - [x] Run `node docai-http/tools/check-complete-evaluations.mjs`.
 - [x] Run `node docai-http/tools/check-openapi-comparison.mjs`.
 - [x] Run `git diff --check`.
-- [ ] Record the final command results in the release notes or release PR summary.
+- [x] Record the final command results in the release notes or release PR summary.
 
 ## P2: Optional Release Automation
 
@@ -172,7 +172,7 @@ be consciously included in, or excluded from, the `0.12.0` release scope.
 Decision already made:
 
 - [x] Defer `README.ja.md` until after `1.0.0` is confirmed.
-- [ ] Optionally add a short note somewhere release-facing that Japanese translation is intentionally deferred.
+- [x] Optionally add a short note somewhere release-facing that Japanese translation is intentionally deferred.
 
 Details:
 
