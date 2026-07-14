@@ -187,9 +187,11 @@ Recommended `0.12.0` treatment:
 
 ### Full OpenAPI Source Files For Every Generated Fixture Set
 
-Decision needed:
+Decision made:
 
-- [ ] Decide whether this is required for `0.12.0`.
+- [x] Include a source-fixture audit in `0.12.0`.
+- [ ] Add missing source files only if an evidenced corpus used for the release lacks a clear source input.
+- [x] Do not broaden this into a full source-to-projection validator for `0.12.0`.
 
 What this means:
 
@@ -216,9 +218,10 @@ Recommended `0.12.0` treatment:
 
 ### Publish Checker As A Standalone Package
 
-Decision needed:
+Decision made:
 
-- [ ] Decide whether to publish a checker package before `0.12.0`.
+- [x] Defer publishing a standalone checker package until validator boundaries are clearer.
+- [x] Keep direct Node commands as canonical for `0.12.0`.
 
 What this means:
 
@@ -243,9 +246,11 @@ Recommended `0.12.0` treatment:
 
 ### Add CI
 
-Decision needed:
+Decision made:
 
-- [ ] Decide whether lightweight deterministic CI should be added before tagging `0.12.0`.
+- [x] Treat CI as optional for `0.12.0`.
+- [ ] If CI is added, keep it limited to deterministic local checks.
+- [x] Do not run live LLM provider calls in CI.
 
 What this means:
 
@@ -272,8 +277,8 @@ Recommended `0.12.0` treatment:
 
 ## Explicit Non-Goals For v0.12.0
 
-- [ ] Do not publish `README.ja.md` as a complete translation before `1.0.0`.
-- [ ] Do not advertise `0.12.0` as stable.
-- [ ] Do not claim general "DocAI always beats OpenAPI" results beyond the measured fixture, models, tasks, and run dates.
-- [ ] Do not publish live LLM provider calls as an automated CI requirement.
-- [ ] Do not publish a checker package unless a separate packaging decision is made.
+- [x] Do not publish `README.ja.md` as a complete translation before `1.0.0`.
+- [x] Do not advertise `0.12.0` as stable.
+- [x] Do not claim general "DocAI always beats OpenAPI" results beyond the measured fixture, models, tasks, and run dates.
+- [x] Do not publish live LLM provider calls as an automated CI requirement.
+- [x] Do not publish a checker package for `0.12.0`.
