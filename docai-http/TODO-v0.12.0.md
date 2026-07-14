@@ -155,9 +155,9 @@ Recommended decision:
 
 ## P3: Tag And Publish
 
-- [ ] Confirm final release version and tag name.
-- [ ] Confirm changelog section is final.
-- [ ] Confirm all deterministic checks pass from a clean worktree.
+- [x] Confirm final release version and tag name: `0.12.0` / `v0.12.0`.
+- [x] Confirm changelog section is final.
+- [x] Confirm all deterministic checks pass from a clean worktree before release-operation handoff.
 - [ ] Create the release tag.
 - [ ] Publish release notes.
 - [ ] After publication, move remaining future work to the next active TODO file.
