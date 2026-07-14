@@ -39,6 +39,12 @@ Pre-tag deterministic validation results:
 - `node docai-http/tools/check-openapi-comparison.mjs`: passed.
 - `git diff --check`: passed.
 
+Release automation:
+
+- No CI workflow is added for `0.12.0`; this repository does not yet have a standard CI provider or task-runner surface.
+- The deterministic commands above remain the canonical pre-tag validation path for this release.
+- Live LLM provider evaluations are manually recorded evidence. They require provider credentials, cost controls, and human result review, and must not be treated as automatic CI gates.
+
 ## Release Labels
 
 Use the narrowest publication label supported by evidence:

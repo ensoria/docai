@@ -139,10 +139,10 @@ Recommended decision:
 
 ## P2: Optional Release Automation
 
-- [ ] Decide whether to add lightweight CI for deterministic checks before tagging `0.12.0`.
-- [ ] If CI is added, include only local deterministic checks.
-- [ ] Do not run live LLM provider calls in CI.
-- [ ] Document that live provider evaluations are manually recorded evidence, not automatic CI gates.
+- [x] Decide whether to add lightweight CI for deterministic checks before tagging `0.12.0`.
+- [x] If CI is added later, include only local deterministic checks.
+- [x] Do not run live LLM provider calls in CI.
+- [x] Document that live provider evaluations are manually recorded evidence, not automatic CI gates.
 
 ## P2: Pre-Tag Review
 
@@ -249,7 +249,8 @@ Recommended `0.12.0` treatment:
 Decision made:
 
 - [x] Treat CI as optional for `0.12.0`.
-- [ ] If CI is added, keep it limited to deterministic local checks.
+- [x] Do not add CI for `0.12.0`; keep deterministic local checks as the canonical pre-tag validation path.
+- [x] If CI is added later, keep it limited to deterministic local checks.
 - [x] Do not run live LLM provider calls in CI.
 
 What this means:
