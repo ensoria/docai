@@ -45,6 +45,15 @@ Release automation:
 - The deterministic commands above remain the canonical pre-tag validation path for this release.
 - Live LLM provider evaluations are manually recorded evidence. They require provider credentials, cost controls, and human result review, and must not be treated as automatic CI gates.
 
+Pre-tag review status:
+
+- `docai-http/README.md` describes `0.12.0` as a pre-1.0 complete-generator-ready candidate, not stable and not compatibility-stable.
+- The top-level `README.md` comparison summary is scoped to the evaluated fixture, target models, task contracts, and evidence file.
+- Release-label references across `README.md`, `RELEASE.md`, `fixtures/README.md`, `COMPLETE-GENERATOR-READINESS.md`, and `CHANGELOG.md` agree on the `0.12.0 Complete-generator-ready candidate` label.
+- The active complete-candidate fixture paths and checker version expectations use `fixtures/complete-candidates/v0.12.0/`.
+- The evidenced complete-candidate corpus has source fixtures under `fixtures/complete-candidates/v0.12.0/source/`.
+- `README.ja.md` is explicitly excluded from `0.12.0` readiness work and deferred until after `1.0.0`.
+
 ## Release Labels
 
 Use the narrowest publication label supported by evidence:

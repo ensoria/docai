@@ -24,7 +24,7 @@ stable compatibility.
 - [x] Required-target LLM task evaluations have been recorded and pass for DocAI HTTP contexts.
 - [x] OpenAPI comparison live baselines have been recorded for raw, sliced, and enriched conditions.
 - [x] Top-level README now contains measured, fixture-scoped DocAI HTTP versus OpenAPI comparison data.
-- [ ] Final pre-tag review checklist has not yet been completed for `0.12.0`.
+- [x] Final pre-tag review checklist has been completed for `0.12.0`; tag and publication remain.
 
 ## P0: Confirm Release Scope
 
@@ -146,12 +146,12 @@ Recommended decision:
 
 ## P2: Pre-Tag Review
 
-- [ ] Review `docai-http/README.md` for over-claiming complete readiness or stability.
-- [ ] Review top-level `README.md` comparative claims for scope limits.
-- [ ] Review all release-label references across `README.md`, `RELEASE.md`, `fixtures/README.md`, `COMPLETE-GENERATOR-READINESS.md`, and `CHANGELOG.md`.
-- [ ] Confirm fixture paths and version labels agree with the versioning decision.
-- [ ] Confirm no required release evidence exists only in an untracked file.
-- [ ] Confirm `README.ja.md` is excluded from `0.12.0` readiness work by explicit decision.
+- [x] Review `docai-http/README.md` for over-claiming complete readiness or stability.
+- [x] Review top-level `README.md` comparative claims for scope limits.
+- [x] Review all release-label references across `README.md`, `RELEASE.md`, `fixtures/README.md`, `COMPLETE-GENERATOR-READINESS.md`, and `CHANGELOG.md`.
+- [x] Confirm fixture paths and version labels agree with the versioning decision.
+- [x] Confirm no required release evidence exists only in an untracked file.
+- [x] Confirm `README.ja.md` is excluded from `0.12.0` readiness work by explicit decision.
 
 ## P3: Tag And Publish
 
@@ -190,7 +190,7 @@ Recommended `0.12.0` treatment:
 Decision made:
 
 - [x] Include a source-fixture audit in `0.12.0`.
-- [ ] Add missing source files only if an evidenced corpus used for the release lacks a clear source input.
+- [x] Add missing source files only if an evidenced corpus used for the release lacks a clear source input.
 - [x] Do not broaden this into a full source-to-projection validator for `0.12.0`.
 
 What this means:
