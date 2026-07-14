@@ -4,22 +4,22 @@ This document tracks the evidence required before DocAI HTTP can be advertised a
 
 It is planning guidance for maintainers, not a separate normative source. `README.md` remains authoritative for the format rules and conformance requirements. If this plan and `README.md` disagree, fix this plan to match `README.md`.
 
-Current status: not complete-generator-ready. The current public label remains `Compatibility Core implementation target`.
+Current status: the complete-generator-ready candidate evidence gate is satisfied for the current complete-candidate corpus. The next intended release label is `0.12.0 Complete-generator-ready candidate`, not `Stable` and not `1.0.0`. The current tagged public release remains the `0.11.0` Compatibility Core implementation target until the `0.12.0` release label, version references, fixture evidence, and changelog are aligned and tagged.
 
 Current candidate evidence:
 
 - A full/compact complete example pair exists at `fixtures/complete-candidates/v0.11.0/valid/`.
 - That pair includes resources, a workflow, and a webhook with matching standard docs-root-relative paths.
-- Focused complete-surface fixtures have started; current coverage is tracked in `fixtures/complete-candidates/v0.11.0/COVERAGE.md`.
+- Focused complete-surface fixtures cover the README section 9.1 complete surface; current coverage is tracked in `fixtures/complete-candidates/v0.11.0/COVERAGE.md`.
 - A corpus-specific complete-candidate checker exists at `tools/check-complete-candidates.mjs`.
 - A complete-candidate evaluation task packet and local context metrics exist under `fixtures/complete-candidates/v0.11.0/evaluations/`.
 - Live LLM execution procedure and gate rationale are documented in `LIVE-LLM-EVALUATION.md`.
 - Complete §9.1 focused fixture coverage and required-target LLM task evaluation evidence exist for the current complete-candidate task packet.
-- OpenAPI comparison evidence is planned in `OPENAPI-COMPARISON-EVIDENCE.md`; prompt contracts and context metrics exist, but the OpenAPI live task baseline has not been run yet.
+- OpenAPI comparison evidence is recorded in `OPENAPI-COMPARISON-EVIDENCE.md`; prompt contracts, context metrics, required-target live baseline records, and a scoped comparison summary exist.
 
 ## Publication Gate
 
-Do not update the README publication label to `Complete-generator-ready candidate` until all of the following are complete:
+Use the README publication label `Complete-generator-ready candidate` only when all of the following are complete and the release documents agree:
 
 - A versioned complete-surface fixture corpus exists.
 - The corpus includes at least one valid full-profile document set and one matching compact projection.
@@ -29,7 +29,7 @@ Do not update the README publication label to `Complete-generator-ready candidat
 - LLM task evaluations have been run against the valid corpus for request construction, response handling, error handling, workflow completion, and token load.
 - `README.md`, `fixtures/README.md`, `RELEASE.md`, and `CHANGELOG.md` describe the same publication label, scope, evidence, and known limits.
 
-Until those conditions are met, complete-surface fixtures and checkers are candidate evidence only. They must not imply stable compatibility for non-core structures.
+The current complete-candidate corpus satisfies the evidence gate for a pre-1.0 complete-generator-ready candidate. It does not imply stable compatibility for non-core structures.
 
 OpenAPI comparison evidence is not required for the `Complete-generator-ready candidate` label unless the README makes measured comparative claims against OpenAPI. When comparative claims are made, they must be backed by `OPENAPI-COMPARISON-EVIDENCE.md` and should stay scoped to the evaluated fixtures, models, tasks, and run dates.
 
@@ -140,7 +140,7 @@ Evaluation results do not need to prove that every LLM succeeds, but they must s
 1. Create the complete-surface fixture skeleton and source fixture. Done for the first candidate pair in `fixtures/complete-candidates/v0.11.0/`.
 2. Merge promoted candidate examples into one full-profile document set. Done for the first candidate pair, without promoting the candidate-only structures.
 3. Create the matching compact projection and token-saving notes. Done for the first candidate pair.
-4. Add focused valid and invalid fixtures for every README section 9.1 complete-surface requirement.
-5. Add the complete-surface expectation checker by composing existing candidate checks where practical.
+4. Add focused valid and invalid fixtures for every README section 9.1 complete-surface requirement. Done for the current complete-candidate corpus.
+5. Add the complete-surface expectation checker by composing existing candidate checks where practical. Done for the current complete-candidate corpus.
 6. Run the checker and LLM task evaluations. Done for the current complete-candidate task packet; required-target live task records and token-load records are summarized in `fixtures/complete-candidates/v0.11.0/evaluations/RESULTS.md`.
-7. Update the README publication label only when all evidence supports the broader claim.
+7. Update the README publication label only when all evidence supports the broader claim and the `0.12.0` release label, fixture versioning decision, changelog, and release notes are aligned.

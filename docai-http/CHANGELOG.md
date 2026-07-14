@@ -87,6 +87,7 @@ DocAI HTTP draft history. Specification versioning and compatibility rules are d
 - Adds Google, Anthropic, and OpenAI provider runners that write OpenAPI comparison live-run records to condition-specific baseline JSONL files.
 - Records OpenAPI comparison live results for all required target models across raw, sliced, and enriched baseline conditions.
 - Summarizes the scoped DocAI HTTP versus OpenAPI comparison results and updates the top-level README with measured, fixture-limited claims.
+- Records the `0.12.0` release-preparation scope as a `Complete-generator-ready candidate`, not `Stable` and not `1.0.0`.
 
 ## 0.11.0 (Draft - Compatibility Core)
 

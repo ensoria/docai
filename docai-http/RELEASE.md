@@ -17,7 +17,7 @@ Do not imply compatibility for structures outside the published label. Non-core 
 
 Before using the `Complete-generator-ready candidate` label, complete the evidence gate in `COMPLETE-GENERATOR-READINESS.md`.
 
-The current repository state is not complete-generator-ready. Candidate corpora for compact output, workflows, webhooks, non-JSON representations, polymorphic variants, and the complete-surface example pair are preparation work only until complete focused fixtures, matching checker coverage, LLM task evaluations, and release evidence all land together.
+The current `0.12.0` release-preparation target is `Complete-generator-ready candidate`, not `Stable` and not `1.0.0`. The complete-candidate corpus now has complete focused fixture coverage, matching checker coverage, required-target LLM evaluations, token-load evidence, and scoped OpenAPI comparison evidence. The current tagged public release remains the `0.11.0` Compatibility Core implementation target until the `0.12.0` release label, version references, fixture evidence, changelog, and release notes are aligned.
 
 Do not update the README publication label merely because one candidate corpus exists. The label may change only after the complete full-profile set, matching compact projection, focused complete-surface fixtures, checker behavior, evaluation notes, and changelog/release notes support the broader claim.
 

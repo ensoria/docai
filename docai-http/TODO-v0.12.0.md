@@ -28,11 +28,11 @@ stable compatibility.
 
 ## P0: Confirm Release Scope
 
-- [ ] Decide whether `0.12.0 Complete-generator-ready candidate` is the target release.
-- [ ] Confirm that `0.12.0` is not intended to be `Stable` and not intended to be `1.0.0`.
-- [ ] Confirm that the release may advertise complete-generator readiness only for the evidenced complete-surface candidate corpus.
-- [ ] Confirm that stable compatibility guarantees still begin at `1.0.0`.
-- [ ] Record the decision in `RELEASE.md`, `COMPLETE-GENERATOR-READINESS.md`, and `CHANGELOG.md`.
+- [x] Decide whether `0.12.0 Complete-generator-ready candidate` is the target release.
+- [x] Confirm that `0.12.0` is not intended to be `Stable` and not intended to be `1.0.0`.
+- [x] Confirm that the release may advertise complete-generator readiness only for the evidenced complete-surface candidate corpus.
+- [x] Confirm that stable compatibility guarantees still begin at `1.0.0`.
+- [x] Record the decision in `RELEASE.md`, `COMPLETE-GENERATOR-READINESS.md`, and `CHANGELOG.md`.
 
 Recommended decision:
 
@@ -48,20 +48,20 @@ Why:
 
 ## P0: Commit Or Stabilize Current Evidence
 
-- [ ] Confirm the current OpenAPI comparison results are committed or intentionally included in the `0.12.0` release branch.
-- [ ] Confirm `TODO-v0.11.0.md` is treated as historical and is no longer the active backlog.
-- [ ] Confirm `TODO-v0.12.0.md` is the active backlog for release-preparation work.
-- [ ] Check that no repository documentation still points to a now-missing `TODO.md`.
+- [x] Confirm the current OpenAPI comparison results are committed or intentionally included in the `0.12.0` release branch.
+- [x] Confirm `TODO-v0.11.0.md` is treated as historical and is no longer the active backlog.
+- [x] Confirm `TODO-v0.12.0.md` is the active backlog for release-preparation work.
+- [x] Check that no repository documentation still points to a now-missing `TODO.md`.
 
 ## P0: Fix Known Documentation Drift
 
-- [ ] Update `COMPLETE-GENERATOR-READINESS.md` current status.
-- [ ] Remove or replace the outdated statement that the OpenAPI live task baseline has not been run.
-- [ ] State that complete-surface fixture coverage, complete-candidate checker coverage, required-target LLM evaluations, and OpenAPI comparison evidence exist.
-- [ ] Keep the document clear that this supports a `Complete-generator-ready candidate`, not `Stable`.
-- [ ] Update `fixtures/README.md` so the complete-surface candidate evidence and OpenAPI comparison records are described as current.
-- [ ] Update `RELEASE.md` so the current repository state and the intended `0.12.0` release label agree.
-- [ ] Review top-level `README.md` and `docai-http/README.md` for publication-label consistency.
+- [x] Update `COMPLETE-GENERATOR-READINESS.md` current status.
+- [x] Remove or replace the outdated statement that the OpenAPI live task baseline has not been run.
+- [x] State that complete-surface fixture coverage, complete-candidate checker coverage, required-target LLM evaluations, and OpenAPI comparison evidence exist.
+- [x] Keep the document clear that this supports a `Complete-generator-ready candidate`, not `Stable`.
+- [x] Update `fixtures/README.md` so the complete-surface candidate evidence and OpenAPI comparison records are described as current.
+- [x] Update `RELEASE.md` so the current repository state and the intended `0.12.0` release label agree.
+- [x] Review top-level `README.md` and `docai-http/README.md` for publication-label consistency.
 
 ## P0: Decide Version And Fixture Alignment
 
