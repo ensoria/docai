@@ -73,6 +73,24 @@ The current tagged public release is `v0.12.0`, published as `Complete-generator
 
 Do not update the README publication label merely because one candidate corpus exists. The label may change only after the complete full-profile set, matching compact projection, focused complete-surface fixtures, checker behavior, evaluation notes, and changelog/release notes support the broader claim.
 
+## Pre-1.0 Stable Boundary Decision
+
+The intended first stable conformance corpus is `fixtures/conformance/v1.0.0/`.
+It copies the standard document content from `fixtures/complete-candidates/v0.12.0/`
+into a separate versioned stable-boundary path with `docai-http: 1.0.0` metadata
+and stable conformance expectation labels.
+
+Minimum evidence before calling a release `1.0.0`:
+
+- Normative README text defines the structure.
+- `fixtures/conformance/v1.0.0/` contains positive and negative fixture evidence for the structure.
+- `node docai-http/tools/check-conformance-fixtures.mjs` passes.
+- Recursive schemas remain explicitly unsupported and are covered by direct and indirect recursive source fixtures plus generated `unsupported` fallback fixtures.
+- The `0.12.0` live LLM, token-load, and OpenAPI comparison records remain supporting evidence only while the stable conformance document content stays semantically identical to the evaluated candidate content.
+- If conformance document content changes beyond metadata, paths, or expectation labels, the release must rerun deterministic checks and decide whether affected live LLM or OpenAPI comparison evidence must be refreshed before tagging `1.0.0`.
+
+Stable compatibility promises for `1.0.0` are limited to structures covered by README normative text, the `fixtures/conformance/v1.0.0/` corpus, and the conformance checker. Candidate-only evidence paths do not create a stable compatibility promise by themselves. Standalone public validator APIs, automated live-provider CI, translated `README.ja.md`, and recursive-schema finite representation support remain outside the stable boundary unless they are deliberately promoted with their own compatibility evidence.
+
 ## Version Bump Rules
 
 Before `1.0.0`:

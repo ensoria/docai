@@ -22,12 +22,20 @@ Decision rationale:
 
 ## P0: Stable Conformance Boundary
 
-- [ ] Decide the minimum evidence required before calling a release `1.0.0`.
-- [ ] Define the stable conformance corpus boundary separately from candidate fixture evidence.
-- [ ] Decide whether `fixtures/complete-candidates/v0.12.0/` should be promoted, copied, or replaced for the stable corpus.
-- [ ] Confirm which complete-surface structures become stable compatibility promises.
-- [ ] Confirm which structures remain candidate-only or explicitly outside `1.0.0`.
-- [ ] Record the stable-boundary decision in `README.md`, `RELEASE.md`, and `CHANGELOG.md`.
+- [x] Decide the minimum evidence required before calling a release `1.0.0`.
+- [x] Define the stable conformance corpus boundary separately from candidate fixture evidence.
+- [x] Decide whether `fixtures/complete-candidates/v0.12.0/` should be promoted, copied, or replaced for the stable corpus.
+- [x] Confirm which complete-surface structures become stable compatibility promises.
+- [x] Confirm which structures remain candidate-only or explicitly outside `1.0.0`.
+- [x] Record the stable-boundary decision in `README.md`, `RELEASE.md`, and `CHANGELOG.md`.
+
+Decision:
+
+- The intended first stable conformance corpus is `fixtures/conformance/v1.0.0/`.
+- It is copied from the standard document content in `fixtures/complete-candidates/v0.12.0/` with `1.0.0` metadata and stable conformance expectation labels.
+- Structures covered by normative README text, `fixtures/conformance/v1.0.0/`, and `tools/check-conformance-fixtures.mjs` are the structures intended to become stable compatibility promises at `1.0.0`.
+- The live LLM, token-load, and OpenAPI comparison evidence remains supporting evidence in `fixtures/complete-candidates/v0.12.0/` only while conformance document content remains semantically identical.
+- Standalone public validator APIs, automated live-provider CI, translated `README.ja.md`, and finite recursive-schema representation remain outside the stable boundary unless deliberately promoted later with their own evidence.
 
 Decision criteria:
 
@@ -37,10 +45,10 @@ Decision criteria:
 
 ## P0: Recursive Schema Policy
 
-- [ ] Review the current recursive-schema unsupported policy before any `1.0.0` release candidate.
-- [ ] Decide whether recursive schemas remain explicitly unsupported for `1.0.0`.
-- [ ] If recursive schemas remain unsupported, ensure stable fixtures cover direct and indirect recursive fallback.
-- [ ] If recursive schemas become representable, define the finite representation and add versioned fixtures before any release candidate.
+- [x] Review the current recursive-schema unsupported policy before any `1.0.0` release candidate.
+- [x] Decide whether recursive schemas remain explicitly unsupported for `1.0.0`.
+- [x] If recursive schemas remain unsupported, ensure stable fixtures cover direct and indirect recursive fallback.
+- [x] If recursive schemas remain unsupported, do not define or promote a finite recursive representation before `1.0.0`.
 
 Recommended starting assumption:
 
@@ -54,19 +62,26 @@ Why:
 
 ## P1: Stable Corpus Plan
 
-- [ ] Decide the target stable corpus directory name and version.
-- [ ] Decide whether to copy from `fixtures/complete-candidates/v0.12.0/` or create a new corpus from source inputs.
-- [ ] Decide how immutable released candidate evidence should relate to the stable corpus.
-- [ ] Define the stable corpus coverage document.
-- [ ] Define the stable corpus checker command.
-- [ ] Define the stable corpus release-note evidence summary.
+- [x] Decide the target stable corpus directory name and version.
+- [x] Decide whether to copy from `fixtures/complete-candidates/v0.12.0/` or create a new corpus from source inputs.
+- [x] Decide how immutable released candidate evidence should relate to the stable corpus.
+- [x] Define the stable corpus coverage document.
+- [x] Define the stable corpus checker command.
+- [x] Define the stable corpus release-note evidence summary.
+
+Decision:
+
+- Target corpus: `fixtures/conformance/v1.0.0/`.
+- Checker command: `node docai-http/tools/check-conformance-fixtures.mjs`.
+- Coverage document: `fixtures/conformance/v1.0.0/COVERAGE.md`.
+- Release-note summary: `RELEASE.md` records the minimum evidence and carried-forward evaluation policy.
 
 ## P1: Validator And Checker Strategy
 
-- [ ] Decide whether `1.0.0` ships only corpus-specific expectation checkers.
-- [ ] Decide whether a public reusable validator API/CLI is required before `1.0.0`.
-- [ ] If a public validator is planned, define its API and compatibility boundary before publishing a package.
-- [ ] Keep direct Node checker commands canonical until a public validator/package boundary is explicit.
+- [x] Decide whether `1.0.0` ships only corpus-specific expectation checkers.
+- [x] Decide whether a public reusable validator API/CLI is required before `1.0.0`.
+- [x] Since a public validator is not planned before `1.0.0`, do not define or publish a validator API in this stabilization pass.
+- [x] Keep direct Node checker commands canonical until a public validator/package boundary is explicit.
 
 Recommended starting assumption:
 
@@ -106,8 +121,8 @@ Recommended starting assumption:
 
 ## Explicit Non-Goals Before Stable Boundary Decision
 
-- [ ] Do not call any post-`0.12.0` release stable without a stable conformance corpus.
-- [ ] Do not publish a standalone checker package without defining its API and compatibility promise.
-- [ ] Do not broaden OpenAPI comparison claims beyond the data recorded in the evidence file.
-- [ ] Do not treat live LLM provider calls as automated CI gates.
-- [ ] Do not introduce new format features merely to make the release look larger.
+- [x] Do not call any post-`0.12.0` release stable without a stable conformance corpus.
+- [x] Do not publish a standalone checker package without defining its API and compatibility promise.
+- [x] Do not broaden OpenAPI comparison claims beyond the data recorded in the evidence file.
+- [x] Do not treat live LLM provider calls as automated CI gates.
+- [x] Do not introduce new format features merely to make the release look larger.

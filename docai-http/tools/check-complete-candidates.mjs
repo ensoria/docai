@@ -5,9 +5,14 @@ import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 
-const SPEC_VERSION = "0.12.0";
+const SPEC_VERSION = process.env.DOCAI_COMPLETE_FIXTURE_VERSION ?? "0.12.0";
+const FOCUSED_EXPECTATION_LABEL = process.env.DOCAI_COMPLETE_FOCUSED_EXPECTATION_LABEL ?? "complete candidate";
+const FIXTURE_EXTENSION_LABEL = process.env.DOCAI_COMPLETE_FIXTURE_EXTENSION_LABEL ?? "complete-candidate";
+const CORPUS_DISPLAY_LABEL = process.env.DOCAI_COMPLETE_CORPUS_DISPLAY_LABEL ?? "Complete candidate";
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
-const DEFAULT_DIR = path.resolve(SCRIPT_DIR, "..", "fixtures", "complete-candidates", `v${SPEC_VERSION}`);
+const DEFAULT_RELATIVE_DIR =
+  process.env.DOCAI_COMPLETE_FIXTURE_DEFAULT_RELATIVE_DIR ?? path.join("fixtures", "complete-candidates", `v${SPEC_VERSION}`);
+const DEFAULT_DIR = path.resolve(SCRIPT_DIR, "..", DEFAULT_RELATIVE_DIR);
 const CANDIDATE_DIR = path.resolve(process.argv[2] ?? DEFAULT_DIR);
 
 const REQUIRED_SET_PATHS = [
@@ -78,7 +83,7 @@ const FOCUSED_EXPECTATIONS = {
     "localized-unsupported-smallest-unit.md": ["**unsupported**: localized:"],
     "media-type-unique-representations.md": ["**media_type**: application/json", "**media_type**: text/csv;charset=UTF-8"],
     "media-type-unknown.md": ["**media_type**: unknown", "**unknown**: concrete response media type"],
-    "metadata-extension-token-routing.md": ["x-retrieval-unit: resource-file", "x-fixture: complete-candidate"],
+    "metadata-extension-token-routing.md": ["x-retrieval-unit: resource-file", `x-fixture: ${FIXTURE_EXTENSION_LABEL}`],
     "multiple-media-type-branching.md": ["**media_type**: application/xml", "branch on the response `Content-Type`", "namespace `https://api.example.test/reports`"],
     "nested-arrays-maps-openness.md": ["| matrix | int[][] | always | no |", "balances.{key}.amount", "| items | object[] | always | no | Array items reject additional properties |"],
     "non-json-representation-classes.md": ["**media_type**: application/x-www-form-urlencoded;charset=UTF-8", "**media_type**: image/png", "**media_type**: text/csv;charset=UTF-8", "**media_type**: application/xml;charset=UTF-8", "**media_type**: text/event-stream;charset=UTF-8"],
@@ -497,7 +502,7 @@ function validateStamp(file, markdown, expectedProfile) {
   if (stamp["docai-http"] !== SPEC_VERSION) throw new Error(`stamp version must be ${SPEC_VERSION}`);
   if (stamp.profile !== expectedProfile) throw new Error(`stamp profile must be ${expectedProfile}`);
   if (stamp.coverage !== "complete" || stamp.knowledge !== "complete") {
-    throw new Error("valid complete candidate set files must be coverage=complete and knowledge=complete");
+    throw new Error(`${FOCUSED_EXPECTATION_LABEL} set files must be coverage=complete and knowledge=complete`);
   }
   if (!stamp.generated || !stamp.generation_id || !stamp.projection_id) {
     throw new Error("stamp lacks generated, generation_id, or projection_id");
@@ -1024,8 +1029,8 @@ function validateFocusedFixtures() {
         return;
       }
       if (!text.startsWith(`# ${kind}: `)) fail(file, "focused", `focused fixture must start with '# ${kind}: '`);
-      if (!text.includes(`Expected: ${kind} complete candidate.`)) {
-        fail(file, "focused", `focused fixture must declare Expected: ${kind} complete candidate`);
+      if (!text.includes(`Expected: ${kind} ${FOCUSED_EXPECTATION_LABEL}.`)) {
+        fail(file, "focused", `focused fixture must declare Expected: ${kind} ${FOCUSED_EXPECTATION_LABEL}`);
       }
       const fixtures = extractMarkdownFixtures(text);
       if (fixtures.length === 0) fail(file, "focused", "focused fixture lacks a markdown code fence");
@@ -1140,11 +1145,11 @@ validateFinalFocusedAudit();
 validateFocusedFixtures();
 
 if (failures.length > 0) {
-  console.error("Complete candidate fixture check failed:");
+  console.error(`${CORPUS_DISPLAY_LABEL} fixture check failed:`);
   failures.forEach((failure) => {
     console.error(`- ${failure.file}: ${failure.area}: ${failure.detail}`);
   });
   process.exit(1);
 }
 
-console.log(`Complete candidate fixture check passed for ${path.relative(process.cwd(), CANDIDATE_DIR) || "."}`);
+console.log(`${CORPUS_DISPLAY_LABEL} fixture check passed for ${path.relative(process.cwd(), CANDIDATE_DIR) || "."}`);
