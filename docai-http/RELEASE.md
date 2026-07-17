@@ -143,6 +143,24 @@ summary claims should use deterministic local context metrics, pass rates, and
 the existing scoped comparison until a normalized cost model is deliberately
 defined.
 
+## Pre-1.0 Documentation Scope
+
+Keep documentation changes before `1.0.0` narrowly focused on the stable boundary:
+
+- Defer `README.ja.md` until after the English `1.0.0` text is stable.
+- Do not add a separate release-history document before `1.0.0`; use
+  `CHANGELOG.md` for chronological history and this `RELEASE.md` for release
+  criteria, gates, and operational decisions.
+- Keep top-level README comparison claims synchronized with
+  `OPENAPI-COMPARISON-EVIDENCE.md` and scoped to the evaluated fixture, target
+  models, tasks, and dates.
+- Keep the `Complete-generator-ready candidate` wording until the repository
+  deliberately switches the publication label to a concrete `1.0.0` release
+  candidate or stable release.
+
+When the publication label changes, update `docai-http/README.md`, `README.md`,
+`CHANGELOG.md`, fixture documentation, and release notes in the same change set.
+
 ## Version Bump Rules
 
 Before `1.0.0`:

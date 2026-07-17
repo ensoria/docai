@@ -134,10 +134,17 @@ Decision:
 
 ## P2: Documentation
 
-- [ ] Keep `README.ja.md` deferred until after `1.0.0` text is stable.
-- [ ] Review whether post-`0.12.0` documentation should include a release-history summary separate from `CHANGELOG.md`.
-- [ ] Keep top-level README comparison claims synchronized with `OPENAPI-COMPARISON-EVIDENCE.md`.
-- [ ] Decide when to replace `Complete-generator-ready candidate` publication wording with release-candidate wording.
+- [x] Keep `README.ja.md` deferred until after `1.0.0` text is stable.
+- [x] Review whether post-`0.12.0` documentation should include a release-history summary separate from `CHANGELOG.md`.
+- [x] Keep top-level README comparison claims synchronized with `OPENAPI-COMPARISON-EVIDENCE.md`.
+- [x] Decide when to replace `Complete-generator-ready candidate` publication wording with release-candidate wording.
+
+Decision:
+
+- Defer `README.ja.md` until after the English `1.0.0` text is stable.
+- Do not add a separate release-history document before `1.0.0`; use `CHANGELOG.md` for chronological history and `RELEASE.md` for release criteria and operational decisions.
+- Keep top-level README comparison claims scoped to `OPENAPI-COMPARISON-EVIDENCE.md`; mention the intended `1.0.0` conformance corpus without broadening comparison claims.
+- Keep `Complete-generator-ready candidate` wording until the repository deliberately switches the publication label to a concrete `1.0.0` release candidate or stable release.
 
 ## Explicit Non-Goals Before Stable Boundary Decision
 

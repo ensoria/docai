@@ -10,6 +10,7 @@ DocAI HTTP draft history. Specification versioning and compatibility rules are d
 - Adds a `1.0.0` source traceability audit and keeps source fixtures as traceability evidence rather than a public source-to-projection validator contract before stable release.
 - Adds a local deterministic release-readiness checker that aggregates fixture, evaluation, OpenAPI comparison, and stable conformance checks without running live LLM provider calls.
 - Records the pre-1.0 LLM/OpenAPI evidence scope: optional targets, additional APIs, additional task classes, and normalized provider cost/token aggregates are not required before `1.0.0`.
+- Records the pre-1.0 documentation scope: defer `README.ja.md`, avoid a separate release-history file before stable text, and keep release-candidate wording changes tied to an explicit publication-label change.
 
 ## 0.12.0 (Draft - Complete-generator-ready candidate)
 
