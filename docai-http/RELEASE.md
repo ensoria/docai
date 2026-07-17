@@ -103,6 +103,21 @@ No missing source inputs are known for the current stable conformance corpus:
 
 Do not promote a source-to-projection validator as part of `1.0.0` unless its input model, diagnostics model, versioning rules, and compatibility boundary are explicitly designed and documented. Until then, the canonical stable check remains `node docai-http/tools/check-conformance-fixtures.mjs`.
 
+## Pre-1.0 Deterministic Automation
+
+Do not add a hosted CI provider as a `1.0.0` prerequisite unless the repository
+chooses a CI platform separately. Before `1.0.0`, keep deterministic validation
+local and provider-neutral:
+
+- Canonical aggregate command: `node docai-http/tools/check-release-readiness.mjs`.
+- The aggregate command runs only local deterministic checks.
+- It must not call Google, Anthropic, OpenAI, or any other live LLM provider.
+- Live provider evaluations remain manually reviewed evidence with explicit
+  credential and cost control.
+
+A future CI workflow may call `node docai-http/tools/check-release-readiness.mjs`,
+but adding CI does not change the stable compatibility boundary.
+
 ## Version Bump Rules
 
 Before `1.0.0`:

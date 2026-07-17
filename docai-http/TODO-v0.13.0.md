@@ -107,10 +107,16 @@ Recommended starting assumption:
 
 ## P2: CI And Automation
 
-- [ ] Decide whether to adopt a CI provider for deterministic local checks before `1.0.0`.
-- [ ] If CI is added, run only local deterministic checks.
-- [ ] Do not run live LLM provider calls in CI.
-- [ ] Keep live provider evaluations as manually reviewed evidence with explicit cost and credential control.
+- [x] Decide whether to adopt a CI provider for deterministic local checks before `1.0.0`.
+- [x] If CI is added later, run only local deterministic checks.
+- [x] Do not run live LLM provider calls in CI.
+- [x] Keep live provider evaluations as manually reviewed evidence with explicit cost and credential control.
+
+Decision:
+
+- Do not add a hosted CI provider as a `1.0.0` prerequisite.
+- Add local deterministic automation first: `node docai-http/tools/check-release-readiness.mjs`.
+- A future CI workflow may call that aggregate checker, but live LLM provider calls remain manual evidence only.
 
 ## P2: LLM Evaluation And OpenAPI Comparison
 
