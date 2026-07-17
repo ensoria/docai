@@ -19,6 +19,8 @@ The comparison should answer:
 
 The DocAI HTTP side has complete required-target evidence for the current complete-candidate task packet. OpenAPI baseline prompt contracts, deterministic context metrics, required-target live task records, and a scoped comparison summary now exist. The top-level README may cite the measured results below, but should keep the scope limited to this fixture, target list, and task set.
 
+For the intended `1.0.0` stable release, this evidence remains supporting evidence rather than a new gate to expand. Optional target runs, additional APIs, additional task classes, provider latency metrics, and normalized provider-cost comparisons are not required before `1.0.0`. They should be added only when the project deliberately wants broader adoption evidence and accepts the extra provider cost, review work, and scope-management burden.
+
 | Evidence item | Current result | Notes |
 |---|---:|---|
 | DocAI HTTP live task records | 15 / 15 pass | Request construction, response handling, error handling, and workflow completion across the three required target models. |
@@ -102,7 +104,7 @@ DocAI HTTP selected profile means the profile used by each task in `tasks.json`:
 | OpenAPI sliced | 5 | 696 | 1445 | 2005 | 3608 | Smaller because it includes only mapped source blocks and still omits convention/recovery/follow-up behavior. |
 | OpenAPI enriched | 5 | 8088 | 10417 | 12394 | 18424 | Adds supplemental behavior prose, making accuracy comparable to DocAI but context size comparable or larger. |
 
-Provider-reported usage is retained in the JSONL run records, but this summary does not publish aggregate cost or cross-provider token totals. Token accounting and billing semantics differ by provider, and this repository has not recorded a normalized cost model.
+Provider-reported usage is retained in the JSONL run records, but this summary does not publish aggregate cost or cross-provider token totals. Token accounting and billing semantics differ by provider, and this repository has not recorded a normalized cost model. Before `1.0.0`, do not publish normalized provider cost or cross-provider token aggregates; use deterministic local context metrics and scoped pass rates instead.
 
 ### Failure Categories
 

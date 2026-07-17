@@ -52,6 +52,13 @@ The current optional target set is:
 
 Only required targets are needed for the publication gate. Optional targets are useful for cost, speed, and robustness comparisons after the required target evidence is complete.
 
+For the intended `1.0.0` stable release, do not require optional target runs unless
+the conformance document content changes in a way that invalidates the current
+required-target evidence or maintainers deliberately choose to gather broader
+adoption evidence. Optional target runs send fixture context to external providers
+and can incur provider charges, so they require explicit provider-send approval
+before execution.
+
 ## Recommended Execution Order
 
 Run in small gates rather than running every provider and every task group at once.

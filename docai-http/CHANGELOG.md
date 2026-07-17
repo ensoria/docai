@@ -9,6 +9,7 @@ DocAI HTTP draft history. Specification versioning and compatibility rules are d
 - Records the pre-1.0 stable-boundary decision: structures covered by normative README text, `fixtures/conformance/v1.0.0/`, and the conformance checker are intended to become the `1.0.0` stable compatibility promises, while live LLM/OpenAPI evidence remains carried-forward supporting evidence unless the conformance document content changes.
 - Adds a `1.0.0` source traceability audit and keeps source fixtures as traceability evidence rather than a public source-to-projection validator contract before stable release.
 - Adds a local deterministic release-readiness checker that aggregates fixture, evaluation, OpenAPI comparison, and stable conformance checks without running live LLM provider calls.
+- Records the pre-1.0 LLM/OpenAPI evidence scope: optional targets, additional APIs, additional task classes, and normalized provider cost/token aggregates are not required before `1.0.0`.
 
 ## 0.12.0 (Draft - Complete-generator-ready candidate)
 

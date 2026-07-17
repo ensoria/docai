@@ -120,10 +120,17 @@ Decision:
 
 ## P2: LLM Evaluation And OpenAPI Comparison
 
-- [ ] Decide whether optional LLM targets should be run for broader signal.
-- [ ] Decide whether additional APIs or task classes are required before `1.0.0`.
-- [ ] Keep current OpenAPI comparison claims scoped to the evaluated fixture, target models, tasks, and run dates.
-- [ ] Decide whether provider-reported token/cost metrics can be normalized and published.
+- [x] Decide whether optional LLM targets should be run for broader signal.
+- [x] Decide whether additional APIs or task classes are required before `1.0.0`.
+- [x] Keep current OpenAPI comparison claims scoped to the evaluated fixture, target models, tasks, and run dates.
+- [x] Decide whether provider-reported token/cost metrics can be normalized and published.
+
+Decision:
+
+- Do not run optional LLM targets as a `1.0.0` prerequisite.
+- Do not add additional APIs or task classes as a `1.0.0` prerequisite.
+- Keep comparison claims scoped to the `complete-candidates/v0.12.0` fixture, required target models, task contracts, run dates, and grader policy.
+- Do not publish normalized provider cost or cross-provider token aggregates before `1.0.0`; use deterministic local context metrics and scoped pass rates.
 
 ## P2: Documentation
 

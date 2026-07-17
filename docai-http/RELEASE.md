@@ -118,6 +118,31 @@ local and provider-neutral:
 A future CI workflow may call `node docai-http/tools/check-release-readiness.mjs`,
 but adding CI does not change the stable compatibility boundary.
 
+## Pre-1.0 LLM Evaluation And OpenAPI Comparison Scope
+
+Do not require optional live LLM targets before `1.0.0`. The required target
+coverage in `fixtures/complete-candidates/v0.12.0/evaluations/RESULTS.md` is
+sufficient supporting evidence for the intended stable conformance corpus while
+the conformance document content stays semantically identical to the evaluated
+candidate content.
+
+Do not add additional APIs or task classes as `1.0.0` prerequisites. Additional
+fixtures, APIs, task groups, optional target models, latency measurements, or
+provider-cost comparisons are useful future adoption evidence, but they are not
+part of the stable compatibility boundary unless explicitly promoted with their
+own fixture and checker evidence.
+
+Keep OpenAPI comparison claims scoped to the evaluated fixture, target models,
+task contracts, run dates, and grader policy recorded in
+`OPENAPI-COMPARISON-EVIDENCE.md`. Do not generalize the comparison into a broad
+benchmark claim.
+
+Do not publish normalized provider cost or cross-provider token aggregates before
+`1.0.0`. Provider-reported usage may remain in reviewed JSONL records, but public
+summary claims should use deterministic local context metrics, pass rates, and
+the existing scoped comparison until a normalized cost model is deliberately
+defined.
+
 ## Version Bump Rules
 
 Before `1.0.0`:
