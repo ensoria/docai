@@ -91,6 +91,24 @@ Minimum evidence before calling a release `1.0.0`:
 
 Stable compatibility promises for `1.0.0` are limited to structures covered by README normative text, the `fixtures/conformance/v1.0.0/` corpus, and the conformance checker. Candidate-only evidence paths do not create a stable compatibility promise by themselves. Standalone public validator APIs, automated live-provider CI, translated `README.ja.md`, and recursive-schema finite representation support remain outside the stable boundary unless they are deliberately promoted with their own compatibility evidence.
 
+## 1.0.0 Release Candidate Path
+
+The chosen path is to publish `v1.0.0-rc.1` before stable `v1.0.0`.
+
+The release candidate prepares the intended stable contract, so the RC
+preparation change set should update active specification wording to
+`docai-http` version `1.0.0` while keeping the publication label as
+`1.0.0 release candidate`, not `Stable`.
+
+After `v1.0.0-rc.1` is published:
+
+- If final review finds only wording or metadata issues that preserve the
+  stable contract, fix them before tagging stable `v1.0.0`.
+- If final review finds compatibility-scope changes or conformance-content
+  changes, update the evidence and consider publishing `v1.0.0-rc.2` before
+  stable `v1.0.0`.
+- Do not call the release `Stable` until the final `v1.0.0` publication step.
+
 ## Source-To-Projection Audit
 
 For the intended `1.0.0` stable release, source fixtures remain traceability evidence only. `fixtures/conformance/v1.0.0/SOURCE-TRACEABILITY.md` records the source inputs, their conformance roles, and the decision not to require a public source-to-projection validator before `1.0.0`.

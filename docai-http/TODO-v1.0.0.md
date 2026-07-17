@@ -17,11 +17,19 @@ conformance corpus.
 
 ## P0: Release Path Decision
 
-- [ ] Decide whether to publish a `1.0.0` release candidate before stable `1.0.0`.
-- [ ] If using a release candidate, decide the tag and label format, such as `v1.0.0-rc.1`.
-- [ ] If publishing stable directly, record why a separate release-candidate tag is unnecessary.
-- [ ] Confirm whether the first publication step updates the specification version in `README.md` to `1.0.0`.
-- [ ] Confirm whether the first publication step changes the publication label in `README.md` from `Complete-generator-ready candidate`.
+- [x] Decide whether to publish a `1.0.0` release candidate before stable `1.0.0`.
+- [x] If using a release candidate, decide the tag and label format, such as `v1.0.0-rc.1`.
+- [x] Since `v1.0.0-rc.1` is chosen, do not publish stable `v1.0.0` directly as the first publication step.
+- [x] Confirm whether the first publication step updates the specification version in `README.md` to `1.0.0`.
+- [x] Confirm whether the first publication step changes the publication label in `README.md` from `Complete-generator-ready candidate`.
+
+Decision:
+
+- Publish `v1.0.0-rc.1` first, then publish stable `v1.0.0` only after final RC review.
+- The RC prepares the intended stable contract, so the active specification version should become `1.0.0` during the RC-preparation change set.
+- The publication label should become `1.0.0 release candidate`, not `Stable`, until the final `v1.0.0` tag.
+- If RC review finds only wording or metadata issues that preserve the stable contract, fix them before stable `v1.0.0`.
+- If RC review finds compatibility-scope or conformance-content changes, update the evidence and consider publishing `v1.0.0-rc.2` before stable.
 
 Decision options:
 
