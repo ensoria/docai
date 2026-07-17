@@ -89,10 +89,17 @@ Recommended starting assumption:
 
 ## P1: Source-To-Projection Audit
 
-- [ ] Decide whether source fixtures remain traceability evidence only.
-- [ ] Decide whether a source-to-projection validator is required before `1.0.0`.
-- [ ] Audit source fixture coverage for any corpus considered for the stable release.
-- [ ] Add missing source inputs only when an evidenced corpus lacks a clear authoritative source.
+- [x] Decide whether source fixtures remain traceability evidence only.
+- [x] Decide whether a source-to-projection validator is required before `1.0.0`.
+- [x] Audit source fixture coverage for any corpus considered for the stable release.
+- [x] Add missing source inputs only when an evidenced corpus lacks a clear authoritative source.
+
+Decision:
+
+- Source fixtures remain traceability evidence for `1.0.0`; they are not a public source-to-projection validator contract.
+- A source-to-projection validator is not required before `1.0.0`.
+- `fixtures/conformance/v1.0.0/SOURCE-TRACEABILITY.md` records the audit.
+- No missing source inputs were found for the current stable conformance corpus.
 
 Recommended starting assumption:
 

@@ -27,6 +27,8 @@ Layout:
 - `focused/valid/` and `focused/invalid/` contain focused complete-surface snippets
   for the areas listed in `COVERAGE.md`.
 - `COVERAGE.md` records the stable conformance evidence present in this corpus.
+- `SOURCE-TRACEABILITY.md` records the source fixture audit and the decision not
+  to require a public source-to-projection validator before `1.0.0`.
 - `TOKEN-SAVINGS.md` records compact-profile reduction guidance for the conformance
   pair.
 
@@ -47,7 +49,7 @@ Both sets share `projection_id: conformance-20260710-001`. The full INDEX links
 Run `node tools/check-conformance-fixtures.mjs` from the `docai-http/` directory,
 or `node docai-http/tools/check-conformance-fixtures.mjs` from the repository root,
 to check this stable conformance corpus. The checker is corpus-specific expectation
-coverage, not a public reusable validator.
+coverage, not a public reusable validator or a full source-to-projection validator.
 
 The live LLM task evaluations, deterministic token-load evidence, and OpenAPI
 comparison evidence were recorded against `fixtures/complete-candidates/v0.12.0/`.

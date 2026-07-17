@@ -7,6 +7,7 @@ DocAI HTTP draft history. Specification versioning and compatibility rules are d
 - Adds the intended first stable `1.0.0` conformance corpus under `fixtures/conformance/v1.0.0/`, copied from the `0.12.0` complete-generator-ready candidate standard document content with stable conformance metadata and expectation labels.
 - Adds `tools/check-conformance-fixtures.mjs` and parameterizes the complete-candidate checker so the same corpus-specific expectation coverage can validate the `1.0.0` conformance corpus without changing the `0.12.0` candidate checker defaults.
 - Records the pre-1.0 stable-boundary decision: structures covered by normative README text, `fixtures/conformance/v1.0.0/`, and the conformance checker are intended to become the `1.0.0` stable compatibility promises, while live LLM/OpenAPI evidence remains carried-forward supporting evidence unless the conformance document content changes.
+- Adds a `1.0.0` source traceability audit and keeps source fixtures as traceability evidence rather than a public source-to-projection validator contract before stable release.
 
 ## 0.12.0 (Draft - Complete-generator-ready candidate)
 

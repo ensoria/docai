@@ -91,6 +91,18 @@ Minimum evidence before calling a release `1.0.0`:
 
 Stable compatibility promises for `1.0.0` are limited to structures covered by README normative text, the `fixtures/conformance/v1.0.0/` corpus, and the conformance checker. Candidate-only evidence paths do not create a stable compatibility promise by themselves. Standalone public validator APIs, automated live-provider CI, translated `README.ja.md`, and recursive-schema finite representation support remain outside the stable boundary unless they are deliberately promoted with their own compatibility evidence.
 
+## Source-To-Projection Audit
+
+For the intended `1.0.0` stable release, source fixtures remain traceability evidence only. `fixtures/conformance/v1.0.0/SOURCE-TRACEABILITY.md` records the source inputs, their conformance roles, and the decision not to require a public source-to-projection validator before `1.0.0`.
+
+No missing source inputs are known for the current stable conformance corpus:
+
+- `source/complete-openapi.yaml` covers the full/compact complete API example pair.
+- `source/recursive-direct-openapi.yaml` covers direct recursive-schema fallback.
+- `source/recursive-indirect-openapi.yaml` covers indirect recursive-schema fallback.
+
+Do not promote a source-to-projection validator as part of `1.0.0` unless its input model, diagnostics model, versioning rules, and compatibility boundary are explicitly designed and documented. Until then, the canonical stable check remains `node docai-http/tools/check-conformance-fixtures.mjs`.
+
 ## Version Bump Rules
 
 Before `1.0.0`:

@@ -9,6 +9,7 @@ const SPEC_VERSION = process.env.DOCAI_COMPLETE_FIXTURE_VERSION ?? "0.12.0";
 const FOCUSED_EXPECTATION_LABEL = process.env.DOCAI_COMPLETE_FOCUSED_EXPECTATION_LABEL ?? "complete candidate";
 const FIXTURE_EXTENSION_LABEL = process.env.DOCAI_COMPLETE_FIXTURE_EXTENSION_LABEL ?? "complete-candidate";
 const CORPUS_DISPLAY_LABEL = process.env.DOCAI_COMPLETE_CORPUS_DISPLAY_LABEL ?? "Complete candidate";
+const SOURCE_TRACEABILITY_FILE = process.env.DOCAI_COMPLETE_SOURCE_TRACEABILITY_FILE;
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_RELATIVE_DIR =
   process.env.DOCAI_COMPLETE_FIXTURE_DEFAULT_RELATIVE_DIR ?? path.join("fixtures", "complete-candidates", `v${SPEC_VERSION}`);
@@ -1001,6 +1002,24 @@ function validateFinalFocusedAudit() {
   });
 }
 
+function validateSourceTraceability() {
+  if (!SOURCE_TRACEABILITY_FILE) return;
+  const file = path.join(CANDIDATE_DIR, SOURCE_TRACEABILITY_FILE);
+  requireExists(file, "source-traceability");
+  if (!fs.existsSync(file)) return;
+  const traceability = read(file);
+  [
+    "source/complete-openapi.yaml",
+    "source/recursive-direct-openapi.yaml",
+    "source/recursive-indirect-openapi.yaml",
+  ].forEach((relativePath) => {
+    requireExists(path.join(CANDIDATE_DIR, relativePath), "source-traceability");
+    if (!traceability.includes(relativePath)) {
+      fail(file, "source-traceability", `traceability file must reference ${relativePath}`);
+    }
+  });
+}
+
 function validateAuditedFixtureExpectation(coverageFile, requirementName, relativePath) {
   const parts = relativePath.split("/");
   if (parts[0] === "source") return;
@@ -1142,6 +1161,7 @@ try {
 
 validateCoverageReferences();
 validateFinalFocusedAudit();
+validateSourceTraceability();
 validateFocusedFixtures();
 
 if (failures.length > 0) {

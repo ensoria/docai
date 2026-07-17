@@ -93,6 +93,7 @@ This file records evidence for the intended first stable DocAI HTTP `1.0.0` conf
 | Recursive source fixtures | present | `source/recursive-direct-openapi.yaml`, `source/recursive-indirect-openapi.yaml` |
 | Focused recursive fallback fixtures | present | `focused/valid/recursive-direct-unsupported.md`, `focused/valid/recursive-indirect-unsupported.md`, `focused/invalid/recursive-truncated-representation.md` |
 | Final focused complete-surface audit | present | `Final Focused Requirement Audit` below; `tools/check-conformance-fixtures.mjs` verifies fixture, checker expectation, coverage-row, and changelog references |
+| Source traceability audit | present | `SOURCE-TRACEABILITY.md`; `tools/check-conformance-fixtures.mjs` verifies required source fixture references |
 | Stable conformance checker coverage | present | `tools/check-conformance-fixtures.mjs` |
 | Supporting LLM task evaluation evidence | carried forward | `fixtures/complete-candidates/v0.12.0/evaluations/` while the standard document content remains semantically identical |
 | Supporting OpenAPI comparison evidence | carried forward | `fixtures/complete-candidates/v0.12.0/evaluations/openapi-baseline/` and `OPENAPI-COMPARISON-EVIDENCE.md` while the evaluated content remains semantically identical |
