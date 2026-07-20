@@ -4,6 +4,8 @@ DocAI HTTP release history. Specification versioning and compatibility rules are
 
 ## Unreleased
 
+## 1.0.0-rc.1 (Release candidate)
+
 - Chooses the `v1.0.0-rc.1` release-candidate path before final stable `v1.0.0` publication.
 - Updates the active specification version and publication wording to `1.0.0 release candidate` while keeping final `Stable` publication reserved for the final `v1.0.0` tag.
 - Adds the intended first stable `1.0.0` conformance corpus under `fixtures/conformance/v1.0.0/`, copied from the `0.12.0` complete-generator-ready candidate standard document content with stable conformance metadata and expectation labels.

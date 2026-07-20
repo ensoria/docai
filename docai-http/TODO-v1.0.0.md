@@ -66,12 +66,12 @@ Audit result:
 
 ## P1: Release Notes And Changelog
 
-- [ ] Add a `1.0.0` release section, or `1.0.0-rc.1` section if using an RC, to `CHANGELOG.md`.
-- [ ] Move applicable `Unreleased` entries into the concrete release section before tagging.
-- [ ] Add `1.0.0` or RC release notes to `RELEASE.md`.
+- [x] Add a `1.0.0` release section, or `1.0.0-rc.1` section if using an RC, to `CHANGELOG.md`.
+- [x] Move applicable `Unreleased` entries into the concrete release section before tagging.
+- [x] Add `1.0.0` or RC release notes to `RELEASE.md`.
 - [ ] Update any `current tagged public release is v0.12.0` wording after the new release is actually tagged.
-- [ ] Confirm release notes state the stable compatibility scope and explicitly non-promoted areas.
-- [ ] Confirm release notes describe carried-forward LLM/OpenAPI evidence without broadening claims.
+- [x] Confirm release notes state the stable compatibility scope and explicitly non-promoted areas.
+- [x] Confirm release notes describe carried-forward LLM/OpenAPI evidence without broadening claims.
 
 ## P1: Fixture And Checker Finalization
 

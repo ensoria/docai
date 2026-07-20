@@ -2,6 +2,71 @@
 
 This document defines the repository release process for DocAI HTTP. It is operational guidance for maintainers; the format rules remain in `README.md`.
 
+## 1.0.0-rc.1 Release Notes (Release candidate)
+
+Scope:
+
+- Publication label: `1.0.0 release candidate`, not final `Stable`.
+- Release path: publish `v1.0.0-rc.1` before stable `v1.0.0`; tag stable
+  `v1.0.0` only after final RC review.
+- Compatibility scope under review for final stable: normative README text,
+  `fixtures/conformance/v1.0.0/`, and `tools/check-conformance-fixtures.mjs`.
+- Explicitly non-promoted areas: final `Stable` publication, standalone public
+  validator APIs, automated live-provider CI, translated `README.ja.md`, source-to-projection
+  validator guarantees, normalized provider cost comparisons, optional live LLM
+  target requirements, additional API/task benchmark claims, and recursive-schema
+  finite representation support.
+
+Evidence:
+
+- Stable conformance corpus: `fixtures/conformance/v1.0.0/`.
+- Stable conformance checker: `node docai-http/tools/check-conformance-fixtures.mjs`.
+- Stable conformance coverage: `fixtures/conformance/v1.0.0/COVERAGE.md`.
+- Source traceability audit: `fixtures/conformance/v1.0.0/SOURCE-TRACEABILITY.md`.
+- Semantic drift audit: `fixtures/conformance/v1.0.0/SEMANTIC-DRIFT-AUDIT.md`.
+- Token-saving conformance notes: `fixtures/conformance/v1.0.0/TOKEN-SAVINGS.md`.
+- Carried-forward LLM evaluation results: `fixtures/complete-candidates/v0.12.0/evaluations/RESULTS.md`.
+- Carried-forward OpenAPI comparison evidence: `OPENAPI-COMPARISON-EVIDENCE.md`.
+
+Compatibility:
+
+- Version bump reason: `v1.0.0-rc.1` switches the active specification version to
+  `1.0.0` and tests the intended first stable compatibility contract before the
+  final stable tag.
+- Known compatibility limits: this publication is a release candidate, not final
+  `Stable`; candidate-only evidence paths do not create stable compatibility
+  promises by themselves.
+- Migration notes: implementers targeting the RC should use
+  `fixtures/conformance/v1.0.0/` and `node docai-http/tools/check-conformance-fixtures.mjs`.
+  Implementers targeting historical pre-1.0 scopes may continue using the
+  `0.11.0` core corpus or the `0.12.0` complete-candidate corpus as appropriate.
+
+Carried-forward evidence policy:
+
+- The `0.12.0` live LLM task evaluations, deterministic token-load records, and
+  OpenAPI comparison records remain supporting evidence for `v1.0.0-rc.1` because
+  `SEMANTIC-DRIFT-AUDIT.md` found no standard document content drift after
+  release-boundary metadata is normalized.
+- If final RC review changes standard document content beyond wording or metadata
+  that preserves the stable contract, rerun deterministic checks and decide
+  whether the affected live LLM or OpenAPI comparison evidence must be refreshed.
+
+Required pre-tag validation:
+
+- `node docai-http/tools/check-release-readiness.mjs`.
+- `git diff --check`.
+- Rerun both immediately before tagging `v1.0.0-rc.1`.
+
+Publication notes:
+
+- Do not call this release `Stable`.
+- Do not update the "current tagged public release" wording from `v0.12.0` until
+  `v1.0.0-rc.1` is actually tagged and published.
+- If final review finds only wording or metadata issues that preserve the stable
+  contract, fix them before tagging stable `v1.0.0`.
+- If final review finds compatibility-scope or conformance-content changes,
+  update the evidence and consider publishing `v1.0.0-rc.2` before stable `v1.0.0`.
+
 ## 0.12.0 Draft Release Notes (Complete-generator-ready candidate)
 
 Scope:
@@ -61,6 +126,7 @@ Use the narrowest publication label supported by evidence:
 - `Design-review draft`: specification text is available, but fixture evidence is incomplete for an implementation promise.
 - `Compatibility Core implementation target`: the release satisfies the Compatibility Core scope in `README.md` and has matching core fixtures and checker coverage.
 - `Complete-generator-ready candidate`: the release has complete-surface fixture evidence for the full generator implementation surface described in `README.md` section 9.1.
+- `1.0.0 release candidate`: the release has the intended `1.0.0` stable conformance corpus and checker evidence, but is still under final review before the final `Stable` tag.
 - `Stable`: the release has the versioned conformance corpus required for the stable compatibility promise.
 
 Do not imply compatibility for structures outside the published label. Non-core structures remain opt-in until they have specification text, positive and negative fixtures, checker behavior, coverage notes, and changelog evidence.
@@ -177,20 +243,21 @@ summary claims should use deterministic local context metrics, pass rates, and
 the existing scoped comparison until a normalized cost model is deliberately
 defined.
 
-## Pre-1.0 Documentation Scope
+## Pre-Stable Documentation Scope
 
-Keep documentation changes before `1.0.0` narrowly focused on the stable boundary:
+Keep documentation changes before final stable `v1.0.0` narrowly focused on the
+stable boundary:
 
 - Defer `README.ja.md` until after the English `1.0.0` text is stable.
-- Do not add a separate release-history document before `1.0.0`; use
+- Do not add a separate release-history document before final stable `v1.0.0`; use
   `CHANGELOG.md` for chronological history and this `RELEASE.md` for release
   criteria, gates, and operational decisions.
 - Keep top-level README comparison claims synchronized with
   `OPENAPI-COMPARISON-EVIDENCE.md` and scoped to the evaluated fixture, target
   models, tasks, and dates.
-- Keep the `Complete-generator-ready candidate` wording until the repository
-  deliberately switches the publication label to a concrete `1.0.0` release
-  candidate or stable release.
+- After switching to `v1.0.0-rc.1`, keep active publication wording on
+  `1.0.0 release candidate` until the repository deliberately switches to final
+  `Stable`.
 
 When the publication label changes, update `docai-http/README.md`, `README.md`,
 `CHANGELOG.md`, fixture documentation, and release notes in the same change set.
