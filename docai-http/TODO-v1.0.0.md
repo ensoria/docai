@@ -9,11 +9,11 @@ conformance corpus.
 
 ## Release Thesis
 
-- [ ] Confirm that `TODO-v0.13.0.md` is historical and complete.
-- [ ] Confirm that `fixtures/conformance/v1.0.0/` is the intended stable conformance corpus.
-- [ ] Confirm that stable compatibility begins with `docai-http` version `1.0.0`.
-- [ ] Confirm that the `1.0.0` stable promise is limited to normative README text, `fixtures/conformance/v1.0.0/`, and `tools/check-conformance-fixtures.mjs`.
-- [ ] Confirm that candidate-only evidence paths do not create stable compatibility promises by themselves.
+- [x] Confirm that `TODO-v0.13.0.md` is historical and complete.
+- [x] Confirm that `fixtures/conformance/v1.0.0/` is the intended stable conformance corpus.
+- [x] Confirm that stable compatibility begins with `docai-http` version `1.0.0`.
+- [x] Confirm that the `1.0.0` stable promise is limited to normative README text, `fixtures/conformance/v1.0.0/`, and `tools/check-conformance-fixtures.mjs`.
+- [x] Confirm that candidate-only evidence paths do not create stable compatibility promises by themselves.
 
 ## P0: Release Path Decision
 
@@ -45,10 +45,15 @@ Decision options:
 
 ## P0: Semantic Drift Audit
 
-- [ ] Compare `fixtures/conformance/v1.0.0/` against `fixtures/complete-candidates/v0.12.0/` and confirm that differences are limited to version metadata, source paths, fixture labels, and conformance documentation.
-- [ ] Confirm that no standard document content changed in a way that invalidates carried-forward LLM or OpenAPI evidence.
-- [ ] If semantic document content changed, decide which LLM and OpenAPI comparison evaluations must be rerun.
-- [ ] Do not send any live LLM API requests unless the user explicitly approves provider submission and possible API usage cost.
+- [x] Compare `fixtures/conformance/v1.0.0/` against `fixtures/complete-candidates/v0.12.0/` and confirm that differences are limited to version metadata, source paths, fixture labels, and conformance documentation.
+- [x] Confirm that no standard document content changed in a way that invalidates carried-forward LLM or OpenAPI evidence.
+- [x] Since no semantic document content changed, record that no LLM or OpenAPI comparison refresh is required for `v1.0.0-rc.1`.
+- [x] Do not send any live LLM API requests unless the user explicitly approves provider submission and possible API usage cost.
+
+Audit result:
+
+- `fixtures/conformance/v1.0.0/SEMANTIC-DRIFT-AUDIT.md` records the comparison.
+- No live LLM API requests were sent for this audit.
 
 ## P1: Version And Label Alignment
 

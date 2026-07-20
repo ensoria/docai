@@ -29,6 +29,9 @@ Layout:
 - `COVERAGE.md` records the stable conformance evidence present in this corpus.
 - `SOURCE-TRACEABILITY.md` records the source fixture audit and the decision not
   to require a public source-to-projection validator before `1.0.0`.
+- `SEMANTIC-DRIFT-AUDIT.md` records the audit showing that standard document
+  content remains semantically identical to the evaluated `0.12.0` candidate
+  corpus after release-boundary metadata is normalized.
 - `TOKEN-SAVINGS.md` records compact-profile reduction guidance for the conformance
   pair.
 

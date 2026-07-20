@@ -121,6 +121,22 @@ No missing source inputs are known for the current stable conformance corpus:
 
 Do not promote a source-to-projection validator as part of `1.0.0` unless its input model, diagnostics model, versioning rules, and compatibility boundary are explicitly designed and documented. Until then, the canonical stable check remains `node docai-http/tools/check-conformance-fixtures.mjs`.
 
+## Semantic Drift Audit
+
+`fixtures/conformance/v1.0.0/SEMANTIC-DRIFT-AUDIT.md` records the audit comparing
+the stable conformance corpus with `fixtures/complete-candidates/v0.12.0/`.
+
+The audit found no semantic drift in standard DocAI HTTP document content after
+normalizing version metadata, source paths, fixture identity values, fixture
+expectation labels, and source fixture title/version metadata. Therefore the
+`0.12.0` live LLM task evaluations, deterministic token-load evidence, and
+OpenAPI comparison records remain carried-forward supporting evidence for
+`v1.0.0-rc.1`.
+
+If standard document content changes after this audit, repeat deterministic
+checks and decide whether affected live LLM or OpenAPI comparison evidence must
+be refreshed before stable `v1.0.0`.
+
 ## Pre-1.0 Deterministic Automation
 
 Do not add a hosted CI provider as a `1.0.0` prerequisite unless the repository
