@@ -17,6 +17,7 @@ DocAI HTTP release history. Specification versioning and compatibility rules are
 - Records the pre-1.0 LLM/OpenAPI evidence scope: optional targets, additional APIs, additional task classes, and normalized provider cost/token aggregates are not required before `1.0.0`.
 - Confirms the `v1.0.0-rc.1` evidence scope and updates the evaluation target-list status to show required live runs complete while optional targets remain pending.
 - Records the pre-1.0 documentation scope: defer `README.ja.md`, avoid a separate release-history file before stable text, and keep release-candidate wording changes tied to an explicit publication-label change.
+- Aligns the publication-readiness guidance, recursive-schema policy evidence, and tag checklist with the `v1.0.0-rc.1` conformance boundary.
 
 ## 0.12.0 (Draft - Complete-generator-ready candidate)
 

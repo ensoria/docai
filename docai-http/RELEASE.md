@@ -299,15 +299,17 @@ If one of these does not apply, state why in the change or release notes. A feat
 
 ## Recursive Schema Policy
 
-Keep recursive schemas explicitly unsupported for the intended `1.0.0` stable contract unless a finite, self-contained representation and versioned fixture evidence land before the pre-v1.0.0 release-candidate stage.
+Keep recursive schemas explicitly unsupported for the intended `1.0.0` stable
+contract unless a finite, self-contained representation and versioned fixture
+evidence land before final stable `v1.0.0` publication.
 
 Current evidence:
 
-- Direct recursive source: `fixtures/core/v0.11.0/source/recursive-direct-openapi.yaml`
-- Indirect recursive source: `fixtures/core/v0.11.0/source/recursive-indirect-openapi.yaml`
-- Direct recursive projection fallback: `fixtures/core/v0.11.0/focused/valid/recursive-direct-unsupported.md`
-- Indirect recursive projection fallback: `fixtures/core/v0.11.0/focused/valid/recursive-indirect-unsupported.md`
-- Full-profile fallback example: `fixtures/core/v0.11.0/valid/full/resources/users.md`
+- Direct recursive source: `fixtures/conformance/v1.0.0/source/recursive-direct-openapi.yaml`
+- Indirect recursive source: `fixtures/conformance/v1.0.0/source/recursive-indirect-openapi.yaml`
+- Direct recursive projection fallback: `fixtures/conformance/v1.0.0/focused/valid/recursive-direct-unsupported.md`
+- Indirect recursive projection fallback: `fixtures/conformance/v1.0.0/focused/valid/recursive-indirect-unsupported.md`
+- Invalid finite truncation fixture: `fixtures/conformance/v1.0.0/focused/invalid/recursive-truncated-representation.md`
 
 Compatibility impact:
 
@@ -320,13 +322,23 @@ Compatibility impact:
 Before tagging:
 
 - Confirm the intended release label and compatibility scope.
-- Confirm `README.md` specification version, metadata-stamp examples, fixture metadata stamps, checker `SPEC_VERSION`, and the `CHANGELOG.md` version section agree.
+- Confirm `docai-http/README.md` specification version, publication label,
+  metadata-stamp examples, conformance fixture metadata stamps, checker expected
+  version, and the `CHANGELOG.md` version section agree.
 - Move every README-visible change out of `Unreleased` into the concrete version section.
 - Confirm promoted features have README text, fixtures, checker behavior, coverage notes, and changelog evidence in the same release.
 - Confirm non-core features are not advertised as compatibility-preserving unless they are explicitly promoted with fixture evidence.
 - Confirm meaning-changing fixture updates either use a new fixture version directory or are called out as compatibility-impacting under the version bump rules.
-- Run `node --check docai-http/tools/check-core-fixtures.mjs` from the repository root.
-- Run `node docai-http/tools/check-core-fixtures.mjs` from the repository root.
+- Confirm candidate-only evidence paths are described as supporting evidence, not
+  stable compatibility promises.
+- Confirm OpenAPI comparison claims remain scoped to the evaluated fixture,
+  required target models, task contracts, run dates, and grader policy.
+- Confirm no live LLM provider call is required by the tag checklist.
+- Run `node docai-http/tools/check-release-readiness.mjs` from the repository root.
+- Run `git diff --check` from the repository root.
+- For `v1.0.0-rc.1`, keep "current tagged public release" wording on `v0.12.0`
+  until the tag is actually published; after publication, update that wording in
+  a follow-up documentation change if needed.
 
 ## Release Note Template
 

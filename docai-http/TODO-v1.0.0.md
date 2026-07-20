@@ -115,23 +115,49 @@ Confirmation notes:
 
 ## P2: Publication Readiness Review
 
-- [ ] Review `docai-http/README.md` for active-version, active-label, and compatibility wording consistency.
-- [ ] Review `README.md` for scoped comparison claims and stable-boundary wording.
-- [ ] Review `RELEASE.md` for release path, release notes, tag checklist, and validation commands.
-- [ ] Review `CHANGELOG.md` for version section consistency.
-- [ ] Review fixture docs for path/version consistency.
-- [ ] Search for stale active-publication wording such as `current tagged public release is v0.12.0` after the new tag exists.
-- [ ] Search for claims that imply broader benchmark results than `OPENAPI-COMPARISON-EVIDENCE.md` supports.
+- [x] Review `docai-http/README.md` for active-version, active-label, and compatibility wording consistency.
+- [x] Review `README.md` for scoped comparison claims and stable-boundary wording.
+- [x] Review `RELEASE.md` for release path, release notes, tag checklist, and validation commands.
+- [x] Review `CHANGELOG.md` for version section consistency.
+- [x] Review fixture docs for path/version consistency.
+- [x] Confirm no stale active-publication wording is present for the pre-tag state; `current tagged public release is v0.12.0` remains intentional until the new tag exists.
+- [x] Search for claims that imply broader benchmark results than `OPENAPI-COMPARISON-EVIDENCE.md` supports.
+
+Confirmation notes:
+
+- `docai-http/README.md` now presents specification version `1.0.0` with the
+  `1.0.0 release candidate` label and limits the intended stable promise to
+  normative README text, `fixtures/conformance/v1.0.0/`, and
+  `tools/check-conformance-fixtures.mjs`.
+- The top-level `README.md` keeps OpenAPI comparison claims scoped to the
+  evaluated `0.12.0` complete-candidate fixture, target models, task contracts,
+  and evidence document.
+- `RELEASE.md` now uses the `v1.0.0-rc.1` path, conformance-corpus evidence,
+  `node docai-http/tools/check-release-readiness.mjs`, and `git diff --check`
+  as the tag-time checks; it does not require live LLM provider calls.
+- The `v1.0.0-rc.1` tag does not exist locally yet, so wording that says the
+  current tagged public release is `v0.12.0` remains intentional until the RC is
+  actually tagged and published.
+- Search found no unsupported broad benchmark claims; comparison claims remain
+  bounded by `OPENAPI-COMPARISON-EVIDENCE.md`.
 
 ## P2: Tag And Release Preparation
 
 - [ ] Confirm working tree state before tagging.
 - [ ] Run `node docai-http/tools/check-release-readiness.mjs` immediately before tagging.
 - [ ] Run `git diff --check` immediately before tagging.
-- [ ] Prepare release notes from `RELEASE.md`.
+- [x] Prepare release notes from `RELEASE.md`.
 - [ ] User tags the release.
 - [ ] User publishes the release.
 - [ ] After tagging, update any documentation that must refer to the newly tagged release as current.
+
+Preparation notes:
+
+- `docai-http/RELEASE.md` contains the `1.0.0-rc.1` release notes, evidence
+  list, compatibility notes, carried-forward evidence policy, validation
+  commands, and publication notes.
+- The remaining tag-time checks should be rerun after the current documentation
+  changes are reviewed and committed, immediately before creating `v1.0.0-rc.1`.
 
 ## P3: Post-1.0 Follow-Up Backlog
 
