@@ -57,12 +57,12 @@ Audit result:
 
 ## P1: Version And Label Alignment
 
-- [ ] Update `docai-http/README.md` specification version only when the release path decision says to do so.
-- [ ] Update the publication label in `docai-http/README.md` to the chosen `1.0.0` release-candidate or stable label.
-- [ ] Update the opening status prose in `docai-http/README.md` so it no longer describes the active publication as `0.12.0 Complete-generator-ready candidate` after the label changes.
-- [ ] Update README metadata-stamp examples if the chosen publication state requires examples to show `1.0.0`.
-- [ ] Keep historical `0.12.0` candidate references where they describe carried-forward evidence, not active publication status.
-- [ ] Update top-level `README.md` so its evidence summary and stable-boundary statement match the chosen release path.
+- [x] Update `docai-http/README.md` specification version only when the release path decision says to do so.
+- [x] Update the publication label in `docai-http/README.md` to the chosen `1.0.0` release-candidate or stable label.
+- [x] Update the opening status prose in `docai-http/README.md` so it no longer describes the active publication as `0.12.0 Complete-generator-ready candidate` after the label changes.
+- [x] Update README metadata-stamp examples if the chosen publication state requires examples to show `1.0.0`.
+- [x] Keep historical `0.12.0` candidate references where they describe carried-forward evidence, not active publication status.
+- [x] Update top-level `README.md` so its evidence summary and stable-boundary statement match the chosen release path.
 
 ## P1: Release Notes And Changelog
 
