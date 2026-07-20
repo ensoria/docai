@@ -69,7 +69,7 @@ Audit result:
 - [x] Add a `1.0.0` release section, or `1.0.0-rc.1` section if using an RC, to `CHANGELOG.md`.
 - [x] Move applicable `Unreleased` entries into the concrete release section before tagging.
 - [x] Add `1.0.0` or RC release notes to `RELEASE.md`.
-- [ ] Update any `current tagged public release is v0.12.0` wording after the new release is actually tagged.
+- [x] Update old current-tagged-public-release wording after the new release is actually tagged.
 - [x] Confirm release notes state the stable compatibility scope and explicitly non-promoted areas.
 - [x] Confirm release notes describe carried-forward LLM/OpenAPI evidence without broadening claims.
 
@@ -120,7 +120,7 @@ Confirmation notes:
 - [x] Review `RELEASE.md` for release path, release notes, tag checklist, and validation commands.
 - [x] Review `CHANGELOG.md` for version section consistency.
 - [x] Review fixture docs for path/version consistency.
-- [x] Confirm no stale active-publication wording is present for the pre-tag state; `current tagged public release is v0.12.0` remains intentional until the new tag exists.
+- [x] Confirm no stale active-publication wording is present after `v1.0.0-rc.1` publication.
 - [x] Search for claims that imply broader benchmark results than `OPENAPI-COMPARISON-EVIDENCE.md` supports.
 
 Confirmation notes:
@@ -135,29 +135,73 @@ Confirmation notes:
 - `RELEASE.md` now uses the `v1.0.0-rc.1` path, conformance-corpus evidence,
   `node docai-http/tools/check-release-readiness.mjs`, and `git diff --check`
   as the tag-time checks; it does not require live LLM provider calls.
-- The `v1.0.0-rc.1` tag does not exist locally yet, so wording that says the
-  current tagged public release is `v0.12.0` remains intentional until the RC is
-  actually tagged and published.
+- The `v1.0.0-rc.1` tag exists locally, and documentation that names the current
+  tagged public release has been updated to `v1.0.0-rc.1`.
 - Search found no unsupported broad benchmark claims; comparison claims remain
   bounded by `OPENAPI-COMPARISON-EVIDENCE.md`.
 
 ## P2: Tag And Release Preparation
 
-- [ ] Confirm working tree state before tagging.
-- [ ] Run `node docai-http/tools/check-release-readiness.mjs` immediately before tagging.
-- [ ] Run `git diff --check` immediately before tagging.
+- [x] Confirm working tree state before tagging.
+- [x] Run `node docai-http/tools/check-release-readiness.mjs` immediately before tagging.
+- [x] Run `git diff --check` immediately before tagging.
 - [x] Prepare release notes from `RELEASE.md`.
-- [ ] User tags the release.
-- [ ] User publishes the release.
-- [ ] After tagging, update any documentation that must refer to the newly tagged release as current.
+- [x] User tags the release.
+- [x] User publishes the release.
+- [x] After tagging, update any documentation that must refer to the newly tagged release as current.
 
 Preparation notes:
 
 - `docai-http/RELEASE.md` contains the `1.0.0-rc.1` release notes, evidence
   list, compatibility notes, carried-forward evidence policy, validation
   commands, and publication notes.
-- The remaining tag-time checks should be rerun after the current documentation
-  changes are reviewed and committed, immediately before creating `v1.0.0-rc.1`.
+- The user confirmed the tag-time `check-release-readiness` and `git diff --check`
+  runs before publication.
+- `git tag --list v1.0.0-rc.1` confirms the release-candidate tag exists locally.
+- Post-tag documentation now names `v1.0.0-rc.1` as the current tagged public
+  release while keeping final `Stable` reserved for `v1.0.0`.
+
+## P2: Final RC Review Before Stable
+
+- [ ] Decide the RC review window and feedback cutoff before final stable tagging.
+- [ ] Collect post-`v1.0.0-rc.1` feedback from release notes, issues, discussions, downstream users, or local review notes.
+- [ ] Classify each feedback item as no-change, wording/metadata-only, compatibility-scope change, conformance-content change, or future backlog.
+- [ ] Apply wording/metadata-only fixes that preserve the intended stable contract before final `v1.0.0`.
+- [ ] If compatibility-scope or conformance-content changes are needed, update fixtures/evidence and consider publishing `v1.0.0-rc.2` before stable.
+- [ ] Rerun `node docai-http/tools/check-release-readiness.mjs` after any RC-review fix.
+- [ ] Rerun `git diff --check` after any RC-review fix.
+- [ ] Decide whether the final stable path is `v1.0.0` or another RC such as `v1.0.0-rc.2`.
+
+Decision guidance:
+
+- Choose final stable `v1.0.0` when review finds no issues or only
+  wording/metadata fixes that do not change the compatibility boundary.
+- Choose another RC when review finds changes to normative behavior,
+  compatibility scope, conformance fixture content, checker expectations, or
+  evidence requirements.
+- Waiting longer for RC feedback reduces first-stable correction risk, but
+  delays the stable release. Moving quickly is reasonable only if no external
+  review channel is expected to provide meaningful new feedback.
+
+User-side work:
+
+- Decide the RC review window and whether any public or downstream feedback must
+  be collected before final stable publication.
+- After review, decide whether to proceed to final `v1.0.0` or publish another
+  RC. The project should prefer another RC if the contract changes.
+
+## P2: Stable Tag And Release Preparation
+
+- [ ] Update `docai-http/README.md` publication label from `1.0.0 release candidate` to `Stable` only after the final stable decision.
+- [ ] Update top-level `README.md` so it says final stable `v1.0.0` is published instead of pending.
+- [ ] Add final `1.0.0` release notes to `docai-http/RELEASE.md`.
+- [ ] Add a final `1.0.0` section to `docai-http/CHANGELOG.md` and move applicable `Unreleased` entries.
+- [ ] Update current-tagged-public-release wording from `v1.0.0-rc.1` to final `v1.0.0` only after final stable publication.
+- [ ] Run `node docai-http/tools/check-release-readiness.mjs` immediately before tagging stable `v1.0.0`.
+- [ ] Run `git diff --check` immediately before tagging stable `v1.0.0`.
+- [ ] User tags final stable `v1.0.0`.
+- [ ] User publishes final stable `v1.0.0`.
+- [ ] After stable publication, update any documentation that must refer to `v1.0.0` as current.
 
 ## P3: Post-1.0 Follow-Up Backlog
 

@@ -4,6 +4,11 @@ DocAI HTTP release history. Specification versioning and compatibility rules are
 
 ## Unreleased
 
+- Updates post-`v1.0.0-rc.1` publication wording so documentation names the
+  release candidate as the current tagged public release while reserving
+  `Stable` for the final `v1.0.0` tag.
+- Adds final RC review and stable `v1.0.0` tag-preparation checklist items.
+
 ## 1.0.0-rc.1 (Release candidate)
 
 - Chooses the `v1.0.0-rc.1` release-candidate path before final stable `v1.0.0` publication.

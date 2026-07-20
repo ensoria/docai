@@ -60,8 +60,8 @@ Required pre-tag validation:
 Publication notes:
 
 - Do not call this release `Stable`.
-- Do not update the "current tagged public release" wording from `v0.12.0` until
-  `v1.0.0-rc.1` is actually tagged and published.
+- Now that `v1.0.0-rc.1` is tagged and published, documentation that names the
+  current tagged public release should point to `v1.0.0-rc.1`.
 - If final review finds only wording or metadata issues that preserve the stable
   contract, fix them before tagging stable `v1.0.0`.
 - If final review finds compatibility-scope or conformance-content changes,
@@ -135,7 +135,7 @@ Do not imply compatibility for structures outside the published label. Non-core 
 
 Before using the `Complete-generator-ready candidate` label, complete the evidence gate in `COMPLETE-GENERATOR-READINESS.md`.
 
-The current tagged public release is `v0.12.0`, published as `Complete-generator-ready candidate`, not `Stable` and not `1.0.0`. The complete-candidate corpus has complete focused fixture coverage, matching checker coverage, required-target LLM evaluations, token-load evidence, and scoped OpenAPI comparison evidence.
+The current tagged public release is `v1.0.0-rc.1`, published as `1.0.0 release candidate`, not final `Stable`. The previous `v0.12.0` complete-generator-ready candidate remains historical supporting evidence. Its complete-candidate corpus has complete focused fixture coverage, matching checker coverage, required-target LLM evaluations, token-load evidence, and scoped OpenAPI comparison evidence.
 
 Do not update the README publication label merely because one candidate corpus exists. The label may change only after the complete full-profile set, matching compact projection, focused complete-surface fixtures, checker behavior, evaluation notes, and changelog/release notes support the broader claim.
 
@@ -336,9 +336,8 @@ Before tagging:
 - Confirm no live LLM provider call is required by the tag checklist.
 - Run `node docai-http/tools/check-release-readiness.mjs` from the repository root.
 - Run `git diff --check` from the repository root.
-- For `v1.0.0-rc.1`, keep "current tagged public release" wording on `v0.12.0`
-  until the tag is actually published; after publication, update that wording in
-  a follow-up documentation change if needed.
+- For release-candidate publications, update "current tagged public release"
+  wording only after the tag is actually published.
 
 ## Release Note Template
 
