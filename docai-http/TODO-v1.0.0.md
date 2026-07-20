@@ -75,12 +75,21 @@ Audit result:
 
 ## P1: Fixture And Checker Finalization
 
-- [ ] Run `node docai-http/tools/check-release-readiness.mjs`.
-- [ ] Run `git diff --check`.
-- [ ] Confirm `tools/check-conformance-fixtures.mjs` is the canonical stable conformance checker.
-- [ ] Confirm `tools/check-release-readiness.mjs` includes the stable conformance checker and does not run live LLM provider calls.
-- [ ] Confirm `fixtures/conformance/v1.0.0/README.md`, `COVERAGE.md`, `SOURCE-TRACEABILITY.md`, and `TOKEN-SAVINGS.md` use stable conformance wording.
-- [ ] Confirm `fixtures/README.md` points to the stable conformance corpus and checker.
+- [x] Run `node docai-http/tools/check-release-readiness.mjs`.
+- [x] Run `git diff --check`.
+- [x] Confirm `tools/check-conformance-fixtures.mjs` is the canonical stable conformance checker.
+- [x] Confirm `tools/check-release-readiness.mjs` includes the stable conformance checker and does not run live LLM provider calls.
+- [x] Confirm `fixtures/conformance/v1.0.0/README.md`, `COVERAGE.md`, `SOURCE-TRACEABILITY.md`, and `TOKEN-SAVINGS.md` use stable conformance wording.
+- [x] Confirm `fixtures/README.md` points to the stable conformance corpus and checker.
+
+Confirmation notes:
+
+- `tools/check-conformance-fixtures.mjs` is the stable conformance wrapper for
+  `fixtures/conformance/v1.0.0/`.
+- `tools/check-release-readiness.mjs` includes `check-conformance-fixtures` and
+  does not call live LLM provider runners.
+- `fixtures/README.md` points to the stable conformance corpus, checker, coverage,
+  source traceability, semantic drift audit, and token-saving notes.
 
 ## P1: Evidence Scope Review
 

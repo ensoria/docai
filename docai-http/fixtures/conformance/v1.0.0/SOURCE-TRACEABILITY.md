@@ -7,7 +7,7 @@ stable conformance corpus.
 
 Source fixtures remain traceability evidence for `1.0.0`; they are not a
 source-to-projection validator contract. The stable release does not require a
-public source-to-projection validator before `1.0.0`.
+public source-to-projection validator before final stable `v1.0.0` publication.
 
 Why:
 
@@ -17,8 +17,9 @@ Why:
   diagnostics model, versioning rules, and compatibility boundary.
 - The current corpus already records authoritative source inputs for the stable
   examples and the recursive-schema unsupported fallback.
-- Adding a validator boundary immediately before `1.0.0` would broaden the stable
-  promise more than the fixture evidence requires.
+- Adding a validator boundary immediately before final stable `v1.0.0`
+  publication would broaden the stable promise more than the fixture evidence
+  requires.
 
 ## Source Fixtures
 
@@ -43,9 +44,9 @@ future work unless the project deliberately defines a reusable validator boundar
 
 No missing source inputs were found for the current stable conformance corpus.
 
-Before `1.0.0`, add a new source fixture only if a conformance document or focused
-fixture depends on authoritative source behavior that is not already represented by
-the three source files above.
+Before final stable `v1.0.0` publication, add a new source fixture only if a
+conformance document or focused fixture depends on authoritative source behavior
+that is not already represented by the three source files above.
 
 ## Refresh Rule
 
