@@ -15,6 +15,7 @@ DocAI HTTP release history. Specification versioning and compatibility rules are
 - Adds a semantic drift audit confirming that the stable conformance corpus does not change standard document content beyond release-boundary metadata, source paths, fixture labels, and conformance documentation.
 - Adds a local deterministic release-readiness checker that aggregates fixture, evaluation, OpenAPI comparison, and stable conformance checks without running live LLM provider calls.
 - Records the pre-1.0 LLM/OpenAPI evidence scope: optional targets, additional APIs, additional task classes, and normalized provider cost/token aggregates are not required before `1.0.0`.
+- Confirms the `v1.0.0-rc.1` evidence scope and updates the evaluation target-list status to show required live runs complete while optional targets remain pending.
 - Records the pre-1.0 documentation scope: defer `README.ja.md`, avoid a separate release-history file before stable text, and keep release-candidate wording changes tied to an explicit publication-label change.
 
 ## 0.12.0 (Draft - Complete-generator-ready candidate)

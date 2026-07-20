@@ -93,11 +93,25 @@ Confirmation notes:
 
 ## P1: Evidence Scope Review
 
-- [ ] Confirm required-target LLM evaluation evidence remains complete and passing.
-- [ ] Confirm OpenAPI comparison evidence remains scoped to the evaluated fixture, target models, task contracts, run dates, and grader policy.
-- [ ] Confirm optional LLM targets are not required for `1.0.0`.
-- [ ] Confirm additional APIs and task classes are not required for `1.0.0`.
-- [ ] Confirm normalized provider cost or cross-provider token aggregates are not published before a normalized cost model exists.
+- [x] Confirm required-target LLM evaluation evidence remains complete and passing.
+- [x] Confirm OpenAPI comparison evidence remains scoped to the evaluated fixture, target models, task contracts, run dates, and grader policy.
+- [x] Confirm optional LLM targets are not required for `1.0.0`.
+- [x] Confirm additional APIs and task classes are not required for `1.0.0`.
+- [x] Confirm normalized provider cost or cross-provider token aggregates are not published before a normalized cost model exists.
+
+Confirmation notes:
+
+- `node docai-http/tools/check-complete-evaluations.mjs` passes for the required
+  target evidence.
+- `node docai-http/tools/check-openapi-comparison.mjs` passes for the scoped
+  OpenAPI baseline records.
+- `targets.json` status records required target completion while keeping optional
+  targets pending.
+- `OPENAPI-COMPARISON-EVIDENCE.md` keeps claims scoped to the evaluated fixture,
+  target models, task contracts, run dates, and grader policy.
+- Optional targets, additional APIs/task classes, provider latency metrics, and
+  normalized provider-cost comparisons remain future adoption evidence, not
+  `v1.0.0-rc.1` or final stable blockers.
 
 ## P2: Publication Readiness Review
 

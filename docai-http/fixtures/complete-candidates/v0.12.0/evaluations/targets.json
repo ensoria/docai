@@ -2,7 +2,7 @@
   "docai_http": "0.12.0",
   "candidate": "complete-candidates/v0.12.0",
   "decided_on": "2026-07-11",
-  "status": "target-list-recorded-live-runs-pending",
+  "status": "required-target-live-runs-complete-optional-pending",
   "selection_policy": {
     "required_targets": "Run every request_construction, response_handling, error_handling, workflow_completion, and token_load task against every required target before changing the README publication label.",
     "optional_targets": "Run optional targets when budget allows to compare frontier, balanced, and cost-sensitive behavior across providers.",
