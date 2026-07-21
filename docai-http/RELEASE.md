@@ -40,8 +40,11 @@ Evidence status:
   `0.12.0` corpus.
 - A separate `fixtures/release-candidates/v1.0.0-rc.2/evaluations/` snapshot
   refreshes affected DocAI task evidence against corrected conformance context;
-  deterministic and Google records are complete, while Anthropic/OpenAI records
-  require maintainer execution before tagging.
+  12 unaffected required live task records and all 6 required-target
+  deterministic token-load records pass. The early-payment-settlement fixture
+  gap is corrected by independent payment/order state and no-recapture order
+  association; the three affected workflow records require refresh before
+  tagging.
 - OpenAPI comparison records remain historical `0.12.0` evidence and are not
   presented as a comparison against the corrected `rc.2` documents.
 

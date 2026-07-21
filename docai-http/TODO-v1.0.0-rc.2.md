@@ -280,11 +280,24 @@ Refresh progress:
   `fixtures/release-candidates/v1.0.0-rc.2/evaluations/` and reads corrected
   context from `fixtures/conformance/v1.0.0/valid/`.
 - Six required-target deterministic token-load records pass.
-- Five Google required-target live records pass after representation-equivalent
-  multipart and workflow recovery normalization.
-- Ten Anthropic/OpenAI live records remain pending because the managed execution
-  environment blocked private-workspace context export. They must be run by the
-  maintainer with the commands in the snapshot README.
+- All fifteen required-target live task records pass across Google, Anthropic,
+  and OpenAI under automated grading after representation-equivalent multipart
+  and workflow recovery normalization.
+- [ ] Resolve the human-review ambiguity between early `payment.completed`
+  transition to `payment.settled` and the `POST /orders` pending-payment
+  precondition; update authoritative/projected workflow semantics and rerun the
+  affected three-provider workflow task if the contract changes.
+
+Chosen resolution:
+
+- Track payment state and order state independently.
+- Allow `POST /orders` for a payment that is pending or already settled by an
+  early `payment.completed` event.
+- Capture a pending payment once; associate an already settled payment without
+  another capture.
+- The authoritative source, full/compact projection, checker, task packet, and
+  deterministic token-load records are updated as `rc2-002`; the three live
+  workflow records remain to be refreshed.
 
 ## P2: Regression And Review Gate
 
@@ -298,7 +311,8 @@ Refresh progress:
   artifacts were refreshed or remain claimed as supporting evidence.
 - [x] Run `node docai-http/tools/check-openapi-comparison.mjs` when comparison
   artifacts were refreshed or remain cited.
-- [x] Run `node docai-http/tools/check-release-readiness.mjs`.
+- [ ] Run `node docai-http/tools/check-release-readiness.mjs` after the corrected
+  workflow live records are complete.
 - [x] Run `git diff --check`.
 - [x] Confirm no valid fixture contains a Type outside the normative grammar.
 - [x] Confirm both canonical `same_as` forms have positive and negative semantic

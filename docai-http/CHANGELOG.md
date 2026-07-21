@@ -26,8 +26,12 @@ DocAI HTTP release history. Specification versioning and compatibility rules are
   `rc.2` evaluation snapshot for corrected conformance context, and retains the
   OpenAPI comparison only as historical `0.12.0` evidence.
 - Refreshes deterministic token-load evidence, tightens request/error/workflow
-  grading for the idempotency contract, and records the required Google live
-  task refresh while Anthropic/OpenAI refreshes remain pending maintainer runs.
+  grading for the idempotency contract, and records 15/15 passing required live
+  task grades plus 6/6 passing required-target token-load records.
+- Resolves the live-review early-webhook/order-precondition ambiguity by tracking
+  payment and order state independently and allowing an already settled payment
+  to be associated with an order without another capture; the affected workflow
+  live records require refresh against the corrected projection.
 - Updates post-`v1.0.0-rc.1` publication wording so documentation names the
   release candidate as the current tagged public release while reserving
   `Stable` for the final `v1.0.0` tag.

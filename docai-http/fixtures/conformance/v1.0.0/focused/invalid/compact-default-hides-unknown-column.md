@@ -3,7 +3,7 @@
 Expected: invalid complete conformance. A compact `field_defaults` marker defaults a column whose logical rows include an unknown value.
 
 ````markdown
-> docai-http: 1.0.0 | profile: compact | coverage: complete | knowledge: requires-input | generated: 2026-07-21 | generation_id: conformance-compact-20260721-rc2-001 | projection_id: conformance-20260721-rc2-001 | source: fixtures/conformance/v1.0.0/source/complete-input-set.yaml (authoritative input set)
+> docai-http: 1.0.0 | profile: compact | coverage: complete | knowledge: requires-input | generated: 2026-07-21 | generation_id: conformance-compact-20260721-rc2-002 | projection_id: conformance-20260721-rc2-002 | source: fixtures/conformance/v1.0.0/source/complete-input-set.yaml (authoritative input set)
 
 ### Response 200
 

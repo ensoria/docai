@@ -184,7 +184,7 @@
         "workflows/checkout.md",
         "webhooks/payment-completed.md"
       ],
-      "user_task": "Complete checkout for cart_01K0COMPLETE with a card payment for JPY 1200, then describe what state to preserve if POST /orders fails retryably and how to reconcile an early payment.completed webhook.",
+      "user_task": "Complete checkout for cart_01K0COMPLETE with a card payment for JPY 1200, then describe what state to preserve if POST /orders fails retryably and how to finish the order when an early payment.completed webhook settles the payment first, including whether the payment is captured again.",
       "expected_outcome": {
         "steps": [
           {
@@ -236,15 +236,23 @@
           "retry",
           "same Idempotency-Key"
         ],
-        "early_webhook_reconciliation": "Match payment.completed by payment_id."
+        "early_webhook_reconciliation": "Match payment.completed by payment_id, record payment.settled with order.not_confirmed, continue POST /orders, and associate the settled payment without capturing it again.",
+        "webhook_reconciliation_required": [
+          "payment.completed",
+          "payment_id",
+          "payment.settled",
+          "order.not_confirmed",
+          "post /orders",
+          "no recapture"
+        ]
       },
       "evidence": [
         "1. POST /carts/{id}/validate - Pass `id`; keep `cart_id`; fix cart and restart on validation failure.",
         "2. POST /payments - Pass `cart_id`, `amount`, `currency`, one payment-method variant, and one `Idempotency-Key` per logical attempt; keep `payment_id`; replay unknown outcomes with the same request and key, but use a new key after correcting rejected details.",
-        "3. POST /orders - Pass `cart_id`, `payment_id`, and one `Idempotency-Key`; keep `order_id`; replay an unknown or safely retryable outcome with the same IDs and key.",
-        "| payment.pending | POST /orders fails with retryable error | payment.pending |",
-        "For an order request with no definitive response or a safely retryable error, replay the same `cart_id`, `payment_id`, and `Idempotency-Key`; use a new key only for a new logical attempt.",
-        "Reconcile early `payment.completed` delivery by `payment_id`."
+        "3. POST /orders - Pass `cart_id`, `payment_id`, and one `Idempotency-Key`; keep `order_id`; capture a pending payment once or associate an already settled payment without another capture; replay an unknown or safely retryable outcome with the same IDs and key.",
+        "| payment.pending or payment.settled + order.not_confirmed | POST /orders fails with retryable error | same payment state + order.not_confirmed |",
+        "For an order request with no definitive response or a safely retryable error, preserve the payment state and replay the same `cart_id`, `payment_id`, and `Idempotency-Key`; use a new key only for a new logical attempt; do not capture an already settled payment again.",
+        "Reconcile early `payment.completed` delivery by `payment_id`, record `payment.settled + order.not_confirmed`, and continue POST /orders with the same IDs and logical-operation key; POST /orders associates the settled payment without capturing it again."
       ]
     },
     {

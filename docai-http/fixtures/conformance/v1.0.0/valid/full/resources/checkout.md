@@ -1,4 +1,4 @@
-> docai-http: 1.0.0 | profile: full | coverage: complete | knowledge: complete | generated: 2026-07-21 | generation_id: conformance-full-20260721-rc2-001 | projection_id: conformance-20260721-rc2-001 | source: fixtures/conformance/v1.0.0/source/complete-input-set.yaml (authoritative input set) | source_revision: fixture-input-set-rc2-001 | x-fixture: stable-conformance
+> docai-http: 1.0.0 | profile: full | coverage: complete | knowledge: complete | generated: 2026-07-21 | generation_id: conformance-full-20260721-rc2-002 | projection_id: conformance-20260721-rc2-002 | source: fixtures/conformance/v1.0.0/source/complete-input-set.yaml (authoritative input set) | source_revision: fixture-input-set-rc2-002 | x-fixture: stable-conformance
 
 ## POST /carts/{id}/validate
 
@@ -66,13 +66,13 @@ none
 
 ## POST /orders
 
-Confirms an order from a validated cart and pending payment.
+Confirms an order from a validated cart and a payment that is pending or already settled.
 
 ### Behavior
 
-- side_effects: creates an order and captures the pending payment
+- side_effects: creates an order; captures a pending payment once, or associates an already settled payment without capturing it again
 - idempotency: safe to retry only with the same `Idempotency-Key`, `cart_id`, and `payment_id`; without a key, do not retry after an ambiguous outcome
-- preconditions: POST /payments returned a pending `payment_id`
+- preconditions: POST /payments returned a `payment_id` for the validated cart; the payment may be pending or already settled by `payment.completed`
 - authorization: authenticated shopper
 
 ### Request
@@ -98,7 +98,7 @@ Confirms an order from a validated cart and pending payment.
 |---|---|---|---|---|
 | $ | object | yes | no | Additional properties forbidden |
 | cart_id | string | yes | no | Validated cart ID |
-| payment_id | string | yes | no | Pending payment ID returned by POST /payments |
+| payment_id | string | yes | no | Payment ID returned by POST /payments; may be pending or already settled |
 
 ### Response 201
 

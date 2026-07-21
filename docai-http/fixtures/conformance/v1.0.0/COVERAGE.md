@@ -10,7 +10,7 @@ This file records evidence for the intended first stable DocAI HTTP `1.0.0` conf
 | Valid full-profile example set | present | `valid/full/` |
 | Matching compact-profile example set | present | `valid/compact/` |
 | Same standard docs-root-relative paths in full and compact | present | `README.md` path list |
-| Shared `projection_id` across full and compact | present | `conformance-20260721-rc2-001` |
+| Shared `projection_id` across full and compact | present | `conformance-20260721-rc2-002` |
 | Authoritative input-set manifest and pass-through behavior source | present | `source/complete-input-set.yaml`, `source/complete-openapi.yaml`, `source/complete-behavior.yaml` |
 | INDEX.md and CONVENTIONS.md | present | `valid/full/` and `valid/compact/` |
 | Resource files | present | users, checkout, payments, documents |

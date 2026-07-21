@@ -18,4 +18,5 @@ export function configureRc2Evaluation() {
   process.env.DOCAI_COMPLETE_EVALUATION_DIR = RC2_EVALUATION_DIR;
   process.env.DOCAI_COMPLETE_EXPECTED_VERSION = "1.0.0";
   process.env.DOCAI_COMPLETE_EXPECTED_CANDIDATE = "release-candidates/v1.0.0-rc.2";
+  process.env.DOCAI_COMPLETE_REQUIRE_REQUIRED_PASS = "1";
 }

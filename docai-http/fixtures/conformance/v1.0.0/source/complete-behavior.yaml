@@ -136,9 +136,12 @@ operations:
         condition: The Idempotency-Key was already used with a different request.
         caller_action: Use the original request or a new key for a new logical operation.
   POST /orders:
-    side_effects: Creates an order and captures the pending payment.
+    side_effects: Creates an order; captures a pending payment once, or associates an already settled payment without capturing it again.
     idempotency: Safe retry requires the same Idempotency-Key, cart_id, and payment_id.
-    preconditions: POST /payments returned a pending payment_id.
+    preconditions: POST /payments returned a payment_id for the validated cart; the payment may be pending or already settled by payment.completed.
+    payment_state_handling:
+      pending: Capture the payment once and associate it with the new order.
+      settled: Associate the settled payment with the new order without another capture.
     authorization: Authenticated shopper.
     errors:
       - status: 409
@@ -171,13 +174,14 @@ workflow:
     steps:
       - Validate the cart and retain cart_id.
       - Create a payment with one Idempotency-Key per logical payment attempt and retain payment_id.
-      - Create an order with one Idempotency-Key and retain order_id.
+      - Create an order with one Idempotency-Key and retain order_id; capture a pending payment once, or associate an already settled payment without another capture.
+    state_model: Payment state and order state are independent; payment.completed settles the payment but does not confirm or invalidate the order operation.
     recovery:
       payment_no_response: Retry the byte-equivalent request with the same key; do not create a second payment key until the first outcome is known.
       payment_rejected: Correct the payment method and use a new key for the new logical attempt.
       order_no_response: Retry the same cart_id and payment_id with the same key.
       order_rejected: Correct the request only when the error permits it and use a new key for a new logical operation.
-      early_webhook: Reconcile by payment_id and continue order confirmation according to known order state.
+      early_webhook: Reconcile by payment_id, mark the payment settled, retain order.not_confirmed, and continue POST /orders; the order operation associates the settled payment without capturing it again.
 
 webhook_delivery:
   default:
@@ -192,4 +196,3 @@ webhook_delivery:
     event_id_field: event_id
     attempt_header: X-Payment-Attempt
     related_operation: POST /payments
-

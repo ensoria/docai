@@ -29,6 +29,7 @@ const TARGETS_FILE = path.join(EVALUATION_DIR, "targets.json");
 const RESULTS_FILE = path.join(EVALUATION_DIR, "RESULTS.md");
 const RUNS_DIR = path.join(EVALUATION_DIR, "runs");
 const RUN_STATUSES = new Set(["pass", "fail", "inconclusive", "blocked"]);
+const REQUIRE_REQUIRED_PASS = process.env.DOCAI_COMPLETE_REQUIRE_REQUIRED_PASS === "1";
 
 const failures = [];
 const metrics = [];
@@ -247,6 +248,7 @@ function validateRunRecords(taskPacket, targetPacket) {
   const tasksById = new Map(taskPacket.tasks.map((task) => [task.id, task]));
   const targetsById = new Map(targetPacket.targets.map((target) => [target.id, target]));
   const seenRunIds = new Set();
+  const recordsByRunId = new Map();
   runRecordFiles().forEach((file) => {
     read(file)
       .split(/\r?\n/)
@@ -254,9 +256,10 @@ function validateRunRecords(taskPacket, targetPacket) {
         if (!line.trim()) return;
         const record = parseJsonLine(file, line, index + 1);
         validateRunRecord(record, tasksById, targetsById, seenRunIds);
+        recordsByRunId.set(record.run_id, record);
       });
   });
-  validateRequiredRunCoverage(taskPacket, targetPacket, seenRunIds);
+  validateRequiredRunCoverage(taskPacket, targetPacket, seenRunIds, recordsByRunId);
 }
 
 function runRecordFiles() {
@@ -300,7 +303,7 @@ function validateRunRecord(record, tasksById, targetsById, seenRunIds) {
   validateRunReview(record, task);
 }
 
-function validateRequiredRunCoverage(taskPacket, targetPacket, seenRunIds) {
+function validateRequiredRunCoverage(taskPacket, targetPacket, seenRunIds, recordsByRunId) {
   targetPacket.targets
     .filter((target) => target.required)
     .forEach((target) => {
@@ -308,6 +311,9 @@ function validateRequiredRunCoverage(taskPacket, targetPacket, seenRunIds) {
         if (!target.task_groups.includes(task.group)) return;
         const runId = `${target.id}__${task.id}`;
         if (!seenRunIds.has(runId)) throw new Error(`missing required run record ${runId}`);
+        if (REQUIRE_REQUIRED_PASS && recordsByRunId.get(runId)?.status !== "pass") {
+          throw new Error(`required run record ${runId} must pass`);
+        }
       });
     });
 }

@@ -221,9 +221,35 @@ function recoveryIncludes(text, expected) {
 
 function validateWorkflowWebhookReconciliation(task, response, reasons) {
   const text = searchableText(response.webhook_reconciliation ?? response.early_webhook_reconciliation ?? response);
-  ["payment.completed", "payment_id"].forEach((token) => {
-    if (!containsToken(text, token)) reasons.push(`webhook_reconciliation must include ${token}`);
+  const requiredTokens = task.expected_outcome.webhook_reconciliation_required ?? ["payment.completed", "payment_id"];
+  requiredTokens.forEach((token) => {
+    if (!webhookReconciliationIncludes(text, token)) reasons.push(`webhook_reconciliation must include ${token}`);
   });
+}
+
+function webhookReconciliationIncludes(text, expected) {
+  if (containsToken(text, expected)) return true;
+  const normalized = String(expected).toLowerCase();
+  if (normalized === "order.not_confirmed") {
+    return (
+      text.includes("order not confirmed") ||
+      text.includes("order has not been confirmed") ||
+      text.includes("order confirmation remains pending") ||
+      text.includes("does not confirm the order")
+    );
+  }
+  if (normalized === "no recapture") {
+    return (
+      text.includes("without another capture") ||
+      text.includes("without capturing") ||
+      text.includes("does not capture") ||
+      text.includes("do not capture") ||
+      text.includes("must not capture") ||
+      text.includes("no additional capture") ||
+      text.includes("avoid duplicate capture")
+    );
+  }
+  return false;
 }
 
 function workflowPathMatches(text, expectedPath) {

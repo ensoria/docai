@@ -3,7 +3,7 @@
 Expected: invalid complete conformance. A file that contains `**unsupported**:` or `**unknown**:` must use `coverage: requires-source` or `knowledge: requires-input` for that file instead of retaining complete metadata.
 
 ````markdown
-> docai-http: 1.0.0 | profile: full | coverage: complete | knowledge: complete | generated: 2026-07-21 | generation_id: conformance-full-20260721-rc2-001 | projection_id: conformance-20260721-rc2-001 | source: fixtures/conformance/v1.0.0/source/complete-input-set.yaml (authoritative input set)
+> docai-http: 1.0.0 | profile: full | coverage: complete | knowledge: complete | generated: 2026-07-21 | generation_id: conformance-full-20260721-rc2-002 | projection_id: conformance-20260721-rc2-002 | source: fixtures/conformance/v1.0.0/source/complete-input-set.yaml (authoritative input set)
 
 ## GET /reports/{id}
 

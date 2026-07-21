@@ -25,15 +25,36 @@ Audit date: 2026-07-21
 - `node docai-http/tools/check-conformance-boundary.mjs`: passed.
 - `node docai-http/tools/check-complete-candidates.mjs`: passed for historical
   `0.12.0` regression coverage.
-- `node docai-http/tools/check-release-readiness.mjs`: passed.
+- `node docai-http/tools/check-rc2-evaluations.mjs`: currently blocked by the
+  three workflow records that predate the `rc2-002` early-settlement contract;
+  all other required records are present.
+- `node docai-http/tools/check-release-readiness.mjs`: currently fails only at
+  `check-rc2-evaluations` until those workflow records are refreshed.
 - `git diff --check`: passed after the documentation/TODO update.
 
 ## Evidence Follow-Up
 
 `SEMANTIC-DRIFT-AUDIT.md` finds task-relevant drift from the evaluated `0.12.0`
-documents. Existing LLM/OpenAPI records remain historical `0.12.0` evidence.
-Refreshing corrected-corpus live evidence is a separate release task and requires
-explicit user approval before provider submission.
+documents. The separate `fixtures/release-candidates/v1.0.0-rc.2/evaluations/`
+snapshot now records passing corrected-context evidence across Google, Anthropic,
+and OpenAI under automated grading. Human review found a gap between the early
+`payment.completed` transition to `payment.settled` and the `POST /orders`
+pending-payment precondition. The `rc2-002` correction tracks payment and order
+state independently and associates a settled payment without another capture.
+The affected three-provider workflow task must be rerun before classifying the
+evaluation refresh as release-complete. Existing OpenAPI comparison records
+remain historical `0.12.0` evidence and are not combined with the `rc.2` result.
+
+## Live-Evaluation Follow-Up
+
+- [x] Classify the early-settlement/order-precondition uncertainty as a fixture
+  gap rather than a model failure.
+- [x] Choose settled-payment order eligibility with no second capture.
+- [x] Update the authoritative source, full/compact projection, input-set
+  revision, checker expectations, evaluation task, and deterministic metrics.
+- [ ] Rerun the corrected workflow task against Google, Anthropic, and OpenAI.
+- [ ] Confirm all three responses state that order confirmation remains valid
+  after early settlement and does not capture the payment again.
 
 ## External Review Result
 

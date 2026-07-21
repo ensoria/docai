@@ -17,6 +17,7 @@ const CHECKS = [
   ["check-polymorphism-candidates", "docai-http/tools/check-polymorphism-candidates.mjs"],
   ["check-complete-candidates", "docai-http/tools/check-complete-candidates.mjs"],
   ["check-complete-evaluations", "docai-http/tools/check-complete-evaluations.mjs"],
+  ["check-rc2-evaluations", "docai-http/tools/check-rc2-evaluations.mjs"],
   ["check-openapi-comparison", "docai-http/tools/check-openapi-comparison.mjs"],
   ["check-conformance-fixtures", "docai-http/tools/check-conformance-fixtures.mjs"],
   ["check-conformance-boundary", "docai-http/tools/check-conformance-boundary.mjs"],

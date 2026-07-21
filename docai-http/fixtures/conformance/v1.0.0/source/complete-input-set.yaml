@@ -1,6 +1,6 @@
 input_set: docai-http-stable-conformance
 format_version: 1
-revision: fixture-input-set-rc2-001
+revision: fixture-input-set-rc2-002
 inputs:
   - path: complete-openapi.yaml
     media_type: application/yaml
@@ -8,4 +8,3 @@ inputs:
   - path: complete-behavior.yaml
     media_type: application/yaml
     role: Pass-through client behavior, conventions, workflows, webhooks, and non-JSON constraints
-

@@ -52,7 +52,7 @@ The full and compact sets use identical standard docs-root-relative paths:
 - `workflows/checkout.md`
 - `webhooks/payment-completed.md`
 
-Both sets share `projection_id: conformance-20260721-rc2-001`. The full INDEX links
+Both sets share `projection_id: conformance-20260721-rc2-002`. The full INDEX links
 `Compact set: ../compact/`; the compact INDEX links `Full set: ../full/`.
 
 Run `node tools/check-conformance-fixtures.mjs` from the `docai-http/` directory,

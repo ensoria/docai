@@ -2,7 +2,7 @@
   "docai_http": "1.0.0",
   "candidate": "release-candidates/v1.0.0-rc.2",
   "decided_on": "2026-07-21",
-  "status": "google-required-refresh-complete-anthropic-openai-pending-optional-not-planned",
+  "status": "required-target-workflow-refresh-pending-optional-not-planned",
   "selection_policy": {
     "required_targets": "Run every request_construction, response_handling, error_handling, workflow_completion, and token_load task against every required target before changing the README publication label.",
     "optional_targets": "Run optional targets when budget allows to compare frontier, balanced, and cost-sensitive behavior across providers.",

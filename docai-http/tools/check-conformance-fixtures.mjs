@@ -11,7 +11,7 @@ const FIXTURE_EXTENSION_LABEL = "stable-conformance";
 const CORPUS_DISPLAY_LABEL = "Stable conformance";
 const SOURCE_TRACEABILITY_FILE = "SOURCE-TRACEABILITY.md";
 const INPUT_SET_SOURCE = "fixtures/conformance/v1.0.0/source/complete-input-set.yaml";
-const INPUT_SET_REVISION = "fixture-input-set-rc2-001";
+const INPUT_SET_REVISION = "fixture-input-set-rc2-002";
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_RELATIVE_DIR = path.join("fixtures", "conformance", "v1.0.0");
 const DEFAULT_DIR = path.resolve(SCRIPT_DIR, "..", DEFAULT_RELATIVE_DIR);
@@ -1040,7 +1040,17 @@ function validateSafeRetryEvidence(entriesByPath) {
   assertContains(entriesByPath["resources/documents.md"].markdown, [
     "Do not retry the same input; correct the file or metadata, then retry with a new `Idempotency-Key`",
   ]);
-  assertContains(entriesByPath["workflows/checkout.md"].markdown, ["same `Idempotency-Key`", "new key"]);
+  assertContains(entriesByPath["resources/checkout.md"].markdown, [
+    "pending or already settled",
+    "associates an already settled payment without capturing it again",
+  ]);
+  assertContains(entriesByPath["workflows/checkout.md"].markdown, [
+    "same `Idempotency-Key`",
+    "new key",
+    "Payment state and order state are tracked independently",
+    "payment.settled + order.not_confirmed",
+    "associates the settled payment without capturing it again",
+  ]);
 }
 
 function validateFocusedRetryContract(markdown) {
@@ -1154,6 +1164,8 @@ function validateInputSetSource() {
     "retention: at least 24 hours",
     "code: idempotency_conflict",
     "maximum_bytes: 10485760",
+    "Payment state and order state are independent",
+    "Associate the settled payment with the new order without another capture",
     "workflow:",
     "webhook_delivery:",
   ].forEach((part) => {

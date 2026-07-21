@@ -36,6 +36,7 @@ evaluation snapshot or keep all published comparison claims explicitly scoped to
 | Request `same_as` positive and negative coverage | Checker/fixture coverage | No current required live task changes unless the new fixture is loaded |
 | Explicit `Idempotency-Key`, conflict behavior, and ambiguous-outcome rules | Task-behavior-affecting | Request construction and workflow behavior expectations change; related error handling context also changes |
 | Document upload 422 corrected-input retry instruction | Task-behavior-affecting | Upload request/error guidance changes |
+| Early `payment.completed` settlement and `POST /orders` eligibility/no-recapture behavior | Task-behavior-affecting | Workflow completion expectations change and require a three-provider rerun |
 | Token-budget wording and section 9.1 responsibility wording | Normative clarification | No task rerun unless the full specification is part of a task prompt |
 
 ## File Coverage
@@ -62,7 +63,7 @@ corrected conformance context without becoming part of that boundary.
 | Request construction | Create-user and upload-document contexts now define `Idempotency-Key`; expected safe request behavior changes | Rebuild prompts from corrected documents and rerun required targets |
 | Response handling | Payment context changed, although the expected response interpretation is unchanged | Rerun if publishing a complete corrected-corpus result set |
 | Error handling | User error context adds `idempotency_conflict` and corrected-input/new-key guidance | Rebuild prompts and rerun required targets |
-| Workflow completion | Checkout recovery now distinguishes same-key replay from a new logical attempt | Rebuild prompts and rerun required targets |
+| Workflow completion | Checkout recovery distinguishes same-key replay from a new logical attempt and now defines independent payment/order state plus settled-payment order confirmation without recapture | Rebuild prompts and rerun required targets after each behavior correction |
 | Token load | Every standard stamp and several task documents changed size | Recompute all deterministic context metrics |
 | OpenAPI comparison | Existing results compare OpenAPI conditions with the `0.12.0` DocAI context | Keep them scoped to `0.12.0`, or rebuild and rerun all conditions before making an `rc.2` comparison claim |
 

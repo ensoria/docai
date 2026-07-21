@@ -40,7 +40,7 @@ Why:
 | `Idempotency-Key`, replay identity, retention, conflicting reuse, and no-key behavior | `source/complete-behavior.yaml` `http_semantics.idempotency` | Full and compact `CONVENTIONS.md`; affected resource Behavior and Errors sections; checkout workflow |
 | Endpoint side effects, preconditions, authorization, and endpoint errors | `source/complete-behavior.yaml` `operations` | Full and compact resource files |
 | Multipart filename, content-type, boundary, and size constraints | `source/complete-behavior.yaml` `file_transfer` and OpenAPI multipart schema | Full and compact `resources/documents.md` |
-| Checkout values, state transitions, ambiguous outcomes, and recovery | `source/complete-behavior.yaml` `workflow.checkout` | Full and compact `workflows/checkout.md`; related resource links |
+| Checkout values, independent payment/order states, early-settlement order eligibility, capture behavior, ambiguous outcomes, and recovery | `source/complete-behavior.yaml` `operations.POST /orders` and `workflow.checkout` | Full and compact `resources/checkout.md` and `workflows/checkout.md`; related resource links |
 | Webhook receiver, retry, deduplication, ordering, and event-specific delivery | `source/complete-behavior.yaml` `webhook_delivery` | Full and compact `CONVENTIONS.md` and `webhooks/payment-completed.md` |
 | Direct and indirect recursive-schema fallback | Recursive OpenAPI source fixtures | Focused recursive valid and invalid fixtures |
 

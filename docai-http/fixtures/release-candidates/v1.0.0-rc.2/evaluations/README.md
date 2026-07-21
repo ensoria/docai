@@ -22,6 +22,8 @@ fixture.
   and upload tasks.
 - Error and workflow grading checks corrected-input/new-key behavior and same-key
   replay behavior where those rules apply.
+- Workflow grading also requires an early settled payment to remain eligible for
+  `POST /orders`, with independent payment/order state and no second capture.
 
 ## Commands
 
