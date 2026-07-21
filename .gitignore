@@ -1,3 +1,5 @@
 AGENTS.md
 ai-instructions.md
 CLAUDE.md
+docai-http/benchmarks/openapi-comparison/v2/private/*
+!docai-http/benchmarks/openapi-comparison/v2/private/README.md

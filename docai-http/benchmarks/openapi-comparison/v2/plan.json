@@ -1,0 +1,169 @@
+{
+  "benchmark_id": "docai-http-openapi-comparison-v2",
+  "plan_version": "2.0.0-draft.1",
+  "status": "pre-registration-draft",
+  "created_on": "2026-07-21",
+  "compatibility_scope": "adoption evidence outside the DocAI HTTP 1.0.0 compatibility boundary",
+  "claims": {
+    "practical": [
+      ["docai-selected", "openapi-raw"],
+      ["docai-selected", "openapi-sliced"]
+    ],
+    "representation": [
+      ["docai-selected", "openapi-enriched"]
+    ],
+    "raw_size_headline_allowed": false
+  },
+  "outcomes": {
+    "primary": ["automated_task_pass", "provider_input_tokens"],
+    "secondary": [
+      "context_utf8_bytes",
+      "context_characters",
+      "provider_output_tokens",
+      "latency_ms",
+      "provider_specific_cost",
+      "failure_category"
+    ]
+  },
+  "conditions": [
+    "openapi-raw",
+    "openapi-sliced",
+    "openapi-enriched",
+    "docai-selected"
+  ],
+  "apis": [
+    {
+      "id": "complete-commerce",
+      "kind": "continuity",
+      "private_until_run_close": false,
+      "docai_http": "1.0.0",
+      "tasks": [
+        "create-user-request",
+        "upload-document-request",
+        "payment-created-response",
+        "create-user-errors",
+        "complete-checkout-workflow",
+        "payment-completed-webhook"
+      ]
+    },
+    {
+      "id": "holdout-field-service",
+      "kind": "holdout",
+      "private_until_run_close": true,
+      "docai_http": "1.0.0",
+      "tasks": [
+        "create-work-order-request",
+        "list-work-orders-pagination",
+        "work-order-auth-and-errors",
+        "dispatch-technician-workflow",
+        "work-order-updated-webhook",
+        "bulk-parts-request"
+      ]
+    },
+    {
+      "id": "holdout-media-processing",
+      "kind": "holdout",
+      "private_until_run_close": true,
+      "docai_http": "1.0.0",
+      "tasks": [
+        "upload-asset-multipart",
+        "download-report-csv",
+        "create-render-polymorphic",
+        "render-error-recovery",
+        "complete-render-workflow",
+        "render-completed-webhook"
+      ]
+    }
+  ],
+  "targets": [
+    {
+      "id": "openai-frontier",
+      "provider": "openai",
+      "planned_model": "gpt-5.6-sol",
+      "catalog_verification_required": true
+    },
+    {
+      "id": "anthropic-balanced",
+      "provider": "anthropic",
+      "planned_model": "claude-sonnet-5",
+      "catalog_verification_required": true
+    },
+    {
+      "id": "google-stable-agentic",
+      "provider": "google",
+      "planned_model": "gemini-3.5-flash",
+      "catalog_verification_required": true
+    }
+  ],
+  "repetitions": [1, 2, 3],
+  "execution": {
+    "planned_primary_requests": 648,
+    "planned_requests_per_batch": 72,
+    "maximum_attempts_per_work_step": 100,
+    "one_batch_per_work_step": true,
+    "approval_required_after_each_batch": true,
+    "condition_order": "deterministic-rotation-from-frozen-plan-batch-task-target",
+    "batches": [
+      {"id": "b01", "api": "complete-commerce", "repetition": 1, "planned_requests": 72},
+      {"id": "b02", "api": "holdout-field-service", "repetition": 1, "planned_requests": 72},
+      {"id": "b03", "api": "holdout-media-processing", "repetition": 1, "planned_requests": 72},
+      {"id": "b04", "api": "complete-commerce", "repetition": 2, "planned_requests": 72},
+      {"id": "b05", "api": "holdout-field-service", "repetition": 2, "planned_requests": 72},
+      {"id": "b06", "api": "holdout-media-processing", "repetition": 2, "planned_requests": 72},
+      {"id": "b07", "api": "complete-commerce", "repetition": 3, "planned_requests": 72},
+      {"id": "b08", "api": "holdout-field-service", "repetition": 3, "planned_requests": 72},
+      {"id": "b09", "api": "holdout-media-processing", "repetition": 3, "planned_requests": 72}
+    ]
+  },
+  "retry_policy": {
+    "maximum_transport_retries_per_run": 1,
+    "retry_only_before_usable_provider_response": true,
+    "content_or_grader_failure_retry": false,
+    "all_attempts_count_toward_step_cap": true,
+    "retain_all_attempts": true
+  },
+  "exclusion_policy": {
+    "silent_exclusion_allowed": false,
+    "statuses": ["pass", "fail", "blocked", "malformed", "inconclusive"],
+    "fixture_or_grader_defect_requires_new_plan": true
+  },
+  "analysis": {
+    "pairing_unit": ["api", "task", "target", "repetition"],
+    "pass_rate_interval": "paired-cluster-bootstrap",
+    "bootstrap_resamples": 10000,
+    "bootstrap_seed": 20260721,
+    "familywise_correction": "holm",
+    "secondary_pass_test": "exact-mcnemar",
+    "input_token_summaries": ["mean-paired-difference", "median-paired-difference", "successes-per-million-input-tokens"],
+    "cross_provider_cost_pooling": false,
+    "manual_adjudication": "blinded-inconclusive-only"
+  },
+  "stop_rules": {
+    "prompt_size_over_estimate_percent": 10,
+    "projected_spend_over_estimate_percent": 20,
+    "maximum_malformed_plus_inconclusive_percent": 5,
+    "stop_on_billing_error": true,
+    "stop_on_unavailable_model": true,
+    "stop_on_fixture_prompt_parser_or_grader_defect": true,
+    "stop_on_source_parity_failure": true
+  },
+  "ablation": {
+    "included_in_primary_648": false,
+    "separate_approval_required": true,
+    "maximum_attempts_per_work_step": 100
+  },
+  "freeze": {
+    "manifest": "freeze-manifest.json",
+    "frozen_at": null,
+    "required_artifact_classes": [
+      "authoritative-sources",
+      "docai-contexts",
+      "tasks-and-expected-outcomes",
+      "prompt-templates-and-output-schemas",
+      "graders",
+      "context-builders",
+      "model-resolutions",
+      "cost-estimate"
+    ]
+  }
+}

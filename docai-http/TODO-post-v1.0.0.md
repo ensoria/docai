@@ -39,14 +39,17 @@ future version before publication.
 - [ ] Create a versioned benchmark plan before sending provider requests and
   freeze its tasks, prompts, output contracts, graders, conditions, model panel,
   repetition count, exclusion rules, and analysis methods.
-- [ ] Separate the practical claim, DocAI HTTP versus raw/task-sliced OpenAPI,
+- [x] Create the human-readable and machine-readable pre-registration draft in
+  `benchmarks/openapi-comparison/v2/`; keep Live execution locked until its
+  freeze manifest passes `tools/check-openapi-comparison-v2-plan.mjs --frozen`.
+- [x] Separate the practical claim, DocAI HTTP versus raw/task-sliced OpenAPI,
   from the representation claim, DocAI HTTP versus OpenAPI enriched with the
   same authoritative behavior facts.
-- [ ] Use identical user tasks, system instructions, output schemas, and grading
-  rules across context conditions; vary only the documentation context.
-- [ ] Keep raw OpenAPI size out of direct efficiency headlines when it omits
+- [x] Require identical user tasks, system instructions, output schemas, and
+  grading rules across context conditions; vary only the documentation context.
+- [x] Keep raw OpenAPI size out of direct efficiency headlines when it omits
   facts required by the task.
-- [ ] Predefine primary outcomes as automated task pass rate and provider input
+- [x] Predefine primary outcomes as automated task pass rate and provider input
   tokens; treat latency, output tokens, cost, and failure categories as
   secondary outcomes.
 
@@ -104,10 +107,11 @@ future version before publication.
   it into separately estimated steps of at most 100 attempted requests.
 - [ ] Verify current model IDs in official provider catalogs immediately before
   execution and record exact resolved model or snapshot identifiers.
-- [ ] Randomize or rotate condition order within API/task/model blocks and keep
+- [x] Define deterministic rotation of condition order within API/task/model
+  blocks; keep
   the execution window short enough to limit provider drift.
-- [ ] Record blocked and malformed-output attempts instead of silently rerunning;
-  predefine when a transport-only retry is allowed.
+- [x] Require blocked and malformed-output attempts to be recorded instead of
+  silently rerunning; predefine when a transport-only retry is allowed.
 - [ ] Export all prompts and compute estimated token/cost ceilings for the whole
   pilot and for each 72-request batch before the first live request; obtain
   explicit approval for the first concrete batch ceiling.
@@ -134,7 +138,7 @@ future version before publication.
 
 ### Expansion And Publication
 
-- [ ] Set a pilot stop/go rule before execution; expand only if the pipeline is
+- [x] Set a pilot stop/go rule before execution; expand only if the pipeline is
   reliable and the effect estimate justifies additional provider cost.
 - [ ] For a broader follow-up, target at least five APIs, eight tasks per API,
   three models, and five repetitions; calculate the exact request and cost
