@@ -32,12 +32,104 @@ future version before publication.
 - [ ] Decide whether a reference generator is useful without making one part of
   the stable format contract by implication.
 
-## P2: Adoption Evidence
+## P2: OpenAPI Comparison Benchmark v2
 
-- [ ] Decide whether to rerun DocAI HTTP versus OpenAPI comparison tasks against
-  the Stable `1.0.0` corpus instead of historical `0.12.0` context.
-- [ ] Consider optional target models, additional API fixtures, and additional
-  task classes only when their review and provider costs are justified.
+### Claims And Fairness
+
+- [ ] Create a versioned benchmark plan before sending provider requests and
+  freeze its tasks, prompts, output contracts, graders, conditions, model panel,
+  repetition count, exclusion rules, and analysis methods.
+- [ ] Separate the practical claim, DocAI HTTP versus raw/task-sliced OpenAPI,
+  from the representation claim, DocAI HTTP versus OpenAPI enriched with the
+  same authoritative behavior facts.
+- [ ] Use identical user tasks, system instructions, output schemas, and grading
+  rules across context conditions; vary only the documentation context.
+- [ ] Keep raw OpenAPI size out of direct efficiency headlines when it omits
+  facts required by the task.
+- [ ] Predefine primary outcomes as automated task pass rate and provider input
+  tokens; treat latency, output tokens, cost, and failure categories as
+  secondary outcomes.
+
+### Fixtures And Tasks
+
+- [ ] Include the existing complete API for continuity plus at least two newly
+  authored, unpublished holdout APIs to reduce training-contamination risk.
+- [ ] Hash and timestamp holdout source inputs, tasks, expected outcomes, and
+  graders before live execution; publish them only after the run set is closed.
+- [ ] Cover materially different API surfaces: ordinary JSON CRUD and
+  pagination, authentication and errors, idempotent multi-step workflows,
+  webhooks, multipart/non-JSON transfer, and polymorphic bodies.
+- [ ] Define at least six independently gradable tasks per API across request
+  construction, response handling, error recovery, workflow completion,
+  retrieval selection, and token load.
+- [ ] Give every condition the same authoritative facts for the enriched
+  comparison, and record separately which facts raw OpenAPI cannot express.
+
+### Context Conditions
+
+- [ ] Compare OpenAPI raw, OpenAPI task slice, OpenAPI enriched, and DocAI HTTP
+  selected profile as the four primary conditions.
+- [ ] Add a DocAI full-versus-compact ablation for compact-eligible tasks without
+  mixing that ablation into the primary OpenAPI comparison.
+- [ ] Build a reusable OpenAPI slicer or document clearly where fixture-mapped
+  slicing remains part of the benchmark setup.
+- [ ] Measure deterministic UTF-8 bytes and characters, provider-reported input
+  tokens, and tokenizer-specific counts where a stable tokenizer is available.
+
+### Pilot Execution
+
+- [ ] Use the recommended pilot matrix: three APIs, six tasks per API, three
+  provider/model targets, three repetitions, and four primary conditions, for
+  approximately 648 live requests plus the limited full/compact ablation.
+- [ ] Verify current model IDs in official provider catalogs immediately before
+  execution and record exact resolved model or snapshot identifiers.
+- [ ] Randomize or rotate condition order within API/task/model blocks and keep
+  the execution window short enough to limit provider drift.
+- [ ] Record blocked and malformed-output attempts instead of silently rerunning;
+  predefine when a transport-only retry is allowed.
+- [ ] Export all prompts and compute an estimated token/cost ceiling before the
+  first live request; obtain explicit approval for that concrete ceiling.
+- [ ] Stop after the pilot if fixture gaps, grader ambiguity, provider parsing
+  failures, or unexpectedly high cost make the comparison unreliable.
+
+### Statistical Analysis
+
+- [ ] Report pass-rate differences in percentage points with 95% confidence
+  intervals, not pass counts alone.
+- [ ] Use paired analysis by API/task/model/repetition, such as paired bootstrap
+  intervals or McNemar tests, and use a mixed-effects logistic model when the
+  sample supports API, task, and model variation.
+- [ ] Report median and mean input-token differences with bootstrap confidence
+  intervals and include successful tasks per million input tokens as an
+  efficiency measure.
+- [ ] Report consistency across repetitions, including all-runs-pass rate and
+  per-condition failure-category distributions.
+- [ ] Keep provider-specific token and cost results separate unless a normalized
+  pricing and token-accounting model is defined in advance.
+- [ ] Require blinded manual adjudication only for grader-inconclusive records
+  and report the adjudication rule and inter-rater agreement when multiple
+  reviewers are used.
+
+### Expansion And Publication
+
+- [ ] Set a pilot stop/go rule before execution; expand only if the pipeline is
+  reliable and the effect estimate justifies additional provider cost.
+- [ ] For a broader follow-up, target at least five APIs, eight tasks per API,
+  three models, and five repetitions; calculate the exact request and cost
+  budget before approval rather than treating this as an automatic requirement.
+- [ ] Store Stable `1.0.0` benchmark artifacts separately from historical
+  `0.12.0` evidence and add a checker for run completeness and frozen-plan
+  identity.
+- [ ] Update `OPENAPI-COMPARISON-EVIDENCE.md` with methods, run dates, model IDs,
+  confidence intervals, limitations, raw aggregate tables, and failure analysis.
+- [ ] Update the top-level README only with claims supported by the completed
+  benchmark scope; do not generalize to all APIs, models, or implementation
+  tasks.
+
+## P2: Additional Adoption Evidence
+
+- [ ] Consider optional target models and additional task classes only when
+  their review and provider costs are justified.
 - [ ] Define a normalized cost model before publishing provider-cost or
   cross-provider token comparisons.
 - [ ] Consider provider latency measurements only with a reproducible sampling
