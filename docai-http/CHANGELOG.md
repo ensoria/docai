@@ -4,6 +4,19 @@ DocAI HTTP release history. Specification versioning and compatibility rules are
 
 ## Unreleased
 
+## 1.0.0-rc.3 (Release candidate)
+
+- Corrects the authoritative inputs for `v1.0.0-rc.3` after focused review found
+  that the `rc.2` OpenAPI did not support every `knowledge: complete` projected
+  fact.
+- Adds missing success response bodies and schemas, `Location`, error schemas,
+  request constraints/defaults, document metadata, and webhook metadata to the
+  authoritative input set without changing the projected client contract.
+- Restamps the conformance projection as `rc3-001`, expands source traceability,
+  and adds targeted source-contract checks to the stable corpus checker.
+- Updates current-release wording to identify published `v1.0.0-rc.2` while
+  keeping `Stable` reserved for final `v1.0.0`.
+
 ## 1.0.0-rc.2 (Release candidate)
 
 - Corrects stable-blocking conformance-content and checker-boundary

@@ -11,7 +11,7 @@ const FIXTURE_EXTENSION_LABEL = "stable-conformance";
 const CORPUS_DISPLAY_LABEL = "Stable conformance";
 const SOURCE_TRACEABILITY_FILE = "SOURCE-TRACEABILITY.md";
 const INPUT_SET_SOURCE = "fixtures/conformance/v1.0.0/source/complete-input-set.yaml";
-const INPUT_SET_REVISION = "fixture-input-set-rc2-002";
+const INPUT_SET_REVISION = "fixture-input-set-rc3-001";
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_RELATIVE_DIR = path.join("fixtures", "conformance", "v1.0.0");
 const DEFAULT_DIR = path.resolve(SCRIPT_DIR, "..", DEFAULT_RELATIVE_DIR);
@@ -1150,16 +1150,26 @@ function validateSourceTraceability() {
 
 function validateInputSetSource() {
   const manifestFile = path.join(CANDIDATE_DIR, "source", "complete-input-set.yaml");
+  const openapiFile = path.join(CANDIDATE_DIR, "source", "complete-openapi.yaml");
   const behaviorFile = path.join(CANDIDATE_DIR, "source", "complete-behavior.yaml");
   requireExists(manifestFile, "source-input-set");
+  requireExists(openapiFile, "source-input-set");
   requireExists(behaviorFile, "source-input-set");
-  if (!fs.existsSync(manifestFile) || !fs.existsSync(behaviorFile)) return;
+  if (!fs.existsSync(manifestFile) || !fs.existsSync(openapiFile) || !fs.existsSync(behaviorFile)) return;
   const manifest = read(manifestFile);
+  const openapi = read(openapiFile);
   const behavior = read(behaviorFile);
-  [`revision: ${INPUT_SET_REVISION}`, "path: complete-openapi.yaml", "path: complete-behavior.yaml"].forEach((part) => {
+  [
+    `revision: ${INPUT_SET_REVISION}`,
+    "path: complete-openapi.yaml",
+    "revision: fixture-openapi-rc3-001",
+    "path: complete-behavior.yaml",
+    "revision: fixture-behavior-rc3-001",
+  ].forEach((part) => {
     if (!manifest.includes(part)) fail(manifestFile, "source-input-set", `manifest evidence is missing: ${part}`);
   });
   [
+    "revision: fixture-behavior-rc3-001",
     "header: Idempotency-Key",
     "retention: at least 24 hours",
     "code: idempotency_conflict",
@@ -1168,9 +1178,77 @@ function validateInputSetSource() {
     "Associate the settled payment with the new order without another capture",
     "workflow:",
     "webhook_delivery:",
+    "error_representations:",
+    "field_message_usage: Safe to display next to the target field.",
+    "attempt_header_wire:",
   ].forEach((part) => {
     if (!behavior.includes(part)) fail(behaviorFile, "source-input-set", `behavior evidence is missing: ${part}`);
   });
+  validateAuthoritativeOpenApi(openapiFile, openapi);
+}
+
+function validateAuthoritativeOpenApi(file, openapi) {
+  const blockExpectations = [
+    ["/users", 2, ["x-docai-email-syntax: RFC 5322", "x-docai-unique-scope: all tenants", "minLength: 1", "maxLength: 100", "default: member", "x-docai-body-presence: always", "Location:", "#/components/schemas/User", "#/components/schemas/EmailTakenError", "#/components/responses/ValidationError"]],
+    ["/users/{id}", 2, ["x-docai-body-presence: always", "#/components/schemas/User"]],
+    ["/carts/{id}/validate", 2, ["x-docai-body-presence: always", "#/components/schemas/CartValidationResponse"]],
+    ["/payments", 2, ["x-docai-body-presence: always", "#/components/schemas/PaymentResponse", "#/components/responses/IdempotencyConflict"]],
+    ["/orders", 2, ["x-docai-body-presence: always", "#/components/schemas/OrderResponse", "#/components/responses/IdempotencyConflict"]],
+    ["/documents", 2, ["x-docai-body-presence: always", "#/components/schemas/DocumentMetadata", "contentType: application/pdf, image/png", "contentType: application/json", "#/components/schemas/DocumentUploadResponse", "#/components/responses/ValidationError"]],
+    ["payment.completed", 2, ["X-Payment-Attempt", "processor_trace", "x-docai-opaque: true"]],
+    ["User", 4, ["x-docai-email-syntax: RFC 5322", "x-docai-unique-scope: all tenants", "minLength: 1", "maxLength: 100", "default: member"]],
+    ["CartValidationResponse", 4, ["cart_id", "const: validated"]],
+    ["PaymentResponse", 4, ["payment_id", "const: pending"]],
+    ["OrderResponse", 4, ["order_id", "const: confirmed"]],
+    ["DocumentUploadResponse", 4, ["document_id", "const: uploaded"]],
+    ["DocumentMetadata", 4, ["additionalProperties: false", "title", "tags"]],
+    ["StandardError", 4, ["additionalProperties: false", "code", "message"]],
+    ["EmailTakenError", 4, ["const: email_taken"]],
+    ["ValidationError", 4, ["const: validation_failed", "field_errors", "field", "code", "message"]],
+    ["TokenExpired", 4, ["x-docai-body-presence: always", "#/components/schemas/StandardError"]],
+    ["Forbidden", 4, ["x-docai-body-presence: always", "#/components/schemas/StandardError"]],
+    ["ServerError", 4, ["x-docai-body-presence: always", "#/components/schemas/StandardError"]],
+    ["IdempotencyConflict", 4, ["x-docai-body-presence: always", "#/components/schemas/StandardError"]],
+    ["ValidationError", 4, ["x-docai-body-presence: always", "#/components/schemas/ValidationError"]],
+  ];
+  if (!openapi.includes("x-source-revision: fixture-openapi-rc3-001")) {
+    fail(file, "source-contract", "authoritative OpenAPI revision is missing");
+  }
+  blockExpectations.forEach(([key, indent, requiredParts]) => {
+    const blocks = yamlMappingBlocks(openapi, key, indent);
+    if (blocks.length === 0) {
+      fail(file, "source-contract", `authoritative OpenAPI block is missing: ${key}`);
+      return;
+    }
+    const block = blocks.find((candidate) => requiredParts.every((part) => candidate.includes(part)));
+    if (!block) {
+      fail(file, "source-contract", `${key} has no single block containing its required source evidence`);
+      return;
+    }
+    requiredParts.forEach((part) => {
+      if (!block.includes(part)) fail(file, "source-contract", `${key} source evidence is missing: ${part}`);
+    });
+  });
+}
+
+function yamlMappingBlocks(source, key, indent) {
+  const lines = source.split(/\r?\n/);
+  const marker = `${" ".repeat(indent)}${key}:`;
+  const blocks = [];
+  lines.forEach((line, start) => {
+    if (line !== marker) return;
+    let end = lines.length;
+    for (let index = start + 1; index < lines.length; index += 1) {
+      if (!lines[index].trim()) continue;
+      const lineIndent = lines[index].match(/^ */)[0].length;
+      if (lineIndent <= indent) {
+        end = index;
+        break;
+      }
+    }
+    blocks.push(lines.slice(start, end).join("\n"));
+  });
+  return blocks;
 }
 
 function validateAuditedFixtureExpectation(coverageFile, requirementName, relativePath) {

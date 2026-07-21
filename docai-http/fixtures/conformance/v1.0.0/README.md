@@ -5,7 +5,10 @@ It originated from the `0.12.0` complete-generator-ready candidate corpus and is
 maintained as a separate versioned conformance corpus so the stable compatibility
 boundary is not silently tied to candidate evidence paths. The `rc.2` preparation
 corrects Type and XML field syntax, source provenance, safe retry behavior, and
-Request `same_as` checker coverage found during review of `v1.0.0-rc.1`.
+Request `same_as` checker coverage found during review of `v1.0.0-rc.1`. The
+`rc.3` preparation completes the authoritative success-response, response-header,
+error-shape, constraint, default, document-metadata, and webhook source evidence
+found incomplete during focused review of `v1.0.0-rc.2`.
 
 The standard DocAI HTTP document files in `valid/full/`, `valid/compact/`, and the
 focused fixture snippets declare `docai-http: 1.0.0`. The semantic differences from
@@ -36,6 +39,8 @@ Layout:
   to require a public source-to-projection validator before `1.0.0`.
 - `RC2-REVIEW-REGRESSION.md` maps the nine `rc.1` review findings to corrected
   files and deterministic regression evidence.
+- `RC3-SOURCE-REVIEW.md` limits the next focused review to authoritative source
+  completeness and current-release wording left by review of `rc.2`.
 - `SEMANTIC-DRIFT-AUDIT.md` records the corrected corpus differences from the
   evaluated `0.12.0` candidate and their evaluation impact.
 - `TOKEN-SAVINGS.md` records compact-profile reduction guidance for the conformance
@@ -52,7 +57,7 @@ The full and compact sets use identical standard docs-root-relative paths:
 - `workflows/checkout.md`
 - `webhooks/payment-completed.md`
 
-Both sets share `projection_id: conformance-20260721-rc2-002`. The full INDEX links
+Both sets share `projection_id: conformance-20260721-rc3-001`. The full INDEX links
 `Compact set: ../compact/`; the compact INDEX links `Full set: ../full/`.
 
 Run `node tools/check-conformance-fixtures.mjs` from the `docai-http/` directory,
@@ -60,9 +65,10 @@ or `node docai-http/tools/check-conformance-fixtures.mjs` from the repository ro
 to check this stable conformance corpus. The checker is corpus-specific expectation
 coverage, not a public reusable validator or a full source-to-projection validator.
 
-The existing live LLM task evaluations, deterministic token-load evidence, and
-OpenAPI comparison evidence were recorded against
-`fixtures/complete-candidates/v0.12.0/`. They remain historical evidence for that
-candidate, but they are not direct evidence for this corrected corpus. Before stable
-publication, follow `SEMANTIC-DRIFT-AUDIT.md` and the active release TODO to refresh
-affected evidence or explicitly keep comparison claims scoped to `0.12.0`.
+The original live LLM task evaluations, deterministic token-load evidence, and
+OpenAPI comparison evidence were recorded against the `0.12.0` candidate. The
+separate `rc.2` task snapshot refreshed behavior-affecting evidence. For `rc.3`,
+those stored responses are regraded without provider submission because the
+correction changes authoritative source evidence and provenance stamps, not loaded
+task semantics. OpenAPI comparison claims remain scoped to `0.12.0`; see
+`SEMANTIC-DRIFT-AUDIT.md` and the active release TODO.

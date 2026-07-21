@@ -326,9 +326,9 @@ Chosen resolution:
   advisory under section 3.1.
 - [x] Confirm the complete-set/focused-fixture wording and Stable label definition
   no longer admit the reviewed contradictory readings.
-- [ ] Request a focused external regression review of the nine original findings
+- [x] Request a focused external regression review of the nine original findings
   rather than reopening unrelated feature design.
-- [ ] Resolve every regression-review result as blocking, wording/metadata-only,
+- [x] Resolve every regression-review result as blocking, wording/metadata-only,
   future backlog, or no change.
 
 ## P2: Changelog And Release Notes
@@ -352,20 +352,20 @@ Chosen resolution:
   tagging.
 - [x] Run `git diff --check` immediately before tagging.
 - [x] Prepare the public release description from `RELEASE.md`.
-- [ ] User creates the `v1.0.0-rc.2` tag.
-- [ ] User publishes the `v1.0.0-rc.2` release.
-- [ ] After publication, update current-tag wording from `v1.0.0-rc.1` to
+- [x] User creates the `v1.0.0-rc.2` tag.
+- [x] User publishes the `v1.0.0-rc.2` release.
+- [x] After publication, update current-tag wording from `v1.0.0-rc.1` to
   `v1.0.0-rc.2` without changing the publication label to Stable.
 
 ## P3: Final Stable Handoff
 
-- [ ] Collect focused feedback on the corrected nine findings during the `rc.2`
+- [x] Collect focused feedback on the corrected nine findings during the `rc.2`
   review window.
 - [ ] Do not treat unrelated feature requests as blockers; move them to the
   post-`1.0.0` backlog unless they reveal a contradiction or compatibility risk.
 - [ ] Proceed to final `v1.0.0` only when no stable-blocking finding remains and
   all deterministic gates pass from a clean worktree.
-- [ ] Publish another RC instead of stable if review changes normative behavior,
+- [x] Publish another RC instead of stable if review changes normative behavior,
   conformance content, checker expectations, or the compatibility boundary
   again.
 - [ ] Return to `TODO-v1.0.0.md` for the final Stable label, tag, publication,

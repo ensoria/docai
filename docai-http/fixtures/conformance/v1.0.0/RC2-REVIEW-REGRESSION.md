@@ -56,5 +56,10 @@ not combined with the `rc.2` result.
 
 ## External Review Result
 
-Pending. Record each result as blocking, wording/metadata-only, future backlog,
-or no change before tagging `v1.0.0-rc.2`.
+The focused review confirmed findings 1, 2, 3, 5, 6, 7, and 9 as resolved.
+Finding 8's Stable definition was resolved, with only stale current-release
+wording remaining. Finding 4 remained blocking because the authoritative
+OpenAPI omitted success bodies, `Location`, error schemas, and projected
+constraints/defaults. The repository therefore keeps `v1.0.0-rc.2` immutable
+and addresses the remaining provenance gap through `TODO-v1.0.0-rc.3.md` before
+final stable publication.

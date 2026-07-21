@@ -32,8 +32,34 @@ try {
     stdio: "inherit",
   });
   if (result.status !== 0) process.exit(result.status ?? 1);
+
+  const isolatedOpenApi = path.join(
+    ISOLATED_DIR,
+    "fixtures",
+    "conformance",
+    "v1.0.0",
+    "source",
+    "complete-openapi.yaml",
+  );
+  const openapi = fs.readFileSync(isolatedOpenApi, "utf8");
+  const mutatedOpenApi = openapi.replace(
+    '$ref: "#/components/schemas/CartValidationResponse"',
+    '$ref: "#/components/schemas/MissingCartValidationResponse"',
+  );
+  if (mutatedOpenApi === openapi) throw new Error("source-contract negative-test mutation did not apply");
+  fs.writeFileSync(isolatedOpenApi, mutatedOpenApi);
+
+  const negativeResult = spawnSync(process.execPath, ["docai-http/tools/check-conformance-fixtures.mjs"], {
+    cwd: TEMP_ROOT,
+    encoding: "utf8",
+  });
+  const negativeOutput = `${negativeResult.stdout ?? ""}\n${negativeResult.stderr ?? ""}`;
+  if (negativeResult.status === 0 || !negativeOutput.includes("/carts/{id}/validate has no single block")) {
+    process.stderr.write(negativeOutput);
+    throw new Error("source-contract negative test did not fail for the removed cart response schema reference");
+  }
   console.log("Stable conformance boundary check passed in an isolated tree.");
+  console.log("Stable conformance source-contract negative test rejected a missing response schema reference.");
 } finally {
   fs.rmSync(TEMP_ROOT, { recursive: true, force: true });
 }
-

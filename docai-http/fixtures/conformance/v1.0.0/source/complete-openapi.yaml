@@ -2,6 +2,7 @@ openapi: 3.1.1
 info:
   title: Stable Conformance Fixture API
   version: 1.0.0-conformance-source
+x-source-revision: fixture-openapi-rc3-001
 paths:
   /users:
     post:
@@ -20,20 +21,50 @@ paths:
                 email:
                   type: string
                   format: email
+                  x-docai-email-syntax: RFC 5322
+                  x-docai-unique-scope: all tenants
                 name:
                   type: string
+                  minLength: 1
+                  maxLength: 100
                 role:
                   type: string
+                  default: member
                   enum:
                     - admin
                     - member
       responses:
         "201":
           description: User created
+          x-docai-body-presence: always
+          headers:
+            Location:
+              required: true
+              description: URL of the created user.
+              schema:
+                type: string
+              example: /users/usr_01K0COMPLETE
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/User"
+              example:
+                id: usr_01K0COMPLETE
+                email: taro@example.com
+                name: Taro Yamada
+                role: member
+                created_at: "2026-07-10T03:00:00Z"
+        "409":
+          description: Email already exists or the idempotency key conflicts.
+          x-docai-body-presence: always
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/EmailTakenError"
+                  - $ref: "#/components/schemas/StandardError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
   /users/{id}:
     get:
       summary: Get user
@@ -46,10 +77,17 @@ paths:
       responses:
         "200":
           description: User
+          x-docai-body-presence: always
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/User"
+              example:
+                id: usr_01K0COMPLETE
+                email: taro@example.com
+                name: Taro Yamada
+                role: member
+                created_at: "2026-07-10T03:00:00Z"
   /carts/{id}/validate:
     post:
       summary: Validate cart
@@ -62,6 +100,14 @@ paths:
       responses:
         "200":
           description: Cart validated
+          x-docai-body-presence: always
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CartValidationResponse"
+              example:
+                cart_id: cart_01K0COMPLETE
+                status: validated
   /payments:
     post:
       summary: Create payment
@@ -78,6 +124,16 @@ paths:
       responses:
         "201":
           description: Payment created
+          x-docai-body-presence: always
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentResponse"
+              example:
+                payment_id: pay_01K0COMPLETE
+                status: pending
+        "409":
+          $ref: "#/components/responses/IdempotencyConflict"
       x-docai-triggers:
         - payment.completed
   /orders:
@@ -101,6 +157,16 @@ paths:
       responses:
         "201":
           description: Order confirmed
+          x-docai-body-presence: always
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderResponse"
+              example:
+                order_id: ord_01K0COMPLETE
+                status: confirmed
+        "409":
+          $ref: "#/components/responses/IdempotencyConflict"
   /documents:
     post:
       summary: Upload document
@@ -118,10 +184,27 @@ paths:
                   type: string
                   format: binary
                 metadata:
-                  type: object
+                  $ref: "#/components/schemas/DocumentMetadata"
+            encoding:
+              document:
+                contentType: application/pdf, image/png
+              metadata:
+                contentType: application/json
       responses:
         "201":
           description: Document uploaded
+          x-docai-body-presence: always
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentUploadResponse"
+              example:
+                document_id: doc_01K0COMPLETE
+                status: uploaded
+        "409":
+          $ref: "#/components/responses/IdempotencyConflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
 webhooks:
   payment.completed:
     post:
@@ -145,6 +228,7 @@ webhooks:
                 - payment_id
                 - amount
                 - occurred_at
+                - metadata
               properties:
                 event_id:
                   type: string
@@ -156,11 +240,19 @@ webhooks:
                   type: string
                 amount:
                   type: integer
+                  minimum: 1
+                  x-docai-currency: JPY
                 occurred_at:
                   type: string
                   format: date-time
                 metadata:
                   type: object
+                  additionalProperties: false
+                  required:
+                    - processor_trace
+                  properties:
+                    processor_trace:
+                      type: string
                   x-docai-opaque: true
 x-docai-workflows:
   checkout:
@@ -169,6 +261,54 @@ x-docai-workflows:
       - POST /payments
       - POST /orders
 components:
+  responses:
+    TokenExpired:
+      description: Access token has expired.
+      x-docai-body-presence: always
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/StandardError"
+          example:
+            error:
+              code: token_expired
+              message: access token expired
+    Forbidden:
+      description: Credential lacks permission.
+      x-docai-body-presence: always
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/StandardError"
+    ServerError:
+      description: Unexpected server failure.
+      x-docai-body-presence: always
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/StandardError"
+    IdempotencyConflict:
+      description: The idempotency key was reused with different request content.
+      x-docai-body-presence: always
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/StandardError"
+    ValidationError:
+      description: Request validation failed.
+      x-docai-body-presence: always
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ValidationError"
+          example:
+            error:
+              code: validation_failed
+              message: input is invalid
+              field_errors:
+                - field: name
+                  code: too_long
+                  message: name is too long
   schemas:
     User:
       type: object
@@ -185,16 +325,149 @@ components:
         email:
           type: string
           format: email
+          x-docai-email-syntax: RFC 5322
+          x-docai-unique-scope: all tenants
         name:
           type: string
+          minLength: 1
+          maxLength: 100
         role:
           type: string
+          default: member
           enum:
             - admin
             - member
         created_at:
           type: string
           format: date-time
+    CartValidationResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - cart_id
+        - status
+      properties:
+        cart_id:
+          type: string
+        status:
+          type: string
+          const: validated
+    PaymentResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - payment_id
+        - status
+      properties:
+        payment_id:
+          type: string
+        status:
+          type: string
+          const: pending
+    OrderResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - order_id
+        - status
+      properties:
+        order_id:
+          type: string
+        status:
+          type: string
+          const: confirmed
+    DocumentUploadResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - document_id
+        - status
+      properties:
+        document_id:
+          type: string
+        status:
+          type: string
+          const: uploaded
+    DocumentMetadata:
+      type: object
+      additionalProperties: false
+      properties:
+        title:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+    StandardError:
+      type: object
+      additionalProperties: false
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          additionalProperties: false
+          required:
+            - code
+            - message
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+    EmailTakenError:
+      type: object
+      additionalProperties: false
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          additionalProperties: false
+          required:
+            - code
+            - message
+          properties:
+            code:
+              type: string
+              const: email_taken
+            message:
+              type: string
+    ValidationError:
+      type: object
+      additionalProperties: false
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          additionalProperties: false
+          required:
+            - code
+            - message
+            - field_errors
+          properties:
+            code:
+              type: string
+              const: validation_failed
+            message:
+              type: string
+            field_errors:
+              type: array
+              items:
+                type: object
+                additionalProperties: false
+                required:
+                  - field
+                  - code
+                  - message
+                properties:
+                  field:
+                    type: string
+                  code:
+                    type: string
+                  message:
+                    type: string
     CardPaymentRequest:
       type: object
       additionalProperties: false

@@ -1,6 +1,6 @@
 behavior_source: docai-http-stable-conformance
 format_version: 1
-revision: fixture-behavior-rc2-001
+revision: fixture-behavior-rc3-001
 
 environments:
   production: https://api.example.test
@@ -63,6 +63,25 @@ validation_error:
   code: validation_failed
   shape: validation-error
   caller_action: Show field-level errors when present; do not retry unchanged input.
+
+error_representations:
+  media_type: application/json
+  body_presence: always
+  body_nullable: false
+  standard-error:
+    additional_properties: false
+    message_usage: Developer-facing message; do not display directly to users.
+  email-taken:
+    additional_properties: false
+    code: email_taken
+    message_usage: Developer-facing message; do not display directly to users.
+  validation-error:
+    additional_properties: false
+    code: validation_failed
+    message_usage: Developer-facing summary; do not display directly to users.
+    field_errors_presence: always
+    field_error_additional_properties: false
+    field_message_usage: Safe to display next to the target field.
 
 data_representation:
   ids: Opaque strings that clients must not parse.
@@ -195,4 +214,9 @@ webhook_delivery:
     retry_schedule: exponential backoff
     event_id_field: event_id
     attempt_header: X-Payment-Attempt
+    attempt_header_wire:
+      single_field_line: true
+      comma_combinable: false
+      order_significant: false
+      example: "1"
     related_operation: POST /payments

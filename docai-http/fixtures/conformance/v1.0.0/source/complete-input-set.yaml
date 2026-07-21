@@ -1,10 +1,12 @@
 input_set: docai-http-stable-conformance
 format_version: 1
-revision: fixture-input-set-rc2-002
+revision: fixture-input-set-rc3-001
 inputs:
   - path: complete-openapi.yaml
+    revision: fixture-openapi-rc3-001
     media_type: application/yaml
     role: HTTP operations and structured request and response schemas
   - path: complete-behavior.yaml
+    revision: fixture-behavior-rc3-001
     media_type: application/yaml
     role: Pass-through client behavior, conventions, workflows, webhooks, and non-JSON constraints

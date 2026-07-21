@@ -2,6 +2,46 @@
 
 This document defines the repository release process for DocAI HTTP. It is operational guidance for maintainers; the format rules remain in `README.md`.
 
+## 1.0.0-rc.3 Release Notes (Release candidate)
+
+Scope:
+
+- Publication label remains `1.0.0 release candidate`, not final `Stable`.
+- Current tagged public release: `v1.0.0-rc.2`.
+- Release path: complete authoritative source traceability, publish
+  `v1.0.0-rc.3`, and repeat the focused source-provenance review before final
+  `v1.0.0`.
+- The DocAI HTTP format and projected client contract do not change.
+
+Corrections:
+
+- Adds the missing cart, payment, order, and document success response schemas
+  and media types to the authoritative OpenAPI input.
+- Adds the POST `/users` `Location` response header, common/validation/inline
+  error body schemas, request constraints/defaults, document metadata schema,
+  and webhook metadata schema to the authoritative input set.
+- Adds error-field usage and webhook-header wire behavior that cannot be
+  expressed structurally in OpenAPI to the pass-through behavior source.
+- Restamps the full, compact, and focused corpus as the `rc3-001` logical
+  projection and expands the traceability matrix and targeted checker gate.
+
+Evidence status:
+
+- The standard DocAI document content is unchanged except for provenance stamps.
+- The prior required-target live records remain behaviorally applicable because
+  no task contract changed; they are regraded deterministically against the
+  current documents rather than resent to providers.
+- Deterministic context metrics and all release-readiness checks must be rerun
+  before tagging.
+- OpenAPI comparison records remain historical `0.12.0` evidence.
+
+Required pre-tag validation:
+
+- `node docai-http/tools/check-release-readiness.mjs`.
+- `git diff --check`.
+- Focused review of `SOURCE-TRACEABILITY.md`, the two complete source inputs,
+  and the source-contract checker assertions.
+
 ## 1.0.0-rc.2 Release Notes (Release candidate)
 
 Scope:
@@ -193,7 +233,7 @@ Do not imply compatibility for structures outside the published label. Non-core 
 
 Before using the `Complete-generator-ready candidate` label, complete the evidence gate in `COMPLETE-GENERATOR-READINESS.md`.
 
-The current tagged public release is `v1.0.0-rc.1`, published as `1.0.0 release candidate`, not final `Stable`. The previous `v0.12.0` complete-generator-ready candidate remains historical supporting evidence. Its complete-candidate corpus has complete focused fixture coverage, matching checker coverage, required-target LLM evaluations, token-load evidence, and scoped OpenAPI comparison evidence.
+The current tagged public release is `v1.0.0-rc.2`, published as `1.0.0 release candidate`, not final `Stable`. A focused review found one remaining source-traceability blocker, so `v1.0.0-rc.3` is required before final stable publication. The previous `v0.12.0` complete-generator-ready candidate remains historical supporting evidence. Its complete-candidate corpus has complete focused fixture coverage, matching checker coverage, required-target LLM evaluations, token-load evidence, and scoped OpenAPI comparison evidence.
 
 Do not update the README publication label merely because one candidate corpus exists. The label may change only after the complete full-profile set, matching compact projection, focused complete-surface fixtures, checker behavior, evaluation notes, and changelog/release notes support the broader claim.
 

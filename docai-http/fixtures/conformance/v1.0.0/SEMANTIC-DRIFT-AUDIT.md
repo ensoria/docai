@@ -76,3 +76,20 @@ OpenAPI comparison remains intentionally scoped to `0.12.0`.
 If corrected standard documents change again, update this classification before
 reusing or refreshing evaluation evidence. Live provider requests require explicit
 user approval and are not part of deterministic release-readiness checks.
+
+## rc.3 Source-Traceability Correction
+
+The `rc.3` correction expands `source/complete-openapi.yaml` and
+`source/complete-behavior.yaml` so every known client-visible fact in the
+`knowledge: complete` full and compact sets has an authoritative input. It does
+not change normative README syntax or the projected client contract. Standard
+documents changed only in their equal-length `rc2-002` to `rc3-001` provenance
+stamps.
+
+The source YAML files are not part of any required Live LLM task context. The
+stored fifteen required-target responses were therefore regraded against the
+unchanged task contract without provider submission, and all pass. The six
+deterministic token-load records and recomputed context metrics also pass and
+remain numerically unchanged. No paid Live LLM rerun is required for this
+provenance-only correction. Historical OpenAPI comparison claims remain scoped
+to the evaluated `0.12.0` corpus.
