@@ -1,4 +1,4 @@
-> docai-http: 1.0.0 | profile: full | coverage: complete | knowledge: complete | generated: 2026-07-10 | generation_id: conformance-full-20260710-001 | projection_id: conformance-20260710-001 | source: fixtures/conformance/v1.0.0/source/complete-openapi.yaml (OpenAPI 3.1.1) | source_revision: fixture-revision-conformance-001 | x-fixture: stable-conformance
+> docai-http: 1.0.0 | profile: full | coverage: complete | knowledge: complete | generated: 2026-07-21 | generation_id: conformance-full-20260721-rc2-001 | projection_id: conformance-20260721-rc2-001 | source: fixtures/conformance/v1.0.0/source/complete-input-set.yaml (authoritative input set) | source_revision: fixture-input-set-rc2-001 | x-fixture: stable-conformance
 
 ## POST /carts/{id}/validate
 
@@ -71,7 +71,7 @@ Confirms an order from a validated cart and pending payment.
 ### Behavior
 
 - side_effects: creates an order and captures the pending payment
-- idempotency: not idempotent unless the same cart and payment are submitted with an idempotency key outside this fixture
+- idempotency: safe to retry only with the same `Idempotency-Key`, `cart_id`, and `payment_id`; without a key, do not retry after an ambiguous outcome
 - preconditions: POST /payments returned a pending `payment_id`
 - authorization: authenticated shopper
 
@@ -122,7 +122,9 @@ Confirms an order from a validated cart and pending payment.
 
 ### Errors
 
-none
+| Status | code | Shape | Condition | Caller action |
+|---|---|---|---|---|
+| 409 | idempotency_conflict | common:standard-error | The `Idempotency-Key` was already used with a different request | Use the original `cart_id` and `payment_id` or a new key for a new logical operation; do not retry changed input with the same key |
 
 ### Related
 

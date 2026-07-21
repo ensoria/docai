@@ -19,6 +19,7 @@ const CHECKS = [
   ["check-complete-evaluations", "docai-http/tools/check-complete-evaluations.mjs"],
   ["check-openapi-comparison", "docai-http/tools/check-openapi-comparison.mjs"],
   ["check-conformance-fixtures", "docai-http/tools/check-conformance-fixtures.mjs"],
+  ["check-conformance-boundary", "docai-http/tools/check-conformance-boundary.mjs"],
 ];
 
 const failures = [];

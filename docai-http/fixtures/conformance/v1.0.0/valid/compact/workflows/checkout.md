@@ -1,4 +1,4 @@
-> docai-http: 1.0.0 | profile: compact | coverage: complete | knowledge: complete | generated: 2026-07-10 | generation_id: conformance-compact-20260710-001 | projection_id: conformance-20260710-001 | source: fixtures/conformance/v1.0.0/source/complete-openapi.yaml (OpenAPI 3.1.1) | source_revision: fixture-revision-conformance-001 | x-fixture: stable-conformance
+> docai-http: 1.0.0 | profile: compact | coverage: complete | knowledge: complete | generated: 2026-07-21 | generation_id: conformance-compact-20260721-rc2-001 | projection_id: conformance-20260721-rc2-001 | source: fixtures/conformance/v1.0.0/source/complete-input-set.yaml (authoritative input set) | source_revision: fixture-input-set-rc2-001 | x-fixture: stable-conformance
 
 # Checkout
 
@@ -12,8 +12,8 @@ Validates a cart, creates a payment, and confirms an order.
 ## Steps
 
 1. POST /carts/{id}/validate - Pass `id`; keep `cart_id`; fix cart and restart on validation failure.
-2. POST /payments - Pass `cart_id`, `amount`, `currency`, and one payment-method variant; keep `payment_id`; collect another method and retry this step on payment failure.
-3. POST /orders - Pass `cart_id` and `payment_id`; keep `order_id`; on retryable failure, keep both values and retry this step.
+2. POST /payments - Pass `cart_id`, `amount`, `currency`, one payment-method variant, and one `Idempotency-Key` per logical attempt; keep `payment_id`; replay unknown outcomes with the same request and key, but use a new key after correcting rejected details.
+3. POST /orders - Pass `cart_id`, `payment_id`, and one `Idempotency-Key`; keep `order_id`; replay an unknown or safely retryable outcome with the same IDs and key.
 
 ## State Transitions
 
@@ -28,6 +28,6 @@ Validates a cart, creates a payment, and confirms an order.
 ## Failure and Recovery
 
 - Restart from step 1 after cart changes.
-- Retry step 2 only after collecting a different payment method.
-- Retry step 3 with the same `cart_id` and `payment_id` when the error is retryable.
+- For a payment request with no definitive response, replay the identical request with the same `Idempotency-Key`; after correcting rejected payment details, use a new key.
+- For an order request with no definitive response or a safely retryable error, replay the same `cart_id`, `payment_id`, and `Idempotency-Key`; use a new key only for a new logical attempt.
 - Reconcile early `payment.completed` delivery by `payment_id`.

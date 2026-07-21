@@ -1,4 +1,4 @@
-> docai-http: 1.0.0 | profile: compact | coverage: complete | knowledge: complete | generated: 2026-07-10 | generation_id: conformance-compact-20260710-001 | projection_id: conformance-20260710-001 | source: fixtures/conformance/v1.0.0/source/complete-openapi.yaml (OpenAPI 3.1.1) | source_revision: fixture-revision-conformance-001 | x-fixture: stable-conformance
+> docai-http: 1.0.0 | profile: compact | coverage: complete | knowledge: complete | generated: 2026-07-21 | generation_id: conformance-compact-20260721-rc2-001 | projection_id: conformance-20260721-rc2-001 | source: fixtures/conformance/v1.0.0/source/complete-input-set.yaml (authoritative input set) | source_revision: fixture-input-set-rc2-001 | x-fixture: stable-conformance
 
 ## POST /documents
 
@@ -7,7 +7,7 @@ Uploads a document file with optional JSON metadata.
 ### Behavior
 
 - side_effects: stores a document file and extracts metadata asynchronously
-- idempotency: not idempotent without an idempotency key outside this fixture
+- idempotency: safe to retry only with the same `Idempotency-Key` and byte-identical multipart parts; without a key, do not retry after an ambiguous outcome
 - preconditions: the caller has a local file to upload
 - authorization: authenticated user
 
@@ -74,7 +74,8 @@ The caller must delegate multipart boundary construction to the HTTP library and
 
 | Status | code | Shape | Condition | Caller action |
 |---|---|---|---|---|
-| 422 | validation_failed | common:validation-error | File type, filename, metadata, or size is invalid | Show the upload error and let the caller choose another file or edit metadata |
+| 409 | idempotency_conflict | common:standard-error | The `Idempotency-Key` was already used with different multipart content | Use the original parts or a new key for a corrected upload; do not retry changed content with the same key |
+| 422 | validation_failed | common:validation-error | File type, filename, metadata, or size is invalid | Do not retry the same input; correct the file or metadata, then retry with a new `Idempotency-Key` |
 
 ### Related
 

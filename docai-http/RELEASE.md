@@ -2,6 +2,58 @@
 
 This document defines the repository release process for DocAI HTTP. It is operational guidance for maintainers; the format rules remain in `README.md`.
 
+## 1.0.0-rc.2 Release Notes (Preparation)
+
+Scope:
+
+- Publication label remains `1.0.0 release candidate`, not final `Stable`.
+- Release path: correct the stable-boundary findings from `v1.0.0-rc.1`, publish
+  `v1.0.0-rc.2`, and perform a focused regression review before final `v1.0.0`.
+- Compatibility scope under review remains normative README text,
+  `fixtures/conformance/v1.0.0/`, and the self-contained
+  `tools/check-conformance-fixtures.mjs`.
+
+Corrections:
+
+- Aligns all conformance Type cells with the simple Type grammar and keeps enum
+  values in constraints or meaning.
+- Uses logical DocAI field paths for structured XML and keeps XPath-like wire
+  locations in meaning/prose.
+- Adds canonical Request `same_as` positive and negative coverage and separate
+  Request/Response target parsing.
+- Makes the stable checker self-contained and verifies it in an isolated tree
+  containing only the advertised compatibility boundary.
+- Adds an authoritative input-set manifest and pass-through behavior source for
+  conventions, retry behavior, errors, workflows, webhooks, and multipart facts.
+- Defines the fixture API's `Idempotency-Key` wire and safe-retry contract,
+  including ambiguous outcomes and corrected-input retries.
+- Makes token-budget sizing advisory and clarifies complete-set versus focused
+  fixture evidence responsibilities.
+- Tightens the `Stable` label so it requires final review, final tag/publication,
+  and the publication-label transition.
+
+Evidence status:
+
+- Deterministic conformance and isolated-boundary checks cover the corrected
+  corpus.
+- `SEMANTIC-DRIFT-AUDIT.md` records task-relevant differences from the evaluated
+  `0.12.0` corpus.
+- Existing LLM and OpenAPI comparison records remain historical `0.12.0`
+  evidence until the release chooses and completes an `rc.2` refresh path.
+
+Required pre-tag validation:
+
+- `node docai-http/tools/check-release-readiness.mjs`.
+- `git diff --check`.
+- Any approved `rc.2` evaluation refresh selected by the active release TODO.
+
+Publication notes:
+
+- Do not call this release `Stable`.
+- Do not rewrite or move tagged `v1.0.0-rc.1` evidence.
+- After `v1.0.0-rc.2` is published, update current-tag wording while preserving
+  the release-candidate label.
+
 ## 1.0.0-rc.1 Release Notes (Release candidate)
 
 Scope:
@@ -127,7 +179,7 @@ Use the narrowest publication label supported by evidence:
 - `Compatibility Core implementation target`: the release satisfies the Compatibility Core scope in `README.md` and has matching core fixtures and checker coverage.
 - `Complete-generator-ready candidate`: the release has complete-surface fixture evidence for the full generator implementation surface described in `README.md` section 9.1.
 - `1.0.0 release candidate`: the release has the intended `1.0.0` stable conformance corpus and checker evidence, but is still under final review before the final `Stable` tag.
-- `Stable`: the release has the versioned conformance corpus required for the stable compatibility promise.
+- `Stable`: final review is complete, the release has the versioned conformance corpus required for the stable compatibility promise, final `v1.0.0` is tagged and published, and the publication label has been changed from release candidate to `Stable`.
 
 Do not imply compatibility for structures outside the published label. Non-core structures remain opt-in until they have specification text, positive and negative fixtures, checker behavior, coverage notes, and changelog evidence.
 

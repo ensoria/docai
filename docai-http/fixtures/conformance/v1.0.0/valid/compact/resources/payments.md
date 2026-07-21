@@ -1,4 +1,4 @@
-> docai-http: 1.0.0 | profile: compact | coverage: complete | knowledge: complete | generated: 2026-07-10 | generation_id: conformance-compact-20260710-001 | projection_id: conformance-20260710-001 | source: fixtures/conformance/v1.0.0/source/complete-openapi.yaml (OpenAPI 3.1.1) | source_revision: fixture-revision-conformance-001 | x-fixture: stable-conformance
+> docai-http: 1.0.0 | profile: compact | coverage: complete | knowledge: complete | generated: 2026-07-21 | generation_id: conformance-compact-20260721-rc2-001 | projection_id: conformance-20260721-rc2-001 | source: fixtures/conformance/v1.0.0/source/complete-input-set.yaml (authoritative input set) | source_revision: fixture-input-set-rc2-001 | x-fixture: stable-conformance
 
 ## POST /payments
 
@@ -7,7 +7,7 @@ Creates a pending payment from one supported payment-method variant.
 ### Behavior
 
 - side_effects: creates a pending payment and may later trigger payment.completed delivery
-- idempotency: not idempotent without an idempotency key outside this fixture
+- idempotency: safe to retry only with the same `Idempotency-Key` and semantically identical request; without a key, do not retry after an ambiguous outcome
 - preconditions: the cart is validated when this endpoint is used in the checkout workflow
 - authorization: authenticated merchant or shopper
 
@@ -40,7 +40,7 @@ Creates a pending payment from one supported payment-method variant.
 | type | string | Discriminator; allowed values are `bank` \| `card`; this variant is `bank` |
 | cart_id | string | Validated cart ID when called from checkout |
 | amount | int | Amount in the minor unit of `currency`; minimum 1 |
-| currency | enum(JPY, USD) | Currency for `amount` |
+| currency | string | Currency for `amount`; allowed values are `JPY` \| `USD` |
 | bank_account_id | string | Bank account token for this variant |
 
 **variant**: type = card
@@ -57,7 +57,7 @@ Creates a pending payment from one supported payment-method variant.
 | type | string | Discriminator; allowed values are `bank` \| `card`; this variant is `card` |
 | cart_id | string | Validated cart ID when called from checkout |
 | amount | int | Amount in the minor unit of `currency`; minimum 1 |
-| currency | enum(JPY, USD) | Currency for `amount` |
+| currency | string | Currency for `amount`; allowed values are `JPY` \| `USD` |
 | card_token | string | Card token for this variant |
 
 ### Response 201
@@ -78,13 +78,15 @@ Creates a pending payment from one supported payment-method variant.
 |---|---|---|
 | $ | object | Additional properties forbidden |
 | payment_id | string | Payment ID to pass to POST /orders and match with payment.completed |
-| status | enum(pending) | Payment status after creation |
+| status | string | Payment status after creation; always `pending` |
 
 - Response Headers: none
 
 ### Errors
 
-none
+| Status | code | Shape | Condition | Caller action |
+|---|---|---|---|---|
+| 409 | idempotency_conflict | common:standard-error | The `Idempotency-Key` was already used with a different request | Use the original request or a new key for a new logical operation; do not retry the changed request with the same key |
 
 ### Related
 

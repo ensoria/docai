@@ -4,6 +4,27 @@ DocAI HTTP release history. Specification versioning and compatibility rules are
 
 ## Unreleased
 
+- Prepares `v1.0.0-rc.2` after external review found stable-blocking
+  conformance-content and checker-boundary inconsistencies in `v1.0.0-rc.1`.
+- Aligns conformance Type cells with the normative simple Type grammar, moves
+  enum values to constraints, and uses logical DocAI field paths for XML while
+  retaining wire locations in meaning/prose.
+- Adds canonical Request `same_as` fixtures, separate Request/Response parsing,
+  full-target resolution, media matching, and chained-reference rejection.
+- Makes the stable conformance checker self-contained, removes its candidate
+  checker and changelog dependencies, and adds an isolated-boundary check to the
+  deterministic release-readiness gate.
+- Adds an authoritative input-set manifest and pass-through behavior source,
+  restamps the full/compact corpus, and replaces the OpenAPI-only provenance
+  claim with a fact-class traceability matrix.
+- Defines fixture-level `Idempotency-Key` and safe-retry behavior across
+  conventions, resources, errors, and checkout recovery, including corrected
+  document-upload retry guidance.
+- Makes token-budget sizing advisory, clarifies complete-set and focused-fixture
+  responsibilities, and tightens the `Stable` release-label conditions.
+- Records semantic drift from the evaluated `0.12.0` corpus and keeps existing
+  LLM/OpenAPI results scoped to that historical candidate pending an `rc.2`
+  evidence-refresh decision.
 - Updates post-`v1.0.0-rc.1` publication wording so documentation names the
   release candidate as the current tagged public release while reserving
   `Stable` for the final `v1.0.0` tag.

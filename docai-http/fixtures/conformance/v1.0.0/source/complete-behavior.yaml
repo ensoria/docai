@@ -1,0 +1,195 @@
+behavior_source: docai-http-stable-conformance
+format_version: 1
+revision: fixture-behavior-rc2-001
+
+environments:
+  production: https://api.example.test
+  sandbox: https://sandbox.api.example.test
+versioning:
+  base_path: /v1
+authentication:
+  scheme: bearer
+  applies_to: all endpoints
+  scopes:
+    POST /users: users:write
+    GET /users/{id}: users:read
+browser_security: none
+
+request_formats:
+  json:
+    content_type: application/json
+    accept: application/json
+http_semantics:
+  request_id:
+    header: X-Request-ID
+    type: opaque string
+    request_required: false
+    response_action: Log the value with client-side error reports when present.
+  idempotency:
+    header: Idempotency-Key
+    applies_to:
+      - POST /users
+      - POST /payments
+      - POST /orders
+      - POST /documents
+    required_for_safe_retry: true
+    value: 1 to 128 visible ASCII characters; opaque and unique per logical create operation
+    retention: at least 24 hours after the first accepted request
+    identical_replay: Return the original status, response body, and response headers without repeating the side effect.
+    conflicting_reuse:
+      status: 409
+      code: idempotency_conflict
+      action: Do not retry the changed request with the same key; use the original request or a new key for a new logical operation.
+    no_key: The operation is not idempotent; after an ambiguous outcome, do not retry automatically.
+
+common_errors:
+  - status: 401
+    code: token_expired
+    shape: standard-error
+    condition: Access token has expired.
+    caller_action: Refresh once, then retry once.
+  - status: 403
+    code: forbidden
+    shape: standard-error
+    condition: Credential lacks permission.
+    caller_action: Do not retry with the same credential.
+  - status: 500
+    code: server_error
+    shape: standard-error
+    condition: Unexpected server failure.
+    caller_action: Retry with backoff only when the request is safe to retry.
+validation_error:
+  status: 422
+  code: validation_failed
+  shape: validation-error
+  caller_action: Show field-level errors when present; do not retry unchanged input.
+
+data_representation:
+  ids: Opaque strings that clients must not parse.
+  timestamps: RFC 3339 UTC strings.
+  root_json_objects: Additional properties are rejected unless a field table states otherwise.
+empty_and_omitted_values:
+  omitted_optional_request_fields: Keep the server-defined default or existing value.
+  null: Send only when the field is nullable.
+pagination: none
+list_operations: none
+rate_limits: none
+
+file_transfer:
+  multipart_boundary: Delegate generation to the HTTP library; do not hard-code a boundary.
+  document_part:
+    name: document
+    filename_required: true
+    preserve_extension: true
+    content_types:
+      - application/pdf
+      - image/png
+    maximum_bytes: 10485760
+  metadata_part:
+    name: metadata
+    required: false
+    content_type: application/json
+    maximum_bytes: 4096
+    additional_properties: false
+
+operations:
+  POST /users:
+    side_effects: Creates a user record.
+    idempotency: Safe retry requires the same Idempotency-Key and semantically identical request.
+    preconditions: Email is unique.
+    authorization: Authenticated caller with users:write.
+    errors:
+      - status: 409
+        code: email_taken
+        shape: email-taken
+        condition: Email address already exists.
+        caller_action: Use another email address and a new idempotency key; do not retry unchanged input.
+      - status: 409
+        code: idempotency_conflict
+        shape: standard-error
+        condition: The Idempotency-Key was already used with a different request.
+        caller_action: Use the original request or a new key for a new logical operation.
+      - status: 422
+        code: validation_failed
+        shape: validation-error
+        condition: Request validation failed.
+        caller_action: Correct the input, then retry as a new logical operation with a new idempotency key.
+  GET /users/{id}:
+    side_effects: none
+    idempotency: Idempotent and safe to retry.
+    preconditions: User exists.
+    authorization: Authenticated caller with users:read.
+  POST /carts/{id}/validate:
+    side_effects: Reserves no inventory and validates current cart state.
+    idempotency: Idempotent for the same cart version.
+    preconditions: Cart exists and contains at least one item.
+    authorization: Authenticated shopper.
+  POST /payments:
+    side_effects: Creates a pending payment and may trigger payment.completed delivery.
+    idempotency: Safe retry requires the same Idempotency-Key and semantically identical request.
+    preconditions: Cart is validated when used in checkout.
+    authorization: Authenticated merchant or shopper.
+    errors:
+      - status: 409
+        code: idempotency_conflict
+        shape: standard-error
+        condition: The Idempotency-Key was already used with a different request.
+        caller_action: Use the original request or a new key for a new logical operation.
+  POST /orders:
+    side_effects: Creates an order and captures the pending payment.
+    idempotency: Safe retry requires the same Idempotency-Key, cart_id, and payment_id.
+    preconditions: POST /payments returned a pending payment_id.
+    authorization: Authenticated shopper.
+    errors:
+      - status: 409
+        code: idempotency_conflict
+        shape: standard-error
+        condition: The Idempotency-Key was already used with a different request.
+        caller_action: Use the original cart_id and payment_id or a new key for a new logical operation.
+  POST /documents:
+    side_effects: Stores a document file and extracts metadata asynchronously.
+    idempotency: Safe retry requires the same Idempotency-Key and byte-identical multipart parts.
+    preconditions: Caller has a local file to upload.
+    authorization: Authenticated user.
+    errors:
+      - status: 409
+        code: idempotency_conflict
+        shape: standard-error
+        condition: The Idempotency-Key was already used with different multipart content.
+        caller_action: Use the original parts or a new key for a corrected upload.
+      - status: 422
+        code: validation_failed
+        shape: validation-error
+        condition: File type, filename, metadata, or size is invalid.
+        caller_action: Do not retry the same input; correct the file or metadata, then retry with a new idempotency key.
+
+workflow:
+  checkout:
+    preconditions:
+      - Cart exists and contains at least one item.
+      - Shopper is authenticated.
+    steps:
+      - Validate the cart and retain cart_id.
+      - Create a payment with one Idempotency-Key per logical payment attempt and retain payment_id.
+      - Create an order with one Idempotency-Key and retain order_id.
+    recovery:
+      payment_no_response: Retry the byte-equivalent request with the same key; do not create a second payment key until the first outcome is known.
+      payment_rejected: Correct the payment method and use a new key for the new logical attempt.
+      order_no_response: Retry the same cart_id and payment_id with the same key.
+      order_rejected: Correct the request only when the error permits it and use a new key for a new logical operation.
+      early_webhook: Reconcile by payment_id and continue order confirmation according to known order state.
+
+webhook_delivery:
+  default:
+    guarantee: at-least-once
+    ordering: unordered
+    response: any 2xx within 5 seconds
+    deduplication: documented event ID
+  payment.completed:
+    method: POST
+    retry_window: 24 hours
+    retry_schedule: exponential backoff
+    event_id_field: event_id
+    attempt_header: X-Payment-Attempt
+    related_operation: POST /payments
+

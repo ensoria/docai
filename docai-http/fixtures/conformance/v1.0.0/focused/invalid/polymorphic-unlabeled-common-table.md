@@ -16,7 +16,7 @@ Expected: invalid complete conformance. Polymorphic representations must not use
 | $ | object | yes | no | Additional properties forbidden |
 | type | string | yes | no | Common discriminator field |
 | amount | int | yes | no | Common amount field |
-| currency | enum(JPY, USD) | yes | no | Common currency field |
+| currency | string | yes | no | Common currency field |
 
 **variant**: type = bank
 
@@ -29,6 +29,6 @@ Expected: invalid complete conformance. Polymorphic representations must not use
 | $ | object | yes | no | Additional properties forbidden |
 | type | string | yes | no | Discriminator; allowed values are `bank` \| `card`; this variant is `bank` |
 | amount | int | yes | no | Amount in the minor unit of `currency`; minimum 1 |
-| currency | enum(JPY, USD) | yes | no | Currency for `amount` |
+| currency | string | yes | no | Currency for `amount`; allowed values are `JPY` \| `USD` |
 | bank_account_id | string | yes | no | Bank account token for this variant |
 ````

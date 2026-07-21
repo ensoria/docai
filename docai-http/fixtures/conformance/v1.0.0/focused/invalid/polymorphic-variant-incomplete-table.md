@@ -34,6 +34,6 @@ Expected: invalid complete conformance. Every variant table must repeat all fiel
 | $ | object | yes | no | Additional properties forbidden |
 | type | string | yes | no | Discriminator; allowed values are `bank` \| `card`; this variant is `card` |
 | amount | int | yes | no | Amount in the minor unit of `currency`; minimum 1 |
-| currency | enum(JPY, USD) | yes | no | Currency for `amount` |
+| currency | string | yes | no | Currency for `amount`; allowed values are `JPY` \| `USD` |
 | card_token | string | yes | no | Card token for this variant |
 ````

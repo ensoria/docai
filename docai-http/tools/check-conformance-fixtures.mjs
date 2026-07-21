@@ -1,20 +1,1344 @@
 #!/usr/bin/env node
 
+import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 
+const SPEC_VERSION = "1.0.0";
+const FOCUSED_EXPECTATION_LABEL = "complete conformance";
+const FIXTURE_EXTENSION_LABEL = "stable-conformance";
+const CORPUS_DISPLAY_LABEL = "Stable conformance";
+const SOURCE_TRACEABILITY_FILE = "SOURCE-TRACEABILITY.md";
+const INPUT_SET_SOURCE = "fixtures/conformance/v1.0.0/source/complete-input-set.yaml";
+const INPUT_SET_REVISION = "fixture-input-set-rc2-001";
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
+const DEFAULT_RELATIVE_DIR = path.join("fixtures", "conformance", "v1.0.0");
+const DEFAULT_DIR = path.resolve(SCRIPT_DIR, "..", DEFAULT_RELATIVE_DIR);
+const CANDIDATE_DIR = path.resolve(process.argv[2] ?? DEFAULT_DIR);
 
-process.env.DOCAI_COMPLETE_FIXTURE_VERSION ??= "1.0.0";
-process.env.DOCAI_COMPLETE_FIXTURE_DEFAULT_RELATIVE_DIR ??= path.join("fixtures", "conformance", "v1.0.0");
-process.env.DOCAI_COMPLETE_FOCUSED_EXPECTATION_LABEL ??= "complete conformance";
-process.env.DOCAI_COMPLETE_FIXTURE_EXTENSION_LABEL ??= "stable-conformance";
-process.env.DOCAI_COMPLETE_CORPUS_DISPLAY_LABEL ??= "Stable conformance";
-process.env.DOCAI_COMPLETE_SOURCE_TRACEABILITY_FILE ??= "SOURCE-TRACEABILITY.md";
+const REQUIRED_SET_PATHS = [
+  "CONVENTIONS.md",
+  "INDEX.md",
+  "resources/checkout.md",
+  "resources/documents.md",
+  "resources/payments.md",
+  "resources/users.md",
+  "webhooks/payment-completed.md",
+  "workflows/checkout.md",
+];
 
-if (!process.argv[2]) {
-  process.argv[2] = path.resolve(SCRIPT_DIR, "..", "fixtures", "conformance", "v1.0.0");
+const CONVENTION_HEADINGS = new Set([
+  "Environments",
+  "Versioning",
+  "Authentication",
+  "Browser Security",
+  "Request Formats",
+  "HTTP Semantics",
+  "Errors",
+  "Validation Errors",
+  "Pagination",
+  "List Operations",
+  "Data Representation",
+  "Empty and Omitted Values",
+  "File Transfer",
+  "Rate Limits",
+  "Webhook Delivery",
+]);
+
+const FOCUSED_EXPECTATIONS = {
+  valid: {
+    "behavior-unknown-marker.md": ["- side_effects: unknown", "**unknown**: side effects and idempotency"],
+    "body-marker-ordering-all-units.md": ["**body_required**: yes", "**body_presence**: always", "**error_shape**: email-conflict", "## Payload"],
+    "bodyless-and-unknown-body.md": ["- Body: none", "### Response 204", "**body_presence**: unknown"],
+    "canonical-boundary-extension-heading.md": ["#### x-Trace Notes", "### Errors"],
+    "compact-error-shape-client-visible-fields.md": [
+      "inline:payment-conflict",
+      "#### Client-visible fields",
+      "#### Opaque fields",
+    ],
+    "compact-opaque-fields-omitted.md": ["#### Client-visible fields", "| role | string | `admin` \\| `member` |"],
+    "compact-opaque-webhook-payload.md": ["#### Client-visible fields", "#### Opaque fields"],
+    "common-error-none-unknown-shapes.md": ["| 404 | route_not_found | none |", "| 502 | upstream_failure | unknown |", "**unknown**: common 502 `upstream_failure` body"],
+    "common-response-header-contracts.md": ["## HTTP Semantics", "| X-Request-ID | string | always |", "**deviation**: this response overrides the common `ETag` response-header contract", "**deviation**: this response suppresses the common `X-Request-ID` and `ETag` response-header contracts"],
+    "conventions-common-error-shapes.md": ["**error_shape**: auth-error", "#### Response Headers", "WWW-Authenticate"],
+    "conventions-whole-section-states.md": ["## Rate Limits", "unknown", "**unsupported**: replaces CONVENTIONS Webhook Delivery:"],
+    "conditional-requiredness.md": ["Required | Nullable", "conditional"],
+    "conditional-response-body-presence.md": ["**body_presence**: present when the request sends `Prefer: return=representation`", "parse JSON only when the body is present"],
+    "conditional-response-header-deviation.md": ["| Retry-After | string | present when `status=processing` |", "**deviation**: this response suppresses the common `X-Request-ID` response header"],
+    "deviation-placement.md": ["#### Query Parameters\n\n**deviation**:", "#### Body\n\n**deviation**:", "### Response 200\n\n**deviation**:", "## Payload\n\n**deviation**:"],
+    "deprecated-index-and-endpoint.md": ["(deprecated) Lists legacy users", "**deprecated**: use GET /users instead"],
+    "endpoint-section-order-path-parameters.md": ["## GET /users/{id}/devices/{device_id}", "| id | string | User ID", "| device_id | string | Device ID", "**call_shape**:"],
+    "enum-documentation.md": ["Any ISO 4217 currency code", "`admin` \\| `member`; closed API-specific subset"],
+    "error-deviation-and-recovery-state.md": ["**deviation**:", "Fetch the order by client reference"],
+    "exactly-null-body.md": ["**body_nullable**: yes", "| $ | null | always | yes |"],
+    "field-defaults-reconstruction.md": ["**field_defaults**: Presence=always | Nullable=no"],
+    "field-defaults-measured-savings.md": ["x-tokenizer: o200k_base", "x-tokens: 142", "**field_defaults**: Presence=always | Nullable=no"],
+    "field-level-error-policy.md": ["error.field_errors[].target", "error.field_errors[].code", "error.field_errors[].display_to_user"],
+    "generated-example-field-coverage.md": ["```json", "| Field | Type | Presence | Nullable | Meaning |"],
+    "generated-example-unknown-values.md": ["knowledge: requires-input", "cart_illustrative", "card_illustrative", "**unknown**: valid example values require seeded cart and card-token fixtures"],
+    "grouped-webhook-payload-variants.md": ["**variant**: event = subscription.cancelled", "**variant**: event = subscription.updated"],
+    "idempotency-safe-retry-contract.md": ["Idempotency-Key", "at least 24 hours", "409 idempotency_conflict", "do not retry after an ambiguous outcome"],
+    "index-metadata-propagation.md": ["coverage: requires-source | knowledge: requires-input", "| GET | /reports/{id} | download report | Downloads a generated report. | none | Authentication | requires-source | requires-input |", "**unsupported**: replaces Response Headers:", "**unknown**: report download URL expiration"],
+    "index-routing-task-conventions.md": ["create user; invite user", "workflows/user-onboarding.md, webhooks/user-created.md", "| GET | /health | health check |", "| GET | /reports/{id} | download report |"],
+    "inline-error-unknown-code.md": ["409 unknown inline:payment-conflict:", "**unknown**:"],
+    "inline-error-shape-reuse-and-bodyless.md": ["| 409 | cart_version_conflict | inline:cart-conflict |", "423 checkout_paused inline:checkout-paused:", "**error_shape**: checkout-paused\n\nnone"],
+    "localized-unsupported-smallest-unit.md": ["**unsupported**: localized:"],
+    "media-type-unique-representations.md": ["**media_type**: application/json", "**media_type**: text/csv;charset=UTF-8"],
+    "media-type-unknown.md": ["**media_type**: unknown", "**unknown**: concrete response media type"],
+    "metadata-extension-token-routing.md": ["x-retrieval-unit: resource-file", `x-fixture: ${FIXTURE_EXTENSION_LABEL}`],
+    "multiple-media-type-branching.md": ["**media_type**: application/xml", "branch on the response `Content-Type`", "namespace `https://api.example.test/reports`"],
+    "nested-arrays-maps-openness.md": ["| matrix | int[][] | always | no |", "balances.{key}.amount", "| items | object[] | always | no | Array items reject additional properties |"],
+    "non-json-representation-classes.md": ["**media_type**: application/x-www-form-urlencoded;charset=UTF-8", "**media_type**: image/png", "**media_type**: text/csv;charset=UTF-8", "**media_type**: application/xml;charset=UTF-8", "**media_type**: text/event-stream;charset=UTF-8"],
+    "non-json-multipart-boundary.md": ["**media_type**: multipart/form-data", "boundary=<generated by HTTP library>"],
+    "parameter-wire-serialization.md": ["style=form, explode=false", "encoded example `ids=usr_01K0COMPLETE,usr_01K0SECOND`", "Cookie: experiment=A; experiment=B"],
+    "polymorphic-tagged-request-variants.md": ["**variant**: type = bank", "**variant**: type = card"],
+    "profile-pair-selective-conventions.md": ["Compact set:", "Full set:", "Conventions"],
+    "recursive-direct-unsupported.md": ["**unsupported**: replaces response representation 200 application/json"],
+    "recursive-indirect-unsupported.md": ["**unsupported**: replaces response representation 200 application/json"],
+    "redirect-and-async-responses.md": ["### Response 202", "Poll `status_url` every 2 seconds", "### Response 302", "| Location | string | always |"],
+    "response-default-classification.md": ["| default | job_failed | inline:default-error |", "**unsupported**: replaces Response default: mixed error and non-error outcome", "**unsupported**: replaces Errors: error branch is inseparable from the mixed default response"],
+    "response-header-repetition.md": ["Set-Cookie", "repeated field lines"],
+    "response-header-replacement-unsupported.md": ["**unsupported**: replaces Response Headers:"],
+    "root-object-dollar-exception.md": ["## Data Representation", "| id | string | always | no | User ID |"],
+    "root-values-and-any-type.md": ["| $ | map<string, bool> | yes | no |", "| $ | string[] | always | no |", "| payload | any | always | no |"],
+    "request-media-type-selection.md": ["**media_type**: application/json", "**media_type**: application/x-www-form-urlencoded;charset=UTF-8", "The caller selects the request representation by setting `Content-Type`"],
+    "same-as-request-resource-file-retrieval-unit.md": ["x-retrieval-unit: resource-file", "**same_as**: POST /users Request application/json"],
+    "same-as-resource-file-retrieval-unit.md": ["x-retrieval-unit: resource-file", "**same_as**: POST /users Response 201 application/json"],
+    "single-prose-language-english-structure.md": ["Crea un usuario para el portal.", "### Behavior", "| Field | Type | Required | Nullable | Constraints / Meaning |"],
+    "status-range-default-ordering.md": ["### Response 2XX", "### Response default", "exact status definitions take precedence"],
+    "structural-identifier-spelling.md": ["## GET /reports/{id}", "### Response 2XX", "**media_type**: application/vnd.example.report+json;version=1"],
+    "structured-parameter-fields.md": ["**parameter**: filter", "##### Fields"],
+    "table-field-path-normalization.md": ["metadata.campaign\\.code\\|source", "Additional properties forbidden"],
+    "table-cell-unknown-values.md": ["| email | string | unknown | no |", "| metadata | unknown | present when source metadata exists | unknown |"],
+    "untagged-overlapping-polymorphic-variants.md": ["**variant**: bank account method", "**variant**: card method", "Use `both signals` for the combined case", "**variant**: both signals"],
+    "unknown-coverage-knowledge-state.md": ["knowledge: requires-input", "coverage: requires-source"],
+    "unknown-response-headers-and-nullability.md": ["**body_nullable**: unknown", "#### Response Headers", "unknown", "**unknown**: response body nullability"],
+    "unrepresentable-endpoint-omitted.md": ["GET /reports/{report id}", "| GET | /reports/{id} | download report |"],
+    "update-patch-semantics.md": ["JSON Merge Patch semantics", "non-updatable and must not be sent"],
+    "value-omission-empty-defaults.md": ["empty array removes all tags", "explicit `null` disables expiration", "Omitted defaults to `private`"],
+    "webhook-payload-presence.md": ["**body_required**: yes", "| error | object | conditional | yes |", "omitted only for legacy deliveries"],
+    "webhook-structure-delivery.md": ["| payment.completed | Sent when a payment settles. | webhooks/payment-completed.md |", "Triggers webhook: webhooks/payment-completed.md", "X-Payment-Attempt", "Deduplicate repeated delivery attempts by this field", "**deviation**: delivery of this event is retried for up to 24 hours"],
+    "workflow-section-replacement-unsupported.md": ["**unsupported**: replaces workflow Steps:"],
+    "workflow-structure-deviation.md": ["| Checkout | Validate cart, create payment, and confirm order. | workflows/checkout.md |", "**deviation**: high-risk carts require manual review", "Pass `cart_id`, `payment_id`, and `review_id`", "retry step 4"],
+    "workflow-whole-section-unknown.md": ["knowledge: requires-input", "## Steps\n\nunknown\n\n**unknown**: settlement step order", "## Failure and Recovery\n\nunknown\n\n**unknown**: recovery actions"],
+    "workflow-webhook-related-links.md": ["Workflow: workflows/checkout.md", "Triggers webhook: webhooks/payment-completed.md"],
+  },
+  invalid: {
+    "any-used-for-missing-type.md": ["| payload | any | always | no | Type is not documented"],
+    "async-response-missing-polling.md": ["### Response 202", "status_url"],
+    "behavior-unknown-missing-marker.md": ["- side_effects: unknown", "- idempotency: unknown"],
+    "body-marker-ordering-wrong.md": ["**media_type**: application/json", "**body_required**: yes"],
+    "bodyless-request-missing-none.md": ["- Cookie Parameters: none", "### Response 204"],
+    "common-error-suppression-missing-deviation.md": ["common:standard-error"],
+    "common-error-unknown-shape-missing-marker.md": ["| 502 | upstream_failure | unknown |"],
+    "common-error-shape-missing-response-headers.md": ["**error_shape**: auth-error", "## Validation Errors"],
+    "common-header-override-missing-deviation.md": ["| ETag | string | always |", "| ETag | string | present when `include_etag=true` |"],
+    "common-header-suppression-missing-deviation.md": ["Every response includes `X-Request-ID`", "- Response Headers: none"],
+    "common-response-header-contract-missing-details.md": ["Every response includes `X-Request-ID`; clients must log it with failures.", "- Response Headers: none"],
+    "compact-default-hides-unknown-column.md": ["**field_defaults**: Presence=always | Nullable=no", "Presence is actually unknown"],
+    "compact-contract-preservation-failures.md": ["| include_inactive | bool | no |", "### Response 409", "| 422 | validation_failed | common:validation-error |", "#### Query Parameters\n\nnone", "| users[].role | string | `member`; clients branch on this value |"],
+    "compact-empty-opaque-fields-heading.md": ["#### Opaque fields\n\nnone"],
+    "conventions-unsupported-wrong-unit.md": ["**unsupported**: replaces Webhook Delivery:"],
+    "conditional-requiredness-missing-condition.md": ["conditional", "missing"],
+    "conditional-response-header-missing-condition.md": ["| Retry-After | string | conditional |"],
+    "conditional-response-presence-missing-condition.md": ["**body_presence**: conditional"],
+    "cross-file-ref-notation.md": ["\"$ref\":\"#/components/schemas/User\"", "| $ref | string | always | no |"],
+    "deprecated-index-summary-missing-prefix.md": ["**deprecated**: use GET /users instead."],
+    "default-error-as-response.md": ["### Response default", "{\"error\":{\"code\":\"job_failed\"", "### Errors\n\nnone"],
+    "deviation-outside-affected-section.md": ["## POST /users\n\n**deviation**:", "### Response 200"],
+    "duplicate-media-type-representation.md": ["**media_type**: application/json"],
+    "enum-omits-client-branch-values.md": ["clients branch on `pending`, `active`, and `suspended`, but this row omits"],
+    "endpoint-related-missing-webhook-complete.md": ["webhooks/payment-completed.md", "### Related\n\nnone"],
+    "event-header-missing-wire-rule-complete.md": ["| X-Payment-Attempt | yes | string | Attempt number |"],
+    "exactly-null-nullable-no.md": ["| $ | null | always | no |"],
+    "field-defaults-retained-column.md": ["**field_defaults**: Presence=always | Nullable=no", "| Field | Type | Presence | Meaning |"],
+    "field-defaults-savings-unjustified.md": ["Measured with `o200k_base`", "repeating `Presence` and `Nullable` would be smaller", "**field_defaults**: Presence=always | Nullable=no"],
+    "field-defaults-unknown-value.md": ["**field_defaults**: Presence=unknown | Nullable=no"],
+    "field-level-error-policy-missing.md": ["error.field_errors[].message", "Field error message"],
+    "field-path-unescaped-pipe.md": ["metadata.campaign.code|source"],
+    "file-metadata-not-propagated.md": ["coverage: complete | knowledge: complete", "**unsupported**: replaces Response Headers:", "**unknown**: report download URL expiration"],
+    "generated-example-field-missing-row.md": ["timezone"],
+    "generated-example-unverified-guess.md": ["knowledge: complete", "cart_illustrative", "card_illustrative"],
+    "generated-example-violates-source-constraint.md": ["\"amount\":0", "\"currency\":\"EUR\"", "**unknown**: valid example values require seeded cart and card-token fixtures"],
+    "grouped-webhook-incompatible-deviation.md": ["Only for subscription.cancelled, delivery retries for 24 hours", "**variant**: event = subscription.updated"],
+    "grouped-webhook-incompatible-headers.md": ["X-Cancel-Reason", "Only for subscription.cancelled", "**variant**: event = subscription.updated"],
+    "grouped-webhook-incompatible-receiver.md": ["Only for subscription.cancelled, receiver handling may return 204."],
+    "grouped-webhook-incompatible-trigger.md": ["Triggered by: DELETE /subscriptions/{id} for `subscription.cancelled`", "Triggered by: PATCH /subscriptions/{id} for `subscription.updated`"],
+    "grouped-webhook-unlabeled-payload-table.md": ["**variant**:", "| Field | Type | Presence | Nullable | Meaning |"],
+    "index-missing-also-read-column.md": ["| Method | Path | Task | Summary |"],
+    "index-metadata-not-propagated.md": ["coverage: complete | knowledge: complete", "coverage: requires-source | knowledge: requires-input", "**unsupported**: replaces Response Headers:", "**unknown**: report download URL expiration"],
+    "index-routing-metadata-contradiction.md": ["| GET | /reports/{id} | download report | Downloads a generated report. | none | Authentication | complete | complete |", "coverage: requires-source | knowledge: requires-input"],
+    "index-webhook-missing-details-complete.md": ["## Webhooks", "| Name | Summary |"],
+    "idempotency-safe-retry-missing-wire-contract.md": ["safe to retry with an idempotency key", "### Errors\n\nnone"],
+    "inline-error-unknown-code-missing-marker.md": ["409 unknown inline:payment-conflict:"],
+    "inline-error-label-mismatch.md": ["| 409 | cart_locked | inline:cart-conflict |", "**error_shape**: stale-cart"],
+    "inline-error-shape-out-of-order.md": ["423 checkout_paused inline:checkout-paused:", "409 cart_locked inline:cart-conflict:"],
+    "metadata-unknown-escape.md": ["\\q"],
+    "media-type-unknown-missing-marker.md": ["**media_type**: unknown", "- Response Headers: none"],
+    "mixed-prose-language.md": ["Creates a user. Crea un usuario."],
+    "mixed-default-invented-body.md": ["### Response default", "{\"id\":\"imp_01K0COMPLETE\"", "| default | import_failed | inline:default-error |"],
+    "mixed-default-missing-error-replacement.md": ["**unsupported**: replaces Response default: mixed error and non-error outcome", "### Errors\n\nnone"],
+    "non-english-structural-text.md": ["### Comportamiento", "### Solicitud", "| Campo | Tipo | Required | Nullable | Constraints / Meaning |"],
+    "multiple-media-type-missing-branching.md": ["**media_type**: application/xml", "- Response Headers: none"],
+    "nested-map-flattened-literal-key.md": ["balances.JPY.amount", "balances.JPY.currency"],
+    "non-extension-heading.md": ["### OAuth2"],
+    "non-json-multipart-boundary-missing.md": ["multipart/form-data"],
+    "opaque-fields-before-client-visible-fields.md": ["#### Opaque fields", "#### Client-visible fields"],
+    "opaque-request-field.md": ["#### Opaque fields"],
+    "overlapping-combined-variant-missing.md": ["The `high_value` and `churn_risk` alternatives can both be valid", "**variant**: churn risk signal", "**variant**: high value signal"],
+    "parameter-array-missing-wire-rule.md": ["| ids | string[] | yes | List of user IDs |"],
+    "path-parameter-name-mismatch.md": ["## GET /users/{id}/devices/{device_id}", "| user_id | string | User ID"],
+    "polymorphic-variant-incomplete-table.md": ["**variant**: type = bank", "**variant**: type = card"],
+    "polymorphic-unlabeled-common-table.md": ["| type | string | yes | no | Common discriminator field |", "**variant**: type = bank"],
+    "polymorphic-unlabeled-example-before-variants.md": ["```json\n{\"id\":\"pm_01K0UNTAGBANK\"", "**variant**: bank account method"],
+    "profile-pair-missing-standard-path.md": ["Full set:", "Compact set:"],
+    "raw-binary-field-table.md": ["**media_type**: image/png", "**body_nullable**: no", "| $ | file | yes | no | Raw PNG bytes |"],
+    "recursive-truncated-representation.md": ["children[]"],
+    "repeated-response-header-missing-wire-rule.md": ["Set-Cookie"],
+    "request-media-type-selection-missing.md": ["**media_type**: application/json", "**media_type**: application/x-www-form-urlencoded;charset=UTF-8"],
+    "resource-file-title-wrapper.md": ["# Users", "This file describes user endpoints."],
+    "redirect-missing-location-header.md": ["### Response 302", "- Response Headers: none"],
+    "response-header-unsupported-wrong-unit.md": ["**unsupported**: replaces Response 201:"],
+    "root-object-dollar-contradiction.md": ["| $ | object | always | no | Additional properties allowed with string values |", "additional properties forbidden by source schema"],
+    "same-as-cross-kind.md": ["**same_as**: POST /users Response 201 application/json"],
+    "same-as-error-shape.md": ["**same_as**: POST /payments Response 409 application/json"],
+    "same-as-forward-reference.md": ["**same_as**: POST /users Response 201 application/json"],
+    "same-as-missing-retrieval-unit.md": ["**same_as**: POST /users Response 201 application/json"],
+    "same-as-request-malformed.md": ["**same_as**: POST /users Request 201 application/json"],
+    "same-as-request-missing-target-body.md": ["- Body: none", "**same_as**: POST /users Request application/json"],
+    "same-as-request-wrong-media-type.md": ["**same_as**: POST /users Request application/xml"],
+    "same-as-target-is-same-as.md": ["**same_as**: POST /user-imports Request application/json"],
+    "selective-conventions-unknown-section.md": ["Billing Rules"],
+    "status-order-default-before-range.md": ["### Response default", "### Response 4XX"],
+    "invalid-structural-identifier-spelling.md": ["## get reports/{id}?download=true", "### Response 60X", "**media_type**: Application/JSON; charset=UTF-8"],
+    "structured-parameter-missing-fields.md": ["filter | object"],
+    "type-enum-expression.md": ["| currency | enum(JPY, USD) | yes | no |"],
+    "unknown-marker-missing.md": ["unknown"],
+    "unknown-response-headers-missing-marker.md": ["#### Response Headers", "unknown"],
+    "unstructured-stream-field-table.md": ["**media_type**: text/event-stream;charset=UTF-8", "**body_nullable**: no", "| percent | int | always | no |"],
+    "untagged-variant-incomplete-table.md": ["**variant**: bank account method", "| bank_account_id | string | always | no | Present only for the bank account method variant |"],
+    "unrepresentable-endpoint-normalized.md": ["GET /reports/{report id}", "## GET /reports/{report_id}"],
+    "update-patch-semantics-missing.md": ["## PATCH /users/{id}", "| name | string | no | no |"],
+    "value-default-behavior-missing.md": ["| visibility | string | no | no | `private` \\| `team` |"],
+    "webhook-payload-presence-missing-condition.md": ["| error | object | conditional | yes | Error object |"],
+    "webhook-dedup-missing-complete.md": ["| event_id | string | always | no | Unique event identifier |"],
+    "webhook-deviation-incomplete.md": ["**deviation**: this event uses different retry and receiver handling"],
+    "webhook-section-order-complete.md": ["## Payload", "## Headers"],
+    "webhook-title-mismatch.md": ["| payment.completed | Sent when a payment settles. | webhooks/payment-completed.md |", "# payment.settled"],
+    "workflow-unsupported-wrong-unit.md": ["**unsupported**: replaces webhook Payload:"],
+    "workflow-deviation-wrong-placement-complete.md": ["1. POST /reviews", "**deviation**: manual review may be skipped by staff."],
+    "workflow-section-order-complete.md": ["## Steps\n\n1. POST /payments", "## Preconditions"],
+    "workflow-step-missing-values-failure.md": ["1. POST /payments - Create a pending payment."],
+    "workflow-title-mismatch.md": ["| Checkout | Validate cart, create payment, and confirm order. | workflows/checkout.md |", "# Payment Flow"],
+    "workflow-unknown-missing-marker.md": ["## Steps\n\nunknown", "knowledge: requires-input"],
+    "xml-xpath-field.md": ["| /report/@status | string | always | no |"],
+  },
+};
+
+const FINAL_AUDIT_REQUIREMENTS = [
+  {
+    name: "Canonical markers",
+    fixtures: [
+      "focused/valid/body-marker-ordering-all-units.md",
+      "focused/valid/deviation-placement.md",
+      "focused/valid/inline-error-shape-reuse-and-bodyless.md",
+    ],
+    coverageRows: ["Focused body marker ordering fixtures", "Focused deviation placement fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for body-marker ordering",
+  },
+  {
+    name: "Table shapes and table-cell normalization",
+    fixtures: [
+      "focused/valid/table-field-path-normalization.md",
+      "focused/valid/table-cell-unknown-values.md",
+      "focused/invalid/field-path-unescaped-pipe.md",
+    ],
+    coverageRows: ["Focused table and field-path fixtures", "Focused table-cell unknown fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for table-cell unknown values",
+  },
+  {
+    name: "Type grammar",
+    fixtures: ["focused/valid/enum-documentation.md", "focused/invalid/type-enum-expression.md"],
+    coverageRows: ["Focused Type grammar and enum documentation fixtures"],
+    changelog: "Corrects stable conformance Type grammar evidence for v1.0.0-rc.2.",
+  },
+  {
+    name: "Representation classes and media-type uniqueness",
+    fixtures: [
+      "focused/valid/non-json-representation-classes.md",
+      "focused/valid/media-type-unique-representations.md",
+      "focused/invalid/duplicate-media-type-representation.md",
+      "focused/invalid/xml-xpath-field.md",
+    ],
+    coverageRows: ["Focused non-JSON representation class fixtures", "Focused media-type uniqueness fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for request media-type selection and non-JSON form, binary, CSV, XML, and SSE representation classes.",
+  },
+  {
+    name: "Structured-parameter block",
+    fixtures: ["focused/valid/structured-parameter-fields.md", "focused/invalid/structured-parameter-missing-fields.md"],
+    coverageRows: ["Focused structured-parameter fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for metadata and extensions, coverage/knowledge states, structured parameters",
+  },
+  {
+    name: "Conditional-requiredness rule",
+    fixtures: ["focused/valid/conditional-requiredness.md", "focused/invalid/conditional-requiredness-missing-condition.md"],
+    coverageRows: ["Focused conditional-requiredness fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for metadata and extensions, coverage/knowledge states, structured parameters",
+  },
+  {
+    name: "Field-path escape",
+    fixtures: ["focused/valid/table-field-path-normalization.md", "focused/invalid/field-path-unescaped-pipe.md"],
+    coverageRows: ["Focused table and field-path fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for table and field-path syntax",
+  },
+  {
+    name: "Object-openness rule",
+    fixtures: ["focused/valid/nested-arrays-maps-openness.md", "focused/invalid/root-object-dollar-contradiction.md"],
+    coverageRows: ["Focused nested arrays, maps, and object-openness fixtures", "Focused root-object `$` row fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for table and field-path syntax, media-type uniqueness",
+  },
+  {
+    name: "Response-header presence and repetition",
+    fixtures: [
+      "focused/valid/conditional-response-header-deviation.md",
+      "focused/valid/response-header-repetition.md",
+      "focused/invalid/repeated-response-header-missing-wire-rule.md",
+    ],
+    coverageRows: ["Focused conditional response-header and deviation fixtures", "Focused repeatable response-header fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for body-marker ordering, conditional response-body presence, conditional response-header presence",
+  },
+  {
+    name: "Response-header replacement unit",
+    fixtures: ["focused/valid/response-header-replacement-unsupported.md", "focused/invalid/response-header-unsupported-wrong-unit.md"],
+    coverageRows: ["Focused replacement `unsupported` fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for non-JSON multipart boundaries, polymorphic variants, workflow and response-header replacement `unsupported`",
+  },
+  {
+    name: "Workflow-section replacement unit",
+    fixtures: ["focused/valid/workflow-section-replacement-unsupported.md", "focused/invalid/workflow-unsupported-wrong-unit.md"],
+    coverageRows: ["Focused replacement `unsupported` fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for non-JSON multipart boundaries, polymorphic variants, workflow and response-header replacement `unsupported`",
+  },
+  {
+    name: "Webhook payload rule",
+    fixtures: ["focused/valid/webhook-payload-presence.md", "focused/invalid/webhook-payload-presence-missing-condition.md"],
+    coverageRows: ["Focused webhook payload-presence fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for body-less and unknown body states, parameter wire serialization, value omission/default behavior, and webhook payload presence.",
+  },
+  {
+    name: "Webhook grouping boundary",
+    fixtures: ["focused/valid/grouped-webhook-payload-variants.md", "focused/invalid/grouped-webhook-incompatible-headers.md"],
+    coverageRows: ["Focused webhook grouped-event incompatibility fixtures", "Focused grouped webhook variant fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for webhook structure, delivery contracts, trigger references, and grouped-event incompatibility boundaries.",
+  },
+  {
+    name: "Error-shape reference",
+    fixtures: ["focused/valid/conventions-common-error-shapes.md", "focused/invalid/inline-error-label-mismatch.md"],
+    coverageRows: ["Focused common error-shape fixtures", "Focused inline error-shape fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for INDEX routing, endpoint section/path-parameter structure, and `CONVENTIONS.md` common error-shape contracts",
+  },
+  {
+    name: "Endpoint-specific common-error deviation and suppression",
+    fixtures: ["focused/valid/error-deviation-and-recovery-state.md", "focused/invalid/common-error-suppression-missing-deviation.md"],
+    coverageRows: ["Focused error-deviation and recovery-state fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for table and field-path syntax, media-type uniqueness, endpoint-specific error recovery state, common-error suppression deviations",
+  },
+  {
+    name: "Error-time state recovery rule",
+    fixtures: ["focused/valid/error-deviation-and-recovery-state.md"],
+    coverageRows: ["Focused error-deviation and recovery-state fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for table and field-path syntax, media-type uniqueness, endpoint-specific error recovery state",
+  },
+  {
+    name: "Compact error-shape field reduction",
+    fixtures: ["focused/valid/compact-error-shape-client-visible-fields.md", "focused/invalid/same-as-error-shape.md"],
+    coverageRows: ["Focused compact error-shape reduction fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for compact field-default reconstruction, compact error-shape reduction",
+  },
+  {
+    name: "Polymorphic form",
+    fixtures: ["focused/valid/polymorphic-tagged-request-variants.md", "focused/valid/untagged-overlapping-polymorphic-variants.md"],
+    coverageRows: ["Focused polymorphic variant fixtures", "Focused untagged and overlapping polymorphic fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for untagged and overlapping polymorphic variants and invalid pre-variant content.",
+  },
+  {
+    name: "Metadata escape",
+    fixtures: ["focused/valid/metadata-extension-token-routing.md", "focused/invalid/metadata-unknown-escape.md"],
+    coverageRows: ["Focused metadata and extension fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for metadata and extensions",
+  },
+  {
+    name: "Optional token-routing x metadata",
+    fixtures: ["focused/valid/metadata-extension-token-routing.md"],
+    coverageRows: ["Focused metadata and extension fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for metadata and extensions",
+  },
+  {
+    name: "Coverage state",
+    fixtures: ["focused/valid/unknown-coverage-knowledge-state.md", "focused/valid/index-metadata-propagation.md"],
+    coverageRows: ["Focused coverage and knowledge fixtures", "Focused INDEX and metadata propagation fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for INDEX and metadata propagation of `unsupported` coverage and `unknown` knowledge states.",
+  },
+  {
+    name: "Knowledge state",
+    fixtures: ["focused/valid/unknown-coverage-knowledge-state.md", "focused/invalid/unknown-marker-missing.md"],
+    coverageRows: ["Focused coverage and knowledge fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for INDEX and metadata propagation of `unsupported` coverage and `unknown` knowledge states.",
+  },
+  {
+    name: "Localized unsupported form",
+    fixtures: ["focused/valid/localized-unsupported-smallest-unit.md"],
+    coverageRows: ["Focused localized `unsupported` fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for compact field-default reconstruction, compact error-shape reduction, localized `unsupported`",
+  },
+  {
+    name: "Replacement unsupported form",
+    fixtures: ["focused/valid/response-header-replacement-unsupported.md", "focused/valid/workflow-section-replacement-unsupported.md"],
+    coverageRows: ["Focused replacement `unsupported` fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for non-JSON multipart boundaries, polymorphic variants, workflow and response-header replacement `unsupported`",
+  },
+  {
+    name: "Field default",
+    fixtures: ["focused/valid/field-defaults-reconstruction.md", "focused/invalid/field-defaults-retained-column.md"],
+    coverageRows: ["Focused compact `field_defaults` fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for compact field-default reconstruction",
+  },
+  {
+    name: "Compact opaque-field form",
+    fixtures: ["focused/valid/compact-opaque-webhook-payload.md", "focused/valid/compact-opaque-fields-omitted.md"],
+    coverageRows: ["Focused compact opaque-field fixtures", "Focused compact opaque-fields omission fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for deviation placement and compact contract-preservation, opaque-field omission",
+  },
+  {
+    name: "Full/compact same-path profile pairing",
+    fixtures: ["focused/valid/profile-pair-selective-conventions.md", "focused/invalid/profile-pair-missing-standard-path.md"],
+    coverageRows: ["Focused full/compact profile-pair fixtures"],
+    changelog: "Adds initial focused complete-candidate fixtures for profile pairing",
+  },
+  {
+    name: "Exactly-null value representation",
+    fixtures: ["focused/valid/exactly-null-body.md", "focused/invalid/exactly-null-nullable-no.md"],
+    coverageRows: ["Focused exactly-null fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for metadata and extensions, coverage/knowledge states, structured parameters, conditional requiredness, repeatable response headers, exactly-null values",
+  },
+  {
+    name: "same_as same-kind and retrieval-unit discoverability",
+    fixtures: [
+      "focused/valid/same-as-request-resource-file-retrieval-unit.md",
+      "focused/valid/same-as-resource-file-retrieval-unit.md",
+      "focused/invalid/same-as-cross-kind.md",
+      "focused/invalid/same-as-missing-retrieval-unit.md",
+      "focused/invalid/same-as-request-malformed.md",
+      "focused/invalid/same-as-request-missing-target-body.md",
+      "focused/invalid/same-as-request-wrong-media-type.md",
+      "focused/invalid/same-as-target-is-same-as.md",
+    ],
+    coverageRows: ["Focused compact `same_as` fixtures"],
+    changelog: "Adds initial focused complete-candidate fixtures for profile pairing, selective conventions, compact `same_as`",
+  },
+  {
+    name: "Inline error labels with unknown code token",
+    fixtures: ["focused/valid/inline-error-unknown-code.md", "focused/invalid/inline-error-unknown-code-missing-marker.md"],
+    coverageRows: ["Focused inline unknown-code fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for metadata and extensions, coverage/knowledge states, structured parameters, conditional requiredness, repeatable response headers, exactly-null values, inline unknown-code labels",
+  },
+  {
+    name: "Canonical boundary and extension placement",
+    fixtures: ["focused/valid/canonical-boundary-extension-heading.md", "focused/invalid/non-extension-heading.md"],
+    coverageRows: ["Focused canonical boundary fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for compact field-default reconstruction, compact error-shape reduction, localized `unsupported`, and canonical extension/non-extension heading boundaries.",
+  },
+  {
+    name: "Generated-example validity rule",
+    fixtures: ["focused/valid/generated-example-field-coverage.md", "focused/valid/generated-example-unknown-values.md", "focused/invalid/generated-example-violates-source-constraint.md"],
+    coverageRows: ["Focused generated-example fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for source-backed generated examples that require `unknown` knowledge when no credible valid example can be generated.",
+  },
+  {
+    name: "Format-specific non-JSON requirement",
+    fixtures: ["focused/valid/non-json-representation-classes.md", "focused/invalid/raw-binary-field-table.md", "focused/invalid/unstructured-stream-field-table.md"],
+    coverageRows: ["Focused non-JSON representation class fixtures", "Focused raw/stream sample-and-prose exception fixtures"],
+    changelog: "Expands focused complete-candidate fixtures for request media-type selection and non-JSON form, binary, CSV, XML, and SSE representation classes.",
+  },
+  {
+    name: "Direct recursive-schema source fallback",
+    fixtures: ["source/recursive-direct-openapi.yaml", "focused/valid/recursive-direct-unsupported.md"],
+    coverageRows: ["Recursive source fixtures", "Focused recursive fallback fixtures"],
+    changelog: "Records the recursive-schema future decision",
+  },
+  {
+    name: "Indirect recursive-schema source fallback",
+    fixtures: ["source/recursive-indirect-openapi.yaml", "focused/valid/recursive-indirect-unsupported.md"],
+    coverageRows: ["Recursive source fixtures", "Focused recursive fallback fixtures"],
+    changelog: "Records the recursive-schema future decision",
+  },
+];
+
+const failures = [];
+
+function fail(file, area, detail) {
+  failures.push({
+    file: path.relative(process.cwd(), file),
+    area,
+    detail,
+  });
 }
 
-await import("./check-complete-candidates.mjs");
+function read(file) {
+  return fs.readFileSync(file, "utf8");
+}
+
+function requireExists(file, area) {
+  if (!fs.existsSync(file)) fail(file, area, "required file is missing");
+}
+
+function listMarkdownFiles(dir) {
+  if (!fs.existsSync(dir)) return [];
+  return fs
+    .readdirSync(dir, { withFileTypes: true })
+    .flatMap((entry) => {
+      const full = path.join(dir, entry.name);
+      return entry.isDirectory() ? listMarkdownFiles(full) : [full];
+    })
+    .filter((file) => file.endsWith(".md"))
+    .sort();
+}
+
+function relativeMarkdownFiles(dir) {
+  return listMarkdownFiles(dir).map((file) => path.relative(dir, file).split(path.sep).join("/")).sort();
+}
+
+function parseStamp(markdown) {
+  const first = markdown.split(/\r?\n/, 1)[0] ?? "";
+  if (!first.startsWith("> ")) throw new Error("missing metadata stamp");
+  return Object.fromEntries(
+    first
+      .slice(2)
+      .split(" | ")
+      .map((pair) => {
+        const sep = pair.indexOf(": ");
+        if (sep < 0) throw new Error(`stamp pair lacks ': ': ${pair}`);
+        return [pair.slice(0, sep), pair.slice(sep + 2)];
+      }),
+  );
+}
+
+function validateStamp(file, markdown, expectedProfile) {
+  const stamp = parseStamp(markdown);
+  if (stamp["docai-http"] !== SPEC_VERSION) throw new Error(`stamp version must be ${SPEC_VERSION}`);
+  if (stamp.profile !== expectedProfile) throw new Error(`stamp profile must be ${expectedProfile}`);
+  if (stamp.coverage !== "complete" || stamp.knowledge !== "complete") {
+    throw new Error(`${FOCUSED_EXPECTATION_LABEL} set files must be coverage=complete and knowledge=complete`);
+  }
+  if (!stamp.generated || !stamp.generation_id || !stamp.projection_id) {
+    throw new Error("stamp lacks generated, generation_id, or projection_id");
+  }
+  if (!stamp.source?.includes(INPUT_SET_SOURCE)) {
+    throw new Error(`stamp source must reference ${INPUT_SET_SOURCE}`);
+  }
+  if (stamp.source_revision !== INPUT_SET_REVISION) throw new Error(`stamp source_revision must be ${INPUT_SET_REVISION}`);
+  return stamp;
+}
+
+function validateProfileSet(setDir, profile) {
+  const files = relativeMarkdownFiles(setDir);
+  const expected = REQUIRED_SET_PATHS.join("|");
+  if (files.join("|") !== expected) {
+    throw new Error(`profile ${profile} must contain exactly the expected standard paths`);
+  }
+
+  const entries = files.map((relativePath) => {
+    const file = path.join(setDir, relativePath);
+    return { relativePath, file, markdown: read(file), stamp: validateStamp(file, read(file), profile) };
+  });
+  assertSingleValue(entries, (entry) => entry.stamp.generated, `${profile} generated values differ`);
+  assertSingleValue(entries, (entry) => entry.stamp.generation_id, `${profile} generation_id values differ`);
+  assertSingleValue(entries, (entry) => entry.stamp.projection_id, `${profile} projection_id values differ`);
+  assertSingleValue(entries, (entry) => entry.stamp.source, `${profile} source values differ`);
+  assertSingleValue(entries, (entry) => entry.stamp.source_revision, `${profile} source_revision values differ`);
+  return entries;
+}
+
+function assertSingleValue(entries, selector, message) {
+  if (new Set(entries.map(selector)).size !== 1) throw new Error(message);
+}
+
+function byRelativePath(entries) {
+  return Object.fromEntries(entries.map((entry) => [entry.relativePath, entry]));
+}
+
+function validateProfileLinks(fullIndex, compactIndex) {
+  const fullLines = fullIndex.split(/\r?\n/);
+  const compactLines = compactIndex.split(/\r?\n/);
+  if (fullLines[1] !== "Compact set: ../compact/") throw new Error("full INDEX profile link is invalid");
+  if (compactLines[1] !== "Full set: ../full/") throw new Error("compact INDEX profile link is invalid");
+  if (fullLines.slice(2).join("\n") !== compactLines.slice(2).join("\n")) {
+    throw new Error("full and compact INDEX content must match after profile-link lines");
+  }
+}
+
+function headingRows(markdown) {
+  return markdown
+    .split(/\r?\n/)
+    .map((line, index) => {
+      const match = line.match(/^(#{1,6}) (.+)$/);
+      return match ? { level: match[1].length, title: match[2].trim(), line: index } : null;
+    })
+    .filter(Boolean);
+}
+
+function sectionLines(markdown, level, title) {
+  const lines = markdown.split(/\r?\n/);
+  const headings = headingRows(markdown);
+  const heading = headings.find((candidate) => candidate.level === level && candidate.title === title);
+  if (!heading) return null;
+  const next = headings.find((candidate) => candidate.line > heading.line && candidate.level <= level);
+  return lines.slice(heading.line + 1, next?.line);
+}
+
+function sectionMarkdown(markdown, level, title) {
+  const lines = markdown.split(/\r?\n/);
+  const headings = headingRows(markdown);
+  const heading = headings.find((candidate) => candidate.level === level && candidate.title === title);
+  if (!heading) return null;
+  const next = headings.find((candidate) => candidate.line > heading.line && candidate.level <= level);
+  return lines.slice(heading.line, next?.line).join("\n");
+}
+
+function splitTableLine(line) {
+  const trimmed = line.trim();
+  if (!trimmed.startsWith("|") || !trimmed.endsWith("|")) return null;
+  const cells = [];
+  let current = "";
+  for (let index = 1; index < trimmed.length - 1; index += 1) {
+    if (trimmed[index] === "|" && !isEscaped(trimmed, index)) {
+      cells.push(current.trim().replace(/\\\|/g, "|"));
+      current = "";
+    } else {
+      current += trimmed[index];
+    }
+  }
+  cells.push(current.trim().replace(/\\\|/g, "|"));
+  return cells;
+}
+
+function isEscaped(value, index) {
+  let count = 0;
+  for (let i = index - 1; i >= 0 && value[i] === "\\"; i -= 1) count += 1;
+  return count % 2 === 1;
+}
+
+function parseTableAt(lines, index) {
+  const header = splitTableLine(lines[index]);
+  const separator = splitTableLine(lines[index + 1] ?? "");
+  if (!header || !separator || !separator.every((cell) => /^-+$/.test(cell))) return null;
+  const rows = [];
+  let next = index + 2;
+  for (; next < lines.length; next += 1) {
+    const row = splitTableLine(lines[next]);
+    if (!row) break;
+    if (row.length !== header.length) throw new Error(`table row at line ${next + 1} has wrong cell count`);
+    rows.push(row);
+  }
+  return { header, rows, line: index + 1, next };
+}
+
+function parseTables(markdown) {
+  const lines = markdown.split(/\r?\n/);
+  const tables = [];
+  for (let index = 0; index < lines.length; index += 1) {
+    const table = parseTableAt(lines, index);
+    if (!table) continue;
+    table.fieldDefaults = nearestFieldDefaults(lines, index);
+    tables.push(table);
+    index = table.next;
+  }
+  return tables;
+}
+
+function nearestFieldDefaults(lines, tableLineIndex) {
+  for (let index = tableLineIndex - 1; index >= 0; index -= 1) {
+    const line = lines[index].trim();
+    if (!line) continue;
+    return line.startsWith("**field_defaults**:") ? line.slice("**field_defaults**:".length).trim() : null;
+  }
+  return null;
+}
+
+function tableRows(section, expectedHeader) {
+  const lines = section.split(/\r?\n/);
+  const start = lines.findIndex((line) => line.trim().startsWith("|"));
+  if (start < 0) throw new Error(`missing ${expectedHeader.join(" | ")} table`);
+  const table = parseTableAt(lines, start);
+  if (!table) throw new Error(`missing ${expectedHeader.join(" | ")} table`);
+  if (table.header.join("|") !== expectedHeader.join("|")) {
+    throw new Error(`table header must be ${expectedHeader.join(" | ")}`);
+  }
+  return table.rows.map((row) => Object.fromEntries(expectedHeader.map((column, index) => [column, row[index] ?? ""])));
+}
+
+function parseIndex(markdown) {
+  const endpointRows = [];
+  const endpoints = sectionLines(markdown, 2, "Endpoints")?.join("\n");
+  if (!endpoints) throw new Error("INDEX Endpoints section is missing");
+  const lines = endpoints.split(/\r?\n/);
+  let resourcePath = null;
+  for (let index = 0; index < lines.length; index += 1) {
+    const resource = lines[index].match(/^### (.+)$/);
+    if (resource) {
+      resourcePath = resource[1].trim();
+      continue;
+    }
+    const table = parseTableAt(lines, index);
+    if (!table) continue;
+    if (table.header.join("|") !== "Method|Path|Task|Summary|Also read|Conventions") {
+      throw new Error("endpoint table must be Method | Path | Task | Summary | Also read | Conventions");
+    }
+    table.rows.forEach((row) => {
+      const alsoRead = row[4] === "none" ? [] : splitCommaList(row[4], "Also read");
+      const conventions = row[5] === "none" || row[5] === "all" ? [row[5]] : splitCommaList(row[5], "Conventions");
+      endpointRows.push({
+        resourcePath,
+        method: row[0],
+        endpointPath: row[1],
+        task: row[2],
+        summary: row[3],
+        alsoRead,
+        conventions,
+      });
+    });
+    index = table.next;
+  }
+
+  const workflows = tableRows(sectionLines(markdown, 2, "Workflows").join("\n"), ["Name", "Summary", "Details"]);
+  const webhooks = tableRows(sectionLines(markdown, 2, "Webhooks").join("\n"), ["Name", "Summary", "Details"]);
+  return { endpointRows, workflows, webhooks };
+}
+
+function splitCommaList(value, column) {
+  if (value.includes(";")) throw new Error(`${column} must use comma-separated values, not semicolons`);
+  return value.split(",").map((item) => item.trim()).filter(Boolean);
+}
+
+function endpointBlock(resourceMarkdown, method, endpointPath) {
+  const lines = resourceMarkdown.split(/\r?\n/);
+  const headings = headingRows(resourceMarkdown);
+  const heading = headings.find((candidate) => candidate.level === 2 && candidate.title === `${method} ${endpointPath}`);
+  if (!heading) return null;
+  const next = headings.find((candidate) => candidate.line > heading.line && candidate.level <= 2);
+  return lines.slice(heading.line, next?.line).join("\n");
+}
+
+function validateIndexReferences(index, entriesByPath, setDir) {
+  index.endpointRows.forEach((row) => {
+    if (!row.resourcePath?.startsWith("resources/")) throw new Error("INDEX endpoint row lacks a resource subsection");
+    const resource = entriesByPath[row.resourcePath];
+    if (!resource) throw new Error(`resource file ${row.resourcePath} is missing`);
+    const block = endpointBlock(resource.markdown, row.method, row.endpointPath);
+    if (!block) throw new Error(`endpoint ${row.method} ${row.endpointPath} is missing from ${row.resourcePath}`);
+    if (row.summary === row.task) throw new Error(`endpoint ${row.method} ${row.endpointPath} summary only repeats task`);
+
+    row.alsoRead.forEach((target) => {
+      if (!entriesByPath[target]) throw new Error(`Also read target ${target} is missing`);
+      const related = sectionMarkdown(block, 3, "Related") ?? "";
+      if (target.startsWith("workflows/") && !related.includes(`Workflow: ${target}`)) {
+        throw new Error(`endpoint ${row.method} ${row.endpointPath} must link Workflow: ${target}`);
+      }
+      if (target.startsWith("webhooks/") && !related.includes(`Triggers webhook: ${target}`)) {
+        throw new Error(`endpoint ${row.method} ${row.endpointPath} must link Triggers webhook: ${target}`);
+      }
+    });
+
+    row.conventions.forEach((heading) => {
+      if (heading !== "all" && heading !== "none" && !CONVENTION_HEADINGS.has(heading)) {
+        throw new Error(`unknown Conventions heading ${heading}`);
+      }
+    });
+  });
+
+  index.workflows.forEach((row) => {
+    if (!row.Details.startsWith("workflows/") || !entriesByPath[row.Details]) {
+      throw new Error(`workflow Details target ${row.Details} is missing`);
+    }
+  });
+  index.webhooks.forEach((row) => {
+    if (!row.Details.startsWith("webhooks/") || !entriesByPath[row.Details]) {
+      throw new Error(`webhook Details target ${row.Details} is missing`);
+    }
+  });
+
+  if (!fs.existsSync(setDir)) throw new Error("profile set directory is missing");
+}
+
+function validateFieldDefaults(markdown) {
+  parseTables(markdown).forEach((table) => {
+    if (table.fieldDefaults) logicalTable(table);
+  });
+}
+
+function validateTypeExpressions(markdown) {
+  parseTables(markdown).forEach((table) => {
+    const logical = table.fieldDefaults ? logicalTable(table) : table;
+    const typeIndex = logical.header.indexOf("Type");
+    if (typeIndex < 0) return;
+    logical.rows.forEach((row) => validateTypeExpression(row[typeIndex]));
+  });
+}
+
+function validateTypeExpression(type) {
+  const simple = new Set(["string", "int", "float", "bool", "null", "any", "object", "file", "unknown"]);
+  if (simple.has(type)) return;
+  if (type.endsWith("[]")) {
+    validateTypeExpression(type.slice(0, -2));
+    return;
+  }
+  if (type.startsWith("map<string, ") && type.endsWith(">")) {
+    validateTypeExpression(type.slice("map<string, ".length, -1));
+    return;
+  }
+  throw new Error(`invalid Type expression ${type}`);
+}
+
+function validateLogicalFieldPaths(markdown) {
+  parseTables(markdown).forEach((table) => {
+    const logical = table.fieldDefaults ? logicalTable(table) : table;
+    const fieldIndex = logical.header.indexOf("Field");
+    if (fieldIndex < 0) return;
+    logical.rows.forEach((row) => {
+      const field = row[fieldIndex];
+      if (field.startsWith("/")) throw new Error(`XPath-like Field value is not a logical field path: ${field}`);
+    });
+  });
+}
+
+function logicalTable(table) {
+  const defaults = parseFieldDefaults(table.fieldDefaults);
+  const fullHeader = inferFullHeader(table, defaults);
+  const defaultMap = new Map(defaults);
+  defaults.forEach(([column, value]) => {
+    if (!fullHeader.includes(column)) throw new Error(`field_defaults column ${column} does not apply to table at line ${table.line}`);
+    if (table.header.includes(column)) throw new Error(`field_defaults column ${column} is still present in table at line ${table.line}`);
+    if (value === "unknown") throw new Error(`field_defaults column ${column} cannot default unknown`);
+  });
+  const expectedHeader = fullHeader.filter((column) => !defaultMap.has(column));
+  if (table.header.join("|") !== expectedHeader.join("|")) {
+    throw new Error(`table at line ${table.line} does not match field_defaults-reconstructed header`);
+  }
+  return {
+    header: fullHeader,
+    rows: table.rows.map((row) => {
+      const compactValues = new Map(table.header.map((column, index) => [column, row[index]]));
+      return fullHeader.map((column) => defaultMap.get(column) ?? compactValues.get(column));
+    }),
+  };
+}
+
+function parseFieldDefaults(value) {
+  return value.split(" | ").map((pair) => {
+    const [column, defaultValue, extra] = pair.split("=");
+    if (!column || !defaultValue || extra !== undefined) throw new Error(`invalid field_defaults pair ${pair}`);
+    validateFieldDefault(column, defaultValue);
+    return [column, defaultValue];
+  });
+}
+
+function validateFieldDefault(column, value) {
+  const valid = {
+    Required: new Set(["yes", "no"]),
+    Presence: new Set(["always"]),
+    Nullable: new Set(["yes", "no"]),
+    Meaning: new Set(["none"]),
+  };
+  if (!valid[column]) throw new Error(`unknown field_defaults column ${column}`);
+  if (!valid[column].has(value)) throw new Error(`invalid field_defaults value ${column}=${value}`);
+}
+
+function inferFullHeader(table, defaults) {
+  const columns = new Set([...table.header, ...defaults.map(([column]) => column)]);
+  if (table.header[0] === "Field" && (columns.has("Required") || columns.has("Constraints / Meaning"))) {
+    return ["Field", "Type", "Required", "Nullable", "Constraints / Meaning"];
+  }
+  if (table.header[0] === "Field") return ["Field", "Type", "Presence", "Nullable", "Meaning"];
+  if (table.header[0] === "Name" && columns.has("Presence")) return ["Name", "Type", "Presence", "Meaning"];
+  if (table.header[0] === "Name" && columns.has("Required")) return ["Name", "Type", "Required", "Constraints / Meaning"];
+  throw new Error(`cannot infer field_defaults table shape at line ${table.line}`);
+}
+
+function validateSameAsReferences(markdown) {
+  const stamp = parseStamp(markdown);
+  const sameAsLines = [...markdown.matchAll(/^\*\*same_as\*\*: (.+)$/gm)];
+  if (sameAsLines.length === 0) return;
+  if (!stamp["x-retrieval-unit"]) throw new Error("same_as requires discoverable x-retrieval-unit metadata in this candidate");
+
+  sameAsLines.forEach((match) => {
+    const target = parseSameAsTarget(match[1]);
+    const { method, endpointPath, kind, mediaType } = target;
+    const sameAsIndex = match.index ?? 0;
+    const enclosing = enclosingHeading(markdown, sameAsIndex, 3);
+    if (!enclosing || (kind === "Response" && !enclosing.title.startsWith("Response ")) || (kind === "Request" && enclosing.title !== "Request")) {
+      throw new Error("same_as kind must match the containing request or response representation");
+    }
+    const headings = headingRows(markdown).map((heading) => ({ ...heading, offset: lineOffset(markdown, heading.line) }));
+    const endpoint = headings.find((heading) => heading.level === 2 && heading.title === `${method} ${endpointPath}`);
+    if (!endpoint || endpoint.offset > sameAsIndex) {
+      throw new Error("same_as target must be a backward reference in the same file");
+    }
+    const endpointEnd = headings.find((heading) => heading.level <= 2 && heading.offset > endpoint.offset)?.offset ?? markdown.length;
+    const endpointHeadings = headings.filter((heading) => heading.offset > endpoint.offset && heading.offset < endpointEnd);
+    let unit;
+    if (kind === "Request") {
+      const request = endpointHeadings.find((heading) => heading.level === 3 && heading.title === "Request");
+      if (request) {
+        const requestEnd = endpointHeadings.find((heading) => heading.level <= 3 && heading.offset > request.offset)?.offset ?? endpointEnd;
+        unit = endpointHeadings.find(
+          (heading) => heading.level === 4 && heading.title === "Body" && heading.offset > request.offset && heading.offset < requestEnd,
+        );
+      }
+    } else {
+      unit = endpointHeadings.find((heading) => heading.level === 3 && heading.title === `Response ${target.status}`);
+    }
+    if (!unit || unit.offset > sameAsIndex) throw new Error("same_as target unit must appear before the reference");
+    const unitEnd = headings.find((heading) => heading.level <= unit.level && heading.offset > unit.offset)?.offset ?? markdown.length;
+    const unitMarkdown = markdown.slice(unit.offset, unitEnd);
+    if (unitMarkdown.includes("**same_as**:")) throw new Error("same_as target must be a full representation, not another same_as reference");
+    if (!unitMarkdown.includes(`**media_type**: ${mediaType}`)) {
+      throw new Error("same_as target media type must match the referenced representation");
+    }
+  });
+}
+
+function parseSameAsTarget(value) {
+  const request = value.match(/^([A-Z]+) (\/\S+) Request (\S+)$/);
+  if (request) return { method: request[1], endpointPath: request[2], kind: "Request", mediaType: request[3] };
+  const response = value.match(/^([A-Z]+) (\/\S+) Response (\S+) (\S+)$/);
+  if (response) {
+    return { method: response[1], endpointPath: response[2], kind: "Response", status: response[3], mediaType: response[4] };
+  }
+  throw new Error(`same_as target is not canonical: ${value}`);
+}
+
+function enclosingHeading(markdown, offset, maxLevel) {
+  return headingRows(markdown)
+    .map((heading) => ({ ...heading, offset: lineOffset(markdown, heading.line) }))
+    .filter((heading) => heading.offset < offset)
+    .reverse()
+    .find((heading) => heading.level <= maxLevel);
+}
+
+function lineOffset(markdown, lineNumber) {
+  let offset = 0;
+  const lines = markdown.split(/\r?\n/);
+  for (let index = 0; index < lineNumber; index += 1) offset += lines[index].length + 1;
+  return offset;
+}
+
+function validateNoSameAsInErrorShapes(markdown) {
+  const errors = [...markdown.matchAll(/^### Errors$/gm)];
+  errors.forEach((match) => {
+    const block = markdown.slice(match.index ?? 0, nextHeadingOffset(markdown, match.index ?? 0, 3));
+    if (block.includes("**same_as**:")) throw new Error("error shapes must not use same_as");
+  });
+}
+
+function nextHeadingOffset(markdown, offset, level) {
+  const lines = markdown.split(/\r?\n/);
+  let currentOffset = 0;
+  let seenStart = false;
+  for (const line of lines) {
+    if (currentOffset > offset) {
+      seenStart = true;
+      const match = line.match(/^(#{1,6}) /);
+      if (seenStart && match && match[1].length <= level) return currentOffset;
+    }
+    currentOffset += line.length + 1;
+  }
+  return markdown.length;
+}
+
+function validateCompactFieldHeadings(markdown) {
+  const opaqueMatches = [...markdown.matchAll(/^#### Opaque fields$/gm)];
+  opaqueMatches.forEach((match) => {
+    const before = markdown.slice(0, match.index);
+    const lastClientVisible = before.lastIndexOf("#### Client-visible fields");
+    const lastRepresentation = Math.max(before.lastIndexOf("**media_type**:"), before.lastIndexOf("**same_as**:"));
+    if (lastClientVisible < lastRepresentation) {
+      throw new Error("Opaque fields must follow Client-visible fields in the same representation");
+    }
+  });
+}
+
+function validateNoRequestOpaqueFields(markdown) {
+  const requestMatches = [...markdown.matchAll(/^### Request$/gm)];
+  requestMatches.forEach((match) => {
+    const block = markdown.slice(match.index ?? 0, nextHeadingOffset(markdown, match.index ?? 0, 3));
+    if (block.includes("#### Opaque fields")) throw new Error("request fields cannot be classified as opaque");
+  });
+  const opaqueMatches = [...markdown.matchAll(/^#### Opaque fields$/gm)];
+  opaqueMatches.forEach((match) => {
+    const before = markdown.slice(0, match.index);
+    const lastBody = before.lastIndexOf("#### Body");
+    const lastResponse = before.lastIndexOf("### Response");
+    const lastErrors = before.lastIndexOf("### Errors");
+    const lastPayload = before.lastIndexOf("## Payload");
+    if (lastBody > Math.max(lastResponse, lastErrors, lastPayload)) {
+      throw new Error("request fields cannot be classified as opaque");
+    }
+  });
+}
+
+function validateCompleteSurfaceEvidence(fullByPath, compactByPath) {
+  assertContains(fullByPath["resources/payments.md"].markdown, [
+    "**variant**: type = bank",
+    "**variant**: type = card",
+    "Triggers webhook: webhooks/payment-completed.md",
+  ]);
+  assertContains(fullByPath["resources/documents.md"].markdown, [
+    "**media_type**: multipart/form-data",
+    "boundary=<generated by HTTP library>",
+    "filename is required",
+    "maximum size is 10485760 bytes",
+  ]);
+  assertContains(fullByPath["workflows/checkout.md"].markdown, [
+    "## Preconditions",
+    "## Steps",
+    "## State Transitions",
+    "## Failure and Recovery",
+  ]);
+  assertContains(fullByPath["webhooks/payment-completed.md"].markdown, [
+    "# payment.completed",
+    "## Headers",
+    "## Payload",
+    "## Related",
+    "Triggered by: POST /payments",
+  ]);
+  assertContains(compactByPath["resources/users.md"].markdown, [
+    "x-retrieval-unit: resource-file",
+    "**same_as**: POST /users Response 201 application/json",
+  ]);
+  assertContains(compactByPath["webhooks/payment-completed.md"].markdown, [
+    "#### Client-visible fields",
+    "#### Opaque fields",
+    "Store or forward only",
+  ]);
+  validateSafeRetryEvidence(fullByPath);
+  validateSafeRetryEvidence(compactByPath);
+}
+
+function validateSafeRetryEvidence(entriesByPath) {
+  assertContains(entriesByPath["CONVENTIONS.md"].markdown, [
+    "Idempotency-Key",
+    "1-128 visible ASCII characters",
+    "at least 24 hours",
+    "returns the original status, body, and headers without repeating the side effect",
+    "409 idempotency_conflict",
+    "do not retry automatically after an ambiguous outcome",
+  ]);
+  ["resources/users.md", "resources/payments.md", "resources/documents.md", "resources/checkout.md"].forEach(
+    (relativePath) => assertContains(entriesByPath[relativePath].markdown, ["`Idempotency-Key`", "idempotency_conflict"]),
+  );
+  assertContains(entriesByPath["resources/documents.md"].markdown, [
+    "Do not retry the same input; correct the file or metadata, then retry with a new `Idempotency-Key`",
+  ]);
+  assertContains(entriesByPath["workflows/checkout.md"].markdown, ["same `Idempotency-Key`", "new key"]);
+}
+
+function validateFocusedRetryContract(markdown) {
+  [
+    "`Idempotency-Key`",
+    "1-128 visible ASCII characters",
+    "at least 24 hours",
+    "returns the original status, body, and headers without repeating the side effect",
+    "409 idempotency_conflict",
+    "Without a key, do not retry after an ambiguous outcome",
+  ].forEach((part) => {
+    if (!markdown.includes(part)) throw new Error(`safe retry contract is missing: ${part}`);
+  });
+}
+
+function assertContains(markdown, requiredParts) {
+  requiredParts.forEach((part) => {
+    if (!markdown.includes(part)) throw new Error(`expected content is missing: ${part}`);
+  });
+}
+
+function extractMarkdownFixtures(markdown) {
+  return [...markdown.matchAll(/^(`{3,4})markdown\r?\n([\s\S]*?)^\1$/gm)].map((match) => match[2]);
+}
+
+function validateCoverageReferences() {
+  const coverageFile = path.join(CANDIDATE_DIR, "COVERAGE.md");
+  const coverage = read(coverageFile);
+  const references = new Set([...coverage.matchAll(/`(focused\/(?:valid|invalid)\/[^`]+\.md)`/g)].map((match) => match[1]));
+  references.forEach((relativePath) => requireExists(path.join(CANDIDATE_DIR, relativePath), "coverage"));
+
+  const focusedFiles = listMarkdownFiles(path.join(CANDIDATE_DIR, "focused")).map((file) =>
+    path.relative(CANDIDATE_DIR, file).split(path.sep).join("/"),
+  );
+  focusedFiles.forEach((relativePath) => {
+    if (!references.has(relativePath)) fail(path.join(CANDIDATE_DIR, relativePath), "coverage", "focused fixture is not listed in COVERAGE.md");
+  });
+}
+
+function validateFinalFocusedAudit() {
+  const coverageFile = path.join(CANDIDATE_DIR, "COVERAGE.md");
+  const coverage = read(coverageFile);
+
+  if (!coverage.includes("## Final Focused Requirement Audit")) {
+    fail(coverageFile, "coverage-audit", "final focused requirement audit section is missing");
+    return;
+  }
+
+  FINAL_AUDIT_REQUIREMENTS.forEach((requirement) => {
+    if (!coverage.includes(`| ${requirement.name} |`)) {
+      fail(coverageFile, "coverage-audit", `audit row is missing for ${requirement.name}`);
+    }
+
+    requirement.fixtures.forEach((relativePath) => {
+      const file = path.join(CANDIDATE_DIR, relativePath);
+      requireExists(file, "coverage-audit");
+      if (!coverage.includes(`\`${relativePath}\``)) {
+        fail(coverageFile, "coverage-audit", `${requirement.name} does not reference ${relativePath}`);
+      }
+      validateAuditedFixtureExpectation(coverageFile, requirement.name, relativePath);
+    });
+
+    requirement.coverageRows.forEach((rowLabel) => {
+      if (!coverage.includes(`| ${rowLabel} |`)) {
+        fail(coverageFile, "coverage-audit", `${requirement.name} references missing coverage row ${rowLabel}`);
+      }
+      if (!coverage.includes(rowLabel)) {
+        fail(coverageFile, "coverage-audit", `${requirement.name} does not cite coverage row ${rowLabel}`);
+      }
+    });
+
+    if (!coverage.includes(requirement.changelog)) {
+      fail(coverageFile, "coverage-audit", `${requirement.name} does not cite changelog evidence`);
+    }
+  });
+}
+
+function validateSourceTraceability() {
+  if (!SOURCE_TRACEABILITY_FILE) return;
+  const file = path.join(CANDIDATE_DIR, SOURCE_TRACEABILITY_FILE);
+  requireExists(file, "source-traceability");
+  if (!fs.existsSync(file)) return;
+  const traceability = read(file);
+  [
+    "source/complete-input-set.yaml",
+    "source/complete-openapi.yaml",
+    "source/complete-behavior.yaml",
+    "source/recursive-direct-openapi.yaml",
+    "source/recursive-indirect-openapi.yaml",
+  ].forEach((relativePath) => {
+    requireExists(path.join(CANDIDATE_DIR, relativePath), "source-traceability");
+    if (!traceability.includes(relativePath)) {
+      fail(file, "source-traceability", `traceability file must reference ${relativePath}`);
+    }
+  });
+}
+
+function validateInputSetSource() {
+  const manifestFile = path.join(CANDIDATE_DIR, "source", "complete-input-set.yaml");
+  const behaviorFile = path.join(CANDIDATE_DIR, "source", "complete-behavior.yaml");
+  requireExists(manifestFile, "source-input-set");
+  requireExists(behaviorFile, "source-input-set");
+  if (!fs.existsSync(manifestFile) || !fs.existsSync(behaviorFile)) return;
+  const manifest = read(manifestFile);
+  const behavior = read(behaviorFile);
+  [`revision: ${INPUT_SET_REVISION}`, "path: complete-openapi.yaml", "path: complete-behavior.yaml"].forEach((part) => {
+    if (!manifest.includes(part)) fail(manifestFile, "source-input-set", `manifest evidence is missing: ${part}`);
+  });
+  [
+    "header: Idempotency-Key",
+    "retention: at least 24 hours",
+    "code: idempotency_conflict",
+    "maximum_bytes: 10485760",
+    "workflow:",
+    "webhook_delivery:",
+  ].forEach((part) => {
+    if (!behavior.includes(part)) fail(behaviorFile, "source-input-set", `behavior evidence is missing: ${part}`);
+  });
+}
+
+function validateAuditedFixtureExpectation(coverageFile, requirementName, relativePath) {
+  const parts = relativePath.split("/");
+  if (parts[0] === "source") return;
+  if (parts[0] !== "focused" || !["valid", "invalid"].includes(parts[1])) {
+    fail(coverageFile, "coverage-audit", `${requirementName} fixture path is not auditable: ${relativePath}`);
+    return;
+  }
+  const kind = parts[1];
+  const name = parts.at(-1);
+  if (!FOCUSED_EXPECTATIONS[kind][name]) {
+    fail(coverageFile, "coverage-audit", `${requirementName} fixture ${relativePath} has no FOCUSED_EXPECTATIONS entry`);
+  }
+}
+
+function validateFocusedFixtures() {
+  ["valid", "invalid"].forEach((kind) => {
+    const dir = path.join(CANDIDATE_DIR, "focused", kind);
+    const files = listMarkdownFiles(dir);
+    const expected = FOCUSED_EXPECTATIONS[kind];
+    files.forEach((file) => {
+      const name = path.basename(file);
+      const text = read(file);
+      const relative = path.relative(dir, file).split(path.sep).join("/");
+      if (!expected[name]) {
+        fail(file, "focused", `checker has no expectation for ${relative}`);
+        return;
+      }
+      if (!text.startsWith(`# ${kind}: `)) fail(file, "focused", `focused fixture must start with '# ${kind}: '`);
+      if (!text.includes(`Expected: ${kind} ${FOCUSED_EXPECTATION_LABEL}.`)) {
+        fail(file, "focused", `focused fixture must declare Expected: ${kind} ${FOCUSED_EXPECTATION_LABEL}`);
+      }
+      const fixtures = extractMarkdownFixtures(text);
+      if (fixtures.length === 0) fail(file, "focused", "focused fixture lacks a markdown code fence");
+      expected[name].forEach((part) => {
+        if (!text.includes(part)) fail(file, "focused", `expected evidence is missing: ${part}`);
+      });
+      validateFocusedSnippetSemantics(file, kind, fixtures);
+    });
+    Object.keys(expected).forEach((name) => {
+      if (!fs.existsSync(path.join(dir, name))) fail(path.join(dir, name), "focused", "expected focused fixture is missing");
+    });
+  });
+}
+
+function validateFocusedSnippetSemantics(file, kind, fixtures) {
+  const name = path.basename(file);
+  const first = fixtures[0] ?? "";
+  if (kind === "valid") {
+    try {
+      if (first.includes("**field_defaults**:")) validateFieldDefaults(first);
+      fixtures.forEach((fixture) => {
+        validateTypeExpressions(fixture);
+        validateLogicalFieldPaths(fixture);
+        validateNoSameAsInErrorShapes(fixture);
+        validateCompactFieldHeadings(fixture);
+        validateNoRequestOpaqueFields(fixture);
+        if (fixture.includes("**same_as**:")) validateSameAsReferences(fixture);
+        if (name === "idempotency-safe-retry-contract.md") validateFocusedRetryContract(fixture);
+      });
+    } catch (error) {
+      fail(file, "focused-valid", error.message);
+    }
+    return;
+  }
+
+  const invalidValidators = {
+    "field-defaults-retained-column.md": () => validateFieldDefaults(first),
+    "field-defaults-unknown-value.md": () => validateFieldDefaults(first),
+    "idempotency-safe-retry-missing-wire-contract.md": () => validateFocusedRetryContract(first),
+    "same-as-error-shape.md": () => validateNoSameAsInErrorShapes(first),
+    "opaque-fields-before-client-visible-fields.md": () => validateCompactFieldHeadings(first),
+    "opaque-request-field.md": () => validateNoRequestOpaqueFields(first),
+    "same-as-forward-reference.md": () => validateSameAsReferences(first),
+    "same-as-cross-kind.md": () => validateSameAsReferences(first),
+    "same-as-missing-retrieval-unit.md": () => validateSameAsReferences(first),
+    "same-as-request-malformed.md": () => validateSameAsReferences(first),
+    "same-as-request-missing-target-body.md": () => validateSameAsReferences(first),
+    "same-as-request-wrong-media-type.md": () => validateSameAsReferences(first),
+    "same-as-target-is-same-as.md": () => validateSameAsReferences(first),
+    "type-enum-expression.md": () => validateTypeExpressions(first),
+    "xml-xpath-field.md": () => validateLogicalFieldPaths(first),
+    "non-extension-heading.md": () => validateNoUnknownNonExtensionHeading(first),
+  };
+  const validator = invalidValidators[name];
+  if (!validator) return;
+  try {
+    validator();
+    fail(file, "focused-invalid", "checker accepted invalid focused fixture");
+  } catch {
+    // Expected invalid fixture was rejected by the targeted rule.
+  }
+}
+
+function validateNoUnknownNonExtensionHeading(markdown) {
+  headingRows(markdown).forEach((heading) => {
+    if (heading.title === "OAuth2") throw new Error("unknown non-extension heading");
+  });
+}
+
+function validatePairAndCorpus() {
+  const fullDir = path.join(CANDIDATE_DIR, "valid", "full");
+  const compactDir = path.join(CANDIDATE_DIR, "valid", "compact");
+  [
+    path.join(CANDIDATE_DIR, "source", "complete-input-set.yaml"),
+    path.join(CANDIDATE_DIR, "source", "complete-openapi.yaml"),
+    path.join(CANDIDATE_DIR, "source", "complete-behavior.yaml"),
+    path.join(CANDIDATE_DIR, "source", "recursive-direct-openapi.yaml"),
+    path.join(CANDIDATE_DIR, "source", "recursive-indirect-openapi.yaml"),
+  ].forEach((file) => requireExists(file, "source"));
+
+  const fullEntries = validateProfileSet(fullDir, "full");
+  const compactEntries = validateProfileSet(compactDir, "compact");
+  const fullByPath = byRelativePath(fullEntries);
+  const compactByPath = byRelativePath(compactEntries);
+
+  if (fullEntries[0].stamp.projection_id !== compactEntries[0].stamp.projection_id) {
+    throw new Error("full and compact sets must share projection_id");
+  }
+  if (fullEntries[0].stamp.generation_id === compactEntries[0].stamp.generation_id) {
+    throw new Error("full and compact sets should demonstrate profile-specific generation_id values");
+  }
+  if (fullEntries[0].stamp.source !== compactEntries[0].stamp.source) {
+    throw new Error("full and compact sets must share the authoritative input-set source");
+  }
+  if (fullEntries[0].stamp.source_revision !== compactEntries[0].stamp.source_revision) {
+    throw new Error("full and compact sets must share source_revision");
+  }
+
+  REQUIRED_SET_PATHS.forEach((relativePath) => {
+    const full = fullByPath[relativePath].stamp;
+    const compact = compactByPath[relativePath].stamp;
+    if (full.coverage !== compact.coverage || full.knowledge !== compact.knowledge) {
+      throw new Error(`${relativePath} coverage and knowledge must match across profiles`);
+    }
+  });
+
+  validateProfileLinks(fullByPath["INDEX.md"].markdown, compactByPath["INDEX.md"].markdown);
+
+  const index = parseIndex(fullByPath["INDEX.md"].markdown);
+  validateIndexReferences(index, fullByPath, fullDir);
+  validateIndexReferences(parseIndex(compactByPath["INDEX.md"].markdown), compactByPath, compactDir);
+
+  compactEntries.forEach((entry) => {
+    validateFieldDefaults(entry.markdown);
+    validateTypeExpressions(entry.markdown);
+    validateLogicalFieldPaths(entry.markdown);
+    validateSameAsReferences(entry.markdown);
+    validateNoSameAsInErrorShapes(entry.markdown);
+    validateCompactFieldHeadings(entry.markdown);
+    validateNoRequestOpaqueFields(entry.markdown);
+  });
+
+  fullEntries.forEach((entry) => {
+    validateTypeExpressions(entry.markdown);
+    validateLogicalFieldPaths(entry.markdown);
+  });
+
+  validateCompleteSurfaceEvidence(fullByPath, compactByPath);
+}
+
+try {
+  validatePairAndCorpus();
+} catch (error) {
+  fail(CANDIDATE_DIR, "corpus", error.message);
+}
+
+validateCoverageReferences();
+validateFinalFocusedAudit();
+validateSourceTraceability();
+validateInputSetSource();
+validateFocusedFixtures();
+
+if (failures.length > 0) {
+  console.error(`${CORPUS_DISPLAY_LABEL} fixture check failed:`);
+  failures.forEach((failure) => {
+    console.error(`- ${failure.file}: ${failure.area}: ${failure.detail}`);
+  });
+  process.exit(1);
+}
+
+console.log(`${CORPUS_DISPLAY_LABEL} fixture check passed for ${path.relative(process.cwd(), CANDIDATE_DIR) || "."}`);

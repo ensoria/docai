@@ -103,12 +103,12 @@ The XML is UTF-8. The XML declaration encoding is UTF-8. The namespace URI is `h
 
 | Field | Type | Presence | Nullable | Meaning |
 |---|---|---|---|---|
-| /report | object | always | no | Root element in the namespace `https://api.example.test/reports` |
-| /report/@id | string | always | no | Attribute; report ID |
-| /report/@status | enum(final, draft) | always | no | Attribute; report status |
-| /report/title | string | always | no | First child element |
-| /report/total | int | always | no | Second child element |
-| /report/total/@currency | enum(JPY, USD) | always | no | Attribute; currency code for total |
+| $ | object | always | no | XML root element `/report` in namespace `https://api.example.test/reports`; additional logical fields forbidden |
+| id | string | always | no | XML attribute `/report/@id`; report ID |
+| status | string | always | no | XML attribute `/report/@status`; allowed values are `draft` \| `final` |
+| title | string | always | no | First child element `/report/title` |
+| total | int | always | no | Second child element `/report/total` text value |
+| total.currency | string | always | no | XML attribute `/report/total/@currency`; allowed values are `JPY` \| `USD` |
 
 ### Response 200
 

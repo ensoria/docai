@@ -11,14 +11,14 @@ fixtures that agree with the normative specification.
 
 ## Release Decision
 
-- [ ] Confirm that final stable `v1.0.0` is deferred.
-- [ ] Confirm that the next public release is `v1.0.0-rc.2`.
-- [ ] Keep the numeric DocAI HTTP version in conformance fixture stamps at
+- [x] Confirm that final stable `v1.0.0` is deferred.
+- [x] Confirm that the next public release is `v1.0.0-rc.2`.
+- [x] Keep the numeric DocAI HTTP version in conformance fixture stamps at
   `1.0.0`; the `rc.2` suffix identifies the repository release, not a different
   format version.
-- [ ] Treat `v1.0.0-rc.1` as immutable historical evidence; apply corrections
+- [x] Treat `v1.0.0-rc.1` as immutable historical evidence; apply corrections
   only in the working tree and the later `v1.0.0-rc.2` release.
-- [ ] Keep the publication label as `1.0.0 release candidate` until final
+- [x] Keep the publication label as `1.0.0 release candidate` until final
   `v1.0.0` is tagged and published.
 
 Why another RC is required:
@@ -47,24 +47,24 @@ Why another RC is required:
 
 ## P0: Confirm Specification Choices
 
-- [ ] Confirm the Type decision: do not add `enum(...)` to the `1.0.0` Type
+- [x] Confirm the Type decision: do not add `enum(...)` to the `1.0.0` Type
   grammar; represent enum values as constraints on `Type=string`.
-- [ ] Confirm the XML decision: field-table identifiers are logical decoded
+- [x] Confirm the XML decision: field-table identifiers are logical decoded
   field paths using the existing dot/array/map grammar; XPath-like locations,
   namespace URIs, and attribute/element mappings belong in Meaning or the
   representation prose.
-- [ ] Confirm the checker decision: make
+- [x] Confirm the checker decision: make
   `tools/check-conformance-fixtures.mjs` self-contained and dependent only on
   Node built-ins and files explicitly inside the stable boundary.
-- [ ] Confirm the retry decision: define an `Idempotency-Key` request-header
+- [x] Confirm the retry decision: define an `Idempotency-Key` request-header
   convention for the fixture endpoints that require safe retries, including
   applicability, key syntax, replay behavior, conflicting reuse, and retention
   window.
-- [ ] Confirm the source decision: add a structured authoritative input-set
+- [x] Confirm the source decision: add a structured authoritative input-set
   manifest that references the OpenAPI and a pass-through behavior source for
   conventions, errors, workflows, webhooks, multipart constraints, and retry
   semantics.
-- [ ] Confirm the token-budget decision: use advisory `should` language for file
+- [x] Confirm the token-budget decision: use advisory `should` language for file
   sizing in `1.0.0`; keep preservation of the complete applicable client
   contract mandatory.
 
@@ -98,151 +98,151 @@ Decision guidance:
 
 ## P1: Align Normative Text
 
-- [ ] Keep the existing simple Type grammar and enum-in-constraint rule in
+- [x] Keep the existing simple Type grammar and enum-in-constraint rule in
   `README.md`; clarify only if needed to make `enum(...)` unmistakably invalid.
-- [ ] Clarify that structured non-JSON field tables use logical decoded field
+- [x] Clarify that structured non-JSON field tables use logical decoded field
   paths governed by the standard field-path grammar.
-- [ ] Clarify that XML XPath-like locations are wire-mapping prose, not canonical
+- [x] Clarify that XML XPath-like locations are wire-mapping prose, not canonical
   `Field` values.
-- [ ] Rewrite the token-budget requirement with advisory `should` language and
+- [x] Rewrite the token-budget requirement with advisory `should` language and
   retain mandatory completeness and explicit `unknown` / `unsupported`
   handling.
-- [ ] Change section 9.1 from requiring the complete full/compact pair alone to
+- [x] Change section 9.1 from requiring the complete full/compact pair alone to
   demonstrate every edge case to requiring demonstration across the complete
   example sets and focused fixtures.
-- [ ] Confirm that the normative Request and Response `same_as` grammars remain
+- [x] Confirm that the normative Request and Response `same_as` grammars remain
   unchanged.
-- [ ] Update the stable compatibility-boundary wording only if implementation
+- [x] Update the stable compatibility-boundary wording only if implementation
   reveals another required runtime dependency; do not silently widen it.
-- [ ] Update `RELEASE.md` so `Stable` requires completed final review, final
+- [x] Update `RELEASE.md` so `Stable` requires completed final review, final
   `v1.0.0` tagging and publication, and the publication-label transition.
 
 ## P1: Correct Type And XML Fixtures
 
-- [ ] Audit every `Type` cell in `fixtures/conformance/v1.0.0/`, including
+- [x] Audit every `Type` cell in `fixtures/conformance/v1.0.0/`, including
   snippets embedded in invalid fixtures whose intended failure is unrelated to
   Type grammar.
-- [ ] Replace `enum(JPY, USD)`, `enum(pending)`, `enum(final, draft)`, and any
+- [x] Replace `enum(JPY, USD)`, `enum(pending)`, `enum(final, draft)`, and any
   other `enum(...)` Type values with `string`.
-- [ ] Put every closed allowed-value set in `Constraints / Meaning` or `Meaning`
+- [x] Put every closed allowed-value set in `Constraints / Meaning` or `Meaning`
   using the canonical escaped table-cell form.
-- [ ] Keep full and compact payment representations semantically equivalent
+- [x] Keep full and compact payment representations semantically equivalent
   after the Type correction.
-- [ ] Replace XML XPath-like `Field` values with logical decoded field paths.
-- [ ] Record each XML element, attribute, namespace, order, and repetition wire
+- [x] Replace XML XPath-like `Field` values with logical decoded field paths.
+- [x] Record each XML element, attribute, namespace, order, and repetition wire
   mapping in Meaning or adjacent representation prose.
-- [ ] Add or update focused invalid evidence proving that `enum(...)` is rejected
+- [x] Add or update focused invalid evidence proving that `enum(...)` is rejected
   as a Type expression.
-- [ ] Add or update focused invalid evidence proving that an XPath-like XML
+- [x] Add or update focused invalid evidence proving that an XPath-like XML
   `Field` value is not a canonical DocAI field path.
-- [ ] Update `COVERAGE.md` and checker expectation maps for the changed or added
+- [x] Update `COVERAGE.md` and checker expectation maps for the changed or added
   focused fixtures.
 
 ## P1: Complete The `same_as` Contract
 
-- [ ] Split Request and Response `same_as` parsing so Request consumes
+- [x] Split Request and Response `same_as` parsing so Request consumes
   `<METHOD> <path> Request <media type>` and Response consumes
   `<METHOD> <path> Response <status> <media type>`.
-- [ ] Resolve targets by parsed endpoint, body kind, response status when
+- [x] Resolve targets by parsed endpoint, body kind, response status when
   applicable, and concrete media type rather than by loose text search.
-- [ ] Verify that every target is a full earlier representation in the same
+- [x] Verify that every target is a full earlier representation in the same
   file, not another `same_as` reference.
-- [ ] Verify that the referring and referenced units are both Request or both
+- [x] Verify that the referring and referenced units are both Request or both
   Response and that the marker is inside the correct containing section.
-- [ ] Keep the retrieval-unit discoverability check for every `same_as` use.
-- [ ] Add a focused valid backward Request reference fixture.
-- [ ] Keep the existing focused valid backward Response reference fixture.
-- [ ] Add or update focused invalid Request fixtures for malformed grammar,
+- [x] Keep the retrieval-unit discoverability check for every `same_as` use.
+- [x] Add a focused valid backward Request reference fixture.
+- [x] Keep the existing focused valid backward Response reference fixture.
+- [x] Add or update focused invalid Request fixtures for malformed grammar,
   forward references, cross-kind references, wrong target endpoint/body, wrong
   media type, and a target that is itself `same_as`.
-- [ ] Add or update equivalent Response coverage where existing fixtures do not
+- [x] Add or update equivalent Response coverage where existing fixtures do not
   already prove the rule.
-- [ ] Update `COVERAGE.md` and checker expectation maps for all added fixtures.
+- [x] Update `COVERAGE.md` and checker expectation maps for all added fixtures.
 
 ## P1: Close The Stable Checker Boundary
 
-- [ ] Move or reimplement stable conformance logic inside
+- [x] Move or reimplement stable conformance logic inside
   `tools/check-conformance-fixtures.mjs` without importing
   `check-complete-candidates.mjs`.
-- [ ] Remove stable-checker reads of `CHANGELOG.md` and other files outside the
+- [x] Remove stable-checker reads of `CHANGELOG.md` and other files outside the
   stated stable boundary.
-- [ ] Replace candidate-history assertions with conformance-local evidence in
+- [x] Replace candidate-history assertions with conformance-local evidence in
   `COVERAGE.md` or with versioned assertions embedded in the stable checker.
-- [ ] Add semantic validation of Type expressions across every valid complete
+- [x] Add semantic validation of Type expressions across every valid complete
   document and focused valid snippet.
-- [ ] Add semantic field-path validation across structured non-JSON focused
+- [x] Add semantic field-path validation across structured non-JSON focused
   fixtures, not only JSON examples.
-- [ ] Add the corrected Request and Response `same_as` parser and target checks.
-- [ ] Preserve the statement that this is a corpus-specific expectation checker,
+- [x] Add the corrected Request and Response `same_as` parser and target checks.
+- [x] Preserve the statement that this is a corpus-specific expectation checker,
   not a public reusable validator or source-to-projection validator.
-- [ ] Add a deterministic boundary-closure test that copies only normative
+- [x] Add a deterministic boundary-closure test that copies only normative
   `README.md`, `fixtures/conformance/v1.0.0/`, and the checker into an isolated
   temporary tree and successfully runs the checker there.
-- [ ] Confirm with an import/file-read audit that the isolated run has no hidden
+- [x] Confirm with an import/file-read audit that the isolated run has no hidden
   repository dependency.
-- [ ] Run the historical complete-candidate checker separately and confirm that
+- [x] Run the historical complete-candidate checker separately and confirm that
   the stable-checker extraction did not change released `0.12.0` evidence.
 
 ## P1: Repair Source Traceability
 
-- [ ] Inventory every fact in the full and compact conformance sets that does
+- [x] Inventory every fact in the full and compact conformance sets that does
   not come from `source/complete-openapi.yaml`.
-- [ ] Add `source/complete-behavior.yaml` or an equivalently structured
+- [x] Add `source/complete-behavior.yaml` or an equivalently structured
   pass-through source covering shared conventions, common and endpoint errors,
   idempotency, workflows, webhook delivery, non-JSON wire behavior, and
   multipart constraints.
-- [ ] Add an authoritative input-set manifest that names the OpenAPI and
+- [x] Add an authoritative input-set manifest that names the OpenAPI and
   pass-through source files and their revisions.
-- [ ] Point complete-set metadata stamps at the authoritative input-set manifest
+- [x] Point complete-set metadata stamps at the authoritative input-set manifest
   rather than presenting the OpenAPI file as the only source.
-- [ ] Compute and record a stable `source_revision` that covers every input in
+- [x] Compute and record a stable `source_revision` that covers every input in
   the manifest.
-- [ ] Regenerate the full and compact sets as whole logical projections: update
+- [x] Regenerate the full and compact sets as whole logical projections: update
   `generated`, `generation_id`, and shared `projection_id` consistently rather
   than editing only individual stamps.
-- [ ] Audit focused fixtures with metadata stamps and update their source claims
+- [x] Audit focused fixtures with metadata stamps and update their source claims
   where their knowledge depends on pass-through behavior.
-- [ ] Replace the `No missing source inputs` claim with an evidenced traceability
+- [x] Replace the `No missing source inputs` claim with an evidenced traceability
   matrix mapping each source fact class to its source and projected files.
-- [ ] Extend the corpus checker to verify source/manifest existence, stamp
+- [x] Extend the corpus checker to verify source/manifest existence, stamp
   references, input-set revision consistency, and required traceability rows
   without claiming full source-to-projection validation.
-- [ ] Keep the source files and manifest as traceability evidence, not a public
+- [x] Keep the source files and manifest as traceability evidence, not a public
   generator input schema or reusable validator API.
 
 ## P1: Define Safe Retry Semantics
 
-- [ ] Define the authoritative idempotency contract in the pass-through behavior
+- [x] Define the authoritative idempotency contract in the pass-through behavior
   source before changing projected documents.
-- [ ] Document the `Idempotency-Key` wire contract in full and compact
+- [x] Document the `Idempotency-Key` wire contract in full and compact
   `CONVENTIONS.md`, including endpoint applicability, allowed value form,
   identical-request replay result, conflicting key reuse result, and minimum
   retention window.
-- [ ] Update affected endpoint `Behavior` entries so they refer to the defined
+- [x] Update affected endpoint `Behavior` entries so they refer to the defined
   convention instead of an idempotency key "outside this fixture".
-- [ ] Confirm affected endpoint headers and INDEX convention routing expose the
+- [x] Confirm affected endpoint headers and INDEX convention routing expose the
   contract according to the shared-header rules in `README.md`.
-- [ ] Make workflow retry steps distinguish pre-response failure, ambiguous
+- [x] Make workflow retry steps distinguish pre-response failure, ambiguous
   outcome, safe same-key replay, and corrected-input/new-key retry where
   applicable.
-- [ ] Update the document-upload 422 Caller action to say that unchanged input
+- [x] Update the document-upload 422 Caller action to say that unchanged input
   must not be retried and that retry is allowed only after correcting the file
   or metadata.
-- [ ] Apply equivalent semantics to the full and compact profiles.
-- [ ] Add focused valid and invalid evidence for safe retry guidance and missing
+- [x] Apply equivalent semantics to the full and compact profiles.
+- [x] Add focused valid and invalid evidence for safe retry guidance and missing
   or contradictory idempotency contracts.
-- [ ] Add targeted checker assertions for the retry fixtures.
+- [x] Add targeted checker assertions for the retry fixtures.
 
 ## P2: Reaudit Semantics And Evidence
 
-- [ ] Compare corrected `fixtures/conformance/v1.0.0/` standard documents against
+- [x] Compare corrected `fixtures/conformance/v1.0.0/` standard documents against
   the evaluated `fixtures/complete-candidates/v0.12.0/` documents.
-- [ ] Record every semantic difference in an updated semantic-drift audit,
+- [x] Record every semantic difference in an updated semantic-drift audit,
   including Type spelling, XML field identifiers, source stamps, idempotency,
   retry actions, and wording-only changes.
-- [ ] Classify each difference as syntax-only, metadata/provenance-only, or
+- [x] Classify each difference as syntax-only, metadata/provenance-only, or
   task-behavior-affecting.
-- [ ] Identify which existing request construction, response handling, error
+- [x] Identify which existing request construction, response handling, error
   handling, workflow completion, token-load, and OpenAPI comparison records no
   longer apply to the corrected corpus.
 - [ ] Create a versioned `rc.2` evaluation snapshot outside the stable
@@ -274,29 +274,29 @@ Evidence refresh rule:
 
 ## P2: Regression And Review Gate
 
-- [ ] Add a regression checklist mapping review findings 1 through 9 to changed
+- [x] Add a regression checklist mapping review findings 1 through 9 to changed
   files, checker coverage, and verification output.
-- [ ] Run `node docai-http/tools/check-conformance-fixtures.mjs`.
-- [ ] Run the isolated stable-boundary checker test.
-- [ ] Run `node docai-http/tools/check-complete-candidates.mjs` for historical
+- [x] Run `node docai-http/tools/check-conformance-fixtures.mjs`.
+- [x] Run the isolated stable-boundary checker test.
+- [x] Run `node docai-http/tools/check-complete-candidates.mjs` for historical
   candidate regression coverage.
-- [ ] Run `node docai-http/tools/check-complete-evaluations.mjs` when evaluation
+- [x] Run `node docai-http/tools/check-complete-evaluations.mjs` when evaluation
   artifacts were refreshed or remain claimed as supporting evidence.
-- [ ] Run `node docai-http/tools/check-openapi-comparison.mjs` when comparison
+- [x] Run `node docai-http/tools/check-openapi-comparison.mjs` when comparison
   artifacts were refreshed or remain cited.
-- [ ] Run `node docai-http/tools/check-release-readiness.mjs`.
-- [ ] Run `git diff --check`.
-- [ ] Confirm no valid fixture contains a Type outside the normative grammar.
-- [ ] Confirm both canonical `same_as` forms have positive and negative semantic
+- [x] Run `node docai-http/tools/check-release-readiness.mjs`.
+- [x] Run `git diff --check`.
+- [x] Confirm no valid fixture contains a Type outside the normative grammar.
+- [x] Confirm both canonical `same_as` forms have positive and negative semantic
   checker coverage.
-- [ ] Confirm the stable checker runs from only the advertised boundary files.
-- [ ] Confirm every `knowledge: complete` standard file has complete source
+- [x] Confirm the stable checker runs from only the advertised boundary files.
+- [x] Confirm every `knowledge: complete` standard file has complete source
   provenance for its client-visible facts.
-- [ ] Confirm every retry instruction is safe for ambiguous outcomes and
+- [x] Confirm every retry instruction is safe for ambiguous outcomes and
   corrected-input retries.
-- [ ] Confirm the token-budget text is objectively classifiable as normative or
+- [x] Confirm the token-budget text is objectively classifiable as normative or
   advisory under section 3.1.
-- [ ] Confirm the complete-set/focused-fixture wording and Stable label definition
+- [x] Confirm the complete-set/focused-fixture wording and Stable label definition
   no longer admit the reviewed contradictory readings.
 - [ ] Request a focused external regression review of the nine original findings
   rather than reopening unrelated feature design.
@@ -305,17 +305,17 @@ Evidence refresh rule:
 
 ## P2: Changelog And Release Notes
 
-- [ ] Add the `v1.0.0-rc.2` correction scope to `CHANGELOG.md` under
+- [x] Add the `v1.0.0-rc.2` correction scope to `CHANGELOG.md` under
   `Unreleased` while work is in progress.
 - [ ] Prepare a `1.0.0-rc.2` changelog section before tagging.
-- [ ] Add `v1.0.0-rc.2` release notes to `RELEASE.md`.
-- [ ] Explain that `rc.2` corrects the intended `1.0.0` contract before stable
+- [x] Add `v1.0.0-rc.2` release notes to `RELEASE.md`.
+- [x] Explain that `rc.2` corrects the intended `1.0.0` contract before stable
   publication and does not make `rc.1` fixtures mutable.
-- [ ] List every conformance-content and checker-boundary correction in the
+- [x] List every conformance-content and checker-boundary correction in the
   release notes.
-- [ ] State whether LLM/OpenAPI evidence was refreshed or retained only as
+- [x] State whether LLM/OpenAPI evidence was refreshed or retained only as
   historical `0.12.0` evidence.
-- [ ] Keep final `Stable` wording reserved for the later final `v1.0.0` tag.
+- [x] Keep final `Stable` wording reserved for the later final `v1.0.0` tag.
 
 ## P2: Tag And Publish `v1.0.0-rc.2`
 

@@ -1,4 +1,4 @@
-> docai-http: 1.0.0 | profile: full | coverage: complete | knowledge: complete | generated: 2026-07-10 | generation_id: conformance-full-20260710-001 | projection_id: conformance-20260710-001 | source: fixtures/conformance/v1.0.0/source/complete-openapi.yaml (OpenAPI 3.1.1) | source_revision: fixture-revision-conformance-001 | x-fixture: stable-conformance
+> docai-http: 1.0.0 | profile: full | coverage: complete | knowledge: complete | generated: 2026-07-21 | generation_id: conformance-full-20260721-rc2-001 | projection_id: conformance-20260721-rc2-001 | source: fixtures/conformance/v1.0.0/source/complete-input-set.yaml (authoritative input set) | source_revision: fixture-input-set-rc2-001 | x-fixture: stable-conformance
 
 # API Conventions
 
@@ -26,6 +26,8 @@ JSON request bodies use `Content-Type: application/json`. Clients send `Accept: 
 ## HTTP Semantics
 
 Clients may send `X-Request-ID` as an opaque string for request tracing. When a response includes `X-Request-ID`, log it with any client-side error report.
+
+For POST /users, POST /payments, POST /orders, and POST /documents, send `Idempotency-Key` when the operation may need a safe retry. The value is an opaque, operation-unique string of 1-128 visible ASCII characters. The server retains a key for at least 24 hours. Replaying the semantically identical request with the same key returns the original status, body, and headers without repeating the side effect. Reusing the key with different request content returns `409 idempotency_conflict`; do not retry the changed request with that key. Without a key, these create operations are not idempotent, so do not retry automatically after an ambiguous outcome.
 
 ## Errors
 

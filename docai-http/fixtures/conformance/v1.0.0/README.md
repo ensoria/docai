@@ -1,14 +1,16 @@
 # DocAI HTTP 1.0.0 Stable Conformance Fixtures
 
 This directory is the intended first stable conformance corpus for DocAI HTTP `1.0.0`.
-It is copied from the `0.12.0` complete-generator-ready candidate corpus and promoted
-as a separate versioned conformance corpus so the stable compatibility boundary is not
-silently tied to candidate evidence paths.
+It originated from the `0.12.0` complete-generator-ready candidate corpus and is
+maintained as a separate versioned conformance corpus so the stable compatibility
+boundary is not silently tied to candidate evidence paths. The `rc.2` preparation
+corrects Type and XML field syntax, source provenance, safe retry behavior, and
+Request `same_as` checker coverage found during review of `v1.0.0-rc.1`.
 
 The standard DocAI HTTP document files in `valid/full/`, `valid/compact/`, and the
-focused fixture snippets declare `docai-http: 1.0.0`. Their API content matches the
-`0.12.0` complete-candidate corpus except for stable-conformance metadata, source
-paths, and fixture expectation labels.
+focused fixture snippets declare `docai-http: 1.0.0`. The semantic differences from
+the evaluated `0.12.0` candidate are recorded in `SEMANTIC-DRIFT-AUDIT.md`; the old
+evaluation records are not direct evidence for the corrected standard documents.
 
 This corpus covers the stable complete surface intended for `1.0.0`: full profile,
 matching compact profile, resources, workflows, webhooks, selective conventions,
@@ -18,8 +20,11 @@ focused syntax/behavior boundaries listed in `COVERAGE.md`.
 
 Layout:
 
-- `source/complete-openapi.yaml` is the source OpenAPI fixture referenced by the full
-  and compact conformance sets.
+- `source/complete-input-set.yaml` is the authoritative input-set manifest referenced
+  by the full and compact conformance sets.
+- `source/complete-openapi.yaml` provides operations and structured schemas.
+- `source/complete-behavior.yaml` provides pass-through conventions, errors, retry
+  behavior, workflows, webhooks, and multipart constraints.
 - `source/recursive-direct-openapi.yaml` and `source/recursive-indirect-openapi.yaml`
   are recursive source inputs whose generated projections use `unsupported`.
 - `valid/full/` contains the full-profile conformance set.
@@ -29,9 +34,10 @@ Layout:
 - `COVERAGE.md` records the stable conformance evidence present in this corpus.
 - `SOURCE-TRACEABILITY.md` records the source fixture audit and the decision not
   to require a public source-to-projection validator before `1.0.0`.
-- `SEMANTIC-DRIFT-AUDIT.md` records the audit showing that standard document
-  content remains semantically identical to the evaluated `0.12.0` candidate
-  corpus after release-boundary metadata is normalized.
+- `RC2-REVIEW-REGRESSION.md` maps the nine `rc.1` review findings to corrected
+  files and deterministic regression evidence.
+- `SEMANTIC-DRIFT-AUDIT.md` records the corrected corpus differences from the
+  evaluated `0.12.0` candidate and their evaluation impact.
 - `TOKEN-SAVINGS.md` records compact-profile reduction guidance for the conformance
   pair.
 
@@ -46,7 +52,7 @@ The full and compact sets use identical standard docs-root-relative paths:
 - `workflows/checkout.md`
 - `webhooks/payment-completed.md`
 
-Both sets share `projection_id: conformance-20260710-001`. The full INDEX links
+Both sets share `projection_id: conformance-20260721-rc2-001`. The full INDEX links
 `Compact set: ../compact/`; the compact INDEX links `Full set: ../full/`.
 
 Run `node tools/check-conformance-fixtures.mjs` from the `docai-http/` directory,
@@ -54,10 +60,9 @@ or `node docai-http/tools/check-conformance-fixtures.mjs` from the repository ro
 to check this stable conformance corpus. The checker is corpus-specific expectation
 coverage, not a public reusable validator or a full source-to-projection validator.
 
-The live LLM task evaluations, deterministic token-load evidence, and OpenAPI
-comparison evidence were recorded against `fixtures/complete-candidates/v0.12.0/`.
-They remain supporting evidence for this stable corpus only while the standard
-document content stays semantically identical to that candidate corpus. If the
-conformance document content changes beyond metadata, source paths, or expectation
-labels, rerun the relevant deterministic checks and review whether the live LLM or
-OpenAPI comparison evidence must be refreshed.
+The existing live LLM task evaluations, deterministic token-load evidence, and
+OpenAPI comparison evidence were recorded against
+`fixtures/complete-candidates/v0.12.0/`. They remain historical evidence for that
+candidate, but they are not direct evidence for this corrected corpus. Before stable
+publication, follow `SEMANTIC-DRIFT-AUDIT.md` and the active release TODO to refresh
+affected evidence or explicitly keep comparison claims scoped to `0.12.0`.
