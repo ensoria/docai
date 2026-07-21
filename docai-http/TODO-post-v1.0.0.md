@@ -80,15 +80,37 @@ future version before publication.
 
 - [ ] Use the recommended pilot matrix: three APIs, six tasks per API, three
   provider/model targets, three repetitions, and four primary conditions, for
-  approximately 648 live requests plus the limited full/compact ablation.
+  exactly 648 primary live requests plus a separately approved limited
+  full/compact ablation.
+- [ ] Split the 648 primary requests into nine batches of 72 requests. One batch
+  is one API, one repetition, six tasks, three models, and four conditions.
+- [ ] Treat 100 attempted provider requests as a hard maximum for one work step;
+  target 72 and never begin another batch in the same step.
+- [ ] Count successful calls, blocked calls, malformed responses, rate-limited
+  calls, and transport retries toward the per-step request maximum.
+- [ ] Stop after every batch and wait for explicit user approval before starting
+  the next batch; do not automatically continue across batches.
+- [ ] At every batch boundary, report requests attempted, completed, blocked,
+  failed, and retried; provider-reported token usage; available account or cost
+  signals; grader pass/fail/inconclusive counts; and the remaining batch plan.
+- [ ] Run the benchmark checker after every batch and persist an idempotent
+  checkpoint so a resumed batch skips already completed run identities.
+- [ ] Define batch IDs before execution using API, repetition, and frozen-plan
+  identity, and record start/end timestamps and resolved model IDs per batch.
+- [ ] Stop the current batch early on a billing/credit error, repeated rate
+  limit, unavailable model, grader/fixture defect, unexpected prompt expansion,
+  or spend materially above the approved batch estimate.
+- [ ] Keep the full/compact ablation outside the nine primary batches and split
+  it into separately estimated steps of at most 100 attempted requests.
 - [ ] Verify current model IDs in official provider catalogs immediately before
   execution and record exact resolved model or snapshot identifiers.
 - [ ] Randomize or rotate condition order within API/task/model blocks and keep
   the execution window short enough to limit provider drift.
 - [ ] Record blocked and malformed-output attempts instead of silently rerunning;
   predefine when a transport-only retry is allowed.
-- [ ] Export all prompts and compute an estimated token/cost ceiling before the
-  first live request; obtain explicit approval for that concrete ceiling.
+- [ ] Export all prompts and compute estimated token/cost ceilings for the whole
+  pilot and for each 72-request batch before the first live request; obtain
+  explicit approval for the first concrete batch ceiling.
 - [ ] Stop after the pilot if fixture gaps, grader ambiguity, provider parsing
   failures, or unexpectedly high cost make the comparison unreliable.
 
