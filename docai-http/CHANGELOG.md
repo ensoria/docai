@@ -4,6 +4,18 @@ DocAI HTTP release history. Specification versioning and compatibility rules are
 
 ## Unreleased
 
+## 1.0.0-rc.4 (Release candidate)
+
+- Completes focused-fixture metadata identity after review of published
+  `v1.0.0-rc.3` found omitted `source_revision` values.
+- Restamps the conformance corpus as the `rc4-001` projection while preserving
+  the unchanged authoritative input revision `fixture-input-set-rc3-001` and
+  projected client contract.
+- Makes the stable checker validate projection, generation, source, and source
+  revision identity for every metadata-bearing focused snippet.
+- Adds focused and isolated negative tests that reject a missing stable source
+  revision, and updates current-release wording to published `v1.0.0-rc.3`.
+
 ## 1.0.0-rc.3 (Release candidate)
 
 - Corrects the authoritative inputs for `v1.0.0-rc.3` after focused review found

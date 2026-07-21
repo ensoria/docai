@@ -93,3 +93,18 @@ deterministic token-load records and recomputed context metrics also pass and
 remain numerically unchanged. No paid Live LLM rerun is required for this
 provenance-only correction. Historical OpenAPI comparison claims remain scoped
 to the evaluated `0.12.0` corpus.
+
+## rc.4 Focused-Metadata Correction
+
+The `rc.4` correction adds the existing `fixture-input-set-rc3-001` revision to
+metadata-bearing focused snippets that omitted it, restamps the corpus as the
+`rc4-001` projection, and makes the stable checker reject inconsistent focused
+source identity. The authoritative OpenAPI, behavior source, input-set manifest,
+normative syntax, and projected client behavior do not change.
+
+Required Live LLM tasks load the standard full or compact document sets rather
+than focused snippets. Their only change is the equal-length `rc3-001` to
+`rc4-001` provenance identifier, so task semantics and context sizes are
+unchanged. Existing provider responses can be regraded deterministically; no
+paid provider resend is required. OpenAPI comparison claims remain scoped to the
+evaluated `0.12.0` corpus.

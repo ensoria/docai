@@ -33,6 +33,36 @@ try {
   });
   if (result.status !== 0) process.exit(result.status ?? 1);
 
+  const isolatedFocusedFixture = path.join(
+    ISOLATED_DIR,
+    "fixtures",
+    "conformance",
+    "v1.0.0",
+    "focused",
+    "valid",
+    "unknown-coverage-knowledge-state.md",
+  );
+  const focusedFixture = fs.readFileSync(isolatedFocusedFixture, "utf8");
+  const mutatedFocusedFixture = focusedFixture.replace(
+    " | source_revision: fixture-input-set-rc3-001",
+    "",
+  );
+  if (mutatedFocusedFixture === focusedFixture) {
+    throw new Error("focused-source-revision negative-test mutation did not apply");
+  }
+  fs.writeFileSync(isolatedFocusedFixture, mutatedFocusedFixture);
+
+  const focusedNegativeResult = spawnSync(process.execPath, ["docai-http/tools/check-conformance-fixtures.mjs"], {
+    cwd: TEMP_ROOT,
+    encoding: "utf8",
+  });
+  const focusedNegativeOutput = `${focusedNegativeResult.stdout ?? ""}\n${focusedNegativeResult.stderr ?? ""}`;
+  if (focusedNegativeResult.status === 0 || !focusedNegativeOutput.includes("stamp source_revision must be fixture-input-set-rc3-001")) {
+    process.stderr.write(focusedNegativeOutput);
+    throw new Error("focused-source-revision negative test did not reject the missing revision");
+  }
+  fs.writeFileSync(isolatedFocusedFixture, focusedFixture);
+
   const isolatedOpenApi = path.join(
     ISOLATED_DIR,
     "fixtures",
@@ -59,6 +89,7 @@ try {
     throw new Error("source-contract negative test did not fail for the removed cart response schema reference");
   }
   console.log("Stable conformance boundary check passed in an isolated tree.");
+  console.log("Stable conformance focused-metadata negative test rejected a missing source revision.");
   console.log("Stable conformance source-contract negative test rejected a missing response schema reference.");
 } finally {
   fs.rmSync(TEMP_ROOT, { recursive: true, force: true });

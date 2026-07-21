@@ -2,12 +2,49 @@
 
 This document defines the repository release process for DocAI HTTP. It is operational guidance for maintainers; the format rules remain in `README.md`.
 
+## 1.0.0-rc.4 Release Notes (Release candidate)
+
+Scope:
+
+- Publication label remains `1.0.0 release candidate`, not final `Stable`.
+- Current tagged public release: `v1.0.0-rc.3`.
+- Release path: correct focused-fixture source identity, publish
+  `v1.0.0-rc.4`, and repeat the focused metadata review before final `v1.0.0`.
+- The DocAI HTTP format, authoritative input content, and projected client
+  contract do not change.
+
+Corrections:
+
+- Adds `source_revision: fixture-input-set-rc3-001` to every metadata-bearing
+  focused snippet that references the versioned authoritative input set.
+- Restamps full, compact, and focused fixtures as the `rc4-001` logical
+  projection without changing the `rc3-001` authoritative input revision.
+- Makes the stable checker enforce exact projection, profile generation,
+  source, and source-revision identity for metadata-bearing focused snippets.
+- Adds focused and isolated negative tests for omitted source revisions.
+- Updates current-release wording after publication of `v1.0.0-rc.3`.
+
+Evidence status:
+
+- Standard DocAI document semantics and authoritative input content are
+  unchanged; only provenance metadata and checker evidence change.
+- Required-target responses may be regraded deterministically without provider
+  submission because no task contract changed.
+- OpenAPI comparison records remain historical `0.12.0` evidence.
+
+Required pre-tag validation:
+
+- `node docai-http/tools/check-release-readiness.mjs`.
+- `git diff --check`.
+- Confirm `fixtures/conformance/v1.0.0/RC4-METADATA-REVIEW.md` is ready for the
+  post-publication focused review.
+
 ## 1.0.0-rc.3 Release Notes (Release candidate)
 
 Scope:
 
 - Publication label remains `1.0.0 release candidate`, not final `Stable`.
-- Current tagged public release: `v1.0.0-rc.2`.
+- Prior tagged public release during preparation: `v1.0.0-rc.2`.
 - Release path: complete authoritative source traceability, publish
   `v1.0.0-rc.3`, and repeat the focused source-provenance review before final
   `v1.0.0`.
@@ -233,7 +270,7 @@ Do not imply compatibility for structures outside the published label. Non-core 
 
 Before using the `Complete-generator-ready candidate` label, complete the evidence gate in `COMPLETE-GENERATOR-READINESS.md`.
 
-The current tagged public release is `v1.0.0-rc.2`, published as `1.0.0 release candidate`, not final `Stable`. A focused review found one remaining source-traceability blocker, so `v1.0.0-rc.3` is required before final stable publication. The previous `v0.12.0` complete-generator-ready candidate remains historical supporting evidence. Its complete-candidate corpus has complete focused fixture coverage, matching checker coverage, required-target LLM evaluations, token-load evidence, and scoped OpenAPI comparison evidence.
+The current tagged public release is `v1.0.0-rc.3`, published as `1.0.0 release candidate`, not final `Stable`. Review confirmed the authoritative source content and found a focused-fixture metadata identity blocker, so `v1.0.0-rc.4` is required before final stable publication. The previous `v0.12.0` complete-generator-ready candidate remains historical supporting evidence. Its complete-candidate corpus has complete focused fixture coverage, matching checker coverage, required-target LLM evaluations, token-load evidence, and scoped OpenAPI comparison evidence.
 
 Do not update the README publication label merely because one candidate corpus exists. The label may change only after the complete full-profile set, matching compact projection, focused complete-surface fixtures, checker behavior, evaluation notes, and changelog/release notes support the broader claim.
 

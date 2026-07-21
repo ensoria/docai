@@ -74,21 +74,23 @@ stable `v1.0.0` remains deferred until this correction is published and reviewed
 - [x] Run `node docai-http/tools/check-release-readiness.mjs`.
 - [x] Run `git diff --check`.
 - [x] Confirm the worktree contains only intended `rc.3` changes.
-- [ ] Request a focused external review of authoritative source completeness,
+- [x] Request a focused external review of authoritative source completeness,
   traceability claims, and checker coverage using `RC3-SOURCE-REVIEW.md`.
-- [ ] Resolve every focused-review result before final stable publication.
+- [x] Record the focused-review result and route the remaining metadata identity
+  and current-release wording corrections to `TODO-v1.0.0-rc.4.md`.
 
 ## P2: Tag And Publish
 
-- [ ] User creates the `v1.0.0-rc.3` tag.
-- [ ] User publishes the `v1.0.0-rc.3` release.
-- [ ] Update current-release wording to `v1.0.0-rc.3` after publication.
+- [x] User creates the `v1.0.0-rc.3` tag.
+- [x] User publishes the `v1.0.0-rc.3` release.
+- [x] Update current-release wording to `v1.0.0-rc.3` after publication through
+  the `rc.4` correction.
 
 ## P3: Final Stable Handoff
 
 - [ ] Return to `TODO-v1.0.0.md` only after the focused `rc.3` review finds no
   stable blocker.
-- [ ] Publish another RC rather than stable if review changes normative text,
+- [x] Publish another RC rather than stable if review changes normative text,
   projected conformance content, checker expectations, or the compatibility
   boundary again.
 

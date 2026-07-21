@@ -12,6 +12,11 @@ const CORPUS_DISPLAY_LABEL = "Stable conformance";
 const SOURCE_TRACEABILITY_FILE = "SOURCE-TRACEABILITY.md";
 const INPUT_SET_SOURCE = "fixtures/conformance/v1.0.0/source/complete-input-set.yaml";
 const INPUT_SET_REVISION = "fixture-input-set-rc3-001";
+const PROJECTION_ID = "conformance-20260721-rc4-001";
+const GENERATION_IDS = {
+  full: "conformance-full-20260721-rc4-001",
+  compact: "conformance-compact-20260721-rc4-001",
+};
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_RELATIVE_DIR = path.join("fixtures", "conformance", "v1.0.0");
 const DEFAULT_DIR = path.resolve(SCRIPT_DIR, "..", DEFAULT_RELATIVE_DIR);
@@ -155,6 +160,7 @@ const FOCUSED_EXPECTATIONS = {
     "field-defaults-retained-column.md": ["**field_defaults**: Presence=always | Nullable=no", "| Field | Type | Presence | Meaning |"],
     "field-defaults-savings-unjustified.md": ["Measured with `o200k_base`", "repeating `Presence` and `Nullable` would be smaller", "**field_defaults**: Presence=always | Nullable=no"],
     "field-defaults-unknown-value.md": ["**field_defaults**: Presence=unknown | Nullable=no"],
+    "focused-source-revision-missing.md": ["source: fixtures/conformance/v1.0.0/source/complete-input-set.yaml (authoritative input set)", "projection_id: conformance-20260721-rc4-001"],
     "field-level-error-policy-missing.md": ["error.field_errors[].message", "Field error message"],
     "field-path-unescaped-pipe.md": ["metadata.campaign.code|source"],
     "file-metadata-not-propagated.md": ["coverage: complete | knowledge: complete", "**unsupported**: replaces Response Headers:", "**unknown**: report download URL expiration"],
@@ -534,11 +540,34 @@ function validateStamp(file, markdown, expectedProfile) {
   if (!stamp.generated || !stamp.generation_id || !stamp.projection_id) {
     throw new Error("stamp lacks generated, generation_id, or projection_id");
   }
+  if (stamp.generation_id !== GENERATION_IDS[expectedProfile]) {
+    throw new Error(`stamp generation_id must be ${GENERATION_IDS[expectedProfile]}`);
+  }
+  if (stamp.projection_id !== PROJECTION_ID) throw new Error(`stamp projection_id must be ${PROJECTION_ID}`);
   if (!stamp.source?.includes(INPUT_SET_SOURCE)) {
     throw new Error(`stamp source must reference ${INPUT_SET_SOURCE}`);
   }
   if (stamp.source_revision !== INPUT_SET_REVISION) throw new Error(`stamp source_revision must be ${INPUT_SET_REVISION}`);
   return stamp;
+}
+
+function validateFocusedStamp(markdown) {
+  if (!markdown.startsWith("> ")) return;
+  const stamp = parseStamp(markdown);
+  const profile = stamp.profile;
+  if (stamp["docai-http"] !== SPEC_VERSION) throw new Error(`stamp version must be ${SPEC_VERSION}`);
+  if (!GENERATION_IDS[profile]) throw new Error("focused stamp profile must be full or compact");
+  if (!stamp.generated || !stamp.generation_id || !stamp.projection_id) {
+    throw new Error("focused stamp lacks generated, generation_id, or projection_id");
+  }
+  if (stamp.generation_id !== GENERATION_IDS[profile]) {
+    throw new Error(`stamp generation_id must be ${GENERATION_IDS[profile]}`);
+  }
+  if (stamp.projection_id !== PROJECTION_ID) throw new Error(`stamp projection_id must be ${PROJECTION_ID}`);
+  if (!stamp.source?.includes(INPUT_SET_SOURCE)) {
+    throw new Error(`stamp source must reference ${INPUT_SET_SOURCE}`);
+  }
+  if (stamp.source_revision !== INPUT_SET_REVISION) throw new Error(`stamp source_revision must be ${INPUT_SET_REVISION}`);
 }
 
 function validateProfileSet(setDir, profile) {
@@ -1302,6 +1331,7 @@ function validateFocusedSnippetSemantics(file, kind, fixtures) {
     try {
       if (first.includes("**field_defaults**:")) validateFieldDefaults(first);
       fixtures.forEach((fixture) => {
+        validateFocusedStamp(fixture);
         validateTypeExpressions(fixture);
         validateLogicalFieldPaths(fixture);
         validateNoSameAsInErrorShapes(fixture);
@@ -1319,6 +1349,7 @@ function validateFocusedSnippetSemantics(file, kind, fixtures) {
   const invalidValidators = {
     "field-defaults-retained-column.md": () => validateFieldDefaults(first),
     "field-defaults-unknown-value.md": () => validateFieldDefaults(first),
+    "focused-source-revision-missing.md": () => validateFocusedStamp(first),
     "idempotency-safe-retry-missing-wire-contract.md": () => validateFocusedRetryContract(first),
     "same-as-error-shape.md": () => validateNoSameAsInErrorShapes(first),
     "opaque-fields-before-client-visible-fields.md": () => validateCompactFieldHeadings(first),
@@ -1334,6 +1365,14 @@ function validateFocusedSnippetSemantics(file, kind, fixtures) {
     "xml-xpath-field.md": () => validateLogicalFieldPaths(first),
     "non-extension-heading.md": () => validateNoUnknownNonExtensionHeading(first),
   };
+  if (name !== "focused-source-revision-missing.md") {
+    try {
+      fixtures.forEach(validateFocusedStamp);
+    } catch (error) {
+      fail(file, "focused-invalid-metadata", error.message);
+      return;
+    }
+  }
   const validator = invalidValidators[name];
   if (!validator) return;
   try {
