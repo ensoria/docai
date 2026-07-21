@@ -250,7 +250,7 @@ Decision guidance:
   released `0.12.0` evaluation records.
 - [x] Refresh deterministic context and token-load metrics for every affected
   task.
-- [ ] Refresh required-provider live LLM task runs for every affected task only
+- [x] Refresh required-provider live LLM task runs for every affected task only
   after the user explicitly approves provider submission and possible API
   usage cost.
 - [x] Keep the existing OpenAPI comparison historical and explicitly scoped to
@@ -260,7 +260,7 @@ Decision guidance:
 - [x] Confirm `OPENAPI-COMPARISON-EVIDENCE.md` and the top-level `README.md`
   already scope comparative claims to the evaluated `0.12.0` fixture, target
   models, and task contracts; no claim update is required for `rc.2`.
-- [ ] Record failed, blocked, and passing live results without converting a
+- [x] Record failed, blocked, and passing live results without converting a
   provider-access failure into a conformance failure.
 
 Evidence refresh rule:
@@ -283,7 +283,7 @@ Refresh progress:
 - All fifteen required-target live task records pass across Google, Anthropic,
   and OpenAI under automated grading after representation-equivalent multipart
   and workflow recovery normalization.
-- [ ] Resolve the human-review ambiguity between early `payment.completed`
+- [x] Resolve the human-review ambiguity between early `payment.completed`
   transition to `payment.settled` and the `POST /orders` pending-payment
   precondition; update authoritative/projected workflow semantics and rerun the
   affected three-provider workflow task if the contract changes.
@@ -297,7 +297,7 @@ Chosen resolution:
   another capture.
 - The authoritative source, full/compact projection, checker, task packet, and
   deterministic token-load records are updated as `rc2-002`; the three live
-  workflow records remain to be refreshed.
+  workflow records pass against the corrected contract.
 
 ## P2: Regression And Review Gate
 
@@ -311,7 +311,7 @@ Chosen resolution:
   artifacts were refreshed or remain claimed as supporting evidence.
 - [x] Run `node docai-http/tools/check-openapi-comparison.mjs` when comparison
   artifacts were refreshed or remain cited.
-- [ ] Run `node docai-http/tools/check-release-readiness.mjs` after the corrected
+- [x] Run `node docai-http/tools/check-release-readiness.mjs` after the corrected
   workflow live records are complete.
 - [x] Run `git diff --check`.
 - [x] Confirm no valid fixture contains a Type outside the normative grammar.
@@ -335,7 +335,7 @@ Chosen resolution:
 
 - [x] Add the `v1.0.0-rc.2` correction scope to `CHANGELOG.md` under
   `Unreleased` while work is in progress.
-- [ ] Prepare a `1.0.0-rc.2` changelog section before tagging.
+- [x] Prepare a `1.0.0-rc.2` changelog section before tagging.
 - [x] Add `v1.0.0-rc.2` release notes to `RELEASE.md`.
 - [x] Explain that `rc.2` corrects the intended `1.0.0` contract before stable
   publication and does not make `rc.1` fixtures mutable.
@@ -347,11 +347,11 @@ Chosen resolution:
 
 ## P2: Tag And Publish `v1.0.0-rc.2`
 
-- [ ] Confirm the worktree contains only intended `rc.2` changes.
-- [ ] Run the complete deterministic release-readiness gate immediately before
+- [x] Confirm the worktree contains only intended `rc.2` changes.
+- [x] Run the complete deterministic release-readiness gate immediately before
   tagging.
-- [ ] Run `git diff --check` immediately before tagging.
-- [ ] Prepare the public release description from `RELEASE.md`.
+- [x] Run `git diff --check` immediately before tagging.
+- [x] Prepare the public release description from `RELEASE.md`.
 - [ ] User creates the `v1.0.0-rc.2` tag.
 - [ ] User publishes the `v1.0.0-rc.2` release.
 - [ ] After publication, update current-tag wording from `v1.0.0-rc.1` to

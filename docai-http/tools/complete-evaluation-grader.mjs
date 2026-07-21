@@ -185,7 +185,7 @@ function validateWorkflowStep(stepNumber, expected, actualText, reasons) {
   (expected.keep ?? []).forEach((value) => {
     if (!containsToken(actualText, value)) reasons.push(`step ${stepNumber} must keep ${value}`);
   });
-  if (expected.state_after_success && !containsToken(actualText, expected.state_after_success)) {
+  if (expected.state_after_success && !workflowStateMatches(actualText, expected.state_after_success)) {
     reasons.push(`step ${stepNumber} must reach ${expected.state_after_success}`);
   }
 }
@@ -202,7 +202,7 @@ function validateWorkflowFailureRecovery(task, response, reasons) {
   requiredTokens.forEach((token) => {
     if (!recoveryIncludes(text, token)) reasons.push(`failure_recovery must include ${token}`);
   });
-  if (!containsToken(text, "payment.pending") && !containsToken(fullText, "payment.pending")) {
+  if (!workflowStateMatches(text, "payment.pending") && !workflowStateMatches(fullText, "payment.pending")) {
     reasons.push("failure_recovery must include payment.pending");
   }
 }
@@ -230,6 +230,7 @@ function validateWorkflowWebhookReconciliation(task, response, reasons) {
 function webhookReconciliationIncludes(text, expected) {
   if (containsToken(text, expected)) return true;
   const normalized = String(expected).toLowerCase();
+  if (workflowStateMatches(text, normalized)) return true;
   if (normalized === "order.not_confirmed") {
     return (
       text.includes("order not confirmed") ||
@@ -250,6 +251,15 @@ function webhookReconciliationIncludes(text, expected) {
     );
   }
   return false;
+}
+
+function workflowStateMatches(text, expectedState) {
+  if (containsToken(text, expectedState)) return true;
+  const [scope, state, ...rest] = String(expectedState).toLowerCase().split(".");
+  if (!scope || !state || rest.length > 0) return false;
+  const objectStatePattern = new RegExp(`"${escapeRegExp(scope)}"\\s*:\\s*"([^"]*)"`, "gi");
+  const stateTokenPattern = new RegExp(`(?:^|[^a-z0-9_])${escapeRegExp(state)}(?:$|[^a-z0-9_])`, "i");
+  return [...text.matchAll(objectStatePattern)].some((match) => stateTokenPattern.test(match[1]));
 }
 
 function workflowPathMatches(text, expectedPath) {

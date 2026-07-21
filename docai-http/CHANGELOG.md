@@ -4,8 +4,10 @@ DocAI HTTP release history. Specification versioning and compatibility rules are
 
 ## Unreleased
 
-- Prepares `v1.0.0-rc.2` after external review found stable-blocking
-  conformance-content and checker-boundary inconsistencies in `v1.0.0-rc.1`.
+## 1.0.0-rc.2 (Release candidate)
+
+- Corrects stable-blocking conformance-content and checker-boundary
+  inconsistencies found by external review of `v1.0.0-rc.1`.
 - Aligns conformance Type cells with the normative simple Type grammar, moves
   enum values to constraints, and uses logical DocAI field paths for XML while
   retaining wire locations in meaning/prose.
@@ -30,8 +32,10 @@ DocAI HTTP release history. Specification versioning and compatibility rules are
   task grades plus 6/6 passing required-target token-load records.
 - Resolves the live-review early-webhook/order-precondition ambiguity by tracking
   payment and order state independently and allowing an already settled payment
-  to be associated with an order without another capture; the affected workflow
-  live records require refresh against the corrected projection.
+  to be associated with an order without another capture; all three affected
+  workflow live records pass against the corrected projection.
+- Normalizes equivalent dotted and structured workflow-state representations in
+  automated grading without relaxing the required workflow behavior.
 - Updates post-`v1.0.0-rc.1` publication wording so documentation names the
   release candidate as the current tagged public release while reserving
   `Stable` for the final `v1.0.0` tag.

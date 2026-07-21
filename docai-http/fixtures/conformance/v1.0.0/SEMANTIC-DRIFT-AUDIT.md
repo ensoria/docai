@@ -67,6 +67,10 @@ corrected conformance context without becoming part of that boundary.
 | Token load | Every standard stamp and several task documents changed size | Recompute all deterministic context metrics |
 | OpenAPI comparison | Existing results compare OpenAPI conditions with the `0.12.0` DocAI context | Keep them scoped to `0.12.0`, or rebuild and rerun all conditions before making an `rc.2` comparison claim |
 
+The selected DocAI task refresh is complete: all required live records and
+deterministic token-load records in the versioned `rc.2` snapshot pass. The
+OpenAPI comparison remains intentionally scoped to `0.12.0`.
+
 ## Refresh Rule
 
 If corrected standard documents change again, update this classification before
