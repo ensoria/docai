@@ -71,7 +71,7 @@ the RC-specific TODO files.
   behavior changed after the reviewed RC.4 state.
 - [x] Confirm the stable-preparation diff contains only intended publication
   wording, release metadata, review records, and TODO updates.
-- [ ] Confirm the worktree is clean after committing the stable-preparation
+- [x] Confirm the worktree is clean after committing the stable-preparation
   change.
 - [x] Confirm `v1.0.0` does not already exist locally or on the release remote.
 - [x] Prepare final release notes from the `1.0.0` section in `RELEASE.md`.
@@ -80,39 +80,38 @@ the RC-specific TODO files.
 
 User-side work after the pre-tag gate passes:
 
-- [ ] User creates annotated tag `v1.0.0` at the reviewed stable-preparation
+- [x] User creates annotated tag `v1.0.0` at the reviewed stable-preparation
   commit.
-- [ ] User pushes the `v1.0.0` tag.
-- [ ] User publishes the final `v1.0.0` release using the prepared release notes.
-- [ ] Verify the public tag resolves to the intended stable commit.
+- [x] User pushes the `v1.0.0` tag.
+- [x] User publishes the final `v1.0.0` release using the prepared release notes.
+- [x] Verify the public tag resolves to the intended stable commit.
 
 Do not move or recreate the final tag after publication. A later correction
 must use a new version according to the compatibility rules.
 
 ## P2: Post-Publication Alignment
 
-- [ ] Update current-release wording from `v1.0.0-rc.4` to published
+- [x] Update current-release wording from `v1.0.0-rc.4` to published
   `v1.0.0` without changing the tagged stable artifact.
-- [ ] Confirm root README, DocAI HTTP README, and `RELEASE.md` all identify
+- [x] Confirm root README, DocAI HTTP README, and `RELEASE.md` all identify
   `v1.0.0` as current and `Stable`.
-- [ ] Record tag/publication completion in this checklist and the changelog.
-- [ ] Rerun `node docai-http/tools/check-release-readiness.mjs`.
-- [ ] Rerun `git diff --check`.
+- [x] Record tag/publication completion in this checklist and the changelog.
+- [x] Rerun `node docai-http/tools/check-release-readiness.mjs`.
+- [x] Rerun `git diff --check`.
 - [ ] Commit and push the post-publication alignment separately.
 
 ## P3: Post-1.0 Handoff
 
-- [ ] Create a versioned post-`1.0.0` TODO for deferred adoption and tooling
+- [x] Create a versioned post-`1.0.0` TODO for deferred adoption and tooling
   work.
 - [ ] Create or refresh `README.ja.md` from the final English `1.0.0` text.
-- [ ] Keep recursive finite representation, public validator APIs, hosted CI,
+- [x] Keep recursive finite representation, public validator APIs, hosted CI,
   optional live targets, and expanded benchmarks outside the `1.0.0` contract
   unless separately designed and versioned.
 
-## Stop Conditions
+## Completed Guardrails
 
-- [ ] Stop and prepare another RC if stable preparation changes normative
-  behavior, conformance content, checker expectations, or compatibility scope.
-- [ ] Stop and investigate if any deterministic readiness check fails.
-- [ ] Do not send Live LLM API requests without explicit user approval; none are
-  currently required for final publication.
+- [x] Stable preparation did not change normative behavior, conformance content,
+  checker expectations, or compatibility scope.
+- [x] Every deterministic readiness check passed before publication.
+- [x] No Live LLM API request was required or sent for final publication.

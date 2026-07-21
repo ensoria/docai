@@ -7,8 +7,7 @@ This document defines the repository release process for DocAI HTTP. It is opera
 Scope:
 
 - Publication label: final `Stable` for tag `v1.0.0`.
-- Current tagged public release remains `v1.0.0-rc.4` until the final tag is
-  published.
+- Current tagged public release: Stable `v1.0.0`.
 - Stable compatibility is limited to normative `README.md` text,
   `fixtures/conformance/v1.0.0/`, and the self-contained
   `tools/check-conformance-fixtures.mjs`.
@@ -50,12 +49,11 @@ Required pre-tag validation:
   metadata, and review records relative to the reviewed RC.4 contract.
 - Confirm `v1.0.0` does not already exist locally or on the release remote.
 
-Publication notes:
+Publication result:
 
-- Create annotated tag `v1.0.0` at the reviewed stable-preparation commit.
-- Publish this section as the final release notes.
-- After publication, update current-release wording from `v1.0.0-rc.4` to
-  `v1.0.0` in a separate commit without changing the tag.
+- Annotated tag `v1.0.0` is published at the reviewed stable-preparation commit.
+- This section was used as the final release notes.
+- Post-publication current-release wording is aligned without changing the tag.
 
 ## 1.0.0-rc.4 Release Notes (Release candidate)
 
@@ -325,13 +323,13 @@ Do not imply compatibility for structures outside the published label. Non-core 
 
 Before using the `Complete-generator-ready candidate` label, complete the evidence gate in `COMPLETE-GENERATOR-READINESS.md`.
 
-The current tagged public release is `v1.0.0-rc.4`. Its focused review completed with no remaining stable blocker, so the reviewed contract is prepared for final `v1.0.0` publication. The previous `v0.12.0` complete-generator-ready candidate remains historical supporting evidence. Its complete-candidate corpus has complete focused fixture coverage, matching checker coverage, required-target LLM evaluations, token-load evidence, and scoped OpenAPI comparison evidence.
+The current tagged public release is Stable `v1.0.0`. It promotes the reviewed RC.4 contract without changing the format, conformance contract, or projected client behavior. The previous `v0.12.0` complete-generator-ready candidate remains historical supporting evidence. Its complete-candidate corpus has complete focused fixture coverage, matching checker coverage, required-target LLM evaluations, token-load evidence, and scoped OpenAPI comparison evidence.
 
 Do not update the README publication label merely because one candidate corpus exists. The label may change only after the complete full-profile set, matching compact projection, focused complete-surface fixtures, checker behavior, evaluation notes, and changelog/release notes support the broader claim.
 
-## Pre-1.0 Stable Boundary Decision
+## 1.0.0 Stable Boundary Decision
 
-The intended first stable conformance corpus is `fixtures/conformance/v1.0.0/`.
+The stable conformance corpus is `fixtures/conformance/v1.0.0/`.
 It copies the standard document content from `fixtures/complete-candidates/v0.12.0/`
 into a separate versioned stable-boundary path with `docai-http: 1.0.0` metadata
 and stable conformance expectation labels.

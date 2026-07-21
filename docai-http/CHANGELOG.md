@@ -4,6 +4,9 @@ DocAI HTTP release history. Specification versioning and compatibility rules are
 
 ## Unreleased
 
+- Aligns current-release wording after publication of Stable `v1.0.0` and
+  records verification of the public annotated tag.
+
 ## 1.0.0 (Stable)
 
 - Promotes the reviewed `v1.0.0-rc.4` contract to the first Stable DocAI HTTP
