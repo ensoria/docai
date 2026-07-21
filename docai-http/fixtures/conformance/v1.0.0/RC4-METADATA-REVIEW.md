@@ -28,8 +28,8 @@ Expected result: resolved.
 Expected result: resolved.
 
 - Root `README.md`, `docai-http/README.md`, and `RELEASE.md` identify
-  `v1.0.0-rc.3` as the current tagged public release.
-- They identify `v1.0.0-rc.4` as the next release candidate and reserve
+  `v1.0.0-rc.4` as the current tagged public release.
+- They identify focused RC.4 review as the next release gate and reserve
   `Stable` for final published `v1.0.0`.
 - The published `v1.0.0-rc.3` tag is not rewritten.
 

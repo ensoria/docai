@@ -52,9 +52,9 @@ focused metadata stamps, and found stale current-release wording. Final stable
 
 ## P2: Tag, Publish, And Review
 
-- [ ] User creates the `v1.0.0-rc.4` tag.
-- [ ] User publishes the `v1.0.0-rc.4` release.
-- [ ] Update current-release wording to `v1.0.0-rc.4` after publication.
+- [x] User creates the `v1.0.0-rc.4` tag.
+- [x] User publishes the `v1.0.0-rc.4` release.
+- [x] Update current-release wording to `v1.0.0-rc.4` after publication.
 - [ ] Request focused external review using `RC4-METADATA-REVIEW.md`.
 - [ ] Resolve every review result before final stable publication.
 

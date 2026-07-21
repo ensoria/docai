@@ -7,9 +7,9 @@ This document defines the repository release process for DocAI HTTP. It is opera
 Scope:
 
 - Publication label remains `1.0.0 release candidate`, not final `Stable`.
-- Current tagged public release: `v1.0.0-rc.3`.
-- Release path: correct focused-fixture source identity, publish
-  `v1.0.0-rc.4`, and repeat the focused metadata review before final `v1.0.0`.
+- Current tagged public release: `v1.0.0-rc.4`.
+- Release path: perform the focused metadata review of published
+  `v1.0.0-rc.4` before final `v1.0.0`.
 - The DocAI HTTP format, authoritative input content, and projected client
   contract do not change.
 
@@ -270,7 +270,7 @@ Do not imply compatibility for structures outside the published label. Non-core 
 
 Before using the `Complete-generator-ready candidate` label, complete the evidence gate in `COMPLETE-GENERATOR-READINESS.md`.
 
-The current tagged public release is `v1.0.0-rc.3`, published as `1.0.0 release candidate`, not final `Stable`. Review confirmed the authoritative source content and found a focused-fixture metadata identity blocker, so `v1.0.0-rc.4` is required before final stable publication. The previous `v0.12.0` complete-generator-ready candidate remains historical supporting evidence. Its complete-candidate corpus has complete focused fixture coverage, matching checker coverage, required-target LLM evaluations, token-load evidence, and scoped OpenAPI comparison evidence.
+The current tagged public release is `v1.0.0-rc.4`, published as `1.0.0 release candidate`, not final `Stable`. RC.4 corrects the focused-fixture metadata identity blocker found in RC.3 review and must complete focused review before final stable publication. The previous `v0.12.0` complete-generator-ready candidate remains historical supporting evidence. Its complete-candidate corpus has complete focused fixture coverage, matching checker coverage, required-target LLM evaluations, token-load evidence, and scoped OpenAPI comparison evidence.
 
 Do not update the README publication label merely because one candidate corpus exists. The label may change only after the complete full-profile set, matching compact projection, focused complete-surface fixtures, checker behavior, evaluation notes, and changelog/release notes support the broader claim.
 

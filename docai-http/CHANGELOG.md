@@ -4,6 +4,9 @@ DocAI HTTP release history. Specification versioning and compatibility rules are
 
 ## Unreleased
 
+- Updates current-release wording after publication of `v1.0.0-rc.4` and
+  records focused RC.4 review as the next stable-release gate.
+
 ## 1.0.0-rc.4 (Release candidate)
 
 - Completes focused-fixture metadata identity after review of published
