@@ -42,7 +42,7 @@ provider request is required.
 
 ## Reviewer Result
 
-- [ ] Focused source identity is complete and checker-enforced.
-- [ ] Current-release wording is correct.
-- [ ] No new stable-blocking contradiction was found inside this review scope.
-- [ ] Any unrelated feature request was classified as post-`1.0.0` backlog.
+- [x] Focused source identity is complete and checker-enforced.
+- [x] Current-release wording is correct.
+- [x] No new stable-blocking contradiction was found inside this review scope.
+- [x] Any unrelated feature request was classified as post-`1.0.0` backlog.

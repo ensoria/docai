@@ -55,16 +55,15 @@ focused metadata stamps, and found stale current-release wording. Final stable
 - [x] User creates the `v1.0.0-rc.4` tag.
 - [x] User publishes the `v1.0.0-rc.4` release.
 - [x] Update current-release wording to `v1.0.0-rc.4` after publication.
-- [ ] Request focused external review using `RC4-METADATA-REVIEW.md`.
-- [ ] Resolve every review result before final stable publication.
+- [x] Request focused external review using `RC4-METADATA-REVIEW.md`.
+- [x] Resolve every review result before final stable publication.
 
 ## P3: Final Stable Handoff
 
-- [ ] Return to `TODO-v1.0.0.md` only after the focused RC.4 review finds no
-  stable blocker.
-- [ ] Publish another RC rather than stable if review changes normative text,
-  projected conformance content, checker expectations, or the compatibility
-  boundary again.
+- [x] Confirm the focused RC.4 review found no stable blocker and hand final
+  publication work to `TODO-v1.0.0-final.md`.
+- [x] Confirm another RC is unnecessary because review requires no normative,
+  conformance-content, checker, or compatibility-boundary change.
 
 ## Explicit Non-Goals
 

@@ -1,5 +1,8 @@
 # DocAI HTTP TODO v1.0.0
 
+Status: historical release-planning record. The active final publication
+checklist is `TODO-v1.0.0-final.md`.
+
 This backlog starts after the pre-`1.0.0` stabilization work in
 `TODO-v0.13.0.md` is complete.
 
