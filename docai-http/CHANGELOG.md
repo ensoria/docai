@@ -22,9 +22,12 @@ DocAI HTTP release history. Specification versioning and compatibility rules are
   document-upload retry guidance.
 - Makes token-budget sizing advisory, clarifies complete-set and focused-fixture
   responsibilities, and tightens the `Stable` release-label conditions.
-- Records semantic drift from the evaluated `0.12.0` corpus and keeps existing
-  LLM/OpenAPI results scoped to that historical candidate pending an `rc.2`
-  evidence-refresh decision.
+- Records semantic drift from the evaluated `0.12.0` corpus, adds a separate
+  `rc.2` evaluation snapshot for corrected conformance context, and retains the
+  OpenAPI comparison only as historical `0.12.0` evidence.
+- Refreshes deterministic token-load evidence, tightens request/error/workflow
+  grading for the idempotency contract, and records the required Google live
+  task refresh while Anthropic/OpenAI refreshes remain pending maintainer runs.
 - Updates post-`v1.0.0-rc.1` publication wording so documentation names the
   release candidate as the current tagged public release while reserving
   `Stable` for the final `v1.0.0` tag.

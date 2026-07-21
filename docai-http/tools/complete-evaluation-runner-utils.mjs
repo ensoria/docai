@@ -7,9 +7,13 @@ export const SPEC_VERSION = "0.12.0";
 export const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 export const DEFAULT_DIR = path.resolve(SCRIPT_DIR, "..", "fixtures", "complete-candidates", `v${SPEC_VERSION}`);
 export const CANDIDATE_DIR = path.resolve(process.env.DOCAI_COMPLETE_CANDIDATE_DIR ?? DEFAULT_DIR);
-export const TASKS_FILE = path.join(CANDIDATE_DIR, "evaluations", "tasks.json");
-export const TARGETS_FILE = path.join(CANDIDATE_DIR, "evaluations", "targets.json");
-export const RUNS_DIR = path.join(CANDIDATE_DIR, "evaluations", "runs");
+export const CONTEXT_DIR = path.resolve(process.env.DOCAI_COMPLETE_CONTEXT_DIR ?? CANDIDATE_DIR);
+export const EVALUATION_DIR = path.resolve(
+  process.env.DOCAI_COMPLETE_EVALUATION_DIR ?? path.join(CANDIDATE_DIR, "evaluations"),
+);
+export const TASKS_FILE = path.join(EVALUATION_DIR, "tasks.json");
+export const TARGETS_FILE = path.join(EVALUATION_DIR, "targets.json");
+export const RUNS_DIR = path.join(EVALUATION_DIR, "runs");
 export const VALID_GROUPS = new Set(["request_construction", "response_handling", "error_handling", "workflow_completion", "token_load"]);
 
 export function parseArgs(argv, defaultGroup, defaultTarget) {
@@ -106,7 +110,7 @@ function contextForTask(task) {
 function contextForProfile(profile, load) {
   return load
     .map((relativePath) => {
-      const file = path.join(CANDIDATE_DIR, "valid", profile, relativePath);
+      const file = path.join(CONTEXT_DIR, "valid", profile, relativePath);
       return `<!-- ${profile}:${relativePath} -->\n\n${read(file)}`;
     })
     .join("\n\n");

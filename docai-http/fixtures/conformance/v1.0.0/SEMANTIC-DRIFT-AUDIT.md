@@ -51,7 +51,9 @@ Comparable and newly added evidence checked:
 - `source/recursive-indirect-openapi.yaml`.
 
 The `0.12.0` evaluation result files are intentionally not modified or duplicated
-into the stable compatibility boundary.
+into the stable compatibility boundary. Refreshed evidence is recorded separately
+under `fixtures/release-candidates/v1.0.0-rc.2/evaluations/` and reads the
+corrected conformance context without becoming part of that boundary.
 
 ## Required-Task Impact
 

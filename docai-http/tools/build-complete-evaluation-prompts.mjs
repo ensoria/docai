@@ -9,8 +9,12 @@ const SPEC_VERSION = "0.12.0";
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_DIR = path.resolve(SCRIPT_DIR, "..", "fixtures", "complete-candidates", `v${SPEC_VERSION}`);
 const CANDIDATE_DIR = path.resolve(process.env.DOCAI_COMPLETE_CANDIDATE_DIR ?? DEFAULT_DIR);
-const TASKS_FILE = path.join(CANDIDATE_DIR, "evaluations", "tasks.json");
-const TARGETS_FILE = path.join(CANDIDATE_DIR, "evaluations", "targets.json");
+const CONTEXT_DIR = path.resolve(process.env.DOCAI_COMPLETE_CONTEXT_DIR ?? CANDIDATE_DIR);
+const EVALUATION_DIR = path.resolve(
+  process.env.DOCAI_COMPLETE_EVALUATION_DIR ?? path.join(CANDIDATE_DIR, "evaluations"),
+);
+const TASKS_FILE = path.join(EVALUATION_DIR, "tasks.json");
+const TARGETS_FILE = path.join(EVALUATION_DIR, "targets.json");
 const VALID_GROUPS = new Set([
   "request_construction",
   "response_handling",
@@ -130,7 +134,7 @@ function contextForTask(task) {
 function contextForProfile(profile, load) {
   return load
     .map((relativePath) => {
-      const file = path.join(CANDIDATE_DIR, "valid", profile, relativePath);
+      const file = path.join(CONTEXT_DIR, "valid", profile, relativePath);
       return `<!-- ${profile}:${relativePath} -->\n\n${read(file)}`;
     })
     .join("\n\n");

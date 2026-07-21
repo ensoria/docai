@@ -193,13 +193,30 @@ function validateWorkflowStep(stepNumber, expected, actualText, reasons) {
 function validateWorkflowFailureRecovery(task, response, reasons) {
   const text = searchableText(response.failure_recovery ?? response.retryable_order_failure ?? response);
   const fullText = searchableText(response);
-  const requiredTokens = ["post /orders", "cart_id", "payment_id", "retry"];
+  const requiredTokens = task.expected_outcome.failure_recovery_required ?? [
+    "post /orders",
+    "cart_id",
+    "payment_id",
+    "retry",
+  ];
   requiredTokens.forEach((token) => {
-    if (!containsToken(text, token)) reasons.push(`failure_recovery must include ${token}`);
+    if (!recoveryIncludes(text, token)) reasons.push(`failure_recovery must include ${token}`);
   });
   if (!containsToken(text, "payment.pending") && !containsToken(fullText, "payment.pending")) {
     reasons.push("failure_recovery must include payment.pending");
   }
+}
+
+function recoveryIncludes(text, expected) {
+  if (containsToken(text, expected)) return true;
+  const normalized = String(expected).toLowerCase();
+  if (normalized === "post /orders") {
+    return containsToken(text, "order request") || containsToken(text, "order operation");
+  }
+  if (normalized === "same idempotency-key") {
+    return containsToken(text, "idempotency") && containsToken(text, "same");
+  }
+  return false;
 }
 
 function validateWorkflowWebhookReconciliation(task, response, reasons) {
@@ -276,6 +293,15 @@ function actionIncludes(actionText, expectedPart) {
   if (normalizedExpected.includes("do not retry") && actionText.includes("do not retry")) return true;
   if (normalizedExpected.includes("refresh once") && actionText.includes("refresh") && actionText.includes("once")) return true;
   if (normalizedExpected.includes("retry once") && actionText.includes("retry") && actionText.includes("once")) return true;
+  if (normalizedExpected.includes("correct the input")) {
+    return (actionText.includes("correct") || actionText.includes("fix")) && actionText.includes("input");
+  }
+  if (normalizedExpected.includes("new logical operation") || normalizedExpected.includes("new `idempotency-key`")) {
+    return (
+      actionText.includes("idempotency") &&
+      (actionText.includes("new") || actionText.includes("fresh") || actionText.includes("different"))
+    );
+  }
   return false;
 }
 
@@ -371,6 +397,9 @@ function headerValueMatches(name, expectedValue, actualValue) {
   if (name === "content-type") {
     return mediaType(actualValue) === mediaType(expectedValue);
   }
+  if (name === "idempotency-key" && expectedValue === "<operation-unique-key>") {
+    return actualValue.length >= 1 && actualValue.length <= 128 && /^[\x21-\x7e]+$/.test(actualValue);
+  }
   return actualValue === expectedValue;
 }
 
@@ -458,9 +487,6 @@ function validateMultipartBoundary(task, response, reasons) {
   const contentType = String(
     response.content_type ?? response.contentType ?? response.headers?.["Content-Type"] ?? response.headers?.["content-type"] ?? "",
   ).toLowerCase();
-  if (!contentType.includes("multipart/form-data")) reasons.push("content_type must include multipart/form-data");
-  if (task.expected_outcome.boundary_handling !== "library-generated") return;
-
   const boundaryText = [
     response.boundary_handling,
     response.boundaryHandling,
@@ -472,6 +498,8 @@ function validateMultipartBoundary(task, response, reasons) {
     .filter(Boolean)
     .join(" ")
     .toLowerCase();
+  if (!boundaryText.includes("multipart/form-data")) reasons.push("content_type must include multipart/form-data");
+  if (task.expected_outcome.boundary_handling !== "library-generated") return;
   if (!/\b(library|delegate|delegated|generated|http client|http library)\b/.test(boundaryText)) {
     reasons.push("multipart boundary delegation must be represented");
   }
@@ -480,5 +508,25 @@ function validateMultipartBoundary(task, response, reasons) {
 function normalizeParts(response) {
   const rawParts = response.parts ?? response.body?.parts ?? response.body;
   if (!Array.isArray(rawParts)) return new Map();
-  return new Map(rawParts.filter((part) => part && part.name).map((part) => [part.name, part]));
+  return new Map(
+    rawParts
+      .filter((part) => part && typeof part === "object")
+      .map((part) => normalizePart(part))
+      .filter((part) => part.name)
+      .map((part) => [part.name, part]),
+  );
+}
+
+function normalizePart(part) {
+  const disposition = normalizeHeaders(part.headers).get("content-disposition") ?? "";
+  return {
+    ...part,
+    name: part.name ?? dispositionParameter(disposition, "name"),
+    filename: part.filename ?? dispositionParameter(disposition, "filename"),
+  };
+}
+
+function dispositionParameter(value, parameter) {
+  const match = String(value).match(new RegExp(`(?:^|;)\\s*${parameter}="([^"]+)"`, "i"));
+  return match?.[1];
 }

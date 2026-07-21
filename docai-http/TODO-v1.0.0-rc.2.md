@@ -245,19 +245,21 @@ Decision guidance:
 - [x] Identify which existing request construction, response handling, error
   handling, workflow completion, token-load, and OpenAPI comparison records no
   longer apply to the corrected corpus.
-- [ ] Create a versioned `rc.2` evaluation snapshot outside the stable
+- [x] Create a versioned `rc.2` evaluation snapshot outside the stable
   compatibility boundary if refreshed evidence is required; do not modify the
   released `0.12.0` evaluation records.
-- [ ] Refresh deterministic context and token-load metrics for every affected
+- [x] Refresh deterministic context and token-load metrics for every affected
   task.
 - [ ] Refresh required-provider live LLM task runs for every affected task only
   after the user explicitly approves provider submission and possible API
   usage cost.
-- [ ] Refresh OpenAPI comparison runs if `rc.2` or final `v1.0.0` will use those
-  results as evidence for the corrected documents; otherwise keep the existing
-  comparison explicitly historical and scoped to `0.12.0`.
-- [ ] Update `OPENAPI-COMPARISON-EVIDENCE.md` and top-level `README.md` only with
-  claims supported by the chosen evidence path.
+- [x] Keep the existing OpenAPI comparison historical and explicitly scoped to
+  `0.12.0`; do not use those results as evidence for the corrected `rc.2`
+  documents or spend 45 additional provider calls on an unchanged adoption
+  claim.
+- [x] Confirm `OPENAPI-COMPARISON-EVIDENCE.md` and the top-level `README.md`
+  already scope comparative claims to the evaluated `0.12.0` fixture, target
+  models, and task contracts; no claim update is required for `rc.2`.
 - [ ] Record failed, blocked, and passing live results without converting a
   provider-access failure into a conformance failure.
 
@@ -271,6 +273,18 @@ Evidence refresh rule:
   the `rc.2` readiness claim.
 - No live provider request may be sent without explicit approval in the turn in
   which it will be sent.
+
+Refresh progress:
+
+- The `rc.2` snapshot is in
+  `fixtures/release-candidates/v1.0.0-rc.2/evaluations/` and reads corrected
+  context from `fixtures/conformance/v1.0.0/valid/`.
+- Six required-target deterministic token-load records pass.
+- Five Google required-target live records pass after representation-equivalent
+  multipart and workflow recovery normalization.
+- Ten Anthropic/OpenAI live records remain pending because the managed execution
+  environment blocked private-workspace context export. They must be run by the
+  maintainer with the commands in the snapshot README.
 
 ## P2: Regression And Review Gate
 

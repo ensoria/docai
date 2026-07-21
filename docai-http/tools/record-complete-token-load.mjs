@@ -5,7 +5,7 @@ import process from "node:process";
 
 import { gradeEvaluationResponse } from "./complete-evaluation-grader.mjs";
 import {
-  CANDIDATE_DIR,
+  CONTEXT_DIR,
   mergeRunRecords,
   outputFileForGroup,
   parseArgs,
@@ -110,7 +110,7 @@ function profileMetrics(profile, load) {
 function contextForProfile(profile, load) {
   return load
     .map((relativePath) => {
-      const file = path.join(CANDIDATE_DIR, "valid", profile, relativePath);
+      const file = path.join(CONTEXT_DIR, "valid", profile, relativePath);
       return `\n\n<!-- ${profile}:${relativePath} -->\n\n${read(file)}`;
     })
     .join("");

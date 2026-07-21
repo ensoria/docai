@@ -7,7 +7,9 @@ import { fileURLToPath } from "node:url";
 
 import { gradeEvaluationRecord } from "./complete-evaluation-grader.mjs";
 
-const SPEC_VERSION = "0.12.0";
+const SPEC_VERSION = process.env.DOCAI_COMPLETE_EXPECTED_VERSION ?? "0.12.0";
+const EXPECTED_CANDIDATE =
+  process.env.DOCAI_COMPLETE_EXPECTED_CANDIDATE ?? `complete-candidates/v${SPEC_VERSION}`;
 const REQUIRED_GROUPS = new Set([
   "request_construction",
   "response_handling",
@@ -17,11 +19,15 @@ const REQUIRED_GROUPS = new Set([
 ]);
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_DIR = path.resolve(SCRIPT_DIR, "..", "fixtures", "complete-candidates", `v${SPEC_VERSION}`);
-const CANDIDATE_DIR = path.resolve(process.argv[2] ?? DEFAULT_DIR);
-const TASKS_FILE = path.join(CANDIDATE_DIR, "evaluations", "tasks.json");
-const TARGETS_FILE = path.join(CANDIDATE_DIR, "evaluations", "targets.json");
-const RESULTS_FILE = path.join(CANDIDATE_DIR, "evaluations", "RESULTS.md");
-const RUNS_DIR = path.join(CANDIDATE_DIR, "evaluations", "runs");
+const LEGACY_ROOT = path.resolve(process.argv[2] ?? DEFAULT_DIR);
+const CONTEXT_DIR = path.resolve(process.env.DOCAI_COMPLETE_CONTEXT_DIR ?? LEGACY_ROOT);
+const EVALUATION_DIR = path.resolve(
+  process.env.DOCAI_COMPLETE_EVALUATION_DIR ?? path.join(LEGACY_ROOT, "evaluations"),
+);
+const TASKS_FILE = path.join(EVALUATION_DIR, "tasks.json");
+const TARGETS_FILE = path.join(EVALUATION_DIR, "targets.json");
+const RESULTS_FILE = path.join(EVALUATION_DIR, "RESULTS.md");
+const RUNS_DIR = path.join(EVALUATION_DIR, "runs");
 const RUN_STATUSES = new Set(["pass", "fail", "inconclusive", "blocked"]);
 
 const failures = [];
@@ -40,7 +46,7 @@ function readJson(file) {
 }
 
 function profileRoot(profile) {
-  return path.join(CANDIDATE_DIR, "valid", profile);
+  return path.join(CONTEXT_DIR, "valid", profile);
 }
 
 function profilePath(profile, relativePath) {
@@ -77,8 +83,8 @@ function contextMetrics(taskId, label, context) {
 
 function validateTaskPacket(packet) {
   if (packet.docai_http !== SPEC_VERSION) throw new Error(`docai_http must be ${SPEC_VERSION}`);
-  if (packet.candidate !== `complete-candidates/v${SPEC_VERSION}`) {
-    throw new Error(`candidate must be complete-candidates/v${SPEC_VERSION}`);
+  if (packet.candidate !== EXPECTED_CANDIDATE) {
+    throw new Error(`candidate must be ${EXPECTED_CANDIDATE}`);
   }
   if (!Array.isArray(packet.tasks) || packet.tasks.length === 0) throw new Error("tasks must be a non-empty array");
 
@@ -173,7 +179,7 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log(`Complete candidate evaluation check passed for ${path.relative(process.cwd(), CANDIDATE_DIR) || "."}`);
+console.log(`Complete candidate evaluation check passed for ${path.relative(process.cwd(), EVALUATION_DIR) || "."}`);
 console.log("");
 console.log("| Task | Context | UTF-8 bytes | Characters | Approx tokens(chars/4) |");
 console.log("|---|---|---:|---:|---:|");
@@ -264,7 +270,7 @@ function parseJsonLine(file, line, lineNumber) {
   try {
     return JSON.parse(line);
   } catch (error) {
-    throw new Error(`${path.relative(CANDIDATE_DIR, file)}:${lineNumber} is not valid JSON: ${error.message}`);
+    throw new Error(`${path.relative(EVALUATION_DIR, file)}:${lineNumber} is not valid JSON: ${error.message}`);
   }
 }
 

@@ -38,8 +38,12 @@ Evidence status:
   corpus.
 - `SEMANTIC-DRIFT-AUDIT.md` records task-relevant differences from the evaluated
   `0.12.0` corpus.
-- Existing LLM and OpenAPI comparison records remain historical `0.12.0`
-  evidence until the release chooses and completes an `rc.2` refresh path.
+- A separate `fixtures/release-candidates/v1.0.0-rc.2/evaluations/` snapshot
+  refreshes affected DocAI task evidence against corrected conformance context;
+  deterministic and Google records are complete, while Anthropic/OpenAI records
+  require maintainer execution before tagging.
+- OpenAPI comparison records remain historical `0.12.0` evidence and are not
+  presented as a comparison against the corrected `rc.2` documents.
 
 Required pre-tag validation:
 
@@ -231,9 +235,14 @@ After `v1.0.0-rc.1` is published:
 
 For the intended `1.0.0` stable release, source fixtures remain traceability evidence only. `fixtures/conformance/v1.0.0/SOURCE-TRACEABILITY.md` records the source inputs, their conformance roles, and the decision not to require a public source-to-projection validator before `1.0.0`.
 
-No missing source inputs are known for the current stable conformance corpus:
+The authoritative input-set evidence for the current conformance corpus is:
 
-- `source/complete-openapi.yaml` covers the full/compact complete API example pair.
+- `source/complete-input-set.yaml` identifies every authoritative input and the
+  shared input-set revision used by complete document stamps.
+- `source/complete-openapi.yaml` supplies the OpenAPI-representable HTTP surface.
+- `source/complete-behavior.yaml` supplies conventions, errors, idempotency,
+  workflows, webhooks, multipart constraints, and retry semantics that are not
+  present in the OpenAPI source.
 - `source/recursive-direct-openapi.yaml` covers direct recursive-schema fallback.
 - `source/recursive-indirect-openapi.yaml` covers indirect recursive-schema fallback.
 
@@ -244,12 +253,12 @@ Do not promote a source-to-projection validator as part of `1.0.0` unless its in
 `fixtures/conformance/v1.0.0/SEMANTIC-DRIFT-AUDIT.md` records the audit comparing
 the stable conformance corpus with `fixtures/complete-candidates/v0.12.0/`.
 
-The audit found no semantic drift in standard DocAI HTTP document content after
-normalizing version metadata, source paths, fixture identity values, fixture
-expectation labels, and source fixture title/version metadata. Therefore the
-`0.12.0` live LLM task evaluations, deterministic token-load evidence, and
-OpenAPI comparison records remain carried-forward supporting evidence for
-`v1.0.0-rc.1`.
+The audit now records task-relevant semantic drift introduced by the `rc.2`
+corrections, especially the explicit idempotency and safe-retry contract. The
+`0.12.0` live LLM, token-load, and OpenAPI comparison records remain historical
+evidence only. The separate `rc.2` evaluation snapshot refreshes affected DocAI
+tasks without widening the stable compatibility boundary; the OpenAPI comparison
+remains scoped to its original `0.12.0` fixture.
 
 If standard document content changes after this audit, repeat deterministic
 checks and decide whether affected live LLM or OpenAPI comparison evidence must
