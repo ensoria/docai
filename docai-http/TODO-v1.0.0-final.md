@@ -22,58 +22,59 @@ the RC-specific TODO files.
 
 ## P0: Freeze The Reviewed Contract
 
-- [ ] Freeze normative DocAI HTTP syntax and behavior through the stable tag.
-- [ ] Freeze `fixtures/conformance/v1.0.0/` content and
+- [x] Freeze normative DocAI HTTP syntax and behavior through the stable tag;
+  final-preparation edits are publication-status wording only.
+- [x] Freeze standard and focused fixtures, authoritative sources, and
   `tools/check-conformance-fixtures.mjs` behavior through the stable tag.
-- [ ] Keep projection ID `conformance-20260721-rc4-001` and source revision
+- [x] Keep projection ID `conformance-20260721-rc4-001` and source revision
   `fixture-input-set-rc3-001`; do not restamp the reviewed corpus for the final
   tag.
-- [ ] Confirm the post-RC.4 current-release update is wording/metadata only.
-- [ ] If any normative text, projected conformance content, checker expectation,
-  or compatibility boundary must change, stop stable preparation and create a
-  new RC checklist instead.
+- [x] Confirm the post-RC.4 current-release update is wording/metadata only.
+- [x] Establish the stop rule: if any normative behavior, projected conformance
+  content, checker expectation, or compatibility boundary must change, stop
+  stable preparation and create a new RC checklist instead.
 
 ## P1: Prepare Stable Publication Wording
 
-- [ ] Change `docai-http/README.md` status and publication label from release
+- [x] Change `docai-http/README.md` status and publication label from release
   candidate to final `Stable`.
-- [ ] Update the DocAI HTTP README opening status prose for final `v1.0.0` while
+- [x] Update the DocAI HTTP README opening status prose for final `v1.0.0` while
   keeping `v1.0.0-rc.4` as the current tagged public release until the final tag
   is actually published.
-- [ ] Update the root `README.md` to present final `v1.0.0` as the stable
+- [x] Update the root `README.md` to present final `v1.0.0` as the stable
   publication being prepared from the reviewed RC.4 contract.
-- [ ] Add final `1.0.0` stable release notes to `RELEASE.md`, including the exact
+- [x] Add final `1.0.0` stable release notes to `RELEASE.md`, including the exact
   compatibility boundary and explicitly non-promoted areas.
-- [ ] Add `1.0.0 (Stable)` to `CHANGELOG.md` and move applicable `Unreleased`
+- [x] Add `1.0.0 (Stable)` to `CHANGELOG.md` and move applicable `Unreleased`
   entries into it before tagging.
-- [ ] Audit active wording across README, release, fixture, and readiness
+- [x] Audit active wording across README, release, fixture, and readiness
   documents; retain RC wording only where it is historical.
-- [ ] Keep `README.ja.md` deferred until the final English `1.0.0` publication is
+- [x] Keep `README.ja.md` deferred until the final English `1.0.0` publication is
   complete.
 
 ## P1: Confirm Evidence Scope
 
-- [ ] Confirm RC.4 review made no task-contract or context-content change that
+- [x] Confirm RC.4 review made no task-contract or context-content change that
   requires Live LLM provider submission.
-- [ ] Regrade existing required-target responses and recompute deterministic
+- [x] Regrade existing required-target responses and recompute deterministic
   context metrics without provider calls.
-- [ ] Keep OpenAPI comparison claims scoped to the evaluated `0.12.0` fixture,
+- [x] Keep OpenAPI comparison claims scoped to the evaluated `0.12.0` fixture,
   target models, task contracts, run dates, and grader policy.
-- [ ] Confirm optional models, additional APIs/tasks, normalized provider costs,
+- [x] Confirm optional models, additional APIs/tasks, normalized provider costs,
   hosted CI, and a public validator remain non-blocking post-1.0 work.
 
 ## P2: Final Pre-Tag Gate
 
-- [ ] Run `node docai-http/tools/check-release-readiness.mjs`.
-- [ ] Run `git diff --check`.
-- [ ] Confirm no source, conformance fixture, or checker behavior changed after
-  the reviewed RC.4 state.
-- [ ] Confirm the stable-preparation diff contains only intended publication
+- [x] Run `node docai-http/tools/check-release-readiness.mjs`.
+- [x] Run `git diff --check`.
+- [x] Confirm no authoritative source, standard/focused fixture, or checker
+  behavior changed after the reviewed RC.4 state.
+- [x] Confirm the stable-preparation diff contains only intended publication
   wording, release metadata, review records, and TODO updates.
 - [ ] Confirm the worktree is clean after committing the stable-preparation
   change.
-- [ ] Confirm `v1.0.0` does not already exist locally or on the release remote.
-- [ ] Prepare final release notes from the `1.0.0` section in `RELEASE.md`.
+- [x] Confirm `v1.0.0` does not already exist locally or on the release remote.
+- [x] Prepare final release notes from the `1.0.0` section in `RELEASE.md`.
 
 ## P2: Tag And Publish
 

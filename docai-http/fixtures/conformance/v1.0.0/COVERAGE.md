@@ -1,6 +1,6 @@
 # Stable Conformance Coverage
 
-This file records evidence for the intended first stable DocAI HTTP `1.0.0` conformance corpus. The corpus is copied from the `0.12.0` complete-generator-ready candidate corpus and promoted into a separate versioned path so candidate evidence and stable compatibility evidence remain distinct.
+This file records evidence for the stable DocAI HTTP `1.0.0` conformance corpus. The corpus is copied from the `0.12.0` complete-generator-ready candidate corpus and promoted into a separate versioned path so candidate evidence and stable compatibility evidence remain distinct.
 
 ## Current Evidence
 
@@ -149,7 +149,7 @@ This audit maps the README section 9.1 complete-corpus focused requirements to f
 
 ## Publication Impact
 
-This corpus is the stable conformance boundary candidate for `1.0.0`. It includes the full/compact complete example pair, resources, workflows, webhooks, and focused valid/invalid fixtures for the complete surface required by README section 9.1. Structures covered by normative README text, this conformance corpus, and `tools/check-conformance-fixtures.mjs` are the structures intended to become stable compatibility promises at `1.0.0`.
+This corpus is the stable conformance boundary for `1.0.0`. It includes the full/compact complete example pair, resources, workflows, webhooks, and focused valid/invalid fixtures for the complete surface required by README section 9.1. Structures covered by normative README text, this conformance corpus, and `tools/check-conformance-fixtures.mjs` are the stable compatibility promises for `1.0.0`.
 
 The live LLM task evaluation records, token-load records, and OpenAPI comparison records are not duplicated into this conformance directory. They remain in `fixtures/complete-candidates/v0.12.0/` as historical evidence for the evaluated candidate. Because this corrected corpus changes task-relevant retry behavior in addition to syntax and provenance, the release must refresh affected evidence before using it as an `rc.2` or stable claim, or keep the existing evidence explicitly scoped to `0.12.0`.
 

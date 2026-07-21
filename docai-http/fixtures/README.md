@@ -2,7 +2,7 @@
 
 This directory holds DocAI HTTP's versioned fixture corpora.
 
-The current contents are an initial Compatibility Core corpus for draft `0.11.0`, a compact-profile candidate corpus, a workflow candidate corpus, a webhook candidate corpus, a non-JSON candidate corpus, a polymorphism candidate corpus, a complete-surface candidate corpus for draft `0.12.0`, and an intended first stable conformance corpus for `1.0.0`. The core corpus is the historical pre-1.0 subset, the complete-surface candidate corpus supports the broader pre-1.0 complete-generator-ready candidate label, and the conformance corpus defines the stable fixture boundary being prepared for `1.0.0`. The evidence gate for the `0.12.0` complete-generator-ready candidate label is tracked in [`../COMPLETE-GENERATOR-READINESS.md`](../COMPLETE-GENERATOR-READINESS.md).
+The current contents are an initial Compatibility Core corpus for draft `0.11.0`, a compact-profile candidate corpus, a workflow candidate corpus, a webhook candidate corpus, a non-JSON candidate corpus, a polymorphism candidate corpus, a complete-surface candidate corpus for draft `0.12.0`, and the stable conformance corpus for `1.0.0`. The core corpus is the historical pre-1.0 subset, the complete-surface candidate corpus supports the broader pre-1.0 complete-generator-ready candidate label, and the conformance corpus defines the `1.0.0` stable fixture boundary. The evidence gate for the `0.12.0` complete-generator-ready candidate label is tracked in [`../COMPLETE-GENERATOR-READINESS.md`](../COMPLETE-GENERATOR-READINESS.md).
 
 Layout:
 
@@ -31,9 +31,9 @@ Layout:
 - `complete-candidates/v0.12.0/valid/full/` and `complete-candidates/v0.12.0/valid/compact/` contain a matching full/compact candidate pair that includes resources, workflows, and webhooks.
 - `complete-candidates/v0.12.0/focused/valid/` and `complete-candidates/v0.12.0/focused/invalid/` contain focused complete-candidate snippets for the areas listed in `complete-candidates/v0.12.0/COVERAGE.md`.
 - `complete-candidates/v0.12.0/evaluations/` contains the complete-candidate LLM evaluation task packet, local context metrics, live run records, and separate OpenAPI baseline comparison artifacts.
-- `conformance/v1.0.0/source/complete-openapi.yaml` is the source OpenAPI fixture referenced by the intended first stable conformance full/compact pair.
+- `conformance/v1.0.0/source/complete-openapi.yaml` is the source OpenAPI fixture referenced by the stable conformance full/compact pair.
 - `conformance/v1.0.0/source/recursive-direct-openapi.yaml` and `conformance/v1.0.0/source/recursive-indirect-openapi.yaml` are recursive source fixtures whose stable conformance projections use the required `unsupported` fallback.
-- `conformance/v1.0.0/valid/full/` and `conformance/v1.0.0/valid/compact/` contain the intended first stable conformance full/compact pair.
+- `conformance/v1.0.0/valid/full/` and `conformance/v1.0.0/valid/compact/` contain the stable conformance full/compact pair.
 - `conformance/v1.0.0/focused/valid/` and `conformance/v1.0.0/focused/invalid/` contain focused stable conformance snippets for the areas listed in `conformance/v1.0.0/COVERAGE.md`.
 - `conformance/v1.0.0/COVERAGE.md` records the stable conformance evidence map.
 - `conformance/v1.0.0/SOURCE-TRACEABILITY.md` records the source fixture audit and confirms that source fixtures remain traceability evidence rather than a public source-to-projection validator contract for `1.0.0`.
@@ -56,7 +56,7 @@ Run `node tools/check-polymorphism-candidates.mjs` from the `docai-http/` direct
 
 Run `node tools/check-complete-candidates.mjs` from the `docai-http/` directory, or `node docai-http/tools/check-complete-candidates.mjs` from the repository root, to check the complete candidate expectations.
 
-Run `node tools/check-conformance-fixtures.mjs` from the `docai-http/` directory, or `node docai-http/tools/check-conformance-fixtures.mjs` from the repository root, to check the intended `1.0.0` stable conformance expectations.
+Run `node tools/check-conformance-fixtures.mjs` from the `docai-http/` directory, or `node docai-http/tools/check-conformance-fixtures.mjs` from the repository root, to check the `1.0.0` stable conformance expectations.
 
 Run `node tools/check-complete-evaluations.mjs` from the `docai-http/` directory, or `node docai-http/tools/check-complete-evaluations.mjs` from the repository root, to check the complete candidate evaluation packet and local context metrics.
 

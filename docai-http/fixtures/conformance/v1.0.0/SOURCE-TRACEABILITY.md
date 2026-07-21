@@ -1,13 +1,13 @@
 # Source Traceability
 
-This file records the source-fixture audit for the intended DocAI HTTP `1.0.0`
+This file records the source-fixture audit for the DocAI HTTP `1.0.0`
 stable conformance corpus.
 
 ## Decision
 
 Source fixtures remain traceability evidence for `1.0.0`; they are not a
-source-to-projection validator contract. The stable release does not require a
-public source-to-projection validator before final stable `v1.0.0` publication.
+source-to-projection validator contract. The stable release does not include a
+public source-to-projection validator.
 
 Why:
 
@@ -17,9 +17,8 @@ Why:
   diagnostics model, versioning rules, and compatibility boundary.
 - The current corpus records an authoritative input-set manifest, its OpenAPI
   input, pass-through behavior input, and recursive-schema fallback inputs.
-- Adding a validator boundary immediately before final stable `v1.0.0`
-  publication would broaden the stable promise more than the fixture evidence
-  requires.
+- Adding a validator boundary to `1.0.0` would broaden the stable promise more
+  than the fixture evidence requires.
 
 ## Source Fixtures
 

@@ -2,6 +2,61 @@
 
 This document defines the repository release process for DocAI HTTP. It is operational guidance for maintainers; the format rules remain in `README.md`.
 
+## 1.0.0 Release Notes (Stable)
+
+Scope:
+
+- Publication label: final `Stable` for tag `v1.0.0`.
+- Current tagged public release remains `v1.0.0-rc.4` until the final tag is
+  published.
+- Stable compatibility is limited to normative `README.md` text,
+  `fixtures/conformance/v1.0.0/`, and the self-contained
+  `tools/check-conformance-fixtures.mjs`.
+- No DocAI HTTP format, authoritative input, conformance contract, checker
+  expectation, or projected client behavior changes from reviewed RC.4.
+
+Evidence:
+
+- The full/compact stable corpus covers resources, workflows, webhooks,
+  non-JSON representations, polymorphism, safe retry behavior, and the complete
+  `unknown` / `unsupported` surface required by README section 9.1.
+- `RC4-METADATA-REVIEW.md` records focused review completion with no remaining
+  stable blocker, wording issue, backlog item, or question.
+- The stable checker validates the corpus in isolation, including focused
+  metadata and source-contract negative tests.
+- Existing required-target responses regrade successfully against the reviewed
+  contract without new provider submission.
+- OpenAPI comparison evidence remains scoped to the evaluated `0.12.0` fixture,
+  target models, task contracts, run dates, and grader policy.
+
+Compatibility:
+
+- This is the first Stable DocAI HTTP compatibility release.
+- Implementers already targeting `v1.0.0-rc.4` require no document-format or
+  projected-client migration.
+- Candidate-only evidence paths do not create additional stable promises.
+- Recursive finite representation, public validator APIs, source-to-projection
+  validator guarantees, hosted live-provider CI, translations, optional target
+  requirements, normalized provider-cost claims, and expanded benchmarks are
+  explicitly not promoted by `1.0.0`.
+- Later changes must follow README section 3.1 compatibility and versioning
+  rules; published tags must not be moved or recreated.
+
+Required pre-tag validation:
+
+- `node docai-http/tools/check-release-readiness.mjs`.
+- `git diff --check`.
+- Confirm the final preparation changes only publication wording, release
+  metadata, and review records relative to the reviewed RC.4 contract.
+- Confirm `v1.0.0` does not already exist locally or on the release remote.
+
+Publication notes:
+
+- Create annotated tag `v1.0.0` at the reviewed stable-preparation commit.
+- Publish this section as the final release notes.
+- After publication, update current-release wording from `v1.0.0-rc.4` to
+  `v1.0.0` in a separate commit without changing the tag.
+
 ## 1.0.0-rc.4 Release Notes (Release candidate)
 
 Scope:
@@ -270,7 +325,7 @@ Do not imply compatibility for structures outside the published label. Non-core 
 
 Before using the `Complete-generator-ready candidate` label, complete the evidence gate in `COMPLETE-GENERATOR-READINESS.md`.
 
-The current tagged public release is `v1.0.0-rc.4`, published as `1.0.0 release candidate`, not final `Stable`. RC.4 corrects the focused-fixture metadata identity blocker found in RC.3 review and must complete focused review before final stable publication. The previous `v0.12.0` complete-generator-ready candidate remains historical supporting evidence. Its complete-candidate corpus has complete focused fixture coverage, matching checker coverage, required-target LLM evaluations, token-load evidence, and scoped OpenAPI comparison evidence.
+The current tagged public release is `v1.0.0-rc.4`. Its focused review completed with no remaining stable blocker, so the reviewed contract is prepared for final `v1.0.0` publication. The previous `v0.12.0` complete-generator-ready candidate remains historical supporting evidence. Its complete-candidate corpus has complete focused fixture coverage, matching checker coverage, required-target LLM evaluations, token-load evidence, and scoped OpenAPI comparison evidence.
 
 Do not update the README publication label merely because one candidate corpus exists. The label may change only after the complete full-profile set, matching compact projection, focused complete-surface fixtures, checker behavior, evaluation notes, and changelog/release notes support the broader claim.
 
@@ -383,7 +438,7 @@ summary claims should use deterministic local context metrics, pass rates, and
 the existing scoped comparison until a normalized cost model is deliberately
 defined.
 
-## Pre-Stable Documentation Scope
+## First Stable Documentation Scope
 
 Keep documentation changes before final stable `v1.0.0` narrowly focused on the
 stable boundary:
@@ -395,9 +450,9 @@ stable boundary:
 - Keep top-level README comparison claims synchronized with
   `OPENAPI-COMPARISON-EVIDENCE.md` and scoped to the evaluated fixture, target
   models, tasks, and dates.
-- After switching to `v1.0.0-rc.1`, keep active publication wording on
-  `1.0.0 release candidate` until the repository deliberately switches to final
-  `Stable`.
+- The reviewed final-preparation commit switches the publication label to
+  `Stable`; current-tag wording remains on `v1.0.0-rc.4` until the final tag is
+  published.
 
 When the publication label changes, update `docai-http/README.md`, `README.md`,
 `CHANGELOG.md`, fixture documentation, and release notes in the same change set.
@@ -478,6 +533,9 @@ Before tagging:
 - Run `git diff --check` from the repository root.
 - For release-candidate publications, update "current tagged public release"
   wording only after the tag is actually published.
+- For final Stable publication, put the `Stable` label in the tagged artifact,
+  then update "current tagged public release" to `v1.0.0` only after the tag is
+  published.
 
 ## Release Note Template
 

@@ -4,8 +4,23 @@ DocAI HTTP release history. Specification versioning and compatibility rules are
 
 ## Unreleased
 
+## 1.0.0 (Stable)
+
+- Promotes the reviewed `v1.0.0-rc.4` contract to the first Stable DocAI HTTP
+  release without changing normative behavior, authoritative inputs,
+  conformance fixture content, checker expectations, or the projected client
+  contract.
+- Defines the stable compatibility promise as normative `README.md` text,
+  `fixtures/conformance/v1.0.0/`, and
+  `tools/check-conformance-fixtures.mjs`.
+- Records completion of focused RC.4 review with no remaining blocker and keeps
+  projection `conformance-20260721-rc4-001` with source revision
+  `fixture-input-set-rc3-001` as the reviewed stable evidence.
+- Keeps recursive finite representation, public validator APIs, hosted live-LLM
+  CI, translations, optional targets, and expanded comparison claims outside
+  the `1.0.0` compatibility promise.
 - Updates current-release wording after publication of `v1.0.0-rc.4` and
-  records focused RC.4 review as the next stable-release gate.
+  prepares final Stable publication after that focused review completed.
 
 ## 1.0.0-rc.4 (Release candidate)
 
