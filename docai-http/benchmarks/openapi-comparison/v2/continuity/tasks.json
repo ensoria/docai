@@ -1,0 +1,743 @@
+{
+  "benchmark_id": "docai-http-openapi-comparison-v2",
+  "api_id": "complete-commerce",
+  "tasks": [
+    {
+      "id": "create-user-request",
+      "class": "request_construction",
+      "profile": "compact",
+      "public": {
+        "user_task": "Construct the complete HTTP request for creating a user named Taro Yamada with email taro@example.com. The operation may need a safe retry after an ambiguous network outcome.",
+        "output_contract": "request-construction.v1",
+        "retrieval": {
+          "openapi_roots": [
+            "paths./users.post",
+            "components.schemas.User"
+          ],
+          "docai_files": [
+            "INDEX.md",
+            "CONVENTIONS.md",
+            "resources/users.md"
+          ]
+        }
+      },
+      "private": {
+        "expected_outcome": {
+          "request": {
+            "method": "POST",
+            "path": "/v1/users",
+            "headers": {
+              "Authorization": "Bearer <access_token>",
+              "Content-Type": "application/json",
+              "Accept": "application/json",
+              "Idempotency-Key": "<operation-unique-key>"
+            },
+            "query": {},
+            "content_type": "application/json",
+            "body": {
+              "email": "taro@example.com",
+              "name": "Taro Yamada"
+            },
+            "parts": []
+          },
+          "uncertainties": []
+        },
+        "assertions": [
+          {
+            "path": "/request/method",
+            "operator": "equals",
+            "value": "POST",
+            "failure_category": "request-method"
+          },
+          {
+            "path": "/request/path",
+            "operator": "equals",
+            "value": "/v1/users",
+            "failure_category": "request-path"
+          },
+          {
+            "path": "/request/headers",
+            "operator": "contains",
+            "value": {
+              "Authorization": "Bearer <access_token>",
+              "Content-Type": "application/json",
+              "Accept": "application/json",
+              "Idempotency-Key": "<operation-unique-key>"
+            },
+            "failure_category": "request-headers"
+          },
+          {
+            "path": "/request/body",
+            "operator": "equals",
+            "value": {
+              "email": "taro@example.com",
+              "name": "Taro Yamada"
+            },
+            "failure_category": "request-body"
+          },
+          {
+            "path": "/request/body/role",
+            "operator": "absent",
+            "failure_category": "request-default"
+          }
+        ],
+        "fact_inventory": {
+          "required": [
+            "common:base-path-v1",
+            "common:bearer-auth",
+            "common:json-request-response",
+            "common:create-idempotency",
+            "users:create-fields",
+            "users:role-default"
+          ],
+          "raw_missing": [
+            "common:base-path-v1",
+            "common:bearer-auth",
+            "common:create-idempotency"
+          ],
+          "sliced_missing": [
+            "common:base-path-v1",
+            "common:bearer-auth",
+            "common:create-idempotency"
+          ]
+        }
+      }
+    },
+    {
+      "id": "upload-document-request",
+      "class": "request_construction",
+      "profile": "full",
+      "public": {
+        "user_task": "Construct the complete multipart HTTP request for uploading statement.pdf as a PDF with JSON metadata title Q2 statement and tags finance and quarterly. The operation may need a safe retry after an ambiguous network outcome.",
+        "output_contract": "request-construction.v1",
+        "retrieval": {
+          "openapi_roots": [
+            "paths./documents.post",
+            "components.schemas.DocumentMetadata"
+          ],
+          "docai_files": [
+            "INDEX.md",
+            "CONVENTIONS.md",
+            "resources/documents.md"
+          ]
+        }
+      },
+      "private": {
+        "expected_outcome": {
+          "request": {
+            "method": "POST",
+            "path": "/v1/documents",
+            "headers": {
+              "Authorization": "Bearer <access_token>",
+              "Accept": "application/json",
+              "Idempotency-Key": "<operation-unique-key>"
+            },
+            "query": {},
+            "content_type": "multipart/form-data; boundary=<library-generated>",
+            "body": {},
+            "parts": [
+              {
+                "name": "document",
+                "filename": "statement.pdf",
+                "content_type": "application/pdf",
+                "value": "<binary PDF bytes>"
+              },
+              {
+                "name": "metadata",
+                "content_type": "application/json",
+                "value": {
+                  "title": "Q2 statement",
+                  "tags": [
+                    "finance",
+                    "quarterly"
+                  ]
+                }
+              }
+            ]
+          },
+          "uncertainties": []
+        },
+        "assertions": [
+          {
+            "path": "/request/method",
+            "operator": "equals",
+            "value": "POST",
+            "failure_category": "request-method"
+          },
+          {
+            "path": "/request/path",
+            "operator": "equals",
+            "value": "/v1/documents",
+            "failure_category": "request-path"
+          },
+          {
+            "path": "/request/headers",
+            "operator": "contains",
+            "value": {
+              "Authorization": "Bearer <access_token>",
+              "Accept": "application/json",
+              "Idempotency-Key": "<operation-unique-key>"
+            },
+            "failure_category": "request-headers"
+          },
+          {
+            "path": "/request/content_type",
+            "operator": "equals",
+            "value": "multipart/form-data; boundary=<library-generated>",
+            "failure_category": "multipart-boundary"
+          },
+          {
+            "path": "/request/parts",
+            "operator": "contains",
+            "value": [
+              {
+                "name": "document",
+                "filename": "statement.pdf",
+                "content_type": "application/pdf"
+              },
+              {
+                "name": "metadata",
+                "content_type": "application/json",
+                "value": {
+                  "title": "Q2 statement",
+                  "tags": [
+                    "finance",
+                    "quarterly"
+                  ]
+                }
+              }
+            ],
+            "failure_category": "multipart-parts"
+          }
+        ],
+        "fact_inventory": {
+          "required": [
+            "common:base-path-v1",
+            "common:bearer-auth",
+            "common:create-idempotency",
+            "documents:multipart-boundary",
+            "documents:file-part",
+            "documents:metadata-part",
+            "documents:size-limits"
+          ],
+          "raw_missing": [
+            "common:base-path-v1",
+            "common:bearer-auth",
+            "common:create-idempotency",
+            "documents:multipart-boundary",
+            "documents:size-limits"
+          ],
+          "sliced_missing": [
+            "common:base-path-v1",
+            "common:bearer-auth",
+            "common:create-idempotency",
+            "documents:multipart-boundary",
+            "documents:size-limits"
+          ]
+        }
+      }
+    },
+    {
+      "id": "payment-created-response",
+      "class": "response_handling",
+      "profile": "compact",
+      "public": {
+        "user_task": "Handle the successful response from creating a checkout payment, including the values to retain and any follow-up workflow or webhook relationships.",
+        "output_contract": "response-handling.v1",
+        "retrieval": {
+          "openapi_roots": [
+            "paths./payments.post",
+            "components.schemas.PaymentResponse",
+            "webhooks.payment.completed",
+            "x-docai-workflows.checkout"
+          ],
+          "docai_files": [
+            "INDEX.md",
+            "CONVENTIONS.md",
+            "resources/payments.md",
+            "workflows/checkout.md",
+            "webhooks/payment-completed.md"
+          ]
+        }
+      },
+      "private": {
+        "expected_outcome": {
+          "response": {
+            "status": 201,
+            "headers": {},
+            "body": {
+              "payment_id": "<retain for POST /orders and webhook matching>",
+              "status": "pending"
+            },
+            "follow_up": [
+              "Pass payment_id to POST /orders.",
+              "Match payment.completed deliveries by payment_id."
+            ]
+          },
+          "uncertainties": []
+        },
+        "assertions": [
+          {
+            "path": "/response/status",
+            "operator": "equals",
+            "value": 201,
+            "failure_category": "response-status"
+          },
+          {
+            "path": "/response/body/status",
+            "operator": "equals",
+            "value": "pending",
+            "failure_category": "response-body"
+          },
+          {
+            "path": "/response/body/payment_id",
+            "operator": "contains",
+            "value": "retain",
+            "failure_category": "response-body"
+          },
+          {
+            "path": "/response/follow_up",
+            "operator": "contains",
+            "value": [
+              "Pass payment_id to POST /orders.",
+              "Match payment.completed deliveries by payment_id."
+            ],
+            "failure_category": "response-follow-up"
+          }
+        ],
+        "fact_inventory": {
+          "required": [
+            "payments:created-status",
+            "payments:pending-body",
+            "payments:order-link",
+            "payments:webhook-link"
+          ],
+          "raw_missing": [
+            "payments:order-link"
+          ],
+          "sliced_missing": [
+            "payments:order-link"
+          ]
+        }
+      }
+    },
+    {
+      "id": "create-user-errors",
+      "class": "error_recovery",
+      "profile": "compact",
+      "public": {
+        "user_task": "Design error handling for creating a user when the email is already used, validation fails, the idempotency key conflicts, or the access token has expired. State whether and how each case may be retried.",
+        "output_contract": "error-recovery.v1",
+        "retrieval": {
+          "openapi_roots": [
+            "paths./users.post",
+            "components.responses.ValidationError",
+            "components.responses.TokenExpired",
+            "components.schemas.EmailTakenError",
+            "components.schemas.StandardError",
+            "components.schemas.ValidationError"
+          ],
+          "docai_files": [
+            "INDEX.md",
+            "CONVENTIONS.md",
+            "resources/users.md"
+          ]
+        }
+      },
+      "private": {
+        "expected_outcome": {
+          "errors": [
+            {
+              "status": 409,
+              "code": "email_taken",
+              "retry_policy": "after-correction-with-new-key",
+              "caller_action": "Use another email address and a new idempotency key; do not retry unchanged input.",
+              "preserve": []
+            },
+            {
+              "status": 422,
+              "code": "validation_failed",
+              "retry_policy": "after-correction-with-new-key",
+              "caller_action": "Correct the input, then retry as a new logical operation with a new idempotency key.",
+              "preserve": []
+            },
+            {
+              "status": 409,
+              "code": "idempotency_conflict",
+              "retry_policy": "original-request-or-new-logical-operation",
+              "caller_action": "Use the original request or a new key for a new logical operation; do not reuse the conflicting key with changed input.",
+              "preserve": []
+            },
+            {
+              "status": 401,
+              "code": "token_expired",
+              "retry_policy": "once-after-token-refresh-with-same-request-and-key",
+              "caller_action": "Refresh once, then retry once.",
+              "preserve": [
+                "semantically identical request",
+                "Idempotency-Key"
+              ]
+            }
+          ],
+          "uncertainties": []
+        },
+        "assertions": [
+          {
+            "path": "/errors",
+            "operator": "contains",
+            "value": [
+              {
+                "status": 409,
+                "code": "email_taken",
+                "retry_policy": "after-correction-with-new-key"
+              },
+              {
+                "status": 422,
+                "code": "validation_failed",
+                "retry_policy": "after-correction-with-new-key"
+              },
+              {
+                "status": 409,
+                "code": "idempotency_conflict",
+                "retry_policy": "original-request-or-new-logical-operation"
+              },
+              {
+                "status": 401,
+                "code": "token_expired",
+                "retry_policy": "once-after-token-refresh-with-same-request-and-key"
+              }
+            ],
+            "failure_category": "error-cases"
+          },
+          {
+            "path": "/errors",
+            "operator": "contains",
+            "value": [
+              {
+                "code": "token_expired",
+                "caller_action": "Refresh once, then retry once."
+              }
+            ],
+            "failure_category": "error-caller-action"
+          }
+        ],
+        "fact_inventory": {
+          "required": [
+            "users:email-taken-action",
+            "users:validation-action",
+            "common:idempotency-conflict-action",
+            "common:token-expired-action",
+            "common:create-idempotency"
+          ],
+          "raw_missing": [
+            "users:email-taken-action",
+            "users:validation-action",
+            "common:idempotency-conflict-action",
+            "common:token-expired-action",
+            "common:create-idempotency"
+          ],
+          "sliced_missing": [
+            "users:email-taken-action",
+            "users:validation-action",
+            "common:idempotency-conflict-action",
+            "common:token-expired-action",
+            "common:create-idempotency"
+          ]
+        }
+      }
+    },
+    {
+      "id": "complete-checkout-workflow",
+      "class": "workflow_completion",
+      "profile": "compact",
+      "public": {
+        "user_task": "Complete checkout for cart_01K0COMPLETE with a card payment for JPY 1200. Explain the ordered calls, values and idempotency keys to retain, recovery after an ambiguous order result, and reconciliation when payment.completed arrives before the order is confirmed.",
+        "output_contract": "workflow-completion.v1",
+        "retrieval": {
+          "openapi_roots": [
+            "paths./carts/{id}/validate.post",
+            "paths./payments.post",
+            "paths./orders.post",
+            "webhooks.payment.completed",
+            "x-docai-workflows.checkout"
+          ],
+          "docai_files": [
+            "INDEX.md",
+            "CONVENTIONS.md",
+            "resources/checkout.md",
+            "resources/payments.md",
+            "workflows/checkout.md",
+            "webhooks/payment-completed.md"
+          ]
+        }
+      },
+      "private": {
+        "expected_outcome": {
+          "steps": [
+            {
+              "order": 1,
+              "method": "POST",
+              "path": "/v1/carts/cart_01K0COMPLETE/validate",
+              "input": {
+                "id": "cart_01K0COMPLETE"
+              },
+              "keep": [
+                "cart_id"
+              ],
+              "state_after_success": "cart.validated"
+            },
+            {
+              "order": 2,
+              "method": "POST",
+              "path": "/v1/payments",
+              "input": {
+                "cart_id": "cart_01K0COMPLETE",
+                "amount": 1200,
+                "currency": "JPY",
+                "type": "card",
+                "card_token": "<card-token>",
+                "Idempotency-Key": "<payment-operation-key>"
+              },
+              "keep": [
+                "payment_id",
+                "Idempotency-Key"
+              ],
+              "state_after_success": "payment.pending + order.not_confirmed"
+            },
+            {
+              "order": 3,
+              "method": "POST",
+              "path": "/v1/orders",
+              "input": {
+                "cart_id": "cart_01K0COMPLETE",
+                "payment_id": "<payment_id>",
+                "Idempotency-Key": "<order-operation-key>"
+              },
+              "keep": [
+                "order_id",
+                "cart_id",
+                "payment_id",
+                "Idempotency-Key"
+              ],
+              "state_after_success": "payment.settled + order.confirmed"
+            }
+          ],
+          "failure_recovery": [
+            "For an ambiguous or safely retryable POST /orders outcome, preserve payment state and replay the same cart_id, payment_id, and Idempotency-Key.",
+            "If payment is already settled, POST /orders associates it without another capture."
+          ],
+          "webhook_reconciliation": [
+            "Match payment.completed by payment_id.",
+            "Record payment.settled + order.not_confirmed and continue POST /orders without another capture."
+          ],
+          "uncertainties": []
+        },
+        "assertions": [
+          {
+            "path": "/steps",
+            "operator": "contains",
+            "value": [
+              {
+                "order": 1,
+                "method": "POST",
+                "path": "/v1/carts/cart_01K0COMPLETE/validate",
+                "state_after_success": "cart.validated"
+              },
+              {
+                "order": 2,
+                "method": "POST",
+                "path": "/v1/payments",
+                "state_after_success": "payment.pending + order.not_confirmed"
+              },
+              {
+                "order": 3,
+                "method": "POST",
+                "path": "/v1/orders",
+                "state_after_success": "payment.settled + order.confirmed"
+              }
+            ],
+            "failure_category": "workflow-steps"
+          },
+          {
+            "path": "/failure_recovery",
+            "operator": "contains",
+            "value": [
+              "For an ambiguous or safely retryable POST /orders outcome, preserve payment state and replay the same cart_id, payment_id, and Idempotency-Key.",
+              "If payment is already settled, POST /orders associates it without another capture."
+            ],
+            "failure_category": "workflow-recovery"
+          },
+          {
+            "path": "/webhook_reconciliation",
+            "operator": "contains",
+            "value": [
+              "Match payment.completed by payment_id.",
+              "Record payment.settled + order.not_confirmed and continue POST /orders without another capture."
+            ],
+            "failure_category": "workflow-webhook"
+          }
+        ],
+        "fact_inventory": {
+          "required": [
+            "checkout:ordered-steps",
+            "checkout:state-transitions",
+            "checkout:payment-idempotency",
+            "checkout:order-idempotency",
+            "checkout:order-recovery",
+            "checkout:early-webhook",
+            "checkout:no-double-capture"
+          ],
+          "raw_missing": [
+            "checkout:state-transitions",
+            "checkout:payment-idempotency",
+            "checkout:order-idempotency",
+            "checkout:order-recovery",
+            "checkout:early-webhook",
+            "checkout:no-double-capture"
+          ],
+          "sliced_missing": [
+            "checkout:state-transitions",
+            "checkout:payment-idempotency",
+            "checkout:order-idempotency",
+            "checkout:order-recovery",
+            "checkout:early-webhook",
+            "checkout:no-double-capture"
+          ]
+        }
+      }
+    },
+    {
+      "id": "payment-completed-webhook",
+      "class": "webhook_handling",
+      "profile": "compact",
+      "public": {
+        "user_task": "Implement a receiver for payment.completed. Describe the HTTP delivery, required header and payload handling, acknowledgement deadline, duplicate handling, opaque metadata treatment, and reconciliation with checkout when the event arrives early.",
+        "output_contract": "webhook-handling.v1",
+        "retrieval": {
+          "openapi_roots": [
+            "webhooks.payment.completed",
+            "paths./payments.post",
+            "x-docai-workflows.checkout"
+          ],
+          "docai_files": [
+            "INDEX.md",
+            "CONVENTIONS.md",
+            "resources/payments.md",
+            "workflows/checkout.md",
+            "webhooks/payment-completed.md"
+          ]
+        }
+      },
+      "private": {
+        "expected_outcome": {
+          "webhook": {
+            "event": "payment.completed",
+            "method": "POST",
+            "path": "<registered URL>",
+            "verification": [
+              "Read the required X-Payment-Attempt single field line.",
+              "Treat deliveries as at-least-once and unordered.",
+              "Deduplicate by event_id."
+            ],
+            "headers": {
+              "X-Payment-Attempt": "<required string; not comma-combinable>"
+            },
+            "payload": {
+              "required": [
+                "event_id",
+                "event",
+                "payment_id",
+                "amount",
+                "occurred_at",
+                "metadata"
+              ],
+              "metadata": "opaque; store or forward without interpreting"
+            },
+            "acknowledgement": {
+              "status": "any 2xx",
+              "deadline": "within 5 seconds"
+            },
+            "reconciliation": [
+              "Match by payment_id.",
+              "If early, record payment.settled + order.not_confirmed.",
+              "Continue POST /orders without capturing the settled payment again."
+            ]
+          },
+          "uncertainties": []
+        },
+        "assertions": [
+          {
+            "path": "/webhook",
+            "operator": "contains",
+            "value": {
+              "event": "payment.completed",
+              "method": "POST",
+              "headers": {
+                "X-Payment-Attempt": "<required string; not comma-combinable>"
+              },
+              "acknowledgement": {
+                "status": "any 2xx",
+                "deadline": "within 5 seconds"
+              }
+            },
+            "failure_category": "webhook-delivery"
+          },
+          {
+            "path": "/webhook/verification",
+            "operator": "contains",
+            "value": [
+              "Treat deliveries as at-least-once and unordered.",
+              "Deduplicate by event_id."
+            ],
+            "failure_category": "webhook-deduplication"
+          },
+          {
+            "path": "/webhook/payload",
+            "operator": "contains",
+            "value": {
+              "metadata": "opaque; store or forward without interpreting"
+            },
+            "failure_category": "webhook-payload"
+          },
+          {
+            "path": "/webhook/reconciliation",
+            "operator": "contains",
+            "value": [
+              "Match by payment_id.",
+              "If early, record payment.settled + order.not_confirmed.",
+              "Continue POST /orders without capturing the settled payment again."
+            ],
+            "failure_category": "webhook-reconciliation"
+          }
+        ],
+        "fact_inventory": {
+          "required": [
+            "webhook:payment-method",
+            "webhook:payment-attempt-header",
+            "webhook:payment-payload",
+            "webhook:at-least-once-unordered",
+            "webhook:deduplicate-event-id",
+            "webhook:ack-2xx-five-seconds",
+            "webhook:opaque-metadata",
+            "checkout:early-webhook",
+            "checkout:no-double-capture"
+          ],
+          "raw_missing": [
+            "webhook:at-least-once-unordered",
+            "webhook:deduplicate-event-id",
+            "webhook:ack-2xx-five-seconds",
+            "checkout:early-webhook",
+            "checkout:no-double-capture"
+          ],
+          "sliced_missing": [
+            "webhook:at-least-once-unordered",
+            "webhook:deduplicate-event-id",
+            "webhook:ack-2xx-five-seconds",
+            "checkout:early-webhook",
+            "checkout:no-double-capture"
+          ]
+        }
+      }
+    }
+  ]
+}

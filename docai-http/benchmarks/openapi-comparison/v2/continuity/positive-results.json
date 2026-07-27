@@ -1,0 +1,226 @@
+{
+  "benchmark_id": "docai-http-openapi-comparison-v2",
+  "api_id": "complete-commerce",
+  "purpose": "Hand-authored positive grader fixtures; these values must not appear in provider prompts.",
+  "results": [
+    {
+      "task_id": "create-user-request",
+      "content_json": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/users",
+          "headers": {
+            "Authorization": "Bearer <access_token>",
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "Idempotency-Key": "<operation-unique-key>"
+          },
+          "query": {},
+          "content_type": "application/json",
+          "body": {
+            "email": "taro@example.com",
+            "name": "Taro Yamada"
+          },
+          "parts": []
+        },
+        "uncertainties": []
+      }
+    },
+    {
+      "task_id": "upload-document-request",
+      "content_json": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/documents",
+          "headers": {
+            "Authorization": "Bearer <access_token>",
+            "Accept": "application/json",
+            "Idempotency-Key": "<operation-unique-key>"
+          },
+          "query": {},
+          "content_type": "multipart/form-data; boundary=<library-generated>",
+          "body": {},
+          "parts": [
+            {
+              "name": "document",
+              "filename": "statement.pdf",
+              "content_type": "application/pdf",
+              "value": "<binary PDF bytes>"
+            },
+            {
+              "name": "metadata",
+              "content_type": "application/json",
+              "value": {
+                "title": "Q2 statement",
+                "tags": [
+                  "finance",
+                  "quarterly"
+                ]
+              }
+            }
+          ]
+        },
+        "uncertainties": []
+      }
+    },
+    {
+      "task_id": "payment-created-response",
+      "content_json": {
+        "response": {
+          "status": 201,
+          "headers": {},
+          "body": {
+            "payment_id": "retain pay_01 for POST /orders",
+            "status": "pending"
+          },
+          "follow_up": [
+            "Pass payment_id to POST /orders.",
+            "Match payment.completed deliveries by payment_id."
+          ]
+        },
+        "uncertainties": []
+      }
+    },
+    {
+      "task_id": "create-user-errors",
+      "content_json": {
+        "errors": [
+          {
+            "status": 409,
+            "code": "email_taken",
+            "retry_policy": "after-correction-with-new-key",
+            "caller_action": "Use another email address and a new idempotency key; do not retry unchanged input.",
+            "preserve": []
+          },
+          {
+            "status": 422,
+            "code": "validation_failed",
+            "retry_policy": "after-correction-with-new-key",
+            "caller_action": "Correct the input, then retry as a new logical operation with a new idempotency key.",
+            "preserve": []
+          },
+          {
+            "status": 409,
+            "code": "idempotency_conflict",
+            "retry_policy": "original-request-or-new-logical-operation",
+            "caller_action": "Use the original request or a new key for a new logical operation; do not reuse the conflicting key with changed input.",
+            "preserve": []
+          },
+          {
+            "status": 401,
+            "code": "token_expired",
+            "retry_policy": "once-after-token-refresh-with-same-request-and-key",
+            "caller_action": "Refresh once, then retry once.",
+            "preserve": [
+              "semantically identical request",
+              "Idempotency-Key"
+            ]
+          }
+        ],
+        "uncertainties": []
+      }
+    },
+    {
+      "task_id": "complete-checkout-workflow",
+      "content_json": {
+        "steps": [
+          {
+            "order": 1,
+            "method": "POST",
+            "path": "/v1/carts/cart_01K0COMPLETE/validate",
+            "input": {
+              "id": "cart_01K0COMPLETE"
+            },
+            "keep": [
+              "cart_id"
+            ],
+            "state_after_success": "cart.validated"
+          },
+          {
+            "order": 2,
+            "method": "POST",
+            "path": "/v1/payments",
+            "input": {
+              "cart_id": "cart_01K0COMPLETE",
+              "amount": 1200,
+              "currency": "JPY",
+              "type": "card",
+              "card_token": "<card-token>",
+              "Idempotency-Key": "<payment-operation-key>"
+            },
+            "keep": [
+              "payment_id",
+              "Idempotency-Key"
+            ],
+            "state_after_success": "payment.pending + order.not_confirmed"
+          },
+          {
+            "order": 3,
+            "method": "POST",
+            "path": "/v1/orders",
+            "input": {
+              "cart_id": "cart_01K0COMPLETE",
+              "payment_id": "<payment_id>",
+              "Idempotency-Key": "<order-operation-key>"
+            },
+            "keep": [
+              "order_id",
+              "cart_id",
+              "payment_id",
+              "Idempotency-Key"
+            ],
+            "state_after_success": "payment.settled + order.confirmed"
+          }
+        ],
+        "failure_recovery": [
+          "For an ambiguous or safely retryable POST /orders outcome, preserve payment state and replay the same cart_id, payment_id, and Idempotency-Key.",
+          "If payment is already settled, POST /orders associates it without another capture."
+        ],
+        "webhook_reconciliation": [
+          "Match payment.completed by payment_id.",
+          "Record payment.settled + order.not_confirmed and continue POST /orders without another capture."
+        ],
+        "uncertainties": []
+      }
+    },
+    {
+      "task_id": "payment-completed-webhook",
+      "content_json": {
+        "webhook": {
+          "event": "payment.completed",
+          "method": "POST",
+          "path": "<registered URL>",
+          "verification": [
+            "Read the required X-Payment-Attempt single field line.",
+            "Treat deliveries as at-least-once and unordered.",
+            "Deduplicate by event_id."
+          ],
+          "headers": {
+            "X-Payment-Attempt": "<required string; not comma-combinable>"
+          },
+          "payload": {
+            "required": [
+              "event_id",
+              "event",
+              "payment_id",
+              "amount",
+              "occurred_at",
+              "metadata"
+            ],
+            "metadata": "opaque; store or forward without interpreting"
+          },
+          "acknowledgement": {
+            "status": "any 2xx",
+            "deadline": "within 5 seconds"
+          },
+          "reconciliation": [
+            "Match by payment_id.",
+            "If early, record payment.settled + order.not_confirmed.",
+            "Continue POST /orders without capturing the settled payment again."
+          ]
+        },
+        "uncertainties": []
+      }
+    }
+  ]
+}

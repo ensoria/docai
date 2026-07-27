@@ -57,6 +57,14 @@ future version before publication.
 
 - [ ] Include the existing complete API for continuity plus at least two newly
   authored, unpublished holdout APIs to reduce training-contamination risk.
+- [x] Define and validate the six `complete-commerce` continuity tasks against
+  Stable `1.0.0`, including one positive and one targeted negative grader case
+  per task.
+- [x] Define six condition-neutral output contracts and a generic assertion
+  grader that keeps expected outcomes outside public prompt fields.
+- [ ] Author and privately validate the `holdout-field-service` and
+  `holdout-media-processing` source bundles, DocAI projections, task packets,
+  and grader cases.
 - [ ] Hash and timestamp holdout source inputs, tasks, expected outcomes, and
   graders before live execution; publish them only after the run set is closed.
 - [ ] Cover materially different API surfaces: ordinary JSON CRUD and

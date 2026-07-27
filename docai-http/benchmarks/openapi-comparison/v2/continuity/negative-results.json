@@ -1,0 +1,170 @@
+{
+  "benchmark_id": "docai-http-openapi-comparison-v2",
+  "api_id": "complete-commerce",
+  "purpose": "Targeted negative grader fixtures; these values must not appear in provider prompts.",
+  "results": [
+    {
+      "task_id": "create-user-request",
+      "expected_failure_category": "request-headers",
+      "content_json": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/users",
+          "headers": {
+            "Authorization": "Bearer <access_token>",
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
+          "query": {},
+          "content_type": "application/json",
+          "body": {
+            "email": "taro@example.com",
+            "name": "Taro Yamada"
+          },
+          "parts": []
+        },
+        "uncertainties": []
+      }
+    },
+    {
+      "task_id": "upload-document-request",
+      "expected_failure_category": "multipart-boundary",
+      "content_json": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/documents",
+          "headers": {
+            "Authorization": "Bearer <access_token>",
+            "Accept": "application/json",
+            "Idempotency-Key": "<operation-unique-key>"
+          },
+          "query": {},
+          "content_type": "multipart/form-data; boundary=hard-coded-boundary",
+          "body": {},
+          "parts": [
+            {
+              "name": "document",
+              "filename": "statement.pdf",
+              "content_type": "application/pdf"
+            },
+            {
+              "name": "metadata",
+              "content_type": "application/json",
+              "value": {
+                "title": "Q2 statement",
+                "tags": [
+                  "finance",
+                  "quarterly"
+                ]
+              }
+            }
+          ]
+        },
+        "uncertainties": []
+      }
+    },
+    {
+      "task_id": "payment-created-response",
+      "expected_failure_category": "response-follow-up",
+      "content_json": {
+        "response": {
+          "status": 201,
+          "headers": {},
+          "body": {
+            "payment_id": "retain pay_01",
+            "status": "pending"
+          },
+          "follow_up": []
+        },
+        "uncertainties": []
+      }
+    },
+    {
+      "task_id": "create-user-errors",
+      "expected_failure_category": "error-cases",
+      "content_json": {
+        "errors": [
+          {
+            "status": 409,
+            "code": "email_taken",
+            "retry_policy": "retry-unchanged",
+            "caller_action": "Retry unchanged.",
+            "preserve": []
+          }
+        ],
+        "uncertainties": []
+      }
+    },
+    {
+      "task_id": "complete-checkout-workflow",
+      "expected_failure_category": "workflow-recovery",
+      "content_json": {
+        "steps": [
+          {
+            "order": 1,
+            "method": "POST",
+            "path": "/v1/carts/cart_01K0COMPLETE/validate",
+            "input": {},
+            "keep": [
+              "cart_id"
+            ],
+            "state_after_success": "cart.validated"
+          },
+          {
+            "order": 2,
+            "method": "POST",
+            "path": "/v1/payments",
+            "input": {},
+            "keep": [
+              "payment_id"
+            ],
+            "state_after_success": "payment.pending + order.not_confirmed"
+          },
+          {
+            "order": 3,
+            "method": "POST",
+            "path": "/v1/orders",
+            "input": {},
+            "keep": [
+              "order_id"
+            ],
+            "state_after_success": "payment.settled + order.confirmed"
+          }
+        ],
+        "failure_recovery": [
+          "Create a new payment and capture it again before retrying POST /orders."
+        ],
+        "webhook_reconciliation": [
+          "Ignore early webhooks."
+        ],
+        "uncertainties": []
+      }
+    },
+    {
+      "task_id": "payment-completed-webhook",
+      "expected_failure_category": "webhook-deduplication",
+      "content_json": {
+        "webhook": {
+          "event": "payment.completed",
+          "method": "POST",
+          "path": "<registered URL>",
+          "verification": [
+            "Process every delivery as new."
+          ],
+          "headers": {
+            "X-Payment-Attempt": "<required string; not comma-combinable>"
+          },
+          "payload": {
+            "metadata": "opaque; store or forward without interpreting"
+          },
+          "acknowledgement": {
+            "status": "any 2xx",
+            "deadline": "within 5 seconds"
+          },
+          "reconciliation": []
+        },
+        "uncertainties": []
+      }
+    }
+  ]
+}

@@ -1,0 +1,134 @@
+{
+  "contract_version": "1",
+  "task_classes": {
+    "request_construction": "request-construction.v1",
+    "response_handling": "response-handling.v1",
+    "error_recovery": "error-recovery.v1",
+    "workflow_completion": "workflow-completion.v1",
+    "webhook_handling": "webhook-handling.v1",
+    "retrieval_selection": "retrieval-selection.v1"
+  },
+  "assertion_operators": [
+    "equals",
+    "contains",
+    "absent",
+    "set_equals"
+  ],
+  "output_contracts": {
+    "request-construction.v1": {
+      "json_shape": {
+        "request": {
+          "method": "string",
+          "path": "string",
+          "headers": {
+            "Header-Name": "value"
+          },
+          "query": {},
+          "content_type": "string or null",
+          "body": {},
+          "parts": []
+        },
+        "uncertainties": [
+          "string"
+        ]
+      }
+    },
+    "response-handling.v1": {
+      "json_shape": {
+        "response": {
+          "status": 0,
+          "headers": {},
+          "body": {},
+          "follow_up": [
+            "string"
+          ]
+        },
+        "uncertainties": [
+          "string"
+        ]
+      }
+    },
+    "error-recovery.v1": {
+      "json_shape": {
+        "errors": [
+          {
+            "status": 0,
+            "code": "string",
+            "retry_policy": "string",
+            "caller_action": "string",
+            "preserve": [
+              "string"
+            ]
+          }
+        ],
+        "uncertainties": [
+          "string"
+        ]
+      }
+    },
+    "workflow-completion.v1": {
+      "json_shape": {
+        "steps": [
+          {
+            "order": 1,
+            "method": "string",
+            "path": "string",
+            "input": {},
+            "keep": [
+              "string"
+            ],
+            "state_after_success": "string"
+          }
+        ],
+        "failure_recovery": [
+          "string"
+        ],
+        "webhook_reconciliation": [
+          "string"
+        ],
+        "uncertainties": [
+          "string"
+        ]
+      }
+    },
+    "webhook-handling.v1": {
+      "json_shape": {
+        "webhook": {
+          "event": "string",
+          "method": "string",
+          "path": "string",
+          "verification": [
+            "string"
+          ],
+          "headers": {},
+          "payload": {},
+          "acknowledgement": {},
+          "reconciliation": [
+            "string"
+          ]
+        },
+        "uncertainties": [
+          "string"
+        ]
+      }
+    },
+    "retrieval-selection.v1": {
+      "json_shape": {
+        "request": {
+          "method": "string",
+          "path": "string",
+          "query": {},
+          "headers": {}
+        },
+        "pagination": {
+          "items_path": "string",
+          "next_cursor_path": "string",
+          "stop_condition": "string"
+        },
+        "uncertainties": [
+          "string"
+        ]
+      }
+    }
+  }
+}

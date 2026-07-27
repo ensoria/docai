@@ -19,6 +19,15 @@ Run the draft-plan checker from the repository root:
 node docai-http/tools/check-openapi-comparison-v2-plan.mjs
 ```
 
+Run the public evaluation-contract tests:
+
+```sh
+node --test \
+  docai-http/tools/tests/openapi-comparison-v2-contract.test.mjs \
+  docai-http/tools/tests/openapi-comparison-v2-continuity.test.mjs \
+  docai-http/tools/tests/openapi-comparison-v2-grader.test.mjs
+```
+
 Inspect the deterministic 648-request schedule without writing it:
 
 ```sh
@@ -53,8 +62,13 @@ authorize a later batch.
 - `PLAN.md` explains claims, fairness rules, execution, analysis, and stopping
   criteria for human review.
 - `plan.json` is the machine-readable matrix and policy source.
+- `contracts.json` defines the six condition-neutral output contracts and the
+  assertion vocabulary used by private expected outcomes.
+- `continuity/` contains the six Stable `1.0.0` continuity task contracts and
+  their hand-authored positive and targeted negative grader cases.
 - `ARTIFACT-CONTRACT.md` defines the public/private split and the evidence
   required to freeze the plan.
+- `IMPLEMENTATION.md` tracks the test-first implementation sequence.
 - `freeze-manifest.json` will be created only after every benchmark artifact is
   complete and hashed.
 - `batches/` and `runs/` will be created when the frozen execution tooling is
