@@ -156,12 +156,12 @@ OpenAPI YAML inputs, and Stable DocAI HTTP `1.0.0` document sets.
 - Produces: strict provider-neutral prompt records and deterministic local
   context metrics.
 
-- [ ] Write a failing test proving all four condition prompts differ only in
+- [x] Write a failing test proving all four condition prompts differ only in
   context and contain no expected values or grader evidence.
-- [ ] Build the common system/user envelope and required-output text.
-- [ ] Export all 648 prompts into the ignored workspace.
-- [ ] Record UTF-8 bytes, characters, and characters/4 for every prompt.
-- [ ] Add optional provider tokenizer counts only where a stable tokenizer is
+- [x] Build the common system/user envelope and required-output text.
+- [x] Export all 648 prompts into the ignored workspace.
+- [x] Record UTF-8 bytes, characters, and characters/4 for every prompt.
+- [x] Add optional provider tokenizer counts only where a stable tokenizer is
   available without adding a runtime dependency.
 
 ### Task 7: Generic Grader

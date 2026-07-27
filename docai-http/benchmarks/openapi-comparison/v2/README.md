@@ -38,6 +38,22 @@ DOCAI_BENCHMARK_PRIVATE_REQUIRED=1 \
   node docai-http/tools/check-openapi-comparison-v2-parity.mjs --private-required
 ```
 
+Export the 648 provider-neutral prompt records and deterministic local metrics
+to the ignored private workspace:
+
+```sh
+DOCAI_BENCHMARK_PRIVATE_REQUIRED=1 \
+  node docai-http/tools/build-openapi-comparison-v2-prompts.mjs \
+  --private-required --write --summary
+node docai-http/tools/record-openapi-comparison-v2-metrics.mjs --write
+```
+
+The metrics include exact context and rendered-prompt UTF-8 bytes, Unicode
+characters, and characters/4 estimates. Provider tokenizer counts remain empty
+unless a stable tokenizer is explicitly supplied without adding a runtime
+dependency. Provider-reported input tokens remain the primary Live efficiency
+measurement.
+
 Inspect the deterministic 648-request schedule without writing it:
 
 ```sh
