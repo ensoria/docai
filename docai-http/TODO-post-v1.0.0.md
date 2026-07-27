@@ -74,7 +74,7 @@ future version before publication.
 - [x] Define at least six independently gradable tasks per API across request
   construction, response handling, error recovery, workflow completion,
   retrieval selection, and token load.
-- [ ] Give every condition the same authoritative facts for the enriched
+- [x] Give every condition the same authoritative facts for the enriched
   comparison, and record separately which facts raw OpenAPI cannot express.
 
 ### Context Conditions
@@ -83,7 +83,7 @@ future version before publication.
   selected profile as the four primary conditions.
 - [ ] Add a DocAI full-versus-compact ablation for compact-eligible tasks without
   mixing that ablation into the primary OpenAPI comparison.
-- [ ] Build a reusable OpenAPI slicer or document clearly where fixture-mapped
+- [x] Build a reusable OpenAPI slicer or document clearly where fixture-mapped
   slicing remains part of the benchmark setup.
 - [ ] Measure deterministic UTF-8 bytes and characters, provider-reported input
   tokens, and tokenizer-specific counts where a stable tokenizer is available.

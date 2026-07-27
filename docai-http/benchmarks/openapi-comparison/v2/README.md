@@ -28,6 +28,16 @@ node --test \
   docai-http/tools/tests/openapi-comparison-v2-grader.test.mjs
 ```
 
+Context construction requires the `ruby` executable and its standard `yaml`
+and `json` libraries; no third-party Ruby packages are required. When the
+private holdouts are available locally, validate all four contexts and source
+fact parity with:
+
+```sh
+DOCAI_BENCHMARK_PRIVATE_REQUIRED=1 \
+  node docai-http/tools/check-openapi-comparison-v2-parity.mjs --private-required
+```
+
 Inspect the deterministic 648-request schedule without writing it:
 
 ```sh

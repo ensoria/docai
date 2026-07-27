@@ -134,13 +134,13 @@ OpenAPI YAML inputs, and Stable DocAI HTTP `1.0.0` document sets.
 - Consumes: one API source bundle and task retrieval roots.
 - Produces: `buildTaskContext(api, task, condition)` and a parity report.
 
-- [ ] Write failing tests for raw, reference-closed slice, enriched, and DocAI
+- [x] Write failing tests for raw, reference-closed slice, enriched, and DocAI
   selected-profile contexts.
-- [ ] Implement reusable path/component reference closure without
+- [x] Implement reusable path/component reference closure without
   fixture-specific extraction code.
-- [ ] Add deterministic enrichment and DocAI retrieval loading.
-- [ ] Verify enriched and DocAI contexts expose every task fact ID.
-- [ ] Record raw/sliced missing facts separately instead of treating them as
+- [x] Add deterministic enrichment and DocAI retrieval loading.
+- [x] Verify enriched and DocAI contexts expose every task fact ID.
+- [x] Record raw/sliced missing facts separately instead of treating them as
   representation failures.
 
 ### Task 6: Prompt Export And Context Metrics
