@@ -40,6 +40,7 @@
             },
             "parts": []
           },
+          "client_behavior": [],
           "uncertainties": []
         },
         "assertions": [
@@ -155,6 +156,7 @@
               }
             ]
           },
+          "client_behavior": [],
           "uncertainties": []
         },
         "assertions": [

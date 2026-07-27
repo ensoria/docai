@@ -94,12 +94,12 @@ OpenAPI YAML inputs, and Stable DocAI HTTP `1.0.0` document sets.
 - Produces: authoritative OpenAPI and behavior inputs, full and compact DocAI
   document sets, six task contracts, and positive/negative grader cases.
 
-- [ ] Write a failing private-packet test for the six planned task IDs.
-- [ ] Author JSON CRUD, cursor pagination, authentication, endpoint errors,
+- [x] Write a failing private-packet test for the six planned task IDs.
+- [x] Author JSON CRUD, cursor pagination, authentication, endpoint errors,
   idempotency, dispatch workflow, webhook, and bulk-parts facts.
-- [ ] Project the same facts into full and compact Stable `1.0.0` contexts.
-- [ ] Add six task contracts with source-fact inventories.
-- [ ] Validate positive and targeted negative results.
+- [x] Project the same facts into full and compact Stable `1.0.0` contexts.
+- [x] Add six task contracts with source-fact inventories.
+- [x] Validate positive and targeted negative results.
 - [ ] Back up the ignored holdout directory in access-controlled storage.
 
 ### Task 4: Media-Processing Holdout

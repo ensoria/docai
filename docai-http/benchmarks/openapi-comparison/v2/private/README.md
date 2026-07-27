@@ -23,3 +23,10 @@ Keep an access-controlled backup before Live execution. Do not place API keys,
 provider account identifiers, billing balances, or unrelated secrets here.
 After all batches close, review and redact the artifacts before deliberately
 moving publishable evidence out of this ignored directory.
+
+Require and validate all locally available private packets:
+
+```sh
+DOCAI_BENCHMARK_PRIVATE_REQUIRED=1 \
+  node --test docai-http/tools/tests/openapi-comparison-v2-private-packets.test.mjs
+```

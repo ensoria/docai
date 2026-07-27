@@ -28,6 +28,9 @@
           "body": {},
           "parts": []
         },
+        "client_behavior": [
+          "string"
+        ],
         "uncertainties": [
           "string"
         ]
@@ -123,7 +126,9 @@
         "pagination": {
           "items_path": "string",
           "next_cursor_path": "string",
-          "stop_condition": "string"
+          "cursor_parameter": "string",
+          "stop_condition": "string",
+          "deduplicate_by": "string or null"
         },
         "uncertainties": [
           "string"

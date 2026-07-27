@@ -62,9 +62,10 @@ future version before publication.
   per task.
 - [x] Define six condition-neutral output contracts and a generic assertion
   grader that keeps expected outcomes outside public prompt fields.
-- [ ] Author and privately validate the `holdout-field-service` and
-  `holdout-media-processing` source bundles, DocAI projections, task packets,
-  and grader cases.
+- [x] Author and privately validate the `holdout-field-service` source bundle,
+  full/compact DocAI projections, six-task packet, and grader cases.
+- [ ] Author and privately validate the `holdout-media-processing` source
+  bundle, full/compact DocAI projections, six-task packet, and grader cases.
 - [ ] Hash and timestamp holdout source inputs, tasks, expected outcomes, and
   graders before live execution; publish them only after the run set is closed.
 - [ ] Cover materially different API surfaces: ordinary JSON CRUD and

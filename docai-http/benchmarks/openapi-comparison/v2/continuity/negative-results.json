@@ -23,6 +23,7 @@
           },
           "parts": []
         },
+        "client_behavior": [],
         "uncertainties": []
       }
     },
@@ -60,6 +61,7 @@
             }
           ]
         },
+        "client_behavior": [],
         "uncertainties": []
       }
     },

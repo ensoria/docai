@@ -83,6 +83,20 @@ test("error contract preserves conditional retry semantics", () => {
   assert.doesNotMatch(output, /"retry": (true|false)/);
 });
 
+test("retrieval contract exposes cursor and moving-view controls", () => {
+  const output = buildRequiredOutputText("retrieval-selection.v1");
+
+  assert.match(output, /"cursor_parameter": "string"/);
+  assert.match(output, /"deduplicate_by": "string or null"/);
+});
+
+test("request contract separates known client behavior from uncertainties", () => {
+  const output = buildRequiredOutputText("request-construction.v1");
+
+  assert.match(output, /"client_behavior": \[/);
+  assert.match(output, /"uncertainties": \[/);
+});
+
 function validPacket() {
   const definitions = [
     ["request-one", "request_construction", "request-construction.v1"],
