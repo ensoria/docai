@@ -23,6 +23,12 @@ test("field-service holdout packet and projections are complete", {
   validatePrivateHoldout("field-service", "holdout-field-service");
 });
 
+test("media-processing holdout packet and projections are complete", {
+  skip: skipUnlessAvailable("media-processing"),
+}, () => {
+  validatePrivateHoldout("media-processing", "holdout-media-processing");
+});
+
 function validatePrivateHoldout(directoryName, apiId) {
   const holdoutDir = path.join(privateRoot, directoryName);
   const packet = readContractPacket(path.join(holdoutDir, "tasks.json"));

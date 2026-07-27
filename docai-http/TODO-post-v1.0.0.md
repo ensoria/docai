@@ -55,7 +55,7 @@ future version before publication.
 
 ### Fixtures And Tasks
 
-- [ ] Include the existing complete API for continuity plus at least two newly
+- [x] Include the existing complete API for continuity plus at least two newly
   authored, unpublished holdout APIs to reduce training-contamination risk.
 - [x] Define and validate the six `complete-commerce` continuity tasks against
   Stable `1.0.0`, including one positive and one targeted negative grader case
@@ -64,14 +64,14 @@ future version before publication.
   grader that keeps expected outcomes outside public prompt fields.
 - [x] Author and privately validate the `holdout-field-service` source bundle,
   full/compact DocAI projections, six-task packet, and grader cases.
-- [ ] Author and privately validate the `holdout-media-processing` source
+- [x] Author and privately validate the `holdout-media-processing` source
   bundle, full/compact DocAI projections, six-task packet, and grader cases.
 - [ ] Hash and timestamp holdout source inputs, tasks, expected outcomes, and
   graders before live execution; publish them only after the run set is closed.
-- [ ] Cover materially different API surfaces: ordinary JSON CRUD and
+- [x] Cover materially different API surfaces: ordinary JSON CRUD and
   pagination, authentication and errors, idempotent multi-step workflows,
   webhooks, multipart/non-JSON transfer, and polymorphic bodies.
-- [ ] Define at least six independently gradable tasks per API across request
+- [x] Define at least six independently gradable tasks per API across request
   construction, response handling, error recovery, workflow completion,
   retrieval selection, and token load.
 - [ ] Give every condition the same authoritative facts for the enriched

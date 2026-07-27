@@ -115,12 +115,12 @@ OpenAPI YAML inputs, and Stable DocAI HTTP `1.0.0` document sets.
 - Produces: authoritative OpenAPI and behavior inputs, full and compact DocAI
   document sets, six task contracts, and positive/negative grader cases.
 
-- [ ] Extend the private-packet test for the six planned media task IDs.
-- [ ] Author multipart, CSV download, polymorphic body, asynchronous workflow,
+- [x] Extend the private-packet test for the six planned media task IDs.
+- [x] Author multipart, CSV download, polymorphic body, asynchronous workflow,
   error recovery, and webhook facts.
-- [ ] Project the same facts into full and compact Stable `1.0.0` contexts.
-- [ ] Add six task contracts with source-fact inventories.
-- [ ] Validate positive and targeted negative results.
+- [x] Project the same facts into full and compact Stable `1.0.0` contexts.
+- [x] Add six task contracts with source-fact inventories.
+- [x] Validate positive and targeted negative results.
 - [ ] Back up the ignored holdout directory in access-controlled storage.
 
 ### Task 5: Context Construction And Source Parity
