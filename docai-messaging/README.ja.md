@@ -1,1 +1,1 @@
-TODO:
+TODO: DocAI Messagingの初版が完成してから翻訳したものを記載
