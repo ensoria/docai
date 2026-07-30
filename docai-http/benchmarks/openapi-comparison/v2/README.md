@@ -54,6 +54,22 @@ unless a stable tokenizer is explicitly supplied without adding a runtime
 dependency. Provider-reported input tokens remain the primary Live efficiency
 measurement.
 
+## Grading Statuses
+
+The generic grader first validates the strict output contract and then applies
+the private task assertions:
+
+- `malformed`: the provider output is not a JSON object or violates its output
+  contract;
+- `pass`: every assertion passes, regardless of any extra uncertainty text;
+- `fail`: at least one assertion fails and `uncertainties` is empty; and
+- `inconclusive`: at least one assertion fails and the structurally valid
+  output contains one or more explicit uncertainty strings.
+
+Only `inconclusive` records require blinded manual review. Content, format, and
+grader outcomes never authorize an automatic rerun; only the separately frozen
+transport policy can do so before a usable provider response exists.
+
 Inspect the deterministic 648-request schedule without writing it:
 
 ```sh

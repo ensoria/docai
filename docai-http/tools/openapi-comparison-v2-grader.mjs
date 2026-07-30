@@ -1,13 +1,25 @@
 import { isDeepStrictEqual } from "node:util";
 
+import { taskContracts } from "./openapi-comparison-v2-contract.mjs";
+
+const contracts = taskContracts();
+
 export function gradeBenchmarkResponse(contentJson, task) {
   if (!contentJson || typeof contentJson !== "object" || Array.isArray(contentJson)) {
-    return {
-      status: "malformed",
-      pass: false,
-      reasons: ["response must be a JSON object"],
-      failure_categories: ["output-format"],
-    };
+    return malformedResult(["response must be a JSON object"]);
+  }
+
+  const contractId = task?.public?.output_contract;
+  const contract = contracts.output_contracts[contractId];
+  if (!contract) {
+    throw new Error(`Grader task has unknown output contract ${contractId ?? "<missing>"}`);
+  }
+  const shapeErrors = validateShape(contentJson, contract.json_shape, "");
+  if (shapeErrors.length > 0) {
+    return malformedResult(shapeErrors.map((reason) => `output contract: ${reason}`));
+  }
+  if (!Array.isArray(task?.private?.assertions)) {
+    throw new Error("Grader task requires private assertions");
   }
 
   const reasons = [];
@@ -21,11 +33,15 @@ export function gradeBenchmarkResponse(contentJson, task) {
     }
   }
 
+  const pass = reasons.length === 0;
+  const inconclusive = !pass && contentJson.uncertainties.length > 0;
   return {
-    status: reasons.length === 0 ? "pass" : "fail",
-    pass: reasons.length === 0,
+    status: pass ? "pass" : inconclusive ? "inconclusive" : "fail",
+    pass,
     reasons,
     failure_categories: failureCategories,
+    automatic_rerun_allowed: false,
+    manual_review_required: inconclusive,
   };
 }
 
@@ -115,4 +131,80 @@ function isPlainObject(value) {
 function format(value) {
   const formatted = JSON.stringify(value);
   return formatted.length > 240 ? `${formatted.slice(0, 237)}...` : formatted;
+}
+
+function malformedResult(reasons) {
+  return {
+    status: "malformed",
+    pass: false,
+    reasons,
+    failure_categories: ["output-format"],
+    automatic_rerun_allowed: false,
+    manual_review_required: false,
+  };
+}
+
+function validateShape(actual, expected, pointer) {
+  const location = pointer === "" ? "/" : pointer;
+
+  if (typeof expected === "string") {
+    if (expected === "string or null") {
+      return typeof actual === "string" || actual === null
+        ? []
+        : [`${location} must be a string or null`];
+    }
+    return typeof actual === "string"
+      ? []
+      : [`${location} must be a string`];
+  }
+
+  if (typeof expected === "number") {
+    return typeof actual === "number" && Number.isFinite(actual)
+      ? []
+      : [`${location} must be a finite number`];
+  }
+
+  if (Array.isArray(expected)) {
+    if (!Array.isArray(actual)) return [`${location} must be an array`];
+    if (expected.length === 0) return [];
+    return actual.flatMap((item, index) => (
+      validateShape(item, expected[0], `${pointer}/${index}`)
+    ));
+  }
+
+  if (isPlainObject(expected)) {
+    if (!isPlainObject(actual)) return [`${location} must be an object`];
+    const expectedKeys = Object.keys(expected);
+    if (expectedKeys.length === 0) return [];
+
+    if (expectedKeys.length === 1 && expectedKeys[0] === "Header-Name") {
+      return Object.entries(actual).flatMap(([key, value]) => (
+        typeof value === "string"
+          ? []
+          : [`${pointer}/${escapePointer(key)} must be a string`]
+      ));
+    }
+
+    const errors = [];
+    expectedKeys.forEach((key) => {
+      const childPointer = `${pointer}/${escapePointer(key)}`;
+      if (!Object.hasOwn(actual, key)) {
+        errors.push(`${childPointer} is required`);
+        return;
+      }
+      errors.push(...validateShape(actual[key], expected[key], childPointer));
+    });
+    Object.keys(actual)
+      .filter((key) => !Object.hasOwn(expected, key))
+      .forEach((key) => errors.push(`${pointer}/${escapePointer(key)} is not allowed`));
+    return errors;
+  }
+
+  return isDeepStrictEqual(actual, expected)
+    ? []
+    : [`${location} must equal ${format(expected)}`];
+}
+
+function escapePointer(value) {
+  return value.replaceAll("~", "~0").replaceAll("/", "~1");
 }

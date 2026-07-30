@@ -176,11 +176,11 @@ OpenAPI YAML inputs, and Stable DocAI HTTP `1.0.0` document sets.
   `gradeBenchmarkResponse(contentJson, task)` returning status, reasons, and
   failure categories.
 
-- [ ] Write failing tests for every assertion operator and each task class.
+- [x] Write failing tests for every assertion operator and each task class.
 - [x] Implement exact, inclusion, absence, and unordered collection
   assertions with JSON-pointer-like paths.
-- [ ] Classify malformed and inconclusive output without automatic reruns.
-- [ ] Run every positive/negative fixture through the grader.
+- [x] Classify malformed and inconclusive output without automatic reruns.
+- [x] Run every positive/negative fixture through the grader.
 
 ### Task 8: Freeze And Cost Preflight
 
