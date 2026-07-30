@@ -5,10 +5,12 @@ import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 
+import { validateFrozenArtifacts } from "./freeze-openapi-comparison-v2.mjs";
 import { buildPrimarySchedule } from "./openapi-comparison-v2-utils.mjs";
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const BENCHMARK_DIR = path.resolve(SCRIPT_DIR, "..", "benchmarks", "openapi-comparison", "v2");
+const REPOSITORY_ROOT = path.resolve(BENCHMARK_DIR, "..", "..", "..", "..");
 const PLAN_FILE = path.join(BENCHMARK_DIR, "plan.json");
 const PLAN_DOC = path.join(BENCHMARK_DIR, "PLAN.md");
 const requireFrozen = process.argv.includes("--frozen");
@@ -166,6 +168,11 @@ function validateFreeze(candidate) {
     });
     (manifest.artifacts ?? []).forEach((artifact) => {
       assert(/^[a-f0-9]{64}$/.test(artifact.sha256 ?? ""), "freeze", `artifact ${artifact.path ?? "<unknown>"} lacks SHA-256`);
+    });
+    validateFrozenArtifacts({
+      plan: candidate,
+      manifest,
+      rootDir: REPOSITORY_ROOT,
     });
   } catch (error) {
     fail("freeze", `cannot validate freeze manifest: ${error.message}`);

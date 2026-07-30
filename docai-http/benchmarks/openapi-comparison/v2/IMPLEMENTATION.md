@@ -198,9 +198,9 @@ OpenAPI YAML inputs, and Stable DocAI HTTP `1.0.0` document sets.
 - Produces: SHA-256 manifest, frozen plan identity, exact model resolutions,
   and provider-specific whole-pilot/per-batch ceilings.
 
-- [ ] Write tests that reject missing classes, changed hashes, secrets, or a
+- [x] Write tests that reject missing classes, changed hashes, secrets, or a
   non-frozen plan.
-- [ ] Verify current models and prices using official provider documentation.
+- [x] Verify current models and prices using official provider documentation.
 - [ ] Generate and review prompt/token estimates.
 - [ ] Freeze every required artifact and change plan status to frozen.
 - [ ] Run `check-openapi-comparison-v2-plan.mjs --frozen`.
