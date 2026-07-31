@@ -219,11 +219,19 @@ OpenAPI YAML inputs, and Stable DocAI HTTP `1.0.0` document sets.
 - Produces: append-only attempts, idempotent checkpoints, graded run records,
   and the batch-boundary report.
 
-- [ ] Write failing tests for resume, 100-attempt cap, retry eligibility,
+- [x] Write failing tests for resume, 100-attempt cap, retry eligibility,
   mandatory stop rules, and one-batch selection.
-- [ ] Implement dependency-injected provider adapters and append-only storage.
-- [ ] Enforce one transport retry and retain both attempts.
-- [ ] Generate counts, usage, cost signals, model IDs, and remaining batches.
+- [x] Implement dependency-injected provider adapters and append-only storage.
+- [x] Enforce one transport retry and retain both attempts.
+- [x] Generate counts, usage, cost signals, model IDs, and remaining batches.
+- [x] Validate the frozen manifest, generated outputs, and private source parity
+  before the runner may call a provider.
+- [x] Record runner revisions, start/end timestamps, raw provider responses,
+  checkpoints, and reports without overwriting attempt or run logs.
+- [ ] Resolve the provider strict-schema incompatibility for contract fields
+  that intentionally allow arbitrary JSON object keys. Do not silently narrow
+  those fields to empty objects. If the request setting or output contract
+  changes, create and freeze a new plan version before execution.
 - [ ] Run adapters only after the corresponding user approval.
 
 ### Task 10: Analysis And Publication

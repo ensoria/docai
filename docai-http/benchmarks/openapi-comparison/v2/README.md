@@ -85,6 +85,30 @@ node docai-http/tools/check-openapi-comparison-v2-plan.mjs --frozen
 
 Changing any hashed artifact now causes the frozen-plan check to fail.
 
+## Execution Tooling
+
+The provider-neutral runner, provider adapters, append-only run store, resume
+checkpoints, batch reports, and run checker are implemented. Inspect the current
+private run state without making provider requests:
+
+```sh
+node docai-http/tools/check-openapi-comparison-v2-runs.mjs
+```
+
+Before a provider call, the runner independently validates the frozen manifest,
+all frozen generated outputs, and private source parity. It also requires one
+matching command-line batch approval and the
+`DOCAI_LIVE_LLM_APPROVED_BATCH` environment variable. Every attempt records the
+runner SHA-256 revision and retains the raw provider response.
+
+Live execution remains blocked pending resolution of one output-mode issue.
+The frozen contracts intentionally contain JSON object slots with arbitrary
+wire keys. A provider schema that closes those objects would incorrectly
+narrow the contract, while at least one target's strict structured-output
+subset requires all object keys to be predefined. Any change to the frozen
+request setting or output contract requires a new plan version and freeze
+before `b01`.
+
 ## Private Holdouts
 
 The two holdout API inputs must remain outside the public repository until all
@@ -113,5 +137,5 @@ authorize a later batch.
 - `cost-estimate.json` records whole-pilot and per-batch token and cost ceilings.
 - `schedule.jsonl` contains the 648 frozen primary run identities.
 - `freeze-manifest.json` records 81 public/private artifact hashes.
-- `batches/` and `runs/` will be created when the frozen execution tooling is
-  implemented.
+- Ignored `private/runs/<plan-version>/<batch-id>/` directories hold append-only
+  attempts and runs plus atomic checkpoints and batch reports during execution.

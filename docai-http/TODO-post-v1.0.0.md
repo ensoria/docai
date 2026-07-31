@@ -96,20 +96,20 @@ future version before publication.
   full/compact ablation.
 - [x] Split the 648 primary requests into nine batches of 72 requests. One batch
   is one API, one repetition, six tasks, three models, and four conditions.
-- [ ] Treat 100 attempted provider requests as a hard maximum for one work step;
+- [x] Treat 100 attempted provider requests as a hard maximum for one work step;
   target 72 and never begin another batch in the same step.
-- [ ] Count successful calls, blocked calls, malformed responses, rate-limited
+- [x] Count successful calls, blocked calls, malformed responses, rate-limited
   calls, and transport retries toward the per-step request maximum.
-- [ ] Stop after every batch and wait for explicit user approval before starting
+- [x] Stop after every batch and wait for explicit user approval before starting
   the next batch; do not automatically continue across batches.
-- [ ] At every batch boundary, report requests attempted, completed, blocked,
+- [x] At every batch boundary, report requests attempted, completed, blocked,
   failed, and retried; provider-reported token usage; available account or cost
   signals; grader pass/fail/inconclusive counts; and the remaining batch plan.
-- [ ] Run the benchmark checker after every batch and persist an idempotent
+- [x] Run the benchmark checker after every batch and persist an idempotent
   checkpoint so a resumed batch skips already completed run identities.
-- [ ] Define batch IDs before execution using API, repetition, and frozen-plan
+- [x] Define batch IDs before execution using API, repetition, and frozen-plan
   identity, and record start/end timestamps and resolved model IDs per batch.
-- [ ] Stop the current batch early on a billing/credit error, repeated rate
+- [x] Stop the current batch early on a billing/credit error, repeated rate
   limit, unavailable model, grader/fixture defect, unexpected prompt expansion,
   or spend materially above the approved batch estimate.
 - [ ] Keep the full/compact ablation outside the nine primary batches and split
