@@ -5,7 +5,10 @@ import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 
-import { validateFrozenArtifacts } from "./freeze-openapi-comparison-v2.mjs";
+import {
+  validateFrozenArtifacts,
+  validateFrozenBenchmarkOutputs,
+} from "./freeze-openapi-comparison-v2.mjs";
 import { buildPrimarySchedule } from "./openapi-comparison-v2-utils.mjs";
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
@@ -173,6 +176,10 @@ function validateFreeze(candidate) {
       plan: candidate,
       manifest,
       rootDir: REPOSITORY_ROOT,
+    });
+    validateFrozenBenchmarkOutputs({
+      plan: candidate,
+      benchmarkDir: BENCHMARK_DIR,
     });
   } catch (error) {
     fail("freeze", `cannot validate freeze manifest: ${error.message}`);

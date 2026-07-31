@@ -1,0 +1,75 @@
+{
+  "resolution_version": "1",
+  "benchmark_id": "docai-http-openapi-comparison-v2",
+  "plan_version": "2.0.0-frozen.1",
+  "status": "frozen",
+  "catalog_checked_on": "2026-07-31",
+  "pricing_currency": "USD",
+  "pricing_unit": "per 1000000 tokens",
+  "targets": [
+    {
+      "target_id": "openai-frontier",
+      "provider": "openai",
+      "requested_model": "gpt-5.6-sol",
+      "resolved_model": "gpt-5.6-sol",
+      "resolution_kind": "catalog-model-id",
+      "official_catalog": "https://developers.openai.com/api/docs/models/gpt-5.6-sol",
+      "pricing_usd_per_million_tokens": {
+        "input": 5,
+        "output": 30
+      },
+      "request_settings": {
+        "structured_json": true,
+        "reasoning_effort": "medium",
+        "sampling_parameters": "omitted",
+        "max_output_tokens": 4096,
+        "prompt_caching": false,
+        "tools": false
+      }
+    },
+    {
+      "target_id": "anthropic-balanced",
+      "provider": "anthropic",
+      "requested_model": "claude-sonnet-5",
+      "resolved_model": "claude-sonnet-5",
+      "resolution_kind": "pinned-dateless-model-id",
+      "official_catalog": "https://platform.claude.com/docs/en/about-claude/models/whats-new-sonnet-5",
+      "official_pricing": "https://platform.claude.com/docs/en/about-claude/pricing",
+      "pricing_usd_per_million_tokens": {
+        "input": 3,
+        "output": 15
+      },
+      "pricing_note": "Conservative standard pricing after the introductory period ending 2026-08-31.",
+      "request_settings": {
+        "structured_json": true,
+        "thinking": "adaptive",
+        "sampling_parameters": "omitted",
+        "max_output_tokens": 4096,
+        "prompt_caching": false,
+        "tools": false
+      }
+    },
+    {
+      "target_id": "google-stable-agentic",
+      "provider": "google",
+      "requested_model": "gemini-3.6-flash",
+      "resolved_model": "gemini-3.6-flash",
+      "resolution_kind": "stable-model-id",
+      "official_catalog": "https://ai.google.dev/gemini-api/docs/models/gemini-3.6-flash",
+      "official_pricing": "https://ai.google.dev/gemini-api/docs/pricing",
+      "pricing_usd_per_million_tokens": {
+        "input": 1.5,
+        "output": 7.5
+      },
+      "request_settings": {
+        "structured_json": true,
+        "thinking_level": "medium",
+        "sampling_parameters": "omitted",
+        "max_output_tokens": 4096,
+        "prompt_caching": false,
+        "tools": false,
+        "grounding": false
+      }
+    }
+  ]
+}

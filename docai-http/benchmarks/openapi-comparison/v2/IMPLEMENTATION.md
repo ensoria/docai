@@ -201,10 +201,10 @@ OpenAPI YAML inputs, and Stable DocAI HTTP `1.0.0` document sets.
 - [x] Write tests that reject missing classes, changed hashes, secrets, or a
   non-frozen plan.
 - [x] Verify current models and prices using official provider documentation.
-- [ ] Generate and review prompt/token estimates.
-- [ ] Freeze every required artifact and change plan status to frozen.
-- [ ] Run `check-openapi-comparison-v2-plan.mjs --frozen`.
-- [ ] Present the `b01` ceiling and request explicit user approval.
+- [x] Generate and review prompt/token estimates.
+- [x] Freeze every required artifact and change plan status to frozen.
+- [x] Run `check-openapi-comparison-v2-plan.mjs --frozen`.
+- [x] Present the `b01` ceiling and request explicit user approval.
 
 ### Task 9: Provider Runners And Checkpoints
 

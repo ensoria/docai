@@ -4,7 +4,9 @@ This document records the model and cost choices that require human approval
 before OpenAPI comparison benchmark v2 can be frozen. It is adoption evidence,
 not part of the DocAI HTTP `1.0.0` compatibility boundary.
 
-Catalog and price check date: 2026-07-30.
+Catalog and price check date: 2026-07-31.
+
+Decision status: approved and frozen on 2026-07-31.
 
 ## Recommended Model Panel
 
@@ -98,15 +100,15 @@ by the nine-batch approval gates, while preserving a stronger cross-provider
 capability comparison matters more than the roughly five-dollar maximum
 saving.
 
-## Approval Gate
+## Approval Record
 
-Before freezing, approve or revise:
+The user approved:
 
 1. the three proposed model IDs;
 2. the provider-balanced reasoning settings;
 3. the 4,096 output-token limit and 10% input contingency; and
 4. the conservative `$6.13` ceiling for `b01`.
 
-Approval freezes the settings; it does not authorize a Live LLM request.
+This approval freezes the settings; it does not authorize a Live LLM request.
 Separate explicit approval remains required before executing `b01`, and again
 after every completed batch.

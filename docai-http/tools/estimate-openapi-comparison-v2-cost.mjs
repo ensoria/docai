@@ -113,6 +113,44 @@ export function buildCostEstimate({
   };
 }
 
+export function validateModelResolutions(plan, modelResolutions) {
+  if (modelResolutions?.benchmark_id !== plan?.benchmark_id) {
+    throw new Error("model resolutions benchmark_id must match the plan");
+  }
+  if (modelResolutions.plan_version !== undefined && modelResolutions.plan_version !== plan.plan_version) {
+    throw new Error("model resolutions plan_version must match the plan");
+  }
+  if (!Array.isArray(modelResolutions.targets) || modelResolutions.targets.length !== plan.targets.length) {
+    throw new Error("model resolutions must cover every target");
+  }
+
+  const resolutions = new Map();
+  modelResolutions.targets.forEach((target) => {
+    if (resolutions.has(target.target_id)) {
+      throw new Error(`duplicate model resolution for target ${target.target_id}`);
+    }
+    resolutions.set(target.target_id, target);
+  });
+  plan.targets.forEach((plannedTarget) => {
+    const target = resolutions.get(plannedTarget.id);
+    if (!target) throw new Error(`missing model resolution for target ${plannedTarget.id}`);
+    const price = target.pricing_usd_per_million_tokens;
+    if (target.provider !== plannedTarget.provider) {
+      throw new Error(`model resolution provider mismatch for target ${plannedTarget.id}`);
+    }
+    if (target.requested_model !== plannedTarget.planned_model) {
+      throw new Error(`requested model mismatch for target ${plannedTarget.id}`);
+    }
+    if (!target.resolved_model) {
+      throw new Error(`resolved model is required for target ${plannedTarget.id}`);
+    }
+    if (!price || !isNonNegativeNumber(price.input) || !isNonNegativeNumber(price.output)) {
+      throw new Error(`model resolution ${plannedTarget.id} requires non-negative input/output prices`);
+    }
+  });
+  return true;
+}
+
 function validateInputs({
   plan,
   metricsPacket,
@@ -130,21 +168,7 @@ function validateInputs({
   if (!Array.isArray(metricsPacket.rows) || metricsPacket.rows.length !== plan.execution.planned_primary_requests) {
     throw new Error("metrics rows must cover every planned primary request");
   }
-  if (modelResolutions?.benchmark_id !== plan.benchmark_id) {
-    throw new Error("model resolutions benchmark_id must match the plan");
-  }
-  if (!Array.isArray(modelResolutions.targets) || modelResolutions.targets.length !== plan.targets.length) {
-    throw new Error("model resolutions must cover every target");
-  }
-  modelResolutions.targets.forEach((target) => {
-    const price = target.pricing_usd_per_million_tokens;
-    if (!target.target_id || !target.requested_model || !target.resolved_model) {
-      throw new Error("each model resolution requires target and model IDs");
-    }
-    if (!price || !isNonNegativeNumber(price.input) || !isNonNegativeNumber(price.output)) {
-      throw new Error(`model resolution ${target.target_id} requires non-negative input/output prices`);
-    }
-  });
+  validateModelResolutions(plan, modelResolutions);
   if (!Number.isInteger(outputTokensPerRequestCeiling) || outputTokensPerRequestCeiling <= 0) {
     throw new Error("outputTokensPerRequestCeiling must be a positive integer");
   }

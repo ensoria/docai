@@ -8,8 +8,10 @@ import { fileURLToPath } from "node:url";
 
 import {
   BENCHMARK_DIR,
+  buildPrimarySchedule,
   readV2Plan,
 } from "./openapi-comparison-v2-utils.mjs";
+import { validateModelResolutions } from "./estimate-openapi-comparison-v2-cost.mjs";
 
 const REPOSITORY_ROOT = path.resolve(BENCHMARK_DIR, "..", "..", "..", "..");
 const MANIFEST_FILE = path.join(BENCHMARK_DIR, "freeze-manifest.json");
@@ -137,6 +139,14 @@ export function collectFreezeArtifacts({
   const toolsDir = path.join(repositoryRoot, "docai-http", "tools");
   const artifacts = [];
 
+  addFiles(artifacts, repositoryRoot, "execution-plan", [
+    path.join(benchmarkDir, "plan.json"),
+    path.join(benchmarkDir, "PLAN.md"),
+    path.join(benchmarkDir, "ARTIFACT-CONTRACT.md"),
+    path.join(benchmarkDir, "MODEL-COST-PREFLIGHT.md"),
+    path.join(toolsDir, "build-openapi-comparison-v2-schedule.mjs"),
+    path.join(toolsDir, "freeze-openapi-comparison-v2.mjs"),
+  ]);
   addFiles(artifacts, repositoryRoot, "authoritative-sources", [
     path.join(conformanceDir, "source", "complete-input-set.yaml"),
     path.join(conformanceDir, "source", "complete-openapi.yaml"),
@@ -159,6 +169,7 @@ export function collectFreezeArtifacts({
     path.join(benchmarkDir, "contracts.json"),
     path.join(toolsDir, "openapi-comparison-v2-contract.mjs"),
     path.join(toolsDir, "openapi-comparison-v2-prompt.mjs"),
+    path.join(toolsDir, "build-openapi-comparison-v2-prompts.mjs"),
     path.join(privateDir, "prompts", "primary.jsonl"),
   ]);
   addFiles(artifacts, repositoryRoot, "graders", [
@@ -177,13 +188,69 @@ export function collectFreezeArtifacts({
     path.join(privateDir, "contexts", "context-metrics.json"),
   ]);
   addFiles(artifacts, repositoryRoot, "model-resolutions", [path.join(benchmarkDir, "model-resolutions.json")]);
-  addFiles(artifacts, repositoryRoot, "cost-estimate", [path.join(benchmarkDir, "cost-estimate.json")]);
+  addFiles(artifacts, repositoryRoot, "cost-estimate", [
+    path.join(benchmarkDir, "cost-estimate.json"),
+    path.join(toolsDir, "estimate-openapi-comparison-v2-cost.mjs"),
+    path.join(toolsDir, "record-openapi-comparison-v2-metrics.mjs"),
+  ]);
   addFiles(artifacts, repositoryRoot, "execution-schedule", [path.join(benchmarkDir, "schedule.jsonl")]);
   return artifacts;
 }
 
 export function sha256File(file) {
   return crypto.createHash("sha256").update(fs.readFileSync(file)).digest("hex");
+}
+
+export function validateFrozenBenchmarkOutputs({
+  plan,
+  benchmarkDir = BENCHMARK_DIR,
+}) {
+  assertFrozenPlan(plan);
+  const modelResolutions = readJson(path.join(benchmarkDir, "model-resolutions.json"));
+  validateModelResolutions(plan, modelResolutions);
+  if (modelResolutions.status !== "frozen") {
+    throw new Error("model resolutions status must be frozen");
+  }
+
+  const estimate = readJson(path.join(benchmarkDir, "cost-estimate.json"));
+  if (estimate.benchmark_id !== plan.benchmark_id || estimate.plan_version !== plan.plan_version) {
+    throw new Error("cost estimate identity must match the frozen plan");
+  }
+  if (estimate.whole_pilot?.requests !== plan.execution.planned_primary_requests) {
+    throw new Error("cost estimate must cover every planned primary request");
+  }
+  if (estimate.methodology?.output_tokens_per_request_ceiling !== 4096) {
+    throw new Error("cost estimate output-token ceiling must match the approved value");
+  }
+  if (estimate.methodology?.input_contingency_percent !== 10) {
+    throw new Error("cost estimate input contingency must match the approved value");
+  }
+
+  const expectedSchedule = buildPrimarySchedule(plan);
+  const schedule = readJsonLines(path.join(benchmarkDir, "schedule.jsonl"));
+  if (JSON.stringify(schedule) !== JSON.stringify(expectedSchedule)) {
+    throw new Error("schedule.jsonl does not match the frozen plan");
+  }
+
+  const privateDir = path.join(benchmarkDir, "private");
+  const promptsFile = path.join(privateDir, "prompts", "primary.jsonl");
+  const prompts = readJsonLines(promptsFile);
+  if (prompts.length !== plan.execution.planned_primary_requests) {
+    throw new Error(`${path.basename(promptsFile)} must cover every planned primary request`);
+  }
+  if (prompts.some((record) => record.plan_version !== plan.plan_version)) {
+    throw new Error(`${path.basename(promptsFile)} contains a non-frozen plan identity`);
+  }
+
+  const metricsFile = path.join(privateDir, "contexts", "context-metrics.json");
+  const metrics = readJson(metricsFile);
+  if (metrics.plan_version !== plan.plan_version) {
+    throw new Error(`${path.basename(metricsFile)} contains a non-frozen plan identity`);
+  }
+  if (!Array.isArray(metrics.rows) || metrics.rows.length !== plan.execution.planned_primary_requests) {
+    throw new Error(`${path.basename(metricsFile)} must cover every planned primary request`);
+  }
+  return true;
 }
 
 function assertFrozenPlan(plan) {
@@ -285,10 +352,21 @@ function compareArtifacts(left, right) {
   return left.class.localeCompare(right.class) || left.path.localeCompare(right.path);
 }
 
+function readJson(file) {
+  return JSON.parse(fs.readFileSync(file, "utf8"));
+}
+
+function readJsonLines(file) {
+  const text = fs.readFileSync(file, "utf8").trim();
+  if (text === "") return [];
+  return text.split("\n").map((line) => JSON.parse(line));
+}
+
 function runCli() {
   const plan = readV2Plan();
   if (process.argv.includes("--check")) {
     const manifest = JSON.parse(fs.readFileSync(MANIFEST_FILE, "utf8"));
+    validateFrozenBenchmarkOutputs({ plan });
     validateFrozenArtifacts({ plan, manifest, rootDir: REPOSITORY_ROOT });
     console.log(`Freeze manifest check passed for ${path.relative(process.cwd(), MANIFEST_FILE)}`);
     return;
@@ -304,6 +382,7 @@ function runCli() {
       throw new Error(`required preflight output is missing: ${path.relative(process.cwd(), requiredFile)}`);
     }
   }
+  validateFrozenBenchmarkOutputs({ plan });
   const artifacts = collectFreezeArtifacts();
   const manifest = buildFreezeManifest({
     plan,

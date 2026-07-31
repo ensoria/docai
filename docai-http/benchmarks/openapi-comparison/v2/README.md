@@ -8,15 +8,15 @@ format or conformance compatibility boundary.
 
 ## Current State
 
-The plan is a pre-registration draft. Live execution is locked until the two
-private holdout APIs, all task contracts, output schemas, graders, prompt
-templates, context builders, and a cost estimate have been reviewed and
-recorded in the freeze manifest.
+The plan is frozen as `2.0.0-frozen.1`. The two private holdout APIs, task
+contracts, output schemas, graders, prompt templates, context builders, model
+resolutions, schedule, and cost estimate are recorded in the SHA-256 freeze
+manifest. Live execution has not started and still requires separate approval.
 
-Run the draft-plan checker from the repository root:
+Run the frozen-plan checker from the repository root:
 
 ```sh
-node docai-http/tools/check-openapi-comparison-v2-plan.mjs
+node docai-http/tools/check-openapi-comparison-v2-plan.mjs --frozen
 ```
 
 Run the public evaluation-contract tests:
@@ -76,17 +76,14 @@ Inspect the deterministic 648-request schedule without writing it:
 node docai-http/tools/build-openapi-comparison-v2-schedule.mjs --summary
 ```
 
-The final preflight will use `--write` to export `schedule.jsonl`; that generated
-file then becomes part of the freeze manifest.
-
-Before any provider request, the stricter frozen-plan check must also pass:
+The generated `schedule.jsonl` is part of the freeze manifest. Before any
+provider request, the frozen-plan check must pass:
 
 ```sh
 node docai-http/tools/check-openapi-comparison-v2-plan.mjs --frozen
 ```
 
-The frozen check intentionally fails while `plan.json` has
-`status: pre-registration-draft`.
+Changing any hashed artifact now causes the frozen-plan check to fail.
 
 ## Private Holdouts
 
@@ -111,7 +108,10 @@ authorize a later batch.
 - `ARTIFACT-CONTRACT.md` defines the public/private split and the evidence
   required to freeze the plan.
 - `IMPLEMENTATION.md` tracks the test-first implementation sequence.
-- `freeze-manifest.json` will be created only after every benchmark artifact is
-  complete and hashed.
+- `model-resolutions.json` records the approved model IDs, request settings,
+  and conservative standard token prices.
+- `cost-estimate.json` records whole-pilot and per-batch token and cost ceilings.
+- `schedule.jsonl` contains the 648 frozen primary run identities.
+- `freeze-manifest.json` records 81 public/private artifact hashes.
 - `batches/` and `runs/` will be created when the frozen execution tooling is
   implemented.

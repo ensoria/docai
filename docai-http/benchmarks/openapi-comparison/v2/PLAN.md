@@ -2,11 +2,11 @@
 
 Plan ID: `docai-http-openapi-comparison-v2`
 
-Status: pre-registration draft
+Status: frozen as `2.0.0-frozen.1` on 2026-07-31
 
 Created: 2026-07-21
 
-This plan must be frozen before the first Live LLM request. Once frozen, any
+This plan was frozen before the first Live LLM request. Any
 change to a task, prompt, output contract, grader, context, model panel,
 repetition count, exclusion rule, or analysis method creates a new plan version
 and invalidates unreported mixed-plan runs.
@@ -94,12 +94,13 @@ implementation and must be disclosed.
 
 ### Model Panel
 
-The panel uses one required target per provider: OpenAI frontier, Anthropic
-balanced, and Google stable agentic. `plan.json` records the planned model IDs.
-Immediately before the first batch, each ID must be checked in official provider
-documentation and its resolved alias or snapshot recorded in the freeze
-manifest. A model substitution after freezing requires a new plan version
-unless the provider only reports the already-frozen alias resolution.
+The panel uses one required target per provider: OpenAI `gpt-5.6-sol`,
+Anthropic `claude-sonnet-5`, and Google `gemini-3.6-flash`.
+`model-resolutions.json` records the official catalog check, request settings,
+standard prices, and resolved model IDs. Each ID must be checked again
+immediately before the first batch. A model substitution after freezing
+requires a new plan version unless the provider only reports the already-frozen
+alias resolution.
 
 ## Prompt And Grading Controls
 

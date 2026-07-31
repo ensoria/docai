@@ -36,7 +36,7 @@ future version before publication.
 
 ### Claims And Fairness
 
-- [ ] Create a versioned benchmark plan before sending provider requests and
+- [x] Create a versioned benchmark plan before sending provider requests and
   freeze its tasks, prompts, output contracts, graders, conditions, model panel,
   repetition count, exclusion rules, and analysis methods.
 - [x] Create the human-readable and machine-readable pre-registration draft in
@@ -66,7 +66,7 @@ future version before publication.
   full/compact DocAI projections, six-task packet, and grader cases.
 - [x] Author and privately validate the `holdout-media-processing` source
   bundle, full/compact DocAI projections, six-task packet, and grader cases.
-- [ ] Hash and timestamp holdout source inputs, tasks, expected outcomes, and
+- [x] Hash and timestamp holdout source inputs, tasks, expected outcomes, and
   graders before live execution; publish them only after the run set is closed.
 - [x] Cover materially different API surfaces: ordinary JSON CRUD and
   pagination, authentication and errors, idempotent multi-step workflows,
@@ -94,7 +94,7 @@ future version before publication.
   provider/model targets, three repetitions, and four primary conditions, for
   exactly 648 primary live requests plus a separately approved limited
   full/compact ablation.
-- [ ] Split the 648 primary requests into nine batches of 72 requests. One batch
+- [x] Split the 648 primary requests into nine batches of 72 requests. One batch
   is one API, one repetition, six tasks, three models, and four conditions.
 - [ ] Treat 100 attempted provider requests as a hard maximum for one work step;
   target 72 and never begin another batch in the same step.
@@ -121,7 +121,7 @@ future version before publication.
   the execution window short enough to limit provider drift.
 - [x] Require blocked and malformed-output attempts to be recorded instead of
   silently rerunning; predefine when a transport-only retry is allowed.
-- [ ] Export all prompts and compute estimated token/cost ceilings for the whole
+- [x] Export all prompts and compute estimated token/cost ceilings for the whole
   pilot and for each 72-request batch before the first live request; obtain
   explicit approval for the first concrete batch ceiling.
 - [ ] Stop after the pilot if fixture gaps, grader ambiguity, provider parsing
