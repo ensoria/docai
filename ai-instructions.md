@@ -10,6 +10,34 @@ Please also provide a concise, one-line Git commit message.
 
 When I need to choose among several options, please explain the factors I should consider, along with the advantages and disadvantages of each option.
 
+## Git Operations
+
+Git may be used only for read-only inspection of the repository.
+
+You may run commands that inspect the current state, differences, or history, such as:
+
+* `git status`
+* `git diff`
+* `git log`
+* `git show`
+* `git blame`
+* `git branch --show-current`
+
+Do not perform any Git operation that modifies the working tree, staging area, branches, tags, repository history, remotes, or Git configuration.
+
+In particular, do not run commands such as:
+
+* `git add`, `git commit`, or `git stash`
+* `git checkout`, `git switch`, or `git restore`
+* `git reset`, `git revert`, `git merge`, or `git rebase`
+* `git branch`, `git tag`, or commands that create, rename, or delete references
+* `git push`, `git pull`, or `git fetch`
+* `git config`
+* Any command that modifies files under the `.git` directory
+
+Do not create commits or otherwise change Git state unless the user explicitly instructs you to do so.
+
+
 ## Git Tagging Scheme
 
 In this repository, DocAI HTTP and DocAI Messaging are versioned and released independently.
