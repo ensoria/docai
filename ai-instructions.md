@@ -10,6 +10,12 @@ Please also provide a concise, one-line Git commit message.
 
 When I need to choose among several options, please explain the factors I should consider, along with the advantages and disadvantages of each option.
 
+When recommending an option, do not treat a smaller scope or a lower volume of changes as an advantage or use the amount of required modification as a primary decision factor.
+
+In general, prioritize the option that results in better specifications, design, and code quality, even if it requires broader or more extensive changes.
+
+Consider compatibility loss a disadvantage only when the proposed changes would cause significant compatibility issues. Compatibility should be taken into account only when the current version is `v1.0.0` or later.
+
 ## Git Operations
 
 Git may be used only for read-only inspection of the repository.
