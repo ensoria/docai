@@ -37,7 +37,6 @@ In particular, do not run commands such as:
 
 Do not create commits or otherwise change Git state unless the user explicitly instructs you to do so.
 
-
 ## Git Tagging Scheme
 
 In this repository, DocAI HTTP and DocAI Messaging are versioned and released independently.
