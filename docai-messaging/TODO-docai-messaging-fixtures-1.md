@@ -1,0 +1,864 @@
+# DocAI Messaging Fixture 初版 Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development`（推奨）または `superpowers:executing-plans` を使い、この計画を task 単位で実行すること。進捗は各 step のチェックボックス（`- [ ]`）で管理する。
+
+**Goal:** DocAI Messaging 0.17.1 の Compatibility Core fixture を先行公開できる状態から始め、complete generator surface、release candidate、安定版 `v1.0.0` の versioned conformance corpus までを、再現可能な checker と証跡付きで構築する。
+
+**Architecture:** source input、生成済み document set、focused valid/invalid fixture、fixture checker、coverage/evidence を一つの垂直スライスとして段階ごとに完成させる。Markdown の字句解析・構造解析・document-set 検証は再利用可能な純粋関数として分離し、公開 validator API ではなく、versioned corpus の期待結果を判定する runner から利用する。
+
+**Tech Stack:** Node.js ESM、Node.js 標準ライブラリ（`node:test`、`node:assert/strict`、`node:crypto`、`node:fs`、`node:path`）、JSON 形式の AsyncAPI fixture、Markdown、トークン evidence のみ Python 3.9 以上と `tiktoken==0.13.0`（`o200k_base`）。
+
+## Global Constraints
+
+- 規範仕様は `docai-messaging/README.md`。fixture や checker が README と衝突した場合、fixture に合わせて解釈を固定せず、README の意味を先にレビューする。
+- 初期 corpus は DocAI Messaging `0.17.1` を対象に `docai-messaging/fixtures/core/v0.17.1/` へ作成する。
+- `0.17.1` の意味を変える README 修正が必要になった場合は §3.1 に従って仕様バージョンを更新し、新しい versioned fixture ディレクトリを作る。公開済み corpus を上書きしない。
+- source fixture は YAML parser 依存を避けるため JSON 形式の AsyncAPI 3.0.0 / 3.1.0 を使用する。YAML 表現そのものの検証は source adapter 実装の別計画とする。
+- Core checker は corpus 固有の expectation checker とし、公開 reusable validator、generator、AsyncAPI-to-DocAI converter を名乗らない。
+- parser/validator の純粋関数は corpus runner から分離し、後続の complete surface checker と安定版 checkerで再利用する。
+- invalid fixture は原則として一つの primary rule だけを違反させる。cascade diagnostics が発生する場合は primary と secondary を区別する。
+- fixture 内の秘密情報、実在個人情報、規制対象データ、機密 production 値は禁止する。例は constraint-valid な synthetic data のみを使う。
+- document-set root は closed root とし、`INDEX.md`、`CONVENTIONS.md`、`indexes/`、`channels/`、`workflows/`、`references/` 以外の証跡や source を valid set 内へ混在させない。
+- Git は読み取り専用で扱う。`git add`、`git commit`、tag、push は、ユーザーから明示的な指示がない限り実行しない。各 task の完了時は推奨 commit message のみ提示する。
+- checker が通ることだけで仕様準拠を宣言しない。README §8 の coverage matrix と人手レビューを別の release gate とする。
+- トークン削減の正式な主張には README §6.2 の evidence を必須とする。`characters / 4` の近似値を正式な token count として扱わない。
+
+---
+
+## Target File Structure
+
+```text
+docai-messaging/
+  fixtures/
+    README.md
+    rules.json
+    core/
+      v0.17.1/
+        README.md
+        COVERAGE.md
+        SOURCE-TRACEABILITY.md
+        cases.json
+        source/
+          storefront-asyncapi-3.1.0.json
+          storefront-behavior.json
+          projection-input-manifest.json
+          focused/
+            asyncapi-3.0.0-message-selection.json
+            asyncapi-3.1.0-message-selection.json
+            recursive-schema.json
+        valid/
+          full/
+            INDEX.md
+            CONVENTIONS.md
+            channels/
+        focused/
+          valid/
+          invalid/
+    complete-candidates/
+      v0.17.1/
+        README.md
+        COVERAGE.md
+        SOURCE-TRACEABILITY.md
+        TOKEN-EVIDENCE.md
+        cases.json
+        source/
+        valid/
+          full/
+          compact/
+        focused/
+          valid/
+          invalid/
+        evaluations/
+          tasks.json
+          retrieval-runs.json
+          RESULTS.md
+    release-candidates/
+      v1.0.0-rc.1/
+        README.md
+        COVERAGE.md
+        SOURCE-TRACEABILITY.md
+        SEMANTIC-DRIFT-AUDIT.md
+        REVIEW.md
+        cases.json
+        source/
+        valid/
+          full/
+          compact/
+        focused/
+          valid/
+          invalid/
+        evaluations/
+    conformance/
+      v1.0.0/
+        README.md
+        COVERAGE.md
+        SOURCE-TRACEABILITY.md
+        SEMANTIC-DRIFT-AUDIT.md
+        REVIEW.md
+        TOKEN-EVIDENCE.md
+        cases.json
+        source/
+        valid/
+          full/
+          compact/
+        focused/
+          valid/
+          invalid/
+        evaluations/
+  tools/
+    lib/
+      diagnostics.mjs
+      metadata.mjs
+      identity.mjs
+      markdown.mjs
+      tables.mjs
+      paths.mjs
+      sentence.mjs
+      media-type.mjs
+      json-value.mjs
+      document-set.mjs
+      fixture-runner.mjs
+      validators/
+        core.mjs
+        complete.mjs
+    tests/
+      metadata.test.mjs
+      identity.test.mjs
+      markdown.test.mjs
+      tables.test.mjs
+      paths.test.mjs
+      sentence.test.mjs
+      media-type.test.mjs
+      json-value.test.mjs
+      document-set.test.mjs
+      fixture-runner.test.mjs
+    check-core-fixtures.mjs
+    check-complete-fixtures.mjs
+    check-conformance-fixtures.mjs
+    check-release-readiness.mjs
+    restamp-document-set.mjs
+    build-token-evidence.py
+    token-evidence-requirements.txt
+  CHANGELOG.md
+  RELEASE.md
+```
+
+## Validation Interfaces
+
+後続 task は、以下の interface 名と戻り値を変更せずに利用する。
+
+```js
+// tools/lib/diagnostics.mjs
+export function diagnostic(ruleId, file, line, message, severity = "error", cascade = false) {
+  return { ruleId, file, line, message, severity, cascade };
+}
+
+// tools/lib/document-set.mjs
+export function loadDocumentSet(rootDir) {
+  return { rootDir, files, paths, diagnostics };
+}
+
+export function validateDocumentSet(documentSet, options) {
+  return { diagnostics, facts };
+}
+
+// tools/lib/fixture-runner.mjs
+export function runFixtureCorpus(corpusDir, validator) {
+  return { passed, failed, cases, diagnostics };
+}
+```
+
+`cases.json` は次の形式に固定する。
+
+```json
+{
+  "docai_messaging": "0.17.1",
+  "scope": "compatibility-core",
+  "cases": [
+    {
+      "id": "core-valid-full-set",
+      "kind": "document-set",
+      "path": "valid/full",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
+      "id": "metadata-duplicate-standard-key",
+      "kind": "focused-document",
+      "path": "focused/invalid/metadata-duplicate-standard-key.md",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-META-004"]
+    }
+  ]
+}
+```
+
+Rule ID の prefix は次に固定する。
+
+| Prefix | Area |
+|---|---|
+| `DM-META` | opening metadata、version、profile、extension |
+| `DM-ID` | identity trailer、digest、closed root、mixed set |
+| `DM-SRC` | Sources、source_refs、projection manifest |
+| `DM-IDX` | INDEX routing、shards、context selection |
+| `DM-CONV` | CONVENTIONS、dependency closure、common shapes |
+| `DM-OP` | operation heading、Behavior、bindings、Channel |
+| `DM-MSG` | Message、Headers、Bindings、Payload、variants |
+| `DM-REPLY` | Reply、reply selection、correlation、timeout |
+| `DM-FAIL` | Failure Handling、common/inline failure shapes |
+| `DM-INC` | `unknown`、`unsupported`、`none`、deviation |
+| `DM-ADAPTER` | schema、wire、header、protocol adapter boundary |
+| `DM-TRUST` | instruction trust boundary、publication safety |
+| `DM-PROFILE` | full/compact parity、`field_defaults`、`same_as` |
+| `DM-WORKFLOW` | workflow grammar、routing、recovery |
+| `DM-REF` | Reference Material |
+| `DM-TOKEN` | sharding/reduction measurement evidence |
+| `DM-COMPAT` | future-minor compatibility、publication scope |
+
+---
+
+### Task 1: Corpus Contract と Test Harness を固定する
+
+**Files:**
+
+- Create: `docai-messaging/fixtures/README.md`
+- Create: `docai-messaging/fixtures/rules.json`
+- Create: `docai-messaging/fixtures/core/v0.17.1/cases.json`
+- Create: `docai-messaging/tools/lib/diagnostics.mjs`
+- Create: `docai-messaging/tools/lib/fixture-runner.mjs`
+- Create: `docai-messaging/tools/tests/fixture-runner.test.mjs`
+
+**Interfaces:**
+
+- Consumes: `cases.json` の固定 schema と rule prefix table。
+- Produces: `diagnostic()`、`runFixtureCorpus()`、human-readable checker report。
+
+- [ ] **Step 1: fixture の役割と非目標を文書化する**
+  - `fixtures/README.md` に versioned corpus、valid set、focused valid/invalid、source、evidence の役割を書く。
+  - checker は corpus expectation checker であり、公開 validator や generator ではないと明記する。
+  - published fixture は immutable とし、意味変更は新しい version directory で行う。
+
+- [ ] **Step 2: rule catalog を作る**
+  - `rules.json` に `rule_id`、README section、短い説明、Core/complete の scope を記録する。
+  - 最初に `DM-META-001`、`DM-ID-001`、`DM-SRC-001`、`DM-IDX-001` の最小行を置き、各 task で追記する。
+
+- [ ] **Step 3: failing runner test を書く**
+
+```js
+import test from "node:test";
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { runFixtureCorpus } from "../lib/fixture-runner.mjs";
+
+function createTemporaryCorpus(testCase) {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "docai-messaging-runner-"));
+  fs.mkdirSync(path.join(root, "focused", "invalid"), { recursive: true });
+  fs.writeFileSync(path.join(root, testCase.path), "invalid fixture\n");
+  fs.writeFileSync(path.join(root, "cases.json"), JSON.stringify({
+    docai_messaging: "0.17.1",
+    scope: "compatibility-core",
+    cases: [testCase]
+  }));
+  return root;
+}
+
+test("fails when an invalid case does not emit its expected rule", () => {
+  const corpus = createTemporaryCorpus({
+    id: "metadata-duplicate-standard-key",
+    kind: "focused-document",
+    path: "focused/invalid/metadata-duplicate-standard-key.md",
+    expected: "invalid",
+    expected_rule_ids: ["DM-META-004"]
+  });
+  const result = runFixtureCorpus(corpus, () => ({ diagnostics: [] }));
+  assert.equal(result.failed, 1);
+});
+```
+
+- [ ] **Step 4: test が期待どおり失敗することを確認する**
+  - Run: `node --test docai-messaging/tools/tests/fixture-runner.test.mjs`
+  - Expected: `runFixtureCorpus` が未定義で FAIL。
+
+- [ ] **Step 5: manifest loader と expectation comparison を最小実装する**
+  - valid case は error diagnostics が 0 件であることを要求する。
+  - invalid case は全 `expected_rule_ids` を primary diagnostic として含むことを要求する。
+  - 予期しない primary error は失敗、`cascade: true` の追加 error は report に残す。
+
+- [ ] **Step 6: report format を固定する**
+  - 各 case を、例えば `FAIL metadata-duplicate-standard-key expected=invalid actual=valid rules=none` の形式で出力する。
+  - 最後に `N passed, M failed` を出力し、`M > 0` なら process exit code 1 とする。
+
+- [ ] **Step 7: runner test を再実行する**
+  - Run: `node --test docai-messaging/tools/tests/fixture-runner.test.mjs`
+  - Expected: PASS。
+
+**Review gate:** fixture の validity と checker 自身の correctness が循環定義になっていないことを確認する。
+
+**Suggested commit message:** `test(messaging): define fixture corpus contract and runner`
+
+---
+
+### Task 2: Markdown、Metadata、Table、Path Parser を TDD で作る
+
+**Files:**
+
+- Create: `docai-messaging/tools/lib/metadata.mjs`
+- Create: `docai-messaging/tools/lib/markdown.mjs`
+- Create: `docai-messaging/tools/lib/tables.mjs`
+- Create: `docai-messaging/tools/lib/paths.mjs`
+- Create: `docai-messaging/tools/lib/sentence.mjs`
+- Test: corresponding files under `docai-messaging/tools/tests/`
+
+**Interfaces:**
+
+- Produces: `parseOpeningMetadata(line)`、`scanMarkdown(source)`、`parsePipeTable(lines)`、`parseDocsPath(value)`、`validateSentenceLine(line, min, max)`。
+
+- [ ] **Step 1: metadata escaping の failing tests を書く**
+  - six standard keys の順序、odd/even backslash run、`\|`、`\\`、unknown escape、trailing backslash、duplicate key を個別 test にする。
+  - `x-[a-z0-9][a-z0-9._-]*` の valid/invalid と pre-1.0 unknown standard key rejection を含める。
+
+- [ ] **Step 2: table parser の failing tests を書く**
+  - leading/trailing pipe、separator row、列数一致、odd/even escaped pipe、ASCII trim、`\|` decode のみを検証する。
+  - HTML entity、code span、emphasis を勝手に正規化しない test を含める。
+
+- [ ] **Step 3: path と sentence grammar の failing tests を書く**
+  - docs-root-relative path、profile link、`none` collision、`.` / `..`、backslash、query/fragment を検証する。
+  - `. ! ? 。 ！ ？` を literal count し、URL、略語、inline code 内も数える。
+
+- [ ] **Step 4: parser tests の RED を確認する**
+  - Run: `node --test docai-messaging/tools/tests/metadata.test.mjs docai-messaging/tools/tests/tables.test.mjs docai-messaging/tools/tests/paths.test.mjs docai-messaging/tools/tests/sentence.test.mjs`
+  - Expected: import または未実装 assertion で FAIL。
+
+- [ ] **Step 5: pure parser を実装する**
+  - parse failure は例外文字列ではなく `diagnostic()` を返し、line number を保持する。
+  - Markdown heading と fenced block の境界を source line ベースで保持する。
+  - prose の見た目を評価せず、README §3.5 の source grammar のみを実装する。
+
+- [ ] **Step 6: parser tests の GREEN を確認する**
+  - Run: `node --test docai-messaging/tools/tests/metadata.test.mjs docai-messaging/tools/tests/markdown.test.mjs docai-messaging/tools/tests/tables.test.mjs docai-messaging/tools/tests/paths.test.mjs docai-messaging/tools/tests/sentence.test.mjs`
+  - Expected: 全 test PASS。
+
+**Review gate:** parser が Markdown renderer の挙動や locale に依存していないことを確認する。
+
+**Suggested commit message:** `feat(messaging): add deterministic markdown fixture parsers`
+
+---
+
+### Task 3: Media Type と Arbitrary-Precision JSON Semantics を実装する
+
+**Files:**
+
+- Create: `docai-messaging/tools/lib/media-type.mjs`
+- Create: `docai-messaging/tools/lib/json-value.mjs`
+- Test: `docai-messaging/tools/tests/media-type.test.mjs`
+- Test: `docai-messaging/tools/tests/json-value.test.mjs`
+
+**Interfaces:**
+
+- Produces: `canonicalizeMediaType(sourceValue)`、`parseExactJson(source)`、`equalExactJson(a, b)`。
+
+- [ ] **Step 1: RFC 9110 media type fixtures を test table にする**
+  - type/subtype/parameter-name case folding、parameter ASCII sort、token/quoted equivalence、quoted-pair、empty parameter entry、OWS around `;` を valid にする。
+  - whitespace around `=`、duplicate case-folded parameter、invalid UTF-8 相当入力、trailing escape を invalid にする。
+  - multibyte UTF-8、Unicode normalization が異なる値、`: ` を含む quoted value の byte length を検証する。
+
+- [ ] **Step 2: exact JSON tests を書く**
+  - `1`、`1.0`、`1e0` は等価。
+  - IEEE 754 を超える隣接整数は不等価。
+  - arbitrary exponent、negative zero、object order independence、array order sensitivity、duplicate object member rejection、non-normalized string inequality を検証する。
+
+- [ ] **Step 3: tests の RED を確認する**
+  - Run: `node --test docai-messaging/tools/tests/media-type.test.mjs docai-messaging/tools/tests/json-value.test.mjs`
+  - Expected: FAIL。
+
+- [ ] **Step 4: decimal を Number へ変換しない parser/comparator を実装する**
+  - number は sign、coefficient digits、base-10 exponent の canonical tuple として比較する。
+  - object member を exact decoded string key の Map として保持し、duplicate を parse error にする。
+  - media type は UTF-8 bytes に対して ABNF class を評価する。
+
+- [ ] **Step 5: tests の GREEN を確認する**
+  - Run: `node --test docai-messaging/tools/tests/media-type.test.mjs docai-messaging/tools/tests/json-value.test.mjs`
+  - Expected: 全 test PASS。
+
+**Review gate:** JavaScript `Number`、locale sort、Unicode normalization が canonical comparison に混入していないことを確認する。
+
+**Suggested commit message:** `feat(messaging): validate media types and exact JSON values`
+
+---
+
+### Task 4: Identity、Digest、Closed Root、Mixed Set 検証を実装する
+
+**Files:**
+
+- Create: `docai-messaging/tools/lib/identity.mjs`
+- Create: `docai-messaging/tools/lib/document-set.mjs`
+- Create: `docai-messaging/tools/restamp-document-set.mjs`
+- Test: `docai-messaging/tools/tests/identity.test.mjs`
+- Test: `docai-messaging/tools/tests/document-set.test.mjs`
+
+**Interfaces:**
+
+- Consumes: metadata parser、docs path parser。
+- Produces: `computeSetDigest(files)`、`deriveShortId(fullDigest)`、`loadDocumentSet(rootDir)`。
+
+- [ ] **Step 1: digest vector tests を書く**
+  - README の `set_digest` / `set_id`、`projection_digest` / `projection_id` 例を固定 vector にする。
+  - `SELF` replacement、path length-prefix、ASCII path order、file add/remove/rename/content change を検証する。
+
+- [ ] **Step 2: closed-root tests を書く**
+  - unrelated file、symbolic link、invalid UTF-8、empty directory、missing trailer、trailer 後の非空行を拒否する。
+  - source/evidence が valid document-set root の外側にある valid case を受理する。
+
+- [ ] **Step 3: mixed-set tests を書く**
+  - version、profile、perspective、set_id、projection_id の各 mismatch を別 rule ID で拒否する。
+  - coverage、knowledge、source_refs は file ごとに異なってよいことを positive test にする。
+
+- [ ] **Step 4: tests の RED を確認する**
+  - Run: `node --test docai-messaging/tools/tests/identity.test.mjs docai-messaging/tools/tests/document-set.test.mjs`
+  - Expected: FAIL。
+
+- [ ] **Step 5: byte-exact digest implementation を作る**
+  - UTF-8 bytes と path bytes を明示し、OS path separator を digest input に使わない。
+  - root INDEX だけ full digests を要求し、task-scoped reader と whole-set validator の責務を分離する。
+
+- [ ] **Step 6: write 専用 restamp helper を実装する**
+  - `restamp-document-set.mjs` だけが document-set file の trailer を更新できるようにする。
+  - default は dry-run とし、`--write` 指定時だけ明示 root 内を書き換える。
+  - validator と fixture checker は常に read-only とし、validation failure を自動修復しない。
+
+- [ ] **Step 7: tests の GREEN を確認する**
+  - Run: `node --test docai-messaging/tools/tests/identity.test.mjs docai-messaging/tools/tests/document-set.test.mjs`
+  - Expected: 全 test PASS。
+
+**Review gate:** fixture を編集した後に ID を手作業で合わせる運用を禁止し、write capability を restamp helper に限定する。
+
+**Suggested commit message:** `feat(messaging): verify document-set identity and closed roots`
+
+---
+
+### Task 5: Compatibility Core の INDEX、Sources、Routing 検証を作る
+
+**Files:**
+
+- Create: `docai-messaging/tools/lib/validators/core.mjs`
+- Modify: `docai-messaging/fixtures/rules.json`
+- Test: `docai-messaging/tools/tests/document-set.test.mjs`
+
+- [ ] **Step 1: root INDEX state machine の failing tests を書く**
+  - opening metadata、optional profile link、`# Messaging Index`、Sources、Operations/Operation Shards、Workflows、optional Unprojected Operations、identity trailer の順序を検証する。
+  - empty operation set の flat `none` form を positive test にする。
+
+- [ ] **Step 2: Sources direct/sharded tests を書く**
+  - global unique ID、ASCII order、`all` reservation、API identity/version unknown markers、Revision `none` を検証する。
+  - overlapping ranges、false positive load、transitive contributor chain、contributor cycle、duplicate/missing row の fixed-point resolution を検証する。
+
+- [ ] **Step 3: operation routing tests を書く**
+  - flat rows、hierarchical bounds、Task membership、reply prefix、context list separator/order/eligibility、routing-provenance closure を検証する。
+  - exact selector、semantic fallback の load-all は fixture runner の simulated retrieval trace として検証する。
+
+- [ ] **Step 4: Unprojected Operations tests を書く**
+  - length-prefixed ASCII/multibyte identity、embedded delimiter、leading zero、byte mismatch、grouping collision、one marker per completeness dimension を検証する。
+  - sensitive routing value の非開示と safe identity/location 不在時の generation-failure expectation を source-aware case として記録する。
+
+- [ ] **Step 5: tests の RED を確認して最小 validator を実装する**
+  - Run: `node --test docai-messaging/tools/tests/document-set.test.mjs`
+  - Expected before implementation: FAIL。実装後: PASS。
+
+- [ ] **Step 6: rule catalog と tests の対応を確認する**
+  - 各 test 名に一つ以上の `DM-SRC-*` または `DM-IDX-*` rule ID を含める。
+  - 未使用 rule ID と rule catalog にない diagnostic を checker で失敗させる。
+
+**Review gate:** selected operation の source resolution が root/shard aggregate scope を誤って全ロードしないことを確認する。
+
+**Suggested commit message:** `feat(messaging): validate core index and source routing`
+
+---
+
+### Task 6: Compatibility Core の CONVENTIONS と Operation Grammar を作る
+
+**Files:**
+
+- Modify: `docai-messaging/tools/lib/validators/core.mjs`
+- Modify: `docai-messaging/fixtures/rules.json`
+- Test: `docai-messaging/tools/tests/document-set.test.mjs`
+
+- [ ] **Step 1: CONVENTIONS state tests を書く**
+  - fixed headings 全件と順序、`none`、whole-section `unknown`、replacement `unsupported`、expanded state を検証する。
+  - `Format | Role | Meaning` catalog の exact resolution と common failure shape の expanded/replacement forms を検証する。
+
+- [ ] **Step 2: operation section state machine tests を書く**
+  - heading/purpose、Behavior six keys、Operation Bindings、Channel、Messages、Reply、Failure Handling、Related の固定順を検証する。
+  - file-level title/prose wrapper と duplicate operation placement を拒否する。
+
+- [ ] **Step 3: direction-correct Message tests を書く**
+  - SEND の Required、RECEIVE の Presence、reply の逆方向、nullable、nested ancestor applicability、`$` row invariants を検証する。
+  - Headers/Bindings の leading collapse と、first expanded subsection 後の `none` heading retention を検証する。
+
+- [ ] **Step 4: payload representation tests を書く**
+  - whole payload marker、media type、nullability、example、field table、raw binary、multiple media selection、tagged/untagged variant boundaryを検証する。
+  - example field coverage、object openness、constraints order、format catalog resolution を検証する。
+
+- [ ] **Step 5: Reply と Failure Handling tests を書く**
+  - reply message set/address/selection fallback、static/dynamic channel、correlation、timeout、reply INDEX entries を検証する。
+  - Failure core states、deviation、common/inline shape exact reference、Action recovery state を検証する。
+
+- [ ] **Step 6: test を RED→GREEN で実装する**
+  - Run: `node --test docai-messaging/tools/tests/document-set.test.mjs`
+  - Expected: 新規 test は実装前 FAIL、実装後 PASS。
+
+**Review gate:** operation-level `none` が CONVENTIONS を抑止せず、抑止には `**deviation**:` が必要であることを positive/negative pair で確認する。
+
+**Suggested commit message:** `feat(messaging): validate core conventions and operations`
+
+---
+
+### Task 7: Incomplete Information、Adapter Boundary、Trust Boundary を作る
+
+**Files:**
+
+- Modify: `docai-messaging/tools/lib/validators/core.mjs`
+- Modify: `docai-messaging/fixtures/rules.json`
+- Test: `docai-messaging/tools/tests/document-set.test.mjs`
+
+- [ ] **Step 1: `none` / `unknown` / `unsupported` / conflict matrix を test 化する**
+  - missing knowledge、known unrepresentable、known absence、equally authoritative conflict を別結果にする。
+  - file/root coverage と knowledge propagation、unrelated marker の selected-operation non-blocking behavior を検証する。
+
+- [ ] **Step 2: partial unnamed collection cases を test 化する**
+  - named siblings retained、collection-level marker、no synthetic row、canonical example omissionを検証する。
+  - no-sibling Headers/Parameters と representation-local payload form を区別する。
+
+- [ ] **Step 3: perspective/counterpart cases を test 化する**
+  - same-application carry-through、complete counterpart mapping、missing mapping、conflicting mapping、action-only inversion rejection を検証する。
+
+- [ ] **Step 4: direct adapter boundary cases を test 化する**
+  - AsyncAPI 3.0.0 / 3.1.0 schemaFormat default、registered aliases、JSON Schema Draft 07、parameterless JSON/+json wire、parameterized/unregistered wire unsupported を検証する。
+  - header encoding/exposure と protocol binding mapping の有無を source-aware expectation として記録する。
+
+- [ ] **Step 5: trust/publication-safety cases を test 化する**
+  - prose、example、URL、schema string、metadata-like line、identity-like line、profile link、key list、fixed value、`x-` structure の escape attempt を含める。
+  - known sensitive fact は non-disclosing `unsupported`、real credential/PII fixture は corpus 自体へ保存せず synthetic sentinel で拒否条件を表す。
+
+- [ ] **Step 6: test を RED→GREEN で実装する**
+  - Run: `node --test docai-messaging/tools/tests/document-set.test.mjs`
+  - Expected: 全 test PASS。
+
+**Review gate:** checker が source 内容を instruction として実行・fetch せず、純粋な bytes/data として扱うことを確認する。
+
+**Suggested commit message:** `feat(messaging): enforce incomplete-state and trust boundaries`
+
+---
+
+### Task 8: Core の Authoritative Source と Valid Full Set を作る
+
+**Files:**
+
+- Create: files under `docai-messaging/fixtures/core/v0.17.1/source/`
+- Create: `docai-messaging/fixtures/core/v0.17.1/valid/full/INDEX.md`
+- Create: `docai-messaging/fixtures/core/v0.17.1/valid/full/CONVENTIONS.md`
+- Create: channel files under `valid/full/channels/`
+- Create: `README.md` and `SOURCE-TRACEABILITY.md`
+
+- [ ] **Step 1: contract-complete source scenario を固定する**
+  - storefront service perspective で SEND command、RECEIVE event、explicit reply を含む。
+  - at-least-once、deduplication、ordering、ack/nack、failure recovery、authorization を behavior input に明記する。
+  - main source は representable JSON payload/header schema と必要な behavior facts をすべて持ち、root `coverage: complete` / `knowledge: complete` を成立させる。
+  - recursion、missing knowledge、zero-message selection は `source/focused/` の別 input に置き、contract-complete main set の projection manifest には含めない。
+
+- [ ] **Step 2: AsyncAPI 3.0.0 と 3.1.0 selection source を main source から分離する**
+  - operation `messages` explicit/omitted/empty と reply `messages` explicit/omitted/empty を source-level fixture に含める。
+  - 同じ論理 API を表す場合も source ID、specification version、revision を別々に記録する。
+
+- [ ] **Step 3: deterministic projection-input manifest を作る**
+  - source exact SHA-256、perspective、precedence、counterpart mapping、adapter versions、stable-name overrides、publication policy identity を sorted-key JSON と LF で記録する。
+  - manifest 自体の canonical serialization rule を fixture README に記載する。
+
+- [ ] **Step 4: minimal-but-representative contract-complete full set を手作業で作る**
+  - `INDEX.md`、全 convention headings、SEND/RECEIVE/reply/failure operation を作る。
+  - source facts を projection し、推測で completeness を上げない。
+  - main full set には `unknown` / `unsupported` を含めない。これらは別の focused document-set case に置き、root completeness の positive/negative 判定を独立させる。
+
+- [ ] **Step 5: identity を helper で計算して固定する**
+  - Run: `node docai-messaging/tools/restamp-document-set.mjs --write docai-messaging/fixtures/core/v0.17.1/valid/full`
+  - Expected: projection digest、set digest、short IDs を更新する。
+  - Run: `node docai-messaging/tools/restamp-document-set.mjs docai-messaging/fixtures/core/v0.17.1/valid/full`
+  - Expected: `restamp required: no`、exit code 0。
+
+- [ ] **Step 6: source traceability を全 fact domain で記録する**
+  - INDEX row、CONVENTIONS section、operation section、payload representation、marker ごとに source ID/location を対応付ける。
+  - checker で自動確認できない semantic mapping を明示する。
+
+**Review gate:** valid set の各 client-visible fact が source または明示的 projection configuration に辿れ、README だけから新しい contract fact を発明していないことを確認する。
+
+**Suggested commit message:** `test(messaging): add core authoritative sources and full set`
+
+---
+
+### Task 9: Core Focused Valid/Invalid Corpus を完成させる
+
+**Files:**
+
+- Create: files and mini document-set directories under `docai-messaging/fixtures/core/v0.17.1/focused/valid/`
+- Create: files and mini document-set directories under `docai-messaging/fixtures/core/v0.17.1/focused/invalid/`
+- Modify: `cases.json`
+- Modify: `COVERAGE.md`
+
+各 checkbox は、最低一つの valid case と一つの invalid case、対応する rule ID、checker assertion を含む。
+
+- [ ] Metadata、extension name/order/escape、unknown non-`x-` key、sentence grammar。
+- [ ] Identity trailer、set/projection digest、closed root、mixed set、task-scoped identity check。
+- [ ] Direct/sharded Sources、unknown API identity/version、Revision none、overlap、fixed-point、cycle。
+- [ ] Flat/hierarchical Operations、bounds、semantic load-all、false positive、path parity。
+- [ ] Required/supplemental context、eligible/forbidden target、separator/order、`none` sentinel collision。
+- [ ] Direct/sharded Unprojected Operations、multibyte identity、group collision、sensitive withholding。
+- [ ] Same-application action、counterpart mapping complete/missing/conflicting。
+- [ ] AsyncAPI 3.0.0/3.1.0 operation message explicit/omitted/empty selection。
+- [ ] AsyncAPI 3.0.0/3.1.0 reply message explicit/omitted/empty selectionと INDEX omission。
+- [ ] CONVENTIONS whole-section states、format semantics catalog、common/replacement failure shapes。
+- [ ] Behavior six keys、delivery tokens、exactly-once qualification、unknown facts。
+- [ ] Operation/channel/message/reply/failure binding scopes。
+- [ ] SEND Required、RECEIVE Presence optional/condition/unknown、Nullable、nested ancestor semantics。
+- [ ] whole payload unknown、representation-local field collection、partial named siblings、example omission。
+- [ ] `$` root rows、root scalar/array/map/object、object openness、recursive unsupported。
+- [ ] exact JSON constraint/equality、default_annotation/default、recognized/custom format behavior。
+- [ ] parameterless JSON/+json、parameterized/unregistered wire、raw binary boundary、header encoding。
+- [ ] Reply static/dynamic channel、correlation、timeout、whole-Reply fallback、no synthetic operation。
+- [ ] Failure core states、deviations、common/inline shapes、receive malformed/unknown/handler errors。
+- [ ] publication safety、unsafe mandatory value failure、instruction structural escape。
+- [ ] canonical marker order、deviation placement、deprecated marker、single prose language、English structure。
+- [ ] implementation readiness cases: same contract under different reader/runtime/adapter capabilities。
+
+- [ ] **Step: one-invalidity audit を行う**
+  - 各 invalid fixture に `expected_rule_ids` が一つの primary concern を示すことを確認する。
+  - 複数の独立違反がある fixture は分割する。
+
+- [ ] **Step: Core coverage matrix を完成させる**
+  - README §8 の Core corpus 要件を一行ずつ `COVERAGE.md` に写し、source、valid fixture、invalid fixture、rule ID、checker test を対応付ける。
+
+**Review gate:** `docai-messaging/README.md` §8 の Core corpus 要件（現在の 1031–1043 行）に uncovered 行がないことを確認する。
+
+**Suggested commit message:** `test(messaging): complete core conformance fixtures`
+
+---
+
+### Task 10: Core Checker と先行公開 Gate を完成させる
+
+**Files:**
+
+- Create: `docai-messaging/tools/check-core-fixtures.mjs`
+- Modify: `fixture-runner.mjs`
+- Modify: Core `README.md` and `COVERAGE.md`
+
+- [ ] **Step 1: read-only CLI を実装する**
+  - default corpus は `fixtures/core/v0.17.1`。
+  - optional positional path で candidate corpus を検証できる。
+  - restamp は Task 4 の専用 helper に限定し、この CLI は file を変更しない。
+
+- [ ] **Step 2: checker self-tests を追加する**
+  - valid corpus の mutation copy を tmp directory に作り、metadata、digest、INDEX row、marker propagation を一箐所ずつ壊して拒否を確認する。
+
+- [ ] **Step 3: full Core command を実行する**
+  - Run: `node --test docai-messaging/tools/tests/*.test.mjs`
+  - Expected: 全 test PASS。
+  - Run: `node docai-messaging/tools/check-core-fixtures.mjs`
+  - Expected: 全 cases PASS、未使用 rule 0、coverage gap 0。
+
+- [ ] **Step 4: Core publication review を記録する**
+  - format compliance、contract completeness、reader-relative readiness を別々に判定する。
+  - publication scope identity/version と adapter mapping identity/version を out-of-band metadata に記録する。
+  - design-review draft から Compatibility Core implementation target へ変更する README edit は、fixture review 後の別 change set とする。
+
+- [ ] **Step 5: stop rule を適用する**
+  - normative meaning、fixture expectation、checker rule のいずれかがレビュー中に変わった場合は公開を止め、仕様バージョンと fixture version を再評価する。
+
+**Exit criteria:** Core checker、coverage matrix、source traceability、人手レビューが全て完了し、Core 外構造を implementation-ready と誤表示していない。
+
+**Suggested commit message:** `feat(messaging): gate the compatibility core fixture release`
+
+---
+
+### Task 11: Complete Surface Validator と Full/Compact Equivalence を作る
+
+**Files:**
+
+- Create: `docai-messaging/tools/lib/validators/complete.mjs`
+- Create: `docai-messaging/tools/check-complete-fixtures.mjs`
+- Add tests under `docai-messaging/tools/tests/`
+
+- [ ] Workflow、Workflow Shards、Reference Material、selective conventions、variants、non-JSON adapters、compact profile を complete scope として有効化する。
+- [ ] full/compact path、routing form、projection identity、coverage、knowledge、source_refs parity を検証する。
+- [ ] expanded comparison view を実装し、profile link、identity、`x-`、example canonicalization、`field_defaults`、`same_as` 以外の差を拒否する。
+- [ ] `field_defaults` の logical column reconstruction、order、duplicate、unknown/inapplicable column、`Meaning=none` を検証する。
+- [ ] `same_as` の backward same-file target、paired full canonical equality、retrieval-unit discoverability、incomplete target rejection を検証する。
+- [ ] invalid compact example fence/info string、prose mismatch、standard heading/marker/table/example/order mismatch を検証する。
+- [ ] Run: `node --test docai-messaging/tools/tests/*.test.mjs`
+- [ ] Expected: 全 test PASS。
+
+**Review gate:** compact checker 自身が full projection の contract を推測せず、paired full set の exact canonical view とだけ比較する。
+
+**Suggested commit message:** `feat(messaging): validate complete full and compact surfaces`
+
+---
+
+### Task 12: Complete Candidate の Full/Compact Set と Advanced Structures を作る
+
+**Files:**
+
+- Create: files under `docai-messaging/fixtures/complete-candidates/v0.17.1/`
+
+- [ ] Core source scenario を拡張し、required/supplemental workflows、Reference Material、multiple source/index shards を追加する。
+- [ ] full set に flat と sharded catalog の代表を含め、各 shard の false-positive/fallback retrieval task を定義する。
+- [ ] workflow の全 section を expanded/none/unknown/unsupported で表す separate cases を作る。
+- [ ] Reference Material の instruction authority、fence length、UTF-8 normalization、forbidden target cases を作る。
+- [ ] tagged/untagged polymorphism、raw binary、adapter-defined structured non-JSON representation を作る。
+- [ ] compact set を full と同じ paths で作り、compact example、field defaults、same-as、selective conventions を実際に使う。
+- [ ] `restamp-document-set.mjs --write` で full/compact を個別に restamp し、dry-run 再実行で両方 `restamp required: no` を確認する。
+- [ ] source traceability を complete structures まで拡張する。
+- [ ] Run: `node docai-messaging/tools/check-complete-fixtures.mjs`
+- [ ] Expected: valid full/compact pair と既存 Core cases が全 PASS。
+
+**Review gate:** advanced structure を使わない selected operation が unrelated advanced marker のために blocked にならないことを確認する。
+
+**Suggested commit message:** `test(messaging): add complete full and compact candidate sets`
+
+---
+
+### Task 13: Complete Surface Focused Corpus を完成させる
+
+**Files:**
+
+- Create: complete candidate `focused/valid/*.md`
+- Create: complete candidate `focused/invalid/*.md`
+- Modify: complete candidate `cases.json` and `COVERAGE.md`
+
+- [ ] Profile fallback、unknown profiles、full/compact path/routing parity。
+- [ ] Direct/sharded workflows、routing name/display title、exact/semantic/load-all selection。
+- [ ] Workflow intro sentence grammar、section states、list/table constraints、deviation placement。
+- [ ] Reference Material fence、embedded backticks、structural escape、non-UTF-8 rejection。
+- [ ] selective convention dependency closure over required workflows と supplemental/direct fallback。
+- [ ] reply-prefixed routing、whole-Reply unknown identity/message-set/channel forms。
+- [ ] stable-name override、derived names、128-bit collision expansion、remaining collision failure。
+- [ ] every binding scope、adapter tuple unique/absent/duplicate mapping、rule-version digest coverage。
+- [ ] non-JSON schema/wire/header combinations、opaque raw binary、structured-as-raw rejection。
+- [ ] tagged/untagged variants、delimiter/JSON/const equality、missing-field fallback。
+- [ ] `field_defaults` valid/invalid reconstruction と token-savings assertion boundary。
+- [ ] `same_as` valid/invalid targets、paired-full comparison、retrieval unit、failure shape prohibition。
+- [ ] exact JSON arbitrary precision を compact examples、same-as、variant、constraints で横断検証。
+- [ ] complete workflow section states と expanded list/table invalid forms。
+- [ ] future-minor synthetic reader compatibility fixtures（metadata key、table suffix、`x-` order）。
+- [ ] `docai-messaging/README.md` §8 の complete-surface corpus 要件（現在の 1045–1049 行）を `COVERAGE.md` に一対一対応させる。
+- [ ] Run: `node docai-messaging/tools/check-complete-fixtures.mjs`
+- [ ] Expected: coverage gap 0、全 cases PASS。
+
+**Review gate:** Core fixtures だけから complete surface compatibility を推論していないことを確認する。
+
+**Suggested commit message:** `test(messaging): complete advanced surface fixture coverage`
+
+---
+
+### Task 14: Token Measurement Evidence を作る
+
+**Files:**
+
+- Create: `docai-messaging/tools/build-token-evidence.py`
+- Create: `docai-messaging/tools/token-evidence-requirements.txt`
+- Create: complete candidate `evaluations/tasks.json`
+- Create: complete candidate `evaluations/retrieval-runs.json`
+- Create: complete candidate `TOKEN-EVIDENCE.md` and `evaluations/RESULTS.md`
+
+- [ ] `token-evidence-requirements.txt` に `tiktoken==0.13.0` を固定する。
+- [ ] tokenizer は `o200k_base`、count input は exact UTF-8 loaded context とする。
+- [ ] representative task corpus に SEND construction、RECEIVE handling、reply handling、failure recovery、workflow completion を含める。
+- [ ] 各 task で root row considered、loaded shards、false positives、load-all、profile fallback、whole-CONVENTIONS fallback、required/supplemental paths を記録する。
+- [ ] DocAI full、DocAI compact、reference-resolved AsyncAPI baseline に同じ client-visible contract と task boundary を与える。
+- [ ] format-specific parser instruction tokens と retrieval tool-result tokens を各方式の total に含める。
+- [ ] per-task totals と nearest-rank p50/p95/max を計算する。
+- [ ] compact/sharding/selective convention が total task tokens を増やす case は regression として開示し、その scope への無条件 savings claim を禁止する。
+- [ ] cache/billed-token claim は、この初版では行わない。将来行う場合だけ README §6.2 の cold/warm sequence と provider cache evidence を別計画で追加する。
+- [ ] Run: `python3 docai-messaging/tools/build-token-evidence.py docai-messaging/fixtures/complete-candidates/v0.17.1/evaluations/tasks.json`
+- [ ] Expected: deterministic `retrieval-runs.json` と `RESULTS.md`、同じ input で byte-identical 再生成。
+
+**Review gate:** `characters / 4`、provider-reported usage、`o200k_base` の結果を混在させない。
+
+**Suggested commit message:** `test(messaging): publish reproducible token evidence`
+
+---
+
+### Task 15: `v1.0.0-rc.1` Corpus を作り、Review Loop を閉じる
+
+**Files:**
+
+- Create: `docai-messaging/fixtures/release-candidates/v1.0.0-rc.1/`
+- Create: RC `SEMANTIC-DRIFT-AUDIT.md` and `REVIEW.md`
+- Create: `docai-messaging/tools/check-conformance-fixtures.mjs`
+
+- [ ] Core と complete candidate の reviewed source、sets、focused cases、evidence を RC directory へ固定する。
+- [ ] RC document set の `docai-messaging` は prerelease suffix を使わず `1.0.0` とする。README と fixture README の publication label に `v1.0.0-rc.1` を記録する。
+- [ ] specification version の `0.17.1` → `1.0.0`、publication scope identity、adapter mapping version、projection manifest を同じ RC change set で更新し、全 document set を restamp する。
+- [ ] candidate との差を heading/marker/table/example/prose/source fact ごとに分類する。
+- [ ] semantic drift がある差は再評価対象、identity/provenance wording のみの差は no-resubmit 理由を記録する。
+- [ ] checker を RC path に対して実行し、Core と complete 全 rule を検証する。
+- [ ] source-aware reviewer が各 generated fact と authoritative source を再照合する。
+- [ ] independent reviewer checklist で blocker、wording issue、future backlog、open question を分離する。
+- [ ] RC review で normative meaning、fixture expectation、checker behavior が変わった場合は stable 化を止め、README §3.1 で version impact を判断し `v1.0.0-rc.2` を作る。
+- [ ] 変更が publication wording のみになるまで RC review loop を繰り返す。
+- [ ] Run: `node docai-messaging/tools/check-conformance-fixtures.mjs docai-messaging/fixtures/release-candidates/v1.0.0-rc.1`
+- [ ] Expected: 全 cases PASS、coverage gap 0、review blocker 0。
+
+**Review gate:** RC tag 相当の corpus を後から書き換えず、修正は次の RC directory に積む。
+
+**Suggested commit message:** `test(messaging): prepare the v1.0.0 release candidate corpus`
+
+---
+
+### Task 16: Stable `v1.0.0` Conformance Corpus を Freeze する
+
+**Files:**
+
+- Create: `docai-messaging/fixtures/conformance/v1.0.0/`
+- Create: `docai-messaging/tools/check-release-readiness.mjs`
+- Modify: `docai-messaging/README.md` publication wording only after freeze approval
+- Create: `docai-messaging/CHANGELOG.md`
+- Create: `docai-messaging/RELEASE.md`
+
+- [ ] reviewed final RC の source、valid sets、focused fixtures、checker expectations、evidence を byte-for-byte stable corpus へ固定する。
+- [ ] docs-root-relative path が変わらないため full/compact set digests が final RC と一致することを確認する。
+- [ ] stable `COVERAGE.md` が README §8 の Core/complete/future-minor requirements をすべて指すことを確認する。
+- [ ] stable `SOURCE-TRACEABILITY.md` が全 source fact domain を覆うことを確認する。
+- [ ] stable `REVIEW.md` の blocker、wording issue、open question が 0 であることを確認する。
+- [ ] `check-release-readiness.mjs` に spec version、publication label、required files、checker pass、coverage gap、RC/stable digest parity を実装する。
+- [ ] Run: `node --test docai-messaging/tools/tests/*.test.mjs`
+- [ ] Expected: 全 test PASS。
+- [ ] Run: `node docai-messaging/tools/check-conformance-fixtures.mjs docai-messaging/fixtures/conformance/v1.0.0`
+- [ ] Expected: 全 cases PASS。
+- [ ] Run: `node docai-messaging/tools/check-release-readiness.mjs`
+- [ ] Expected: `DocAI Messaging v1.0.0 release readiness: PASS`。
+- [ ] Run: `git diff --check`
+- [ ] Expected: output なし、exit code 0。
+- [ ] final preparation 中に normative behavior、fixture、checker expectation、compatibility boundary の変更が必要になった場合は stable 化を中止し、新しい RC へ戻る。
+- [ ] tag、push、release publication はユーザーが明示的に実行する。agent は指示なしに Git state を変更しない。
+
+**Exit criteria:** stable README、versioned conformance corpus、checker、source traceability、coverage、token evidence、review record が同じ contract boundary を示し、再現可能な全検証が PASS する。
+
+**Suggested commit message:** `release(messaging): freeze the v1.0.0 conformance corpus`
+
+---
+
+## Final Review Checklist
+
+- [ ] `docai-messaging/README.md` の各 normative section が rules.json の rule または明示的な non-machine-checkable review item に対応している。
+- [ ] Core と complete surface の coverage を混同していない。
+- [ ] valid fixture は README に対する新しい normative requirement を暗黙に追加していない。
+- [ ] invalid fixture は primary rule を一つに絞り、expected rule ID が安定している。
+- [ ] checker の parser、validator、corpus expectation が分離されている。
+- [ ] source-aware validation と ordinary reader validation が分離されている。
+- [ ] full/compact comparison が README §3.4 で許可された差だけを除外している。
+- [ ] token evidence が README §6.2 の total-task accounting を満たす。
+- [ ] RC 以降の corpus が immutable で、meaning-changing change は新しい version/RC に分離される。
+- [ ] stable release gate が README、fixture、checker、evidence の同時 freeze を要求する。
+
+## Implementation Handoff
+
+Task 1 から順番に実行する。Task 1–7 は checker foundation、Task 8–10 は Compatibility Core、Task 11–14 は complete generator surface、Task 15 は RC hardening、Task 16 は stable freeze である。後段 task は前段の exit criteria を満たすまで開始しない。
