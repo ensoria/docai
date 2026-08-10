@@ -8,7 +8,7 @@ function sourceLine(input, index) {
 function failure(source, message) {
   return {
     value: null,
-    diagnostics: [diagnostic("DM-PARSE-TABLE", source.file, source.line, message)]
+    diagnostics: [diagnostic("DM-PARSE-002", source.file, source.line, message)]
   };
 }
 
@@ -59,7 +59,9 @@ export function parsePipeTable(inputs) {
   if (header.error) return failure(lines[0], header.error);
   const separator = parseRow(lines[1]);
   if (separator.error) return failure(lines[1], separator.error);
-  if (separator.cells.length !== header.cells.length || separator.cells.some((cell) => cell !== "---")) {
+  if (separator.cells.length === 0
+    || separator.cells.length !== header.cells.length
+    || separator.cells.some((cell) => cell !== "---")) {
     return failure(lines[1], "Pipe table requires an exact separator row with one '---' cell per column.");
   }
 

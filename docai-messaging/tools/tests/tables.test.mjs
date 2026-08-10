@@ -17,7 +17,7 @@ function rejected(lines) {
 
 test("requires a leading boundary pipe", () => {
   const diagnostic = rejected(["A | B |", "|---|---|"]);
-  assert.equal(diagnostic.ruleId, "DM-PARSE-TABLE");
+  assert.equal(diagnostic.ruleId, "DM-PARSE-002");
   assert.match(diagnostic.message, /leading/);
 });
 
@@ -27,6 +27,12 @@ test("requires a trailing boundary pipe", () => {
 
 test("requires an exact separator row", () => {
   assert.match(rejected(["| A | B |", "| -- | --- |"]).message, /separator/);
+});
+
+test("rejects a boundary-only zero-column table", () => {
+  const diagnostic = rejected(["|", "|"]);
+  assert.equal(diagnostic.ruleId, "DM-PARSE-002");
+  assert.match(diagnostic.message, /separator/);
 });
 
 test("requires every table row to have the separator column count", () => {

@@ -29,7 +29,7 @@ test("reports an unclosed fence at its source location", () => {
   const result = scanMarkdown({ text: "before\n````text\ninside", file: "references/example.md" });
   assert.equal(result.value, null);
   assert.deepEqual(result.diagnostics[0], {
-    ruleId: "DM-PARSE-MARKDOWN",
+    ruleId: "DM-PARSE-001",
     file: "references/example.md",
     line: 2,
     message: "Fenced block opened on this line is not closed.",

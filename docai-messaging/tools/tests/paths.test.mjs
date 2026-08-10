@@ -54,7 +54,7 @@ test("rejects path queries and fragments", () => {
 
 test("rejects absolute and empty-segment paths", () => {
   for (const value of ["/INDEX.md", "channels//orders.md", "../"]) {
-    assert.equal(rejected(value).ruleId, "DM-PARSE-PATH");
+    assert.equal(rejected(value).ruleId, "DM-PARSE-003");
   }
 });
 

@@ -10,7 +10,7 @@ function sourceLine(input) {
 function failure(source, message) {
   return {
     value: null,
-    diagnostics: [diagnostic("DM-PARSE-PATH", source.file, source.line, message)]
+    diagnostics: [diagnostic("DM-PARSE-003", source.file, source.line, message)]
   };
 }
 

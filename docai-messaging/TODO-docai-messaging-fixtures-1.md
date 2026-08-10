@@ -198,6 +198,7 @@ Rule ID の prefix は次に固定する。
 | Prefix | Area |
 |---|---|
 | `DM-META` | opening metadata、version、profile、extension |
+| `DM-PARSE` | shared context-free Markdown、table、path、sentence lexical/structural parsing |
 | `DM-ID` | identity trailer、digest、closed root、mixed set |
 | `DM-SRC` | Sources、source_refs、projection manifest |
 | `DM-IDX` | INDEX routing、shards、context selection |
@@ -308,6 +309,8 @@ test("fails when an invalid case does not emit its expected rule", () => {
 
 ### Task 2: Markdown、Metadata、Table、Path Parser を TDD で作る
 
+> **Plan change / impact (user-approved):** Shared context-free lexical and structural parser failures use the new fixed `DM-PARSE` prefix. Task 2 catalogs `DM-PARSE-001` through `DM-PARSE-004`; later semantic validators deliberately emit or translate to the relevant area-specific rule when a violation is semantic and may retain the parser diagnostic as cascade evidence. A pure syntax-focused fixture may use `DM-PARSE` as its primary diagnostic. Task 5's catalog/test correspondence checks cover these entries as well.
+
 **Files:**
 
 - Create: `docai-messaging/tools/lib/metadata.mjs`
@@ -316,6 +319,7 @@ test("fails when an invalid case does not emit its expected rule", () => {
 - Create: `docai-messaging/tools/lib/paths.mjs`
 - Create: `docai-messaging/tools/lib/sentence.mjs`
 - Test: corresponding files under `docai-messaging/tools/tests/`
+- Test: `docai-messaging/tools/tests/parser-diagnostics.test.mjs`
 
 **Interfaces:**
 
@@ -323,6 +327,7 @@ test("fails when an invalid case does not emit its expected rule", () => {
 
 - [x] **Step 1: metadata escaping の failing tests を書く**
   - six standard keys の順序、odd/even backslash run、`\|`、`\\`、unknown escape、trailing backslash、duplicate key を個別 test にする。
+  - missing standard key と duplicate extension key を明示的な regression test にする。
   - `x-[a-z0-9][a-z0-9._-]*` の valid/invalid と pre-1.0 unknown standard key rejection を含める。
 
 - [x] **Step 2: table parser の failing tests を書く**
@@ -334,16 +339,18 @@ test("fails when an invalid case does not emit its expected rule", () => {
   - `. ! ? 。 ！ ？` を literal count し、URL、略語、inline code 内も数える。
 
 - [x] **Step 4: parser tests の RED を確認する**
-  - Run: `node --test docai-messaging/tools/tests/metadata.test.mjs docai-messaging/tools/tests/tables.test.mjs docai-messaging/tools/tests/paths.test.mjs docai-messaging/tools/tests/sentence.test.mjs`
+  - Run: `node --test docai-messaging/tools/tests/metadata.test.mjs docai-messaging/tools/tests/markdown.test.mjs docai-messaging/tools/tests/tables.test.mjs docai-messaging/tools/tests/paths.test.mjs docai-messaging/tools/tests/sentence.test.mjs docai-messaging/tools/tests/parser-diagnostics.test.mjs`
   - Expected: import または未実装 assertion で FAIL。
 
 - [x] **Step 5: pure parser を実装する**
   - parse failure は例外文字列ではなく `diagnostic()` を返し、line number を保持する。
+  - shared parser failure は `DM-PARSE-001`（Markdown）、`DM-PARSE-002`（table）、`DM-PARSE-003`（path）、`DM-PARSE-004`（sentence）を返し、四つすべてを rule catalog に登録する。metadata failure は `DM-META-*` のままとする。
+  - 後続 validator は semantic violation を relevant area-specific rule として意図的に emit/translate し、`DM-PARSE` は cascade evidence として保持してよい。pure syntax-focused case は `DM-PARSE` を primary にしてよい。
   - Markdown heading と fenced block の境界を source line ベースで保持する。
   - prose の見た目を評価せず、README §3.5 の source grammar のみを実装する。
 
 - [x] **Step 6: parser tests の GREEN を確認する**
-  - Run: `node --test docai-messaging/tools/tests/metadata.test.mjs docai-messaging/tools/tests/markdown.test.mjs docai-messaging/tools/tests/tables.test.mjs docai-messaging/tools/tests/paths.test.mjs docai-messaging/tools/tests/sentence.test.mjs`
+  - Run: `node --test docai-messaging/tools/tests/metadata.test.mjs docai-messaging/tools/tests/markdown.test.mjs docai-messaging/tools/tests/tables.test.mjs docai-messaging/tools/tests/paths.test.mjs docai-messaging/tools/tests/sentence.test.mjs docai-messaging/tools/tests/parser-diagnostics.test.mjs`
   - Expected: 全 test PASS。
 
 **Review gate:** parser が Markdown renderer の挙動や locale に依存していないことを確認する。
@@ -365,26 +372,26 @@ test("fails when an invalid case does not emit its expected rule", () => {
 
 - Produces: `canonicalizeMediaType(sourceValue)`、`parseExactJson(source)`、`equalExactJson(a, b)`。
 
-- [ ] **Step 1: RFC 9110 media type fixtures を test table にする**
+- [x] **Step 1: RFC 9110 media type fixtures を test table にする**
   - type/subtype/parameter-name case folding、parameter ASCII sort、token/quoted equivalence、quoted-pair、empty parameter entry、OWS around `;` を valid にする。
   - whitespace around `=`、duplicate case-folded parameter、invalid UTF-8 相当入力、trailing escape を invalid にする。
   - multibyte UTF-8、Unicode normalization が異なる値、`: ` を含む quoted value の byte length を検証する。
 
-- [ ] **Step 2: exact JSON tests を書く**
+- [x] **Step 2: exact JSON tests を書く**
   - `1`、`1.0`、`1e0` は等価。
   - IEEE 754 を超える隣接整数は不等価。
   - arbitrary exponent、negative zero、object order independence、array order sensitivity、duplicate object member rejection、non-normalized string inequality を検証する。
 
-- [ ] **Step 3: tests の RED を確認する**
+- [x] **Step 3: tests の RED を確認する**
   - Run: `node --test docai-messaging/tools/tests/media-type.test.mjs docai-messaging/tools/tests/json-value.test.mjs`
   - Expected: FAIL。
 
-- [ ] **Step 4: decimal を Number へ変換しない parser/comparator を実装する**
+- [x] **Step 4: decimal を Number へ変換しない parser/comparator を実装する**
   - number は sign、coefficient digits、base-10 exponent の canonical tuple として比較する。
   - object member を exact decoded string key の Map として保持し、duplicate を parse error にする。
   - media type は UTF-8 bytes に対して ABNF class を評価する。
 
-- [ ] **Step 5: tests の GREEN を確認する**
+- [x] **Step 5: tests の GREEN を確認する**
   - Run: `node --test docai-messaging/tools/tests/media-type.test.mjs docai-messaging/tools/tests/json-value.test.mjs`
   - Expected: 全 test PASS。
 
@@ -475,6 +482,7 @@ test("fails when an invalid case does not emit its expected rule", () => {
 - [ ] **Step 6: rule catalog と tests の対応を確認する**
   - 各 test 名に一つ以上の `DM-SRC-*` または `DM-IDX-*` rule ID を含める。
   - Task 1 の catalog-membership enforcement を前提に、未使用 rule ID と一対一で対応しない test/catalog entry を checker で失敗させる。
+  - Task 2 で cataloged になった `DM-PARSE-001`〜`DM-PARSE-004` も unused-rule と test/catalog correspondence の対象に含める。
 
 **Review gate:** selected operation の source resolution が root/shard aggregate scope を誤って全ロードしないことを確認する。
 

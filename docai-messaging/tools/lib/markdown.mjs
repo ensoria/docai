@@ -48,7 +48,7 @@ export function scanMarkdown(input) {
     return {
       value: null,
       diagnostics: [diagnostic(
-        "DM-PARSE-MARKDOWN",
+        "DM-PARSE-001",
         source.file,
         openFence.startLine,
         "Fenced block opened on this line is not closed."

@@ -25,6 +25,13 @@ test("requires all six standard metadata keys in their canonical order", () => {
   assert.equal(rejected(line).ruleId, "DM-META-001");
 });
 
+test("identifies a missing standard metadata key", () => {
+  const line = stamp.replace(" | source_refs: all", "");
+  const diagnostic = rejected(line);
+  assert.equal(diagnostic.ruleId, "DM-META-001");
+  assert.match(diagnostic.message, /required metadata key 'source_refs'/);
+});
+
 test("treats a pipe after an odd backslash run as metadata value data", () => {
   const line = stamp.replace("perspective: storefront", String.raw`perspective: left\\\|right`);
   assert.equal(parsed(line).perspective, String.raw`left\|right`);
@@ -60,6 +67,12 @@ test("rejects a trailing metadata backslash", () => {
 test("rejects a duplicate metadata key", () => {
   const diagnostic = rejected(`${stamp} | profile: compact`);
   assert.equal(diagnostic.ruleId, "DM-META-004");
+});
+
+test("identifies a duplicate metadata extension key", () => {
+  const diagnostic = rejected(`${stamp} | x-note: first | x-note: second`);
+  assert.equal(diagnostic.ruleId, "DM-META-004");
+  assert.match(diagnostic.message, /extension key 'x-note'/);
 });
 
 test("accepts lowercase metadata extension keys after the standard keys", () => {

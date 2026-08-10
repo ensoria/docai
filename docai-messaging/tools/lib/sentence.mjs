@@ -11,7 +11,7 @@ function sourceLine(input) {
 function failure(source, message) {
   return {
     value: null,
-    diagnostics: [diagnostic("DM-PARSE-SENTENCE", source.file, source.line, message)]
+    diagnostics: [diagnostic("DM-PARSE-004", source.file, source.line, message)]
   };
 }
 

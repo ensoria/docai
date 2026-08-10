@@ -39,7 +39,7 @@ test("counts terminators inside inline code literally", () => {
 
 test("rejects a line whose final character is not a terminator", () => {
   const diagnostic = rejected("No terminator");
-  assert.equal(diagnostic.ruleId, "DM-PARSE-SENTENCE");
+  assert.equal(diagnostic.ruleId, "DM-PARSE-004");
   assert.match(diagnostic.message, /final character/);
 });
 

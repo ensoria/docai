@@ -29,6 +29,30 @@
       "readme_section": "§3.2 INDEX.md(required)",
       "description": "INDEX routes readers to the selected operation and required context.",
       "scope": "core"
+    },
+    {
+      "rule_id": "DM-PARSE-001",
+      "readme_section": "§3.5 Canonical Syntax and Boundaries",
+      "description": "Markdown headings and backtick-fenced blocks retain deterministic source-line boundaries.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-PARSE-002",
+      "readme_section": "§3.5 Canonical Syntax and Boundaries",
+      "description": "Pipe tables use source-level boundary pipes, escape parity, separators, and consistent column counts.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-PARSE-003",
+      "readme_section": "§3.5 Canonical Syntax and Boundaries",
+      "description": "Docs-root-relative paths and INDEX profile links use their exact ASCII source grammars.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-PARSE-004",
+      "readme_section": "§3.1 Compatibility",
+      "description": "Required one-line prose uses the literal source-level sentence-terminator grammar.",
+      "scope": "core"
     }
   ]
 }

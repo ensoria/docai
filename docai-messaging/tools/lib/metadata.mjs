@@ -81,7 +81,10 @@ export function parseOpeningMetadata(input) {
     const separator = pair.indexOf(": ");
     if (separator <= 0) return failure(source, "Each metadata pair must contain 'key: value'.");
     const key = pair.slice(0, separator);
-    if (seen.has(key)) return failure(source, `Metadata key '${key}' is duplicated.`, "DM-META-004");
+    if (seen.has(key)) {
+      const kind = EXTENSION_KEY.test(key) ? "extension key" : "key";
+      return failure(source, `Metadata ${kind} '${key}' is duplicated.`, "DM-META-004");
+    }
     seen.add(key);
     const decoded = decodeValue(pair.slice(separator + 2));
     if (decoded.error) return failure(source, decoded.error);
@@ -90,6 +93,9 @@ export function parseOpeningMetadata(input) {
 
   for (let index = 0; index < STANDARD_KEYS.length; index += 1) {
     if (entries[index]?.[0] !== STANDARD_KEYS[index]) {
+      if (!seen.has(STANDARD_KEYS[index])) {
+        return failure(source, `Opening metadata is missing required metadata key '${STANDARD_KEYS[index]}'.`);
+      }
       return failure(source, "Opening metadata standard keys are missing or out of canonical order.");
     }
   }
