@@ -403,6 +403,8 @@ test("fails when an invalid case does not emit its expected rule", () => {
 
 ### Task 4: Identity、Digest、Closed Root、Mixed Set 検証を実装する
 
+> **Plan change / impact (user-approved):** `projection_digest` は emitted set ではなく producer-published projection-input manifest の exact UTF-8 bytes に由来するため、restamp CLI は `--projection-manifest <path>` と document-set root の両方を明示的に要求する。manifest の auto-discovery は行わず、manifest は closed root の外側に置き、projection identity を先に stamp してから set identity を計算する。この変更は Task 8、12、15 の restamp command と Task 16 の freeze 手順にも反映する。
+
 **Files:**
 
 - Create: `docai-messaging/tools/lib/identity.mjs`
@@ -416,32 +418,35 @@ test("fails when an invalid case does not emit its expected rule", () => {
 - Consumes: metadata parser、docs path parser。
 - Produces: `computeSetDigest(files)`、`deriveShortId(fullDigest)`、`loadDocumentSet(rootDir)`。
 
-- [ ] **Step 1: digest vector tests を書く**
+- [x] **Step 1: digest vector tests を書く**
   - README の `set_digest` / `set_id`、`projection_digest` / `projection_id` 例を固定 vector にする。
   - `SELF` replacement、path length-prefix、ASCII path order、file add/remove/rename/content change を検証する。
 
-- [ ] **Step 2: closed-root tests を書く**
+- [x] **Step 2: closed-root tests を書く**
   - unrelated file、symbolic link、invalid UTF-8、empty directory、missing trailer、trailer 後の非空行を拒否する。
   - source/evidence が valid document-set root の外側にある valid case を受理する。
 
-- [ ] **Step 3: mixed-set tests を書く**
+- [x] **Step 3: mixed-set tests を書く**
   - version、profile、perspective、set_id、projection_id の各 mismatch を別 rule ID で拒否する。
   - coverage、knowledge、source_refs は file ごとに異なってよいことを positive test にする。
 
-- [ ] **Step 4: tests の RED を確認する**
+- [x] **Step 4: tests の RED を確認する**
   - Run: `node --test docai-messaging/tools/tests/identity.test.mjs docai-messaging/tools/tests/document-set.test.mjs`
   - Expected: FAIL。
 
-- [ ] **Step 5: byte-exact digest implementation を作る**
+- [x] **Step 5: byte-exact digest implementation を作る**
   - UTF-8 bytes と path bytes を明示し、OS path separator を digest input に使わない。
   - root INDEX だけ full digests を要求し、task-scoped reader と whole-set validator の責務を分離する。
 
-- [ ] **Step 6: write 専用 restamp helper を実装する**
+- [x] **Step 6: write 専用 restamp helper を実装する**
   - `restamp-document-set.mjs` だけが document-set file の trailer を更新できるようにする。
-  - default は dry-run とし、`--write` 指定時だけ明示 root 内を書き換える。
+  - CLI は `restamp-document-set.mjs [--write] --projection-manifest <path> <document-set-root>` とし、manifest と root の両方を必須にして auto-discovery を禁止する。
+  - manifest は closed root の外側の regular file とし、valid UTF-8 を確認したうえで exact bytes の SHA-256 を `projection_digest`、その short ID を `projection_id` として先に stamp する。その後に prescribed `SELF` replacement で `set_digest` と `set_id` を計算する。manifest 自体とその path は `set_digest` に含めない。
+  - default は dry-run とし、`--write` 指定時だけ明示 root 内を書き換える。missing/invalid manifest、missing root、root 内 manifest は書き換え前に失敗する。
   - validator と fixture checker は常に read-only とし、validation failure を自動修復しない。
+  - tests は exact manifest bytes の固定 vector、missing/invalid UTF-8 manifest、manifest/root 明示、auto-discovery rejection、root 外の同一 bytes を持つ別 manifest path、dry-run byte preservation、`--write` 後の whole-set validation と converged dry-run を検証する。
 
-- [ ] **Step 7: tests の GREEN を確認する**
+- [x] **Step 7: tests の GREEN を確認する**
   - Run: `node --test docai-messaging/tools/tests/identity.test.mjs docai-messaging/tools/tests/document-set.test.mjs`
   - Expected: 全 test PASS。
 
@@ -595,9 +600,9 @@ test("fails when an invalid case does not emit its expected rule", () => {
   - main full set には `unknown` / `unsupported` を含めない。これらは別の focused document-set case に置き、root completeness の positive/negative 判定を独立させる。
 
 - [ ] **Step 5: identity を helper で計算して固定する**
-  - Run: `node docai-messaging/tools/restamp-document-set.mjs --write docai-messaging/fixtures/core/v0.17.1/valid/full`
+  - Run: `node docai-messaging/tools/restamp-document-set.mjs --write --projection-manifest docai-messaging/fixtures/core/v0.17.1/source/projection-input-manifest.json docai-messaging/fixtures/core/v0.17.1/valid/full`
   - Expected: projection digest、set digest、short IDs を更新する。
-  - Run: `node docai-messaging/tools/restamp-document-set.mjs docai-messaging/fixtures/core/v0.17.1/valid/full`
+  - Run: `node docai-messaging/tools/restamp-document-set.mjs --projection-manifest docai-messaging/fixtures/core/v0.17.1/source/projection-input-manifest.json docai-messaging/fixtures/core/v0.17.1/valid/full`
   - Expected: `restamp required: no`、exit code 0。
 
 - [ ] **Step 6: source traceability を全 fact domain で記録する**
@@ -728,7 +733,7 @@ test("fails when an invalid case does not emit its expected rule", () => {
 - [ ] Reference Material の instruction authority、fence length、UTF-8 normalization、forbidden target cases を作る。
 - [ ] tagged/untagged polymorphism、raw binary、adapter-defined structured non-JSON representation を作る。
 - [ ] compact set を full と同じ paths で作り、compact example、field defaults、same-as、selective conventions を実際に使う。
-- [ ] `restamp-document-set.mjs --write` で full/compact を個別に restamp し、dry-run 再実行で両方 `restamp required: no` を確認する。
+- [ ] complete candidate の同じ explicit projection-input manifest を `--projection-manifest <candidate-manifest-path>` で指定し、`restamp-document-set.mjs --write` で full/compact root を個別に restamp する。manifest は auto-discover せず、同じ manifest での dry-run 再実行が両方 `restamp required: no` になることを確認する。
 - [ ] source traceability を complete structures まで拡張する。
 - [ ] Run: `node docai-messaging/tools/check-complete-fixtures.mjs`
 - [ ] Expected: valid full/compact pair と既存 Core cases が全 PASS。
@@ -810,7 +815,7 @@ test("fails when an invalid case does not emit its expected rule", () => {
 
 - [ ] Core と complete candidate の reviewed source、sets、focused cases、evidence を RC directory へ固定する。
 - [ ] RC document set の `docai-messaging` は prerelease suffix を使わず `1.0.0` とする。README と fixture README の publication label に `v1.0.0-rc.1` を記録する。
-- [ ] specification version の `0.17.1` → `1.0.0`、publication scope identity、adapter mapping version、projection manifest を同じ RC change set で更新し、全 document set を restamp する。
+- [ ] specification version の `0.17.1` → `1.0.0`、publication scope identity、adapter mapping version、reviewed RC projection manifest を同じ RC change set で更新し、`restamp-document-set.mjs [--write] --projection-manifest docai-messaging/fixtures/release-candidates/v1.0.0-rc.1/source/projection-input-manifest.json <RC-root>` として全 document set を restamp する。RC manifest は auto-discover しない。
 - [ ] candidate との差を heading/marker/table/example/prose/source fact ごとに分類する。
 - [ ] semantic drift がある差は再評価対象、identity/provenance wording のみの差は no-resubmit 理由を記録する。
 - [ ] checker を RC path に対して実行し、Core と complete 全 rule を検証する。
@@ -839,6 +844,7 @@ test("fails when an invalid case does not emit its expected rule", () => {
 
 - [ ] reviewed final RC の source、valid sets、focused fixtures、checker expectations、evidence を byte-for-byte stable corpus へ固定する。
 - [ ] docs-root-relative path が変わらないため full/compact set digests が final RC と一致することを確認する。
+- [ ] stable files は restamp しない。final RC を byte-for-byte copy した後、stable root の `projection_digest` / `projection_id` / `set_digest` / `set_id` が final RC と一致する digest parity を read-only に検証する。
 - [ ] stable `COVERAGE.md` が README §8 の Core/complete/future-minor requirements をすべて指すことを確認する。
 - [ ] stable `SOURCE-TRACEABILITY.md` が全 source fact domain を覆うことを確認する。
 - [ ] stable `REVIEW.md` の blocker、wording issue、open question が 0 であることを確認する。

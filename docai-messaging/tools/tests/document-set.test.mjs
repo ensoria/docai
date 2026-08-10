@@ -6,12 +6,16 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { loadDocumentSet, validateDocumentSet } from "../lib/document-set.mjs";
+import { restampDocumentSet } from "../restamp-document-set.mjs";
 
 const SET_DIGEST = "sha256:813b7cf8b838a5e3ba2fa494405bbf061bd1c6c0f693077d7349fd4c4d45dd2b";
 const SET_ID = "b32:qe5xz6fyhcs6horpuskeaw57ay";
 const PROJECTION_DIGEST = "sha256:17b223a4bf668cc9e2fcef034fb8c83e2655055de8736737619b76a4a1d666d0";
 const PROJECTION_ID = "b32:c6zchjf7m2gmtyx454bu7ogihy";
 const ALTERNATE_ID = "b32:aaaaaaaaaaaaaaaaaaaaaaaaaa";
+const MANIFEST_SOURCE = "{\"projection\":\"v1\"}\n";
+const MANIFEST_DIGEST = "sha256:070ac8cb2c8c4b0052fb169a30c76075402ab4a071052ff722a6ce073424fee0";
+const MANIFEST_ID = "b32:a4fmrszmrrfqaux3c2ndbr3aou";
 const restampPath = fileURLToPath(new URL("../restamp-document-set.mjs", import.meta.url));
 const catalogPath = fileURLToPath(new URL("../../fixtures/rules.json", import.meta.url));
 
@@ -64,13 +68,14 @@ function write(root, relativePath, content) {
 
 function createSet(t, {
   rootDir,
+  rootIdentity,
   childMetadata,
   childIdentity,
   childPath = "CONVENTIONS.md"
 } = {}) {
   const root = rootDir ?? temporaryDirectory(t);
   fs.mkdirSync(root, { recursive: true });
-  write(root, "INDEX.md", documentSource({ root: true }));
+  write(root, "INDEX.md", documentSource({ root: true, identityOverrides: rootIdentity }));
   write(root, childPath, documentSource({
     metadataOverrides: childMetadata,
     identityOverrides: childIdentity
@@ -84,6 +89,14 @@ function ruleIds(result) {
 
 function taskScoped(root) {
   return validateDocumentSet(loadDocumentSet(root), { wholeSet: false });
+}
+
+function runRestamp(...arguments_) {
+  return spawnSync(process.execPath, [restampPath, ...arguments_], { encoding: "utf8" });
+}
+
+function withLineEnding(source, lineEnding) {
+  return Buffer.from(source.replaceAll("\n", lineEnding), "utf8");
 }
 
 test("accepts source and evidence siblings outside a closed document-set root", (t) => {
@@ -159,6 +172,19 @@ test("permits coverage, knowledge, and source_refs to vary by file", (t) => {
   assert.deepEqual(taskScoped(root).diagnostics, []);
 });
 
+for (const identityMismatch of [
+  { rootIdentity: { setId: ALTERNATE_ID }, childIdentity: { setId: ALTERNATE_ID } },
+  {
+    rootIdentity: { projectionId: ALTERNATE_ID },
+    childIdentity: { projectionId: ALTERNATE_ID }
+  }
+]) {
+  test("DM-ID-002 rejects a root short ID not derived from its full digest", (t) => {
+    const root = createSet(t, identityMismatch);
+    assert.ok(ruleIds(taskScoped(root)).includes("DM-ID-002"));
+  });
+}
+
 test("task-scoped validation checks handles without recomputing the whole set", (t) => {
   const root = createSet(t);
   const documentSet = loadDocumentSet(root);
@@ -181,32 +207,335 @@ test("catalogs every Task 4 identity diagnostic", () => {
   assert.deepEqual(taskRuleIds.filter((ruleId) => !cataloged.has(ruleId)), []);
 });
 
-test("restamp requires an explicit root even in dry-run mode", () => {
-  const result = spawnSync(process.execPath, [restampPath], { encoding: "utf8" });
+test("restamp requires an explicit root even when a manifest is supplied", (t) => {
+  const publication = temporaryDirectory(t, "docai-messaging-restamp-");
+  const manifestPath = path.join(publication, "projection-input-manifest.json");
+  fs.writeFileSync(manifestPath, MANIFEST_SOURCE);
+  const result = runRestamp("--projection-manifest", manifestPath);
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /explicit document-set root/i);
 });
 
-test("restamp is dry-run by default and writes only with --write", (t) => {
+test("restamp requires --projection-manifest and never auto-discovers it", (t) => {
+  const publication = temporaryDirectory(t, "docai-messaging-restamp-");
+  const root = createSet(t, { rootDir: path.join(publication, "valid", "full") });
+  write(publication, "source/projection-input-manifest.json", MANIFEST_SOURCE);
+  const before = fs.readFileSync(path.join(root, "INDEX.md"));
+
+  const result = runRestamp(root);
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /--projection-manifest/);
+  assert.deepEqual(fs.readFileSync(path.join(root, "INDEX.md")), before);
+});
+
+test("restamp rejects a missing projection manifest without writing", (t) => {
+  const publication = temporaryDirectory(t, "docai-messaging-restamp-");
+  const root = createSet(t, { rootDir: path.join(publication, "valid", "full") });
+  const before = fs.readFileSync(path.join(root, "INDEX.md"));
+  const result = runRestamp(
+    "--write",
+    "--projection-manifest",
+    path.join(publication, "source", "missing.json"),
+    root
+  );
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /projection manifest cannot be read/i);
+  assert.deepEqual(fs.readFileSync(path.join(root, "INDEX.md")), before);
+});
+
+test("restamp rejects an invalid UTF-8 projection manifest without writing", (t) => {
+  const publication = temporaryDirectory(t, "docai-messaging-restamp-");
+  const root = createSet(t, { rootDir: path.join(publication, "valid", "full") });
+  const manifestPath = path.join(publication, "source", "projection-input-manifest.json");
+  fs.mkdirSync(path.dirname(manifestPath), { recursive: true });
+  fs.writeFileSync(manifestPath, Buffer.from([0xc3, 0x28]));
+  const before = fs.readFileSync(path.join(root, "INDEX.md"));
+
+  const result = runRestamp("--write", "--projection-manifest", manifestPath, root);
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /valid UTF-8/i);
+  assert.deepEqual(fs.readFileSync(path.join(root, "INDEX.md")), before);
+});
+
+test("restamp rejects a projection manifest inside the closed root", (t) => {
   const root = createSet(t);
+  const manifestPath = path.join(root, "projection-input-manifest.json");
+  fs.writeFileSync(manifestPath, MANIFEST_SOURCE);
+  const before = fs.readFileSync(path.join(root, "INDEX.md"));
+
+  const result = runRestamp("--write", "--projection-manifest", manifestPath, root);
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /outside the document-set root/i);
+  assert.deepEqual(fs.readFileSync(path.join(root, "INDEX.md")), before);
+});
+
+test("restamp rejects an external lexical alias that resolves inside the root", (t) => {
+  const publication = temporaryDirectory(t, "docai-messaging-restamp-");
+  const root = createSet(t, { rootDir: path.join(publication, "valid", "full") });
+  const alias = path.join(publication, "outside-alias");
+  fs.symlinkSync(root, alias, "dir");
+  const manifestPath = path.join(alias, "CONVENTIONS.md");
+  const before = new Map([
+    ["INDEX.md", fs.readFileSync(path.join(root, "INDEX.md"))],
+    ["CONVENTIONS.md", fs.readFileSync(path.join(root, "CONVENTIONS.md"))]
+  ]);
+
+  const result = runRestamp("--write", "--projection-manifest", manifestPath, root);
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /outside the document-set root/i);
+  for (const [relativePath, bytes] of before) {
+    assert.deepEqual(fs.readFileSync(path.join(root, relativePath)), bytes);
+  }
+});
+
+test("restamp rejects an outside hard link to a root document", (t) => {
+  const publication = temporaryDirectory(t, "docai-messaging-restamp-");
+  const root = createSet(t, { rootDir: path.join(publication, "valid", "full") });
+  const manifestPath = path.join(publication, "outside-hard-link.md");
+  fs.linkSync(path.join(root, "CONVENTIONS.md"), manifestPath);
+  const before = new Map([
+    ["INDEX.md", fs.readFileSync(path.join(root, "INDEX.md"))],
+    ["CONVENTIONS.md", fs.readFileSync(path.join(root, "CONVENTIONS.md"))]
+  ]);
+
+  const result = runRestamp("--write", "--projection-manifest", manifestPath, root);
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /same physical file|hard link/i);
+  for (const [relativePath, bytes] of before) {
+    assert.deepEqual(fs.readFileSync(path.join(root, relativePath)), bytes);
+  }
+});
+
+test("a BOM before opening metadata stays visible and restamp never strips it", (t) => {
+  const publication = temporaryDirectory(t, "docai-messaging-restamp-");
+  const root = createSet(t, { rootDir: path.join(publication, "valid", "full") });
+  const manifestPath = path.join(publication, "source", "projection-input-manifest.json");
+  write(publication, "source/projection-input-manifest.json", MANIFEST_SOURCE);
+  const indexPath = path.join(root, "INDEX.md");
+  const before = Buffer.concat([
+    Buffer.from([0xef, 0xbb, 0xbf]),
+    fs.readFileSync(indexPath)
+  ]);
+  fs.writeFileSync(indexPath, before);
+
+  const result = runRestamp("--write", "--projection-manifest", manifestPath, root);
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /opening metadata/i);
+  assert.deepEqual(fs.readFileSync(indexPath), before);
+});
+
+for (const [name, lineEnding] of [["CRLF", "\r\n"], ["lone CR", "\r"]]) {
+  test(`restamp handles ${name} trailer boundaries without normalizing bytes`, (t) => {
+    const publication = temporaryDirectory(t, "docai-messaging-restamp-");
+    const root = createSet(t, { rootDir: path.join(publication, "valid", "full") });
+    const manifestPath = path.join(publication, "source", "projection-input-manifest.json");
+    write(publication, "source/projection-input-manifest.json", MANIFEST_SOURCE);
+    const sources = new Map([
+      ["INDEX.md", withLineEnding(documentSource({ root: true }), lineEnding)],
+      ["CONVENTIONS.md", withLineEnding(documentSource(), lineEnding)]
+    ]);
+    for (const [relativePath, bytes] of sources) fs.writeFileSync(path.join(root, relativePath), bytes);
+
+    const result = runRestamp("--write", "--projection-manifest", manifestPath, root);
+
+    assert.equal(result.status, 0, result.stderr);
+    for (const [relativePath, before] of sources) {
+      const after = fs.readFileSync(path.join(root, relativePath));
+      const trailerStart = before.indexOf(Buffer.from("> docai-identity:", "ascii"));
+      assert.deepEqual(after.subarray(0, trailerStart), before.subarray(0, trailerStart));
+      assert.deepEqual(after.subarray(after.length - lineEnding.length), Buffer.from(lineEnding, "ascii"));
+      if (lineEnding === "\r") assert.equal(after.includes(0x0a), false);
+    }
+    assert.deepEqual(validateDocumentSet(loadDocumentSet(root), { wholeSet: true }).diagnostics, []);
+  });
+}
+
+test("restamp defaults to a non-mutating dry-run", (t) => {
+  const publication = temporaryDirectory(t, "docai-messaging-restamp-");
+  const root = createSet(t, { rootDir: path.join(publication, "valid", "full") });
+  const manifestPath = path.join(publication, "source", "projection-input-manifest.json");
+  write(publication, "source/projection-input-manifest.json", MANIFEST_SOURCE);
   const indexPath = path.join(root, "INDEX.md");
   const childPath = path.join(root, "CONVENTIONS.md");
   const before = [fs.readFileSync(indexPath), fs.readFileSync(childPath)];
 
-  const dryRun = spawnSync(process.execPath, [restampPath, root], { encoding: "utf8" });
+  const dryRun = runRestamp("--projection-manifest", manifestPath, root);
   assert.equal(dryRun.status, 0, dryRun.stderr);
   assert.match(dryRun.stdout, /restamp required: yes/);
   assert.deepEqual(fs.readFileSync(indexPath), before[0]);
   assert.deepEqual(fs.readFileSync(childPath), before[1]);
+});
 
-  const writeRun = spawnSync(process.execPath, [restampPath, "--write", root], { encoding: "utf8" });
+test("restamp --write hashes exact manifest bytes before stamping set identity", (t) => {
+  const publication = temporaryDirectory(t, "docai-messaging-restamp-");
+  const root = createSet(t, { rootDir: path.join(publication, "valid", "full") });
+  const manifestPath = path.join(publication, "source", "projection-input-manifest.json");
+  write(publication, "source/projection-input-manifest.json", MANIFEST_SOURCE);
+  const indexPath = path.join(root, "INDEX.md");
+  const childPath = path.join(root, "CONVENTIONS.md");
+  const before = [fs.readFileSync(indexPath), fs.readFileSync(childPath)];
+
+  const writeRun = runRestamp("--write", "--projection-manifest", manifestPath, root);
   assert.equal(writeRun.status, 0, writeRun.stderr);
   assert.match(writeRun.stdout, /restamp required: yes/);
   assert.notDeepEqual(fs.readFileSync(indexPath), before[0]);
   assert.notDeepEqual(fs.readFileSync(childPath), before[1]);
+  assert.match(fs.readFileSync(indexPath, "utf8"), new RegExp(
+    `projection_id: ${MANIFEST_ID} \\| set_digest: sha256:[0-9a-f]{64} \\| projection_digest: ${MANIFEST_DIGEST}`
+  ));
+  assert.match(fs.readFileSync(childPath, "utf8"), new RegExp(`projection_id: ${MANIFEST_ID}$`, "m"));
   assert.deepEqual(validateDocumentSet(loadDocumentSet(root), { wholeSet: true }).diagnostics, []);
+});
 
-  const cleanDryRun = spawnSync(process.execPath, [restampPath, root], { encoding: "utf8" });
+test("restamp identity depends on manifest bytes but not its external path", (t) => {
+  const publication = temporaryDirectory(t, "docai-messaging-restamp-");
+  const root = createSet(t, { rootDir: path.join(publication, "valid", "full") });
+  const firstManifest = path.join(publication, "source", "projection-input-manifest.json");
+  const secondManifest = path.join(publication, "evidence", "same-bytes.json");
+  write(publication, "source/projection-input-manifest.json", MANIFEST_SOURCE);
+  write(publication, "evidence/same-bytes.json", MANIFEST_SOURCE);
+  const writeRun = runRestamp("--write", "--projection-manifest", firstManifest, root);
+  assert.equal(writeRun.status, 0, writeRun.stderr);
+
+  const cleanDryRun = runRestamp("--projection-manifest", secondManifest, root);
   assert.equal(cleanDryRun.status, 0, cleanDryRun.stderr);
   assert.match(cleanDryRun.stdout, /restamp required: no/);
+});
+
+test("restamp rejects a manifest path rebound after its descriptor is read", (t) => {
+  const publication = temporaryDirectory(t, "docai-messaging-restamp-");
+  const root = createSet(t, { rootDir: path.join(publication, "valid", "full") });
+  const manifestPath = path.join(publication, "source", "projection-input-manifest.json");
+  const reboundPath = path.join(publication, "source", "rebound.json");
+  const openedPath = path.join(publication, "source", "opened.json");
+  write(publication, "source/projection-input-manifest.json", MANIFEST_SOURCE);
+  write(publication, "source/rebound.json", "{\"projection\":\"rebound\"}\n");
+  const before = new Map([
+    ["INDEX.md", fs.readFileSync(path.join(root, "INDEX.md"))],
+    ["CONVENTIONS.md", fs.readFileSync(path.join(root, "CONVENTIONS.md"))]
+  ]);
+  let rebound = false;
+
+  assert.throws(() => restampDocumentSet(root, manifestPath, {
+    write: true,
+    statPath(candidate) {
+      if (!rebound && candidate === manifestPath) {
+        fs.renameSync(manifestPath, openedPath);
+        fs.renameSync(reboundPath, manifestPath);
+        rebound = true;
+      }
+      return fs.statSync(candidate);
+    }
+  }), /manifest path.*changed|same opened file/i);
+
+  assert.equal(rebound, true);
+  for (const [relativePath, bytes] of before) {
+    assert.deepEqual(fs.readFileSync(path.join(root, relativePath)), bytes);
+  }
+});
+
+test("restamp preserves complete file modes despite restrictive stage creation", (t) => {
+  const publication = temporaryDirectory(t, "docai-messaging-restamp-");
+  const root = createSet(t, { rootDir: path.join(publication, "valid", "full") });
+  const manifestPath = path.join(publication, "source", "projection-input-manifest.json");
+  write(publication, "source/projection-input-manifest.json", MANIFEST_SOURCE);
+  const documentPaths = [path.join(root, "INDEX.md"), path.join(root, "CONVENTIONS.md")];
+  fs.chmodSync(documentPaths[0], 0o6777);
+  fs.chmodSync(documentPaths[1], 0o1776);
+  const expectedModes = new Map(documentPaths.map((filePath) => [
+    path.basename(filePath),
+    fs.statSync(filePath).mode & 0o7777
+  ]));
+  let stageOpens = 0;
+
+  restampDocumentSet(root, manifestPath, {
+    write: true,
+    openFile(filePath, flags, mode) {
+      stageOpens += 1;
+      return fs.openSync(filePath, flags, mode & 0o700);
+    }
+  });
+
+  assert.equal(stageOpens, documentPaths.length);
+  for (const filePath of documentPaths) {
+    assert.equal(fs.statSync(filePath).mode & 0o7777, expectedModes.get(path.basename(filePath)));
+  }
+});
+
+test("restamp rolls back earlier replacements when a later atomic replacement fails", (t) => {
+  const publication = temporaryDirectory(t, "docai-messaging-restamp-");
+  const root = createSet(t, { rootDir: path.join(publication, "valid", "full") });
+  const manifestPath = path.join(publication, "source", "projection-input-manifest.json");
+  write(publication, "source/projection-input-manifest.json", MANIFEST_SOURCE);
+  const before = new Map([
+    ["INDEX.md", fs.readFileSync(path.join(root, "INDEX.md"))],
+    ["CONVENTIONS.md", fs.readFileSync(path.join(root, "CONVENTIONS.md"))]
+  ]);
+  let replacements = 0;
+
+  assert.throws(() => restampDocumentSet(root, manifestPath, {
+    write: true,
+    replaceFile(from, to) {
+      replacements += 1;
+      if (replacements === 2) throw new Error("injected replacement failure");
+      fs.renameSync(from, to);
+    }
+  }), /injected replacement failure/);
+
+  assert.equal(replacements, 2);
+  for (const [relativePath, bytes] of before) {
+    assert.deepEqual(fs.readFileSync(path.join(root, relativePath)), bytes);
+  }
+  assert.deepEqual(fs.readdirSync(root).sort(), ["CONVENTIONS.md", "INDEX.md"]);
+
+  const recovered = restampDocumentSet(root, manifestPath, { write: true });
+  assert.equal(recovered.changed, true);
+  assert.deepEqual(validateDocumentSet(loadDocumentSet(root), { wholeSet: true }).diagnostics, []);
+  assert.equal(restampDocumentSet(root, manifestPath).changed, false);
+});
+
+test("restamp retains and reports a backup when rollback restore fails", (t) => {
+  const publication = temporaryDirectory(t, "docai-messaging-restamp-");
+  const root = createSet(t, { rootDir: path.join(publication, "valid", "full") });
+  const manifestPath = path.join(publication, "source", "projection-input-manifest.json");
+  write(publication, "source/projection-input-manifest.json", MANIFEST_SOURCE);
+  const originals = new Map([
+    ["INDEX.md", fs.readFileSync(path.join(root, "INDEX.md"))],
+    ["CONVENTIONS.md", fs.readFileSync(path.join(root, "CONVENTIONS.md"))]
+  ]);
+  let replacements = 0;
+  let retainedBackup = null;
+  let restoreTarget = null;
+  let failure;
+
+  try {
+    restampDocumentSet(root, manifestPath, {
+      write: true,
+      replaceFile(from, to) {
+        replacements += 1;
+        if (replacements === 2) throw new Error("injected commit failure");
+        fs.renameSync(from, to);
+      },
+      restoreFile(from, to) {
+        retainedBackup = from;
+        restoreTarget = to;
+        throw new Error("injected restore failure");
+      }
+    });
+  } catch (error) {
+    failure = error;
+  }
+
+  assert.ok(failure instanceof AggregateError);
+  assert.notEqual(retainedBackup, null);
+  assert.equal(failure.message.includes(retainedBackup), true);
+  assert.equal(fs.existsSync(retainedBackup), true);
+  assert.deepEqual(fs.readFileSync(retainedBackup), originals.get(path.basename(restoreTarget)));
 });

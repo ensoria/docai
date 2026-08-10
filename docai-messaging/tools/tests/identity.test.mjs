@@ -59,6 +59,17 @@ test("computes the byte-exact length-prefixed single-file digest vector", () => 
   assert.equal(digest, "sha256:623088f180a3aa24a6a93c239a569a57cbe7d089218c05be3eb6a58f7fdbb00d");
 });
 
+test("preserves UTF-8 BOM bytes in the direct byte-level set digest vector", () => {
+  const bytes = Buffer.concat([
+    Buffer.from([0xef, 0xbb, 0xbf]),
+    Buffer.from(rootDocument(), "utf8")
+  ]);
+  assert.equal(
+    computeSetDigest([{ path: "INDEX.md", bytes }]),
+    "sha256:b183fe4f857a3c903960c55a3246ba9982886465d6972687e9a18e71ecb64447"
+  );
+});
+
 test("replaces only set identity handles with SELF before hashing", () => {
   const original = computeSetDigest([{ path: "INDEX.md", content: rootDocument() }]);
   const changedHandles = computeSetDigest([{
@@ -100,7 +111,7 @@ test("sorts paths by ASCII bytes and binds file membership, names, and content",
     file.path === "channels/A.md" ? { ...file, path: "channels/B.md" } : file
   ))), baseline);
   assert.notEqual(computeSetDigest(files.map((file) => (
-    file.path === "channels/A.md" ? { ...file, content: `${file.content}changed\n` } : file
+    file.path === "channels/A.md" ? { ...file, content: file.content.replace("# A", "# Changed") } : file
   ))), baseline);
 });
 

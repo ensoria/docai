@@ -19,6 +19,54 @@
       "scope": "core"
     },
     {
+      "rule_id": "DM-ID-002",
+      "readme_section": "§3 File Structure",
+      "description": "Root short identity handles derive from the first 128 bits of their full digests.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-ID-003",
+      "readme_section": "§3 File Structure",
+      "description": "The root set_digest matches byte-exact recomputation across the complete document set.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-ID-004",
+      "readme_section": "§3 File Structure",
+      "description": "A document-set root is closed to unrelated files, symbolic links, invalid UTF-8, and empty directories.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-ID-005",
+      "readme_section": "§3 File Structure",
+      "description": "Every file in a document set declares the same DocAI Messaging version.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-ID-006",
+      "readme_section": "§3 File Structure",
+      "description": "Every file in a document set declares the same output profile.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-ID-007",
+      "readme_section": "§3 File Structure",
+      "description": "Every file in a document set declares the same exact perspective.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-ID-008",
+      "readme_section": "§3 File Structure",
+      "description": "Every file in a document set carries the same set_id.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-ID-009",
+      "readme_section": "§3 File Structure",
+      "description": "Every file in a document set carries the same projection_id.",
+      "scope": "core"
+    },
+    {
       "rule_id": "DM-SRC-001",
       "readme_section": "§3.2 INDEX.md(required)",
       "description": "The Sources catalog identifies the authoritative inputs for a document set.",
