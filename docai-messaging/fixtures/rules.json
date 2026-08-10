@@ -1,0 +1,34 @@
+{
+  "rules": [
+    {
+      "rule_id": "DM-META-001",
+      "readme_section": "§3 File Structure",
+      "description": "Opening metadata uses the required standard keys in their defined order.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-META-004",
+      "readme_section": "§3 File Structure",
+      "description": "Opening metadata keys must not be duplicated.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-ID-001",
+      "readme_section": "§3 File Structure",
+      "description": "Every document-set file ends with the required identity trailer.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-SRC-001",
+      "readme_section": "§3.2 INDEX.md(required)",
+      "description": "The Sources catalog identifies the authoritative inputs for a document set.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-IDX-001",
+      "readme_section": "§3.2 INDEX.md(required)",
+      "description": "INDEX routes readers to the selected operation and required context.",
+      "scope": "core"
+    }
+  ]
+}

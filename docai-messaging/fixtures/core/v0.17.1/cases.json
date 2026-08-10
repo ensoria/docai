@@ -1,0 +1,20 @@
+{
+  "docai_messaging": "0.17.1",
+  "scope": "compatibility-core",
+  "cases": [
+    {
+      "id": "core-valid-full-set",
+      "kind": "document-set",
+      "path": "valid/full",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
+      "id": "metadata-duplicate-standard-key",
+      "kind": "focused-document",
+      "path": "focused/invalid/metadata-duplicate-standard-key.md",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-META-004"]
+    }
+  ]
+}

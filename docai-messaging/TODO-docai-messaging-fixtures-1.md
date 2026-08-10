@@ -219,6 +219,8 @@ Rule ID の prefix は次に固定する。
 
 ### Task 1: Corpus Contract と Test Harness を固定する
 
+> **Plan change / impact (user-approved):** Task 1 now guarantees that every expected and emitted rule ID is cataloged. Task 5 no longer introduces catalog-membership enforcement; it extends the existing guarantee with unused-rule detection and one-to-one test/catalog correspondence.
+
 **Files:**
 
 - Create: `docai-messaging/fixtures/README.md`
@@ -233,16 +235,16 @@ Rule ID の prefix は次に固定する。
 - Consumes: `cases.json` の固定 schema と rule prefix table。
 - Produces: `diagnostic()`、`runFixtureCorpus()`、human-readable checker report。
 
-- [ ] **Step 1: fixture の役割と非目標を文書化する**
+- [x] **Step 1: fixture の役割と非目標を文書化する**
   - `fixtures/README.md` に versioned corpus、valid set、focused valid/invalid、source、evidence の役割を書く。
   - checker は corpus expectation checker であり、公開 validator や generator ではないと明記する。
   - published fixture は immutable とし、意味変更は新しい version directory で行う。
 
-- [ ] **Step 2: rule catalog を作る**
+- [x] **Step 2: rule catalog を作る**
   - `rules.json` に `rule_id`、README section、短い説明、Core/complete の scope を記録する。
-  - 最初に `DM-META-001`、`DM-ID-001`、`DM-SRC-001`、`DM-IDX-001` の最小行を置き、各 task で追記する。
+  - 最初に `DM-META-001`、`DM-META-004`、`DM-ID-001`、`DM-SRC-001`、`DM-IDX-001` の最小行を置き、各 task で追記する。
 
-- [ ] **Step 3: failing runner test を書く**
+- [x] **Step 3: failing runner test を書く**
 
 ```js
 import test from "node:test";
@@ -277,22 +279,26 @@ test("fails when an invalid case does not emit its expected rule", () => {
 });
 ```
 
-- [ ] **Step 4: test が期待どおり失敗することを確認する**
-  - Run: `node --test docai-messaging/tools/tests/fixture-runner.test.mjs`
-  - Expected: `runFixtureCorpus` が未定義で FAIL。
+  - catalog にない expected/emitted rule ID、valid case の error、unexpected primary error、failure summary/exit code を直接 test にする。
 
-- [ ] **Step 5: manifest loader と expectation comparison を最小実装する**
+- [x] **Step 4: test が期待どおり失敗することを確認する**
+  - Run: `node --test docai-messaging/tools/tests/fixture-runner.test.mjs`
+  - Expected: catalog にない expected/emitted rule ID assertion で FAIL。
+
+- [x] **Step 5: manifest loader と expectation comparison を最小実装する**
   - valid case は error diagnostics が 0 件であることを要求する。
   - invalid case は全 `expected_rule_ids` を primary diagnostic として含むことを要求する。
   - 予期しない primary error は失敗、`cascade: true` の追加 error は report に残す。
+  - `cases.json` と fixture root の `rules.json` を読み、expected と emitted の全 rule ID が catalog に存在しない場合は deterministic に失敗する。
 
-- [ ] **Step 6: report format を固定する**
+- [x] **Step 6: report format を固定する**
   - 各 case を、例えば `FAIL metadata-duplicate-standard-key expected=invalid actual=valid rules=none` の形式で出力する。
+  - catalog にない expected/emitted rule ID は case report に明示する。
   - 最後に `N passed, M failed` を出力し、`M > 0` なら process exit code 1 とする。
 
-- [ ] **Step 7: runner test を再実行する**
+- [x] **Step 7: runner test を再実行する**
   - Run: `node --test docai-messaging/tools/tests/fixture-runner.test.mjs`
-  - Expected: PASS。
+  - Expected: catalog membership と all runner tests が PASS。
 
 **Review gate:** fixture の validity と checker 自身の correctness が循環定義になっていないことを確認する。
 
@@ -315,28 +321,28 @@ test("fails when an invalid case does not emit its expected rule", () => {
 
 - Produces: `parseOpeningMetadata(line)`、`scanMarkdown(source)`、`parsePipeTable(lines)`、`parseDocsPath(value)`、`validateSentenceLine(line, min, max)`。
 
-- [ ] **Step 1: metadata escaping の failing tests を書く**
+- [x] **Step 1: metadata escaping の failing tests を書く**
   - six standard keys の順序、odd/even backslash run、`\|`、`\\`、unknown escape、trailing backslash、duplicate key を個別 test にする。
   - `x-[a-z0-9][a-z0-9._-]*` の valid/invalid と pre-1.0 unknown standard key rejection を含める。
 
-- [ ] **Step 2: table parser の failing tests を書く**
+- [x] **Step 2: table parser の failing tests を書く**
   - leading/trailing pipe、separator row、列数一致、odd/even escaped pipe、ASCII trim、`\|` decode のみを検証する。
   - HTML entity、code span、emphasis を勝手に正規化しない test を含める。
 
-- [ ] **Step 3: path と sentence grammar の failing tests を書く**
+- [x] **Step 3: path と sentence grammar の failing tests を書く**
   - docs-root-relative path、profile link、`none` collision、`.` / `..`、backslash、query/fragment を検証する。
   - `. ! ? 。 ！ ？` を literal count し、URL、略語、inline code 内も数える。
 
-- [ ] **Step 4: parser tests の RED を確認する**
+- [x] **Step 4: parser tests の RED を確認する**
   - Run: `node --test docai-messaging/tools/tests/metadata.test.mjs docai-messaging/tools/tests/tables.test.mjs docai-messaging/tools/tests/paths.test.mjs docai-messaging/tools/tests/sentence.test.mjs`
   - Expected: import または未実装 assertion で FAIL。
 
-- [ ] **Step 5: pure parser を実装する**
+- [x] **Step 5: pure parser を実装する**
   - parse failure は例外文字列ではなく `diagnostic()` を返し、line number を保持する。
   - Markdown heading と fenced block の境界を source line ベースで保持する。
   - prose の見た目を評価せず、README §3.5 の source grammar のみを実装する。
 
-- [ ] **Step 6: parser tests の GREEN を確認する**
+- [x] **Step 6: parser tests の GREEN を確認する**
   - Run: `node --test docai-messaging/tools/tests/metadata.test.mjs docai-messaging/tools/tests/markdown.test.mjs docai-messaging/tools/tests/tables.test.mjs docai-messaging/tools/tests/paths.test.mjs docai-messaging/tools/tests/sentence.test.mjs`
   - Expected: 全 test PASS。
 
@@ -468,7 +474,7 @@ test("fails when an invalid case does not emit its expected rule", () => {
 
 - [ ] **Step 6: rule catalog と tests の対応を確認する**
   - 各 test 名に一つ以上の `DM-SRC-*` または `DM-IDX-*` rule ID を含める。
-  - 未使用 rule ID と rule catalog にない diagnostic を checker で失敗させる。
+  - Task 1 の catalog-membership enforcement を前提に、未使用 rule ID と一対一で対応しない test/catalog entry を checker で失敗させる。
 
 **Review gate:** selected operation の source resolution が root/shard aggregate scope を誤って全ロードしないことを確認する。
 
