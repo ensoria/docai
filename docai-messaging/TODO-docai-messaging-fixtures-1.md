@@ -458,31 +458,46 @@ test("fails when an invalid case does not emit its expected rule", () => {
 
 ### Task 5: Compatibility Core の INDEX、Sources、Routing 検証を作る
 
+> **Plan change / impact (user-approved):** Task 5 は、Step 1〜4 の全 test を先に RED にして Step 5 で一括実装する順序から、`root INDEX structure`、`Sources direct/sharded resolution`、`operation routing/retrieval`、`Unprojected Operations`、`rule catalog correspondence` の垂直 slice 順へ変更する。各 slice は、対象 test の RED、最小実装、対象 test と既存回帰 test の GREEN を一つの checkpoint とし、checkpoint ごとに commit 可能な状態で停止できるようにする。公開済み interface、rule の意味、Task 5 の最終 coverage、Task 6 以降の依存関係は変更しない。`tools/lib/validators/core.mjs` は slice ごとに段階的に拡張し、`validateDocumentSet()` が identity diagnostics と Core diagnostics を一つの read-only 結果へ統合する。元の Step 5 に相当する実装は各 Step 1〜4 へ移動し、Task 5 全体の integration regression は新しい Step 5 で確認する。
+
+**Checkpoint boundaries:**
+
+1. root INDEX の固定構造、profile link、flat empty Operations/Workflows
+2. Sources の direct/sharded catalog と fixed-point resolution
+3. operation routing と simulated retrieval trace
+4. Unprojected Operations の direct/sharded grammar
+5. Task 5 integration と rule catalog/test correspondence
+
 **Files:**
 
 - Create: `docai-messaging/tools/lib/validators/core.mjs`
 - Modify: `docai-messaging/fixtures/rules.json`
 - Test: `docai-messaging/tools/tests/document-set.test.mjs`
 
-- [ ] **Step 1: root INDEX state machine の failing tests を書く**
+- [x] **Step 1: root INDEX state machine を RED→GREEN で実装する**
   - opening metadata、optional profile link、`# Messaging Index`、Sources、Operations/Operation Shards、Workflows、optional Unprojected Operations、identity trailer の順序を検証する。
   - empty operation set の flat `none` form を positive test にする。
+  - failing tests が `DM-IDX-*` の期待した欠落・順序違反で RED になることを確認してから、root structure に必要な最小 validator を実装する。
+  - 対象 test と既存の document-set regression tests が GREEN であることを確認し、最初の checkpoint とする。
 
-- [ ] **Step 2: Sources direct/sharded tests を書く**
+- [ ] **Step 2: Sources direct/sharded resolution を RED→GREEN で実装する**
   - global unique ID、ASCII order、`all` reservation、API identity/version unknown markers、Revision `none` を検証する。
   - overlapping ranges、false positive load、transitive contributor chain、contributor cycle、duplicate/missing row の fixed-point resolution を検証する。
+  - 対象 test の RED を確認してから最小実装し、Sources checkpoint の GREEN を確認する。
 
-- [ ] **Step 3: operation routing tests を書く**
+- [ ] **Step 3: operation routing と retrieval trace を RED→GREEN で実装する**
   - flat rows、hierarchical bounds、Task membership、reply prefix、context list separator/order/eligibility、routing-provenance closure を検証する。
   - exact selector、semantic fallback の load-all は fixture runner の simulated retrieval trace として検証する。
+  - 対象 test の RED を確認してから最小実装し、operation-routing checkpoint の GREEN を確認する。
 
-- [ ] **Step 4: Unprojected Operations tests を書く**
+- [ ] **Step 4: Unprojected Operations を RED→GREEN で実装する**
   - length-prefixed ASCII/multibyte identity、embedded delimiter、leading zero、byte mismatch、grouping collision、one marker per completeness dimension を検証する。
   - sensitive routing value の非開示と safe identity/location 不在時の generation-failure expectation を source-aware case として記録する。
+  - 対象 test の RED を確認してから最小実装し、Unprojected Operations checkpoint の GREEN を確認する。
 
-- [ ] **Step 5: tests の RED を確認して最小 validator を実装する**
+- [ ] **Step 5: Task 5 integration regression を実行する**
   - Run: `node --test docai-messaging/tools/tests/document-set.test.mjs`
-  - Expected before implementation: FAIL。実装後: PASS。
+  - Expected: root、Sources、operation routing、Unprojected Operations と既存 identity tests がすべて PASS。
 
 - [ ] **Step 6: rule catalog と tests の対応を確認する**
   - 各 test 名に一つ以上の `DM-SRC-*` または `DM-IDX-*` rule ID を含める。
@@ -492,6 +507,8 @@ test("fails when an invalid case does not emit its expected rule", () => {
 **Review gate:** selected operation の source resolution が root/shard aggregate scope を誤って全ロードしないことを確認する。
 
 **Suggested commit message:** `feat(messaging): validate core index and source routing`
+
+Checkpoint 1 の suggested commit message: `feat(messaging): validate core root index structure`
 
 ---
 

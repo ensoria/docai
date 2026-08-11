@@ -10,6 +10,7 @@ import {
   parseIdentityTrailer,
   scanUtf8Lines
 } from "./identity.mjs";
+import { validateCoreDocumentSet } from "./validators/core.mjs";
 
 const DOCUMENT_DIRECTORIES = new Set(["indexes", "channels", "workflows", "references"]);
 
@@ -198,8 +199,12 @@ export function validateDocumentSet(documentSet, options = {}) {
     projectionId: root?.identity?.projection_id ?? null,
     setDigest: root?.identity?.set_digest ?? null,
     projectionDigest: root?.identity?.projection_digest ?? null,
-    computedSetDigest: null
+    computedSetDigest: null,
+    core: null
   };
+  const coreResult = validateCoreDocumentSet(documentSet);
+  diagnostics.push(...coreResult.diagnostics);
+  facts.core = coreResult.facts;
   if (root === undefined || root.metadata === null || root.identity === null) {
     return { diagnostics, facts };
   }

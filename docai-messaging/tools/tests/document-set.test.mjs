@@ -49,11 +49,43 @@ function identity({
   return root ? `${short} | set_digest: ${setDigest} | projection_digest: ${projectionDigest}` : short;
 }
 
+function minimalRootBody({
+  profileLink,
+  operationHeading = "## Operations",
+  operationContent = "none",
+  workflowsContent = "none",
+  unprojectedContent
+} = {}) {
+  const lines = [];
+  if (profileLink !== undefined) lines.push(profileLink, "");
+  lines.push(
+    "# Messaging Index",
+    "",
+    "## Sources",
+    "",
+    "| ID | Kind | Specification | API | Contract version | Location | Revision |",
+    "|---|---|---|---|---|---|---|",
+    "| source-a | pass-through | none | none | none | source.json | none |",
+    "",
+    operationHeading,
+    "",
+    operationContent,
+    "",
+    "## Workflows",
+    "",
+    workflowsContent
+  );
+  if (unprojectedContent !== undefined) {
+    lines.push("", "## Unprojected Operations", "", unprojectedContent);
+  }
+  return lines.join("\n");
+}
+
 function documentSource({ root = false, metadataOverrides, identityOverrides, body } = {}) {
   return [
     metadata(metadataOverrides),
     "",
-    body ?? (root ? "# Messaging Index" : "# Conventions"),
+    body ?? (root ? minimalRootBody() : "# Conventions"),
     "",
     identity({ root, ...identityOverrides }),
     ""
@@ -98,6 +130,112 @@ function runRestamp(...arguments_) {
 function withLineEnding(source, lineEnding) {
   return Buffer.from(source.replaceAll("\n", lineEnding), "utf8");
 }
+
+test("accepts the DM-IDX-001 flat root INDEX with empty Operations and Workflows", (t) => {
+  const root = createSet(t);
+  assert.deepEqual(taskScoped(root).diagnostics, []);
+});
+
+test("accepts the DM-IDX-002 optional compact profile link in a full root INDEX", (t) => {
+  const root = createSet(t);
+  write(root, "INDEX.md", documentSource({
+    root: true,
+    body: minimalRootBody({ profileLink: "Compact set: ../docs-compact/" })
+  }));
+  assert.deepEqual(taskScoped(root).diagnostics, []);
+});
+
+test("accepts the DM-IDX-001 Operation Shards root structure", (t) => {
+  const root = createSet(t);
+  write(root, "INDEX.md", documentSource({
+    root: true,
+    body: minimalRootBody({
+      operationHeading: "## Operation Shards",
+      operationContent: [
+        "| Tasks | Actions | First channel | Last channel | First operation | Last operation | First message | Last message | Summary | Details |",
+        "|---|---|---|---|---|---|---|---|---|---|",
+        "| orders | SEND | orders | orders | create-order | create-order | create-order | create-order | Order commands | indexes/orders.md |"
+      ].join("\n")
+    })
+  }));
+  assert.equal(ruleIds(taskScoped(root)).includes("DM-IDX-001"), false);
+});
+
+test("accepts the DM-IDX-001 optional final Unprojected Operations section structure", (t) => {
+  const root = createSet(t);
+  write(root, "INDEX.md", documentSource({
+    root: true,
+    metadataOverrides: { coverage: "requires-source" },
+    body: minimalRootBody({
+      unprojectedContent: "**unsupported**: localized: source operation source-a 7:legacy-1: unsupported source feature at source.json"
+    })
+  }));
+  assert.equal(ruleIds(taskScoped(root)).includes("DM-IDX-001"), false);
+});
+
+for (const [name, body] of [
+  ["wrong title", minimalRootBody().replace("# Messaging Index", "# Message Index")],
+  ["a level-three heading before the title", `### x-Notes\n\n${minimalRootBody()}`],
+  ["prose between the title and Sources", minimalRootBody().replace(
+    "# Messaging Index\n\n## Sources",
+    "# Messaging Index\n\nUnexpected root prose.\n\n## Sources"
+  )],
+  ["missing Sources", minimalRootBody().replace(/## Sources[\s\S]*?(?=## Operations)/, "")],
+  ["missing operation routing", minimalRootBody().replace(/\n\n## Operations\n\nnone/, "")],
+  ["reordered sections", minimalRootBody()
+    .replace("## Operations\n\nnone\n\n## Workflows\n\nnone", "## Workflows\n\nnone\n\n## Operations\n\nnone")],
+  ["both operation forms", minimalRootBody().replace(
+    "## Operations\n\nnone",
+    "## Operations\n\nnone\n\n## Operation Shards\n\nnone"
+  )],
+  ["missing Workflows", minimalRootBody().replace(/\n\n## Workflows[\s\S]*$/, "")],
+  ["Unprojected Operations before Workflows", minimalRootBody({ unprojectedContent: "none" })
+    .replace(
+      "## Workflows\n\nnone\n\n## Unprojected Operations\n\nnone",
+      "## Unprojected Operations\n\nnone\n\n## Workflows\n\nnone"
+    )],
+  ["unexpected root section", `${minimalRootBody()}\n\n## Notes\n\nnone`]
+]) {
+  test(`DM-IDX-001 rejects a root INDEX with ${name}`, (t) => {
+    const root = createSet(t);
+    write(root, "INDEX.md", documentSource({ root: true, body }));
+    assert.ok(ruleIds(taskScoped(root)).includes("DM-IDX-001"));
+  });
+}
+
+for (const [name, profile, profileLink] of [
+  ["an invalid compact path", "full", "Compact set: ../docs compact/"],
+  ["a Full set label for the full profile", "full", "Full set: ../docs-full/"],
+  ["unexpected text before the title", "full", "Read this first"],
+  ["no Full set link for a compact profile", "compact", undefined],
+  ["a Compact set label for a compact profile", "compact", "Compact set: ../docs-compact/"]
+]) {
+  test(`DM-IDX-002 rejects ${name}`, (t) => {
+    const root = createSet(t);
+    write(root, "INDEX.md", documentSource({
+      root: true,
+      metadataOverrides: { profile },
+      body: minimalRootBody({ profileLink })
+    }));
+    assert.ok(ruleIds(taskScoped(root)).includes("DM-IDX-002"));
+  });
+}
+
+test("accepts the DM-IDX-002 required full profile link in a compact root INDEX", (t) => {
+  const root = createSet(t, { childMetadata: { profile: "compact" } });
+  write(root, "INDEX.md", documentSource({
+    root: true,
+    metadataOverrides: { profile: "compact" },
+    body: minimalRootBody({ profileLink: "Full set: ../docs-full/" })
+  }));
+  assert.deepEqual(taskScoped(root).diagnostics, []);
+});
+
+test("DM-IDX-001 and DM-IDX-002 are cataloged for Task 5 checkpoint 1", () => {
+  const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
+  const cataloged = new Set(catalog.rules.map((entry) => entry.rule_id));
+  assert.deepEqual(["DM-IDX-001", "DM-IDX-002"].filter((ruleId) => !cataloged.has(ruleId)), []);
+});
 
 test("accepts source and evidence siblings outside a closed document-set root", (t) => {
   const publication = temporaryDirectory(t, "docai-messaging-publication-");

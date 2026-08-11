@@ -75,7 +75,13 @@
     {
       "rule_id": "DM-IDX-001",
       "readme_section": "§3.2 INDEX.md(required)",
-      "description": "INDEX routes readers to the selected operation and required context.",
+      "description": "The root INDEX uses the fixed title and ordered Sources, operation-routing, Workflows, and optional Unprojected Operations sections.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-IDX-002",
+      "readme_section": "§3.2 INDEX.md(required)",
+      "description": "A root INDEX uses the profile-specific optional or required profile-link label and relative-directory grammar.",
       "scope": "core"
     },
     {
