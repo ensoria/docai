@@ -31,6 +31,49 @@ function unknownRuleIds(ruleIds, catalog, kind) {
   );
 }
 
+function testRuleIds(testName, rulePrefixes) {
+  const matches = String(testName).match(/\bDM-[A-Z]+-[0-9]{3}\b/g) ?? [];
+  return [...new Set(matches.filter((ruleId) => (
+    rulePrefixes.some((prefix) => ruleId.startsWith(`${prefix}-`))
+  )))];
+}
+
+export function auditRuleTestCorrespondence({ catalogRuleIds, testNames, rulePrefixes }) {
+  const scopedCatalogIds = catalogRuleIds.filter((ruleId) => (
+    rulePrefixes.some((prefix) => ruleId.startsWith(`${prefix}-`))
+  ));
+  const catalogCounts = new Map();
+  for (const ruleId of scopedCatalogIds) {
+    catalogCounts.set(ruleId, (catalogCounts.get(ruleId) ?? 0) + 1);
+  }
+  const catalog = new Set(scopedCatalogIds);
+  const used = new Set();
+  const missingTestRules = [];
+  const unknownTestRules = new Set();
+  for (const testName of testNames) {
+    const ruleIds = testRuleIds(testName, rulePrefixes);
+    if (ruleIds.length === 0) missingTestRules.push(String(testName));
+    for (const ruleId of ruleIds) {
+      used.add(ruleId);
+      if (!catalog.has(ruleId)) unknownTestRules.add(ruleId);
+    }
+  }
+  const duplicateCatalogRules = [...catalogCounts]
+    .filter(([, count]) => count > 1)
+    .map(([ruleId]) => ruleId)
+    .sort();
+  const unusedCatalogRules = [...catalog]
+    .filter((ruleId) => !used.has(ruleId))
+    .sort();
+  const errors = [
+    ...duplicateCatalogRules.map((ruleId) => `duplicate-catalog-rule:${ruleId}`),
+    ...missingTestRules.sort().map((testName) => `missing-test-rule:${testName}`),
+    ...[...unknownTestRules].sort().map((ruleId) => `unknown-test-rule:${ruleId}`),
+    ...unusedCatalogRules.map((ruleId) => `unused-catalog-rule:${ruleId}`)
+  ];
+  return { passed: errors.length === 0, errors };
+}
+
 function caseResult(testCase, diagnostics, catalog) {
   const errors = errorDiagnostics(diagnostics);
   const primaryErrors = primaryErrorDiagnostics(diagnostics);

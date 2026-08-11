@@ -1,4 +1,4 @@
-import test from "node:test";
+import nodeTest from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
@@ -6,6 +6,7 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { loadDocumentSet, validateDocumentSet } from "../lib/document-set.mjs";
+import { auditRuleTestCorrespondence } from "../lib/fixture-runner.mjs";
 import * as coreRouting from "../lib/validators/core-routing.mjs";
 import { restampDocumentSet } from "../restamp-document-set.mjs";
 
@@ -19,6 +20,12 @@ const MANIFEST_DIGEST = "sha256:070ac8cb2c8c4b0052fb169a30c76075402ab4a071052ff7
 const MANIFEST_ID = "b32:a4fmrszmrrfqaux3c2ndbr3aou";
 const restampPath = fileURLToPath(new URL("../restamp-document-set.mjs", import.meta.url));
 const catalogPath = fileURLToPath(new URL("../../fixtures/rules.json", import.meta.url));
+const task5RuleTestNames = [];
+
+function task5Test(name, ...arguments_) {
+  task5RuleTestNames.push(String(name));
+  return nodeTest(name, ...arguments_);
+}
 
 function temporaryDirectory(t, prefix = "docai-messaging-set-") {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
@@ -418,12 +425,12 @@ function withLineEnding(source, lineEnding) {
   return Buffer.from(source.replaceAll("\n", lineEnding), "utf8");
 }
 
-test("accepts the DM-IDX-001 flat root INDEX with empty Operations and Workflows", (t) => {
+task5Test("accepts the DM-IDX-001 flat root INDEX with empty Operations and Workflows", (t) => {
   const root = createSet(t);
   assert.deepEqual(taskScoped(root).diagnostics, []);
 });
 
-test("accepts the DM-IDX-002 optional compact profile link in a full root INDEX", (t) => {
+task5Test("accepts the DM-IDX-002 optional compact profile link in a full root INDEX", (t) => {
   const root = createSet(t);
   write(root, "INDEX.md", documentSource({
     root: true,
@@ -432,7 +439,7 @@ test("accepts the DM-IDX-002 optional compact profile link in a full root INDEX"
   assert.deepEqual(taskScoped(root).diagnostics, []);
 });
 
-test("accepts the DM-IDX-001 Operation Shards root structure", (t) => {
+task5Test("accepts the DM-IDX-001 Operation Shards root structure", (t) => {
   const root = createSet(t);
   write(root, "INDEX.md", documentSource({
     root: true,
@@ -448,7 +455,7 @@ test("accepts the DM-IDX-001 Operation Shards root structure", (t) => {
   assert.equal(ruleIds(taskScoped(root)).includes("DM-IDX-001"), false);
 });
 
-test("accepts the DM-IDX-001 optional final Unprojected Operations section structure", (t) => {
+task5Test("accepts the DM-IDX-001 optional final Unprojected Operations section structure", (t) => {
   const root = createSet(t);
   write(root, "INDEX.md", documentSource({
     root: true,
@@ -483,7 +490,7 @@ for (const [name, body] of [
     )],
   ["unexpected root section", `${minimalRootBody()}\n\n## Notes\n\nnone`]
 ]) {
-  test(`DM-IDX-001 rejects a root INDEX with ${name}`, (t) => {
+  task5Test(`DM-IDX-001 rejects a root INDEX with ${name}`, (t) => {
     const root = createSet(t);
     write(root, "INDEX.md", documentSource({ root: true, body }));
     assert.ok(ruleIds(taskScoped(root)).includes("DM-IDX-001"));
@@ -497,7 +504,7 @@ for (const [name, profile, profileLink] of [
   ["no Full set link for a compact profile", "compact", undefined],
   ["a Compact set label for a compact profile", "compact", "Compact set: ../docs-compact/"]
 ]) {
-  test(`DM-IDX-002 rejects ${name}`, (t) => {
+  task5Test(`DM-IDX-002 rejects ${name}`, (t) => {
     const root = createSet(t);
     write(root, "INDEX.md", documentSource({
       root: true,
@@ -508,7 +515,7 @@ for (const [name, profile, profileLink] of [
   });
 }
 
-test("accepts the DM-IDX-002 required full profile link in a compact root INDEX", (t) => {
+task5Test("accepts the DM-IDX-002 required full profile link in a compact root INDEX", (t) => {
   const root = createSet(t, { childMetadata: { profile: "compact" } });
   write(root, "INDEX.md", documentSource({
     root: true,
@@ -518,13 +525,13 @@ test("accepts the DM-IDX-002 required full profile link in a compact root INDEX"
   assert.deepEqual(taskScoped(root).diagnostics, []);
 });
 
-test("DM-IDX-001 and DM-IDX-002 are cataloged for Task 5 checkpoint 1", () => {
+task5Test("DM-IDX-001 and DM-IDX-002 are cataloged for Task 5 checkpoint 1", () => {
   const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
   const cataloged = new Set(catalog.rules.map((entry) => entry.rule_id));
   assert.deepEqual(["DM-IDX-001", "DM-IDX-002"].filter((ruleId) => !cataloged.has(ruleId)), []);
 });
 
-test("accepts DM-SRC-001 direct Sources and exposes exact catalog facts", (t) => {
+task5Test("accepts DM-SRC-001 direct Sources and exposes exact catalog facts", (t) => {
   const root = createSet(t, { childMetadata: { source_refs: "api-a" } });
   write(root, "INDEX.md", documentSource({
     root: true,
@@ -547,7 +554,7 @@ test("accepts DM-SRC-001 direct Sources and exposes exact catalog facts", (t) =>
   });
 });
 
-test("DM-SRC-001 rejects a direct Sources table with the wrong standard columns", (t) => {
+task5Test("DM-SRC-001 rejects a direct Sources table with the wrong standard columns", (t) => {
   const root = createSet(t);
   write(root, "INDEX.md", documentSource({
     root: true,
@@ -558,7 +565,7 @@ test("DM-SRC-001 rejects a direct Sources table with the wrong standard columns"
   assert.ok(ruleIds(taskScoped(root)).includes("DM-SRC-001"));
 });
 
-test("DM-SRC-001 rejects an empty direct Sources catalog", (t) => {
+task5Test("DM-SRC-001 rejects an empty direct Sources catalog", (t) => {
   const root = createSet(t);
   write(root, "INDEX.md", documentSource({
     root: true,
@@ -567,7 +574,7 @@ test("DM-SRC-001 rejects an empty direct Sources catalog", (t) => {
   assert.ok(ruleIds(taskScoped(root)).includes("DM-SRC-001"));
 });
 
-test("DM-SRC-001 diagnoses a short-column Sources table without throwing", (t) => {
+task5Test("DM-SRC-001 diagnoses a short-column Sources table without throwing", (t) => {
   const root = createSet(t);
   write(root, "INDEX.md", documentSource({
     root: true,
@@ -594,7 +601,7 @@ for (const [name, rows] of [
     ["source-a", "pass-through", "none", "none", "none", "a.json", "none"]
   ]]
 ]) {
-  test(`DM-SRC-002 rejects direct Sources with ${name}`, (t) => {
+  task5Test(`DM-SRC-002 rejects direct Sources with ${name}`, (t) => {
     const root = createSet(t);
     write(root, "INDEX.md", documentSource({
       root: true,
@@ -604,7 +611,7 @@ for (const [name, rows] of [
   });
 }
 
-test("accepts DM-SRC-003 source-qualified API unknown markers and root knowledge propagation", (t) => {
+task5Test("accepts DM-SRC-003 source-qualified API unknown markers and root knowledge propagation", (t) => {
   const root = createSet(t);
   const markers = [
     "**unknown**: API contract version for source api-a requires AsyncAPI info.version at api-a.json",
@@ -622,7 +629,7 @@ test("accepts DM-SRC-003 source-qualified API unknown markers and root knowledge
   assert.equal(ruleIds(taskScoped(root)).includes("DM-SRC-003"), false);
 });
 
-test("DM-SRC-003 rejects an unknown API identity without its source-qualified marker", (t) => {
+task5Test("DM-SRC-003 rejects an unknown API identity without its source-qualified marker", (t) => {
   const root = createSet(t);
   write(root, "INDEX.md", documentSource({
     root: true,
@@ -636,7 +643,7 @@ test("DM-SRC-003 rejects an unknown API identity without its source-qualified ma
   assert.ok(ruleIds(taskScoped(root)).includes("DM-SRC-003"));
 });
 
-test("DM-SRC-003 rejects an unknown contract version marker that omits its source ID", (t) => {
+task5Test("DM-SRC-003 rejects an unknown contract version marker that omits its source ID", (t) => {
   const root = createSet(t);
   write(root, "INDEX.md", documentSource({
     root: true,
@@ -650,7 +657,7 @@ test("DM-SRC-003 rejects an unknown contract version marker that omits its sourc
   assert.ok(ruleIds(taskScoped(root)).includes("DM-SRC-003"));
 });
 
-test("DM-SRC-003 rejects API unknown markers when root knowledge remains complete", (t) => {
+task5Test("DM-SRC-003 rejects API unknown markers when root knowledge remains complete", (t) => {
   const root = createSet(t);
   write(root, "INDEX.md", documentSource({
     root: true,
@@ -663,7 +670,7 @@ test("DM-SRC-003 rejects API unknown markers when root knowledge remains complet
   assert.ok(ruleIds(taskScoped(root)).includes("DM-SRC-003"));
 });
 
-test("DM-SRC-003 rejects prose between a Sources table and its required unknown marker", (t) => {
+task5Test("DM-SRC-003 rejects prose between a Sources table and its required unknown marker", (t) => {
   const root = createSet(t);
   write(root, "INDEX.md", documentSource({
     root: true,
@@ -680,7 +687,7 @@ test("DM-SRC-003 rejects prose between a Sources table and its required unknown 
   assert.ok(ruleIds(taskScoped(root)).includes("DM-SRC-003"));
 });
 
-test("DM-SRC-004 rejects a malformed sha256 Revision", (t) => {
+task5Test("DM-SRC-004 rejects a malformed sha256 Revision", (t) => {
   const root = createSet(t);
   write(root, "INDEX.md", documentSource({
     root: true,
@@ -699,13 +706,13 @@ for (const [name, sourceRefs] of [
   ["non-canonical spacing", "source-a,source-z"],
   ["non-ASCII ordering", "source-z, source-a"]
 ]) {
-  test(`DM-SRC-005 rejects source_refs with ${name}`, (t) => {
+  task5Test(`DM-SRC-005 rejects source_refs with ${name}`, (t) => {
     const root = createSet(t, { childMetadata: { source_refs: sourceRefs } });
     assert.ok(ruleIds(taskScoped(root)).includes("DM-SRC-005"));
   });
 }
 
-test("accepts DM-SRC-006 sharded Sources and resolves a DM-SRC-007 transitive contributor cycle", (t) => {
+task5Test("accepts DM-SRC-006 sharded Sources and resolves a DM-SRC-007 transitive contributor cycle", (t) => {
   const root = createSet(t, { childMetadata: { source_refs: "a" } });
   write(root, "INDEX.md", documentSource({
     root: true,
@@ -740,7 +747,7 @@ test("accepts DM-SRC-006 sharded Sources and resolves a DM-SRC-007 transitive co
   ]);
 });
 
-test("DM-SRC-007 records every overlapping-range false-positive shard load", (t) => {
+task5Test("DM-SRC-007 records every overlapping-range false-positive shard load", (t) => {
   const root = createSet(t, { childMetadata: { source_refs: "b" } });
   write(root, "INDEX.md", documentSource({
     root: true,
@@ -772,7 +779,7 @@ test("DM-SRC-007 records every overlapping-range false-positive shard load", (t)
   });
 });
 
-test("accepts DM-SRC-003 localized unknown state in a source shard", (t) => {
+task5Test("accepts DM-SRC-003 localized unknown state in a source shard", (t) => {
   const root = createSet(t);
   const marker = "**unknown**: API contract version for source api-a requires AsyncAPI info.version at api-a.json";
   write(root, "INDEX.md", documentSource({
@@ -795,7 +802,7 @@ test("accepts DM-SRC-003 localized unknown state in a source shard", (t) => {
   assert.deepEqual(result.facts.core.sources.rows.map((row) => row.id), ["api-a"]);
 });
 
-test("DM-SRC-003 rejects a source-shard unknown value without its localized marker", (t) => {
+task5Test("DM-SRC-003 rejects a source-shard unknown value without its localized marker", (t) => {
   const root = createSet(t);
   write(root, "INDEX.md", documentSource({
     root: true,
@@ -835,7 +842,7 @@ for (const [name, route, shard] of [
     }
   ]
 ]) {
-  test(`DM-SRC-006 rejects ${name}`, (t) => {
+  task5Test(`DM-SRC-006 rejects ${name}`, (t) => {
     const root = createSet(t);
     write(root, "INDEX.md", documentSource({
       root: true,
@@ -846,7 +853,7 @@ for (const [name, route, shard] of [
   });
 }
 
-test("DM-SRC-006 rejects a root route whose source shard is missing", (t) => {
+task5Test("DM-SRC-006 rejects a root route whose source shard is missing", (t) => {
   const root = createSet(t);
   write(root, "INDEX.md", documentSource({
     root: true,
@@ -859,7 +866,7 @@ test("DM-SRC-006 rejects a root route whose source shard is missing", (t) => {
   assert.ok(ruleIds(taskScoped(root)).includes("DM-SRC-006"));
 });
 
-test("accepts DM-SRC-006 source-shard Details outside the conventional indexes directory", (t) => {
+task5Test("accepts DM-SRC-006 source-shard Details outside the conventional indexes directory", (t) => {
   const root = createSet(t);
   write(root, "INDEX.md", documentSource({
     root: true,
@@ -876,7 +883,7 @@ test("accepts DM-SRC-006 source-shard Details outside the conventional indexes d
   assert.equal(ruleIds(taskScoped(root)).includes("DM-SRC-006"), false);
 });
 
-test("DM-SRC-006 rejects an extra heading in a source-index shard", (t) => {
+task5Test("DM-SRC-006 rejects an extra heading in a source-index shard", (t) => {
   const root = createSet(t);
   write(root, "INDEX.md", documentSource({
     root: true,
@@ -896,7 +903,7 @@ test("DM-SRC-006 rejects an extra heading in a source-index shard", (t) => {
   assert.ok(ruleIds(taskScoped(root)).includes("DM-SRC-006"));
 });
 
-test("DM-SRC-006 diagnoses a short-column Source Shards table without throwing", (t) => {
+task5Test("DM-SRC-006 diagnoses a short-column Source Shards table without throwing", (t) => {
   const root = createSet(t);
   write(root, "INDEX.md", documentSource({
     root: true,
@@ -911,7 +918,7 @@ test("DM-SRC-006 diagnoses a short-column Source Shards table without throwing",
   assert.ok(ruleIds(result).includes("DM-SRC-006"));
 });
 
-test("DM-SRC-005 rejects a source shard whose source_refs omits one of its own rows", (t) => {
+task5Test("DM-SRC-005 rejects a source shard whose source_refs omits one of its own rows", (t) => {
   const root = createSet(t);
   write(root, "INDEX.md", documentSource({
     root: true,
@@ -931,7 +938,7 @@ test("DM-SRC-005 rejects a source shard whose source_refs omits one of its own r
   assert.ok(ruleIds(taskScoped(root)).includes("DM-SRC-005"));
 });
 
-test("DM-SRC-007 rejects a requested ID absent from every loaded overlapping shard", (t) => {
+task5Test("DM-SRC-007 rejects a requested ID absent from every loaded overlapping shard", (t) => {
   const root = createSet(t, { childMetadata: { source_refs: "b" } });
   write(root, "INDEX.md", documentSource({
     root: true,
@@ -951,7 +958,7 @@ test("DM-SRC-007 rejects a requested ID absent from every loaded overlapping sha
   assert.ok(ruleIds(taskScoped(root)).includes("DM-SRC-007"));
 });
 
-test("DM-SRC-007 rejects a duplicate source ID across loaded shards", (t) => {
+task5Test("DM-SRC-007 rejects a duplicate source ID across loaded shards", (t) => {
   const root = createSet(t);
   write(root, "INDEX.md", documentSource({
     root: true,
@@ -971,7 +978,7 @@ test("DM-SRC-007 rejects a duplicate source ID across loaded shards", (t) => {
   assert.ok(ruleIds(taskScoped(root)).includes("DM-SRC-007"));
 });
 
-test("DM-SRC-001 through DM-SRC-007 are cataloged for Task 5 checkpoint 2", () => {
+task5Test("DM-SRC-001 through DM-SRC-007 are cataloged for Task 5 checkpoint 2", () => {
   const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
   const cataloged = new Set(catalog.rules.map((entry) => entry.rule_id));
   const expected = [
@@ -986,7 +993,7 @@ test("DM-SRC-001 through DM-SRC-007 are cataloged for Task 5 checkpoint 2", () =
   assert.deepEqual(expected.filter((ruleId) => !cataloged.has(ruleId)), []);
 });
 
-test("accepts DM-IDX-003 flat operation rows and records a DM-IDX-007 provenance-closed exact trace", (t) => {
+task5Test("accepts DM-IDX-003 flat operation rows and records a DM-IDX-007 provenance-closed exact trace", (t) => {
   const sourcesContent = directSources([
     ["source-a", "pass-through", "none", "none", "none", "a.md", "none"],
     ["source-z", "configuration", "none", "none", "none", "z.json", "none"]
@@ -1024,7 +1031,7 @@ test("accepts DM-IDX-003 flat operation rows and records a DM-IDX-007 provenance
   assert.deepEqual(trace.loadedSourceIndexPaths, ["INDEX.md"]);
 });
 
-test("accepts DM-IDX-005 workflows/none.md as a context path distinct from the none sentinel", (t) => {
+task5Test("accepts DM-IDX-005 workflows/none.md as a context path distinct from the none sentinel", (t) => {
   const row = [...BASIC_OPERATION_ROW];
   row[6] = "workflows/none.md";
   const root = createFlatOperationSet(t, { rows: [row] });
@@ -1033,7 +1040,7 @@ test("accepts DM-IDX-005 workflows/none.md as a context path distinct from the n
   assert.deepEqual(taskScoped(root).diagnostics, []);
 });
 
-test("DM-IDX-003 rejects a flat operation table with the wrong standard columns", (t) => {
+task5Test("DM-IDX-003 rejects a flat operation table with the wrong standard columns", (t) => {
   const columns = [
     "Action",
     "Channel",
@@ -1049,7 +1056,7 @@ test("DM-IDX-003 rejects a flat operation table with the wrong standard columns"
   assert.ok(ruleIds(taskScoped(root)).includes("DM-IDX-003"));
 });
 
-test("DM-IDX-003 rejects a flat channel route whose file is missing", (t) => {
+task5Test("DM-IDX-003 rejects a flat channel route whose file is missing", (t) => {
   const root = createFlatOperationSet(t, { writeChannel: false });
 
   assert.ok(ruleIds(taskScoped(root)).includes("DM-IDX-003"));
@@ -1066,7 +1073,7 @@ for (const [name, cell, value] of [
   ["an empty Summary", 5, ""],
   ["a Summary that only repeats its Task", 5, "create order"]
 ]) {
-  test(`DM-IDX-004 rejects a flat operation row with ${name}`, (t) => {
+  task5Test(`DM-IDX-004 rejects a flat operation row with ${name}`, (t) => {
     const row = [...BASIC_OPERATION_ROW];
     row[cell] = value;
     const root = createFlatOperationSet(t, { rows: [row] });
@@ -1075,7 +1082,7 @@ for (const [name, cell, value] of [
   });
 }
 
-test("DM-IDX-004 rejects a duplicate operation name across channel subsections", (t) => {
+task5Test("DM-IDX-004 rejects a duplicate operation name across channel subsections", (t) => {
   const root = createSet(t);
   const secondRow = [...BASIC_OPERATION_ROW];
   secondRow[1] = "orders.events";
@@ -1103,7 +1110,7 @@ for (const [name, required, supplemental, files = []] of [
   ["one path in both context columns", "workflows/a.md", "workflows/a.md", ["workflows/a.md"]],
   ["a missing context file", "workflows/missing.md", "none"]
 ]) {
-  test(`DM-IDX-005 rejects ${name}`, (t) => {
+  task5Test(`DM-IDX-005 rejects ${name}`, (t) => {
     const row = [...BASIC_OPERATION_ROW];
     row[6] = required;
     row[7] = supplemental;
@@ -1114,7 +1121,7 @@ for (const [name, required, supplemental, files = []] of [
   });
 }
 
-test("accepts DM-IDX-006 overlapping operation shards and records DM-IDX-007 exact and fallback traces", (t) => {
+task5Test("accepts DM-IDX-006 overlapping operation shards and records DM-IDX-007 exact and fallback traces", (t) => {
   const root = createShardedOperationSet(t);
 
   const result = taskScoped(root);
@@ -1159,7 +1166,7 @@ for (const [name, routeIndex, cellIndex, value] of [
   ["reply-prefixed Message bounds that omit the reply", 1, 7, "m-message"],
   ["an empty route Summary", 1, 8, ""]
 ]) {
-  test(`DM-IDX-006 rejects ${name}`, (t) => {
+  task5Test(`DM-IDX-006 rejects ${name}`, (t) => {
     const routes = OVERLAPPING_OPERATION_ROUTES.map((row) => [...row]);
     routes[routeIndex][cellIndex] = value;
     const root = createShardedOperationSet(t, { routes });
@@ -1168,19 +1175,19 @@ for (const [name, routeIndex, cellIndex, value] of [
   });
 }
 
-test("DM-IDX-006 rejects a missing operation-index shard", (t) => {
+task5Test("DM-IDX-006 rejects a missing operation-index shard", (t) => {
   const root = createShardedOperationSet(t, { writeMiddle: false });
 
   assert.ok(ruleIds(taskScoped(root)).includes("DM-IDX-006"));
 });
 
-test("DM-IDX-006 rejects an operation-index shard with the wrong structure", (t) => {
+task5Test("DM-IDX-006 rejects an operation-index shard with the wrong structure", (t) => {
   const root = createShardedOperationSet(t, { middleBody: "# Wrong Operation Index" });
 
   assert.ok(ruleIds(taskScoped(root)).includes("DM-IDX-006"));
 });
 
-test("DM-IDX-006 rejects an empty operation-index shard", (t) => {
+task5Test("DM-IDX-006 rejects an empty operation-index shard", (t) => {
   const root = createShardedOperationSet(t, {
     middleBody: "# Messaging Operation Index\n\n## Operations\n\nnone"
   });
@@ -1188,7 +1195,7 @@ test("DM-IDX-006 rejects an empty operation-index shard", (t) => {
   assert.ok(ruleIds(taskScoped(root)).includes("DM-IDX-006"));
 });
 
-test("DM-IDX-006 rejects an unlisted operation-index shard", (t) => {
+task5Test("DM-IDX-006 rejects an unlisted operation-index shard", (t) => {
   const root = createShardedOperationSet(t);
   writeDocument(root, "channels/extra.md");
   writeOperationShard(root, "indexes/operations-extra.md", {
@@ -1210,7 +1217,7 @@ test("DM-IDX-006 rejects an unlisted operation-index shard", (t) => {
   assert.ok(ruleIds(taskScoped(root)).includes("DM-IDX-006"));
 });
 
-test("DM-IDX-004 rejects a duplicate operation name across operation-index shards", (t) => {
+task5Test("DM-IDX-004 rejects a duplicate operation name across operation-index shards", (t) => {
   const duplicate = [...MIDDLE_OPERATION_ROW];
   duplicate[2] = "a-operation";
   const root = createShardedOperationSet(t, { middleRows: [duplicate] });
@@ -1218,7 +1225,7 @@ test("DM-IDX-004 rejects a duplicate operation name across operation-index shard
   assert.ok(ruleIds(taskScoped(root)).includes("DM-IDX-004"));
 });
 
-test("DM-IDX-003 rejects one channel-file subsection split across operation-index shards", (t) => {
+task5Test("DM-IDX-003 rejects one channel-file subsection split across operation-index shards", (t) => {
   const root = createShardedOperationSet(t);
   writeOperationShard(root, "indexes/operations-middle.md", {
     sourceRefs: "source-q",
@@ -1228,7 +1235,7 @@ test("DM-IDX-003 rejects one channel-file subsection split across operation-inde
   assert.ok(ruleIds(taskScoped(root)).includes("DM-IDX-003"));
 });
 
-test("DM-IDX-006 diagnoses a short-column Operation Shards table without throwing", (t) => {
+task5Test("DM-IDX-006 diagnoses a short-column Operation Shards table without throwing", (t) => {
   const root = createSet(t);
   write(root, "INDEX.md", documentSource({
     root: true,
@@ -1244,7 +1251,7 @@ test("DM-IDX-006 diagnoses a short-column Operation Shards table without throwin
   assert.ok(ruleIds(result).includes("DM-IDX-006"));
 });
 
-test("DM-IDX-006 rejects content after the root Operation Shards routing table", (t) => {
+task5Test("DM-IDX-006 rejects content after the root Operation Shards routing table", (t) => {
   const root = createShardedOperationSet(t);
   const indexPath = path.join(root, "INDEX.md");
   const content = fs.readFileSync(indexPath, "utf8").replace(
@@ -1256,14 +1263,14 @@ test("DM-IDX-006 rejects content after the root Operation Shards routing table",
   assert.ok(ruleIds(taskScoped(root)).includes("DM-IDX-006"));
 });
 
-test("DM-IDX-003 through DM-IDX-007 are cataloged for Task 5 checkpoint 3", () => {
+task5Test("DM-IDX-003 through DM-IDX-007 are cataloged for Task 5 checkpoint 3", () => {
   const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
   const cataloged = new Set(catalog.rules.map((entry) => entry.rule_id));
   const expected = ["DM-IDX-003", "DM-IDX-004", "DM-IDX-005", "DM-IDX-006", "DM-IDX-007"];
   assert.deepEqual(expected.filter((ruleId) => !cataloged.has(ruleId)), []);
 });
 
-test("accepts DM-IDX-008 direct Unprojected Operations with length-prefixed ASCII and multibyte identities", (t) => {
+task5Test("accepts DM-IDX-008 direct Unprojected Operations with length-prefixed ASCII and multibyte identities", (t) => {
   const markers = [
     unprojectedMarker({
       dimension: "unsupported",
@@ -1323,7 +1330,7 @@ for (const [name, transform] of [
   ["a UTF-8 byte-length mismatch", (marker) => marker.replace(/ (\d+):操作/, " 2:操作")],
   ["a missing exact reason delimiter", (marker) => marker.replace(": operation action", ":operation action")]
 ]) {
-  test(`DM-IDX-008 rejects ${name}`, (t) => {
+  task5Test(`DM-IDX-008 rejects ${name}`, (t) => {
     const original = unprojectedMarker({
       dimension: "unknown",
       sourceId: "source-a",
@@ -1341,7 +1348,7 @@ for (const [name, transform] of [
   });
 }
 
-test("DM-IDX-008 rejects an Unprojected Operations marker for an unknown source ID", (t) => {
+task5Test("DM-IDX-008 rejects an Unprojected Operations marker for an unknown source ID", (t) => {
   const root = createSet(t);
   write(root, "INDEX.md", documentSource({
     root: true,
@@ -1359,7 +1366,7 @@ test("DM-IDX-008 rejects an Unprojected Operations marker for an unknown source 
   assert.ok(ruleIds(taskScoped(root)).includes("DM-IDX-008"));
 });
 
-test("DM-IDX-008 rejects duplicate completeness markers for one grouping key", (t) => {
+task5Test("DM-IDX-008 rejects duplicate completeness markers for one grouping key", (t) => {
   const marker = unprojectedMarker({
     dimension: "unknown",
     sourceId: "source-a",
@@ -1376,7 +1383,7 @@ test("DM-IDX-008 rejects duplicate completeness markers for one grouping key", (
   assert.ok(ruleIds(taskScoped(root)).includes("DM-IDX-008"));
 });
 
-test("DM-IDX-008 rejects marker completeness that is not aggregated by root metadata", (t) => {
+task5Test("DM-IDX-008 rejects marker completeness that is not aggregated by root metadata", (t) => {
   const root = createSet(t);
   write(root, "INDEX.md", documentSource({
     root: true,
@@ -1393,7 +1400,7 @@ test("DM-IDX-008 rejects marker completeness that is not aggregated by root meta
   assert.ok(ruleIds(taskScoped(root)).includes("DM-IDX-008"));
 });
 
-test("accepts DM-IDX-009 sharded Unprojected Operations and records DM-IDX-010 exact and fallback traces", (t) => {
+task5Test("accepts DM-IDX-009 sharded Unprojected Operations and records DM-IDX-010 exact and fallback traces", (t) => {
   const firstMarkers = [
     unprojectedMarker({
       dimension: "unsupported",
@@ -1466,7 +1473,7 @@ for (const [name, mutate] of [
   ["a duplicate Details path", (routes) => { routes[1][2] = routes[0][2]; }],
   ["an empty route Summary", (routes) => { routes[0][1] = ""; }]
 ]) {
-  test(`DM-IDX-009 rejects ${name}`, (t) => {
+  task5Test(`DM-IDX-009 rejects ${name}`, (t) => {
     const marker = unprojectedMarker({
       dimension: "unknown",
       sourceId: "source-a",
@@ -1494,7 +1501,7 @@ for (const [name, mutate] of [
   });
 }
 
-test("DM-IDX-009 rejects one grouping key split across unprojected-operation shards", (t) => {
+task5Test("DM-IDX-009 rejects one grouping key split across unprojected-operation shards", (t) => {
   const marker = unprojectedMarker({
     dimension: "unknown",
     sourceId: "source-a",
@@ -1524,7 +1531,7 @@ test("DM-IDX-009 rejects one grouping key split across unprojected-operation sha
   assert.ok(ruleIds(taskScoped(root)).includes("DM-IDX-009"));
 });
 
-test("DM-IDX-009 rejects a missing unprojected-operation shard", (t) => {
+task5Test("DM-IDX-009 rejects a missing unprojected-operation shard", (t) => {
   const root = createSet(t);
   write(root, "INDEX.md", documentSource({
     root: true,
@@ -1539,7 +1546,7 @@ test("DM-IDX-009 rejects a missing unprojected-operation shard", (t) => {
   assert.ok(ruleIds(taskScoped(root)).includes("DM-IDX-009"));
 });
 
-test("DM-IDX-009 rejects an unlisted unprojected-operation shard", (t) => {
+task5Test("DM-IDX-009 rejects an unlisted unprojected-operation shard", (t) => {
   const marker = unprojectedMarker({
     dimension: "unknown",
     sourceId: "source-a",
@@ -1565,7 +1572,7 @@ test("DM-IDX-009 rejects an unlisted unprojected-operation shard", (t) => {
   assert.ok(ruleIds(taskScoped(root)).includes("DM-IDX-009"));
 });
 
-test("DM-IDX-009 rejects an unprojected-operation shard with the wrong fixed structure", (t) => {
+task5Test("DM-IDX-009 rejects an unprojected-operation shard with the wrong fixed structure", (t) => {
   const root = createSet(t, { childMetadata: { source_refs: "source-a" } });
   write(root, "INDEX.md", documentSource({
     root: true,
@@ -1585,7 +1592,7 @@ test("DM-IDX-009 rejects an unprojected-operation shard with the wrong fixed str
   assert.ok(ruleIds(taskScoped(root)).includes("DM-IDX-009"));
 });
 
-test("DM-IDX-009 rejects an empty unprojected-operation shard", (t) => {
+task5Test("DM-IDX-009 rejects an empty unprojected-operation shard", (t) => {
   const root = createSet(t, { childMetadata: { source_refs: "source-a" } });
   write(root, "INDEX.md", documentSource({
     root: true,
@@ -1604,7 +1611,7 @@ test("DM-IDX-009 rejects an empty unprojected-operation shard", (t) => {
   assert.ok(ruleIds(taskScoped(root)).includes("DM-IDX-009"));
 });
 
-test("DM-IDX-009 rejects shard completeness metadata that does not match its markers", (t) => {
+task5Test("DM-IDX-009 rejects shard completeness metadata that does not match its markers", (t) => {
   const marker = unprojectedMarker({
     dimension: "unknown",
     sourceId: "source-a",
@@ -1630,7 +1637,7 @@ test("DM-IDX-009 rejects shard completeness metadata that does not match its mar
   assert.ok(ruleIds(taskScoped(root)).includes("DM-IDX-009"));
 });
 
-test("DM-IDX-009 rejects shard source_refs that omits a marker source ID", (t) => {
+task5Test("DM-IDX-009 rejects shard source_refs that omits a marker source ID", (t) => {
   const marker = unprojectedMarker({
     dimension: "unknown",
     sourceId: "source-a",
@@ -1659,7 +1666,7 @@ test("DM-IDX-009 rejects shard source_refs that omits a marker source ID", (t) =
   assert.ok(ruleIds(taskScoped(root)).includes("DM-IDX-009"));
 });
 
-test("accepts DM-IDX-009 contributor source refs beyond the marker source and routes DM-IDX-010 retrieval", (t) => {
+task5Test("accepts DM-IDX-009 contributor source refs beyond the marker source and routes DM-IDX-010 retrieval", (t) => {
   const marker = unprojectedMarker({
     dimension: "unknown",
     sourceId: "source-a",
@@ -1695,7 +1702,7 @@ test("accepts DM-IDX-009 contributor source refs beyond the marker source and ro
   });
 });
 
-test("DM-IDX-009 diagnoses a short-column shard table without throwing", (t) => {
+task5Test("DM-IDX-009 diagnoses a short-column shard table without throwing", (t) => {
   const root = createSet(t);
   write(root, "INDEX.md", documentSource({
     root: true,
@@ -1710,7 +1717,7 @@ test("DM-IDX-009 diagnoses a short-column shard table without throwing", (t) => 
   assert.ok(ruleIds(result).includes("DM-IDX-009"));
 });
 
-test("records DM-IDX-008 source-aware generation-failure and sensitive-withholding expectations separately", () => {
+task5Test("records DM-IDX-008 source-aware generation-failure and sensitive-withholding expectations separately", () => {
   assert.equal(typeof coreRouting.evaluateUnprojectedSourceExpectations, "function");
   const result = coreRouting.evaluateUnprojectedSourceExpectations([
     {
@@ -1796,14 +1803,25 @@ test("records DM-IDX-008 source-aware generation-failure and sensitive-withholdi
   assert.equal(revealingClass[0].reason.includes("tenant-secret-route"), false);
 });
 
-test("DM-IDX-008 through DM-IDX-010 are cataloged for Task 5 checkpoint 4", () => {
+task5Test("DM-IDX-008 through DM-IDX-010 are cataloged for Task 5 checkpoint 4", () => {
   const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
   const cataloged = new Set(catalog.rules.map((entry) => entry.rule_id));
   const expected = ["DM-IDX-008", "DM-IDX-009", "DM-IDX-010"];
   assert.deepEqual(expected.filter((ruleId) => !cataloged.has(ruleId)), []);
 });
 
-test("accepts source and evidence siblings outside a closed document-set root", (t) => {
+task5Test("DM-SRC-001 through DM-SRC-007 and DM-IDX-001 through DM-IDX-010 maintain rule correspondence", () => {
+  const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
+  const result = auditRuleTestCorrespondence({
+    catalogRuleIds: catalog.rules.map((entry) => entry.rule_id),
+    testNames: task5RuleTestNames,
+    rulePrefixes: ["DM-SRC", "DM-IDX"]
+  });
+
+  assert.deepEqual(result, { passed: true, errors: [] });
+});
+
+nodeTest("accepts source and evidence siblings outside a closed document-set root", (t) => {
   const publication = temporaryDirectory(t, "docai-messaging-publication-");
   const root = createSet(t, { rootDir: path.join(publication, "valid", "full") });
   write(publication, "source/input.json", "{}\n");
@@ -1815,38 +1833,38 @@ test("accepts source and evidence siblings outside a closed document-set root", 
   assert.deepEqual(loaded.diagnostics, []);
 });
 
-test("DM-ID-004 rejects an unrelated file inside the closed root", (t) => {
+nodeTest("DM-ID-004 rejects an unrelated file inside the closed root", (t) => {
   const root = createSet(t);
   write(root, "notes.txt", "not a document-set file\n");
   assert.ok(ruleIds(loadDocumentSet(root)).includes("DM-ID-004"));
 });
 
-test("DM-ID-004 rejects a symbolic link inside the closed root", (t) => {
+nodeTest("DM-ID-004 rejects a symbolic link inside the closed root", (t) => {
   const root = createSet(t);
   fs.mkdirSync(path.join(root, "channels"));
   fs.symlinkSync(path.join(root, "CONVENTIONS.md"), path.join(root, "channels", "linked.md"));
   assert.ok(ruleIds(loadDocumentSet(root)).includes("DM-ID-004"));
 });
 
-test("DM-ID-004 rejects invalid UTF-8 inside the closed root", (t) => {
+nodeTest("DM-ID-004 rejects invalid UTF-8 inside the closed root", (t) => {
   const root = createSet(t);
   write(root, "channels/bad.md", Buffer.from([0xc3, 0x28]));
   assert.ok(ruleIds(loadDocumentSet(root)).includes("DM-ID-004"));
 });
 
-test("DM-ID-004 rejects an empty directory inside the closed root", (t) => {
+nodeTest("DM-ID-004 rejects an empty directory inside the closed root", (t) => {
   const root = createSet(t);
   fs.mkdirSync(path.join(root, "channels"));
   assert.ok(ruleIds(loadDocumentSet(root)).includes("DM-ID-004"));
 });
 
-test("DM-ID-001 rejects a document with no identity trailer", (t) => {
+nodeTest("DM-ID-001 rejects a document with no identity trailer", (t) => {
   const root = createSet(t);
   write(root, "CONVENTIONS.md", `${metadata()}\n\n# Conventions\n`);
   assert.ok(ruleIds(loadDocumentSet(root)).includes("DM-ID-001"));
 });
 
-test("DM-ID-001 rejects non-empty content after an identity trailer", (t) => {
+nodeTest("DM-ID-001 rejects non-empty content after an identity trailer", (t) => {
   const root = createSet(t);
   write(root, "CONVENTIONS.md", `${documentSource()}unexpected\n`);
   assert.ok(ruleIds(loadDocumentSet(root)).includes("DM-ID-001"));
@@ -1859,13 +1877,13 @@ for (const mismatch of [
   ["DM-ID-008", { childIdentity: { setId: ALTERNATE_ID } }],
   ["DM-ID-009", { childIdentity: { projectionId: ALTERNATE_ID } }]
 ]) {
-  test(`${mismatch[0]} rejects its mixed-set identity mismatch`, (t) => {
+  nodeTest(`${mismatch[0]} rejects its mixed-set identity mismatch`, (t) => {
     const root = createSet(t, mismatch[1]);
     assert.ok(ruleIds(taskScoped(root)).includes(mismatch[0]));
   });
 }
 
-test("permits coverage, knowledge, and source_refs to vary by file", (t) => {
+nodeTest("permits coverage, knowledge, and source_refs to vary by file", (t) => {
   const root = createSet(t, {
     childMetadata: {
       coverage: "requires-source",
@@ -1892,13 +1910,13 @@ for (const identityMismatch of [
     childIdentity: { projectionId: ALTERNATE_ID }
   }
 ]) {
-  test("DM-ID-002 rejects a root short ID not derived from its full digest", (t) => {
+  nodeTest("DM-ID-002 rejects a root short ID not derived from its full digest", (t) => {
     const root = createSet(t, identityMismatch);
     assert.ok(ruleIds(taskScoped(root)).includes("DM-ID-002"));
   });
 }
 
-test("task-scoped validation checks handles without recomputing the whole set", (t) => {
+nodeTest("task-scoped validation checks handles without recomputing the whole set", (t) => {
   const root = createSet(t);
   const documentSet = loadDocumentSet(root);
 
@@ -1906,21 +1924,21 @@ test("task-scoped validation checks handles without recomputing the whole set", 
   assert.equal(ruleIds(validateDocumentSet(documentSet, { wholeSet: true })).includes("DM-ID-003"), true);
 });
 
-test("loaders and validators never repair an invalid document set", (t) => {
+nodeTest("loaders and validators never repair an invalid document set", (t) => {
   const root = createSet(t, { childIdentity: { setId: ALTERNATE_ID } });
   const before = fs.readFileSync(path.join(root, "CONVENTIONS.md"));
   validateDocumentSet(loadDocumentSet(root), { wholeSet: true });
   assert.deepEqual(fs.readFileSync(path.join(root, "CONVENTIONS.md")), before);
 });
 
-test("catalogs every Task 4 identity diagnostic", () => {
+nodeTest("catalogs every Task 4 identity diagnostic", () => {
   const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
   const cataloged = new Set(catalog.rules.map((entry) => entry.rule_id));
   const taskRuleIds = Array.from({ length: 9 }, (_, index) => `DM-ID-${String(index + 1).padStart(3, "0")}`);
   assert.deepEqual(taskRuleIds.filter((ruleId) => !cataloged.has(ruleId)), []);
 });
 
-test("restamp requires an explicit root even when a manifest is supplied", (t) => {
+nodeTest("restamp requires an explicit root even when a manifest is supplied", (t) => {
   const publication = temporaryDirectory(t, "docai-messaging-restamp-");
   const manifestPath = path.join(publication, "projection-input-manifest.json");
   fs.writeFileSync(manifestPath, MANIFEST_SOURCE);
@@ -1929,7 +1947,7 @@ test("restamp requires an explicit root even when a manifest is supplied", (t) =
   assert.match(result.stderr, /explicit document-set root/i);
 });
 
-test("restamp requires --projection-manifest and never auto-discovers it", (t) => {
+nodeTest("restamp requires --projection-manifest and never auto-discovers it", (t) => {
   const publication = temporaryDirectory(t, "docai-messaging-restamp-");
   const root = createSet(t, { rootDir: path.join(publication, "valid", "full") });
   write(publication, "source/projection-input-manifest.json", MANIFEST_SOURCE);
@@ -1942,7 +1960,7 @@ test("restamp requires --projection-manifest and never auto-discovers it", (t) =
   assert.deepEqual(fs.readFileSync(path.join(root, "INDEX.md")), before);
 });
 
-test("restamp rejects a missing projection manifest without writing", (t) => {
+nodeTest("restamp rejects a missing projection manifest without writing", (t) => {
   const publication = temporaryDirectory(t, "docai-messaging-restamp-");
   const root = createSet(t, { rootDir: path.join(publication, "valid", "full") });
   const before = fs.readFileSync(path.join(root, "INDEX.md"));
@@ -1958,7 +1976,7 @@ test("restamp rejects a missing projection manifest without writing", (t) => {
   assert.deepEqual(fs.readFileSync(path.join(root, "INDEX.md")), before);
 });
 
-test("restamp rejects an invalid UTF-8 projection manifest without writing", (t) => {
+nodeTest("restamp rejects an invalid UTF-8 projection manifest without writing", (t) => {
   const publication = temporaryDirectory(t, "docai-messaging-restamp-");
   const root = createSet(t, { rootDir: path.join(publication, "valid", "full") });
   const manifestPath = path.join(publication, "source", "projection-input-manifest.json");
@@ -1973,7 +1991,7 @@ test("restamp rejects an invalid UTF-8 projection manifest without writing", (t)
   assert.deepEqual(fs.readFileSync(path.join(root, "INDEX.md")), before);
 });
 
-test("restamp rejects a projection manifest inside the closed root", (t) => {
+nodeTest("restamp rejects a projection manifest inside the closed root", (t) => {
   const root = createSet(t);
   const manifestPath = path.join(root, "projection-input-manifest.json");
   fs.writeFileSync(manifestPath, MANIFEST_SOURCE);
@@ -1986,7 +2004,7 @@ test("restamp rejects a projection manifest inside the closed root", (t) => {
   assert.deepEqual(fs.readFileSync(path.join(root, "INDEX.md")), before);
 });
 
-test("restamp rejects an external lexical alias that resolves inside the root", (t) => {
+nodeTest("restamp rejects an external lexical alias that resolves inside the root", (t) => {
   const publication = temporaryDirectory(t, "docai-messaging-restamp-");
   const root = createSet(t, { rootDir: path.join(publication, "valid", "full") });
   const alias = path.join(publication, "outside-alias");
@@ -2006,7 +2024,7 @@ test("restamp rejects an external lexical alias that resolves inside the root", 
   }
 });
 
-test("restamp rejects an outside hard link to a root document", (t) => {
+nodeTest("restamp rejects an outside hard link to a root document", (t) => {
   const publication = temporaryDirectory(t, "docai-messaging-restamp-");
   const root = createSet(t, { rootDir: path.join(publication, "valid", "full") });
   const manifestPath = path.join(publication, "outside-hard-link.md");
@@ -2025,7 +2043,7 @@ test("restamp rejects an outside hard link to a root document", (t) => {
   }
 });
 
-test("a BOM before opening metadata stays visible and restamp never strips it", (t) => {
+nodeTest("a BOM before opening metadata stays visible and restamp never strips it", (t) => {
   const publication = temporaryDirectory(t, "docai-messaging-restamp-");
   const root = createSet(t, { rootDir: path.join(publication, "valid", "full") });
   const manifestPath = path.join(publication, "source", "projection-input-manifest.json");
@@ -2045,7 +2063,7 @@ test("a BOM before opening metadata stays visible and restamp never strips it", 
 });
 
 for (const [name, lineEnding] of [["CRLF", "\r\n"], ["lone CR", "\r"]]) {
-  test(`restamp handles ${name} trailer boundaries without normalizing bytes`, (t) => {
+  nodeTest(`restamp handles ${name} trailer boundaries without normalizing bytes`, (t) => {
     const publication = temporaryDirectory(t, "docai-messaging-restamp-");
     const root = createSet(t, { rootDir: path.join(publication, "valid", "full") });
     const manifestPath = path.join(publication, "source", "projection-input-manifest.json");
@@ -2070,7 +2088,7 @@ for (const [name, lineEnding] of [["CRLF", "\r\n"], ["lone CR", "\r"]]) {
   });
 }
 
-test("restamp defaults to a non-mutating dry-run", (t) => {
+nodeTest("restamp defaults to a non-mutating dry-run", (t) => {
   const publication = temporaryDirectory(t, "docai-messaging-restamp-");
   const root = createSet(t, { rootDir: path.join(publication, "valid", "full") });
   const manifestPath = path.join(publication, "source", "projection-input-manifest.json");
@@ -2086,7 +2104,7 @@ test("restamp defaults to a non-mutating dry-run", (t) => {
   assert.deepEqual(fs.readFileSync(childPath), before[1]);
 });
 
-test("restamp --write hashes exact manifest bytes before stamping set identity", (t) => {
+nodeTest("restamp --write hashes exact manifest bytes before stamping set identity", (t) => {
   const publication = temporaryDirectory(t, "docai-messaging-restamp-");
   const root = createSet(t, { rootDir: path.join(publication, "valid", "full") });
   const manifestPath = path.join(publication, "source", "projection-input-manifest.json");
@@ -2107,7 +2125,7 @@ test("restamp --write hashes exact manifest bytes before stamping set identity",
   assert.deepEqual(validateDocumentSet(loadDocumentSet(root), { wholeSet: true }).diagnostics, []);
 });
 
-test("restamp identity depends on manifest bytes but not its external path", (t) => {
+nodeTest("restamp identity depends on manifest bytes but not its external path", (t) => {
   const publication = temporaryDirectory(t, "docai-messaging-restamp-");
   const root = createSet(t, { rootDir: path.join(publication, "valid", "full") });
   const firstManifest = path.join(publication, "source", "projection-input-manifest.json");
@@ -2122,7 +2140,7 @@ test("restamp identity depends on manifest bytes but not its external path", (t)
   assert.match(cleanDryRun.stdout, /restamp required: no/);
 });
 
-test("restamp rejects a manifest path rebound after its descriptor is read", (t) => {
+nodeTest("restamp rejects a manifest path rebound after its descriptor is read", (t) => {
   const publication = temporaryDirectory(t, "docai-messaging-restamp-");
   const root = createSet(t, { rootDir: path.join(publication, "valid", "full") });
   const manifestPath = path.join(publication, "source", "projection-input-manifest.json");
@@ -2154,7 +2172,7 @@ test("restamp rejects a manifest path rebound after its descriptor is read", (t)
   }
 });
 
-test("restamp preserves complete file modes despite restrictive stage creation", (t) => {
+nodeTest("restamp preserves complete file modes despite restrictive stage creation", (t) => {
   const publication = temporaryDirectory(t, "docai-messaging-restamp-");
   const root = createSet(t, { rootDir: path.join(publication, "valid", "full") });
   const manifestPath = path.join(publication, "source", "projection-input-manifest.json");
@@ -2182,7 +2200,7 @@ test("restamp preserves complete file modes despite restrictive stage creation",
   }
 });
 
-test("restamp rolls back earlier replacements when a later atomic replacement fails", (t) => {
+nodeTest("restamp rolls back earlier replacements when a later atomic replacement fails", (t) => {
   const publication = temporaryDirectory(t, "docai-messaging-restamp-");
   const root = createSet(t, { rootDir: path.join(publication, "valid", "full") });
   const manifestPath = path.join(publication, "source", "projection-input-manifest.json");
@@ -2214,7 +2232,7 @@ test("restamp rolls back earlier replacements when a later atomic replacement fa
   assert.equal(restampDocumentSet(root, manifestPath).changed, false);
 });
 
-test("restamp retains and reports a backup when rollback restore fails", (t) => {
+nodeTest("restamp retains and reports a backup when rollback restore fails", (t) => {
   const publication = temporaryDirectory(t, "docai-messaging-restamp-");
   const root = createSet(t, { rootDir: path.join(publication, "valid", "full") });
   const manifestPath = path.join(publication, "source", "projection-input-manifest.json");

@@ -3,7 +3,10 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { runFixtureCorpus } from "../lib/fixture-runner.mjs";
+import {
+  auditRuleTestCorrespondence,
+  runFixtureCorpus
+} from "../lib/fixture-runner.mjs";
 
 const rules = [
   {
@@ -131,4 +134,40 @@ test("returns a failing exit code and summary when a case fails", (t) => {
   const result = runFixtureCorpus(corpus, () => ({ diagnostics: [] }));
   assert.equal(result.exitCode, 1);
   assert.match(result.report, /0 passed, 1 failed$/);
+});
+
+test("rule correspondence audit accepts cataloged, used rule IDs in every scoped test name", () => {
+  const result = auditRuleTestCorrespondence({
+    catalogRuleIds: ["DM-SRC-001", "DM-IDX-001", "DM-IDX-002"],
+    testNames: [
+      "DM-SRC-001 rejects an empty catalog",
+      "DM-IDX-001 rejects bad structure and DM-IDX-002 rejects a bad profile link"
+    ],
+    rulePrefixes: ["DM-SRC", "DM-IDX"]
+  });
+
+  assert.deepEqual(result, { passed: true, errors: [] });
+});
+
+test("rule correspondence audit reports unused, unknown, missing, and duplicate mappings", () => {
+  const result = auditRuleTestCorrespondence({
+    catalogRuleIds: ["DM-IDX-001", "DM-IDX-002", "DM-IDX-002", "DM-IDX-003"],
+    testNames: [
+      "DM-IDX-001 rejects bad structure",
+      "DM-IDX-999 rejects an uncataloged condition",
+      "accepts a scoped case without a rule ID"
+    ],
+    rulePrefixes: ["DM-IDX"]
+  });
+
+  assert.deepEqual(result, {
+    passed: false,
+    errors: [
+      "duplicate-catalog-rule:DM-IDX-002",
+      "missing-test-rule:accepts a scoped case without a rule ID",
+      "unknown-test-rule:DM-IDX-999",
+      "unused-catalog-rule:DM-IDX-002",
+      "unused-catalog-rule:DM-IDX-003"
+    ]
+  });
 });

@@ -500,11 +500,11 @@ test("fails when an invalid case does not emit its expected rule", () => {
   - sensitive routing value の非開示と safe identity/location 不在時の generation-failure expectation を source-aware case として記録する。
   - 対象 test の RED を確認してから最小実装し、Unprojected Operations checkpoint の GREEN を確認する。
 
-- [ ] **Step 5: Task 5 integration regression を実行する**
+- [x] **Step 5: Task 5 integration regression を実行する**
   - Run: `node --test docai-messaging/tools/tests/document-set.test.mjs`
   - Expected: root、Sources、operation routing、Unprojected Operations と既存 identity tests がすべて PASS。
 
-- [ ] **Step 6: rule catalog と tests の対応を確認する**
+- [x] **Step 6: rule catalog と tests の対応を確認する**
   - 各 test 名に一つ以上の `DM-SRC-*` または `DM-IDX-*` rule ID を含める。
   - Task 1 の catalog-membership enforcement を前提に、未使用 rule ID と一対一で対応しない test/catalog entry を checker で失敗させる。
   - Task 2 で cataloged になった `DM-PARSE-001`〜`DM-PARSE-004` も unused-rule と test/catalog correspondence の対象に含める。
@@ -520,6 +520,8 @@ Checkpoint 2 の suggested commit message: `feat(messaging): validate source cat
 Checkpoint 3 の suggested commit message: `feat(messaging): validate operation routing and retrieval traces`
 
 Checkpoint 4 の suggested commit message: `feat(messaging): validate unprojected operation routing`
+
+Checkpoint 5 の suggested commit message: `test(messaging): audit Task 5 rule test correspondence`
 
 ---
 
