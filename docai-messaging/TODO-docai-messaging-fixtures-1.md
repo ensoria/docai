@@ -527,39 +527,82 @@ Checkpoint 5 の suggested commit message: `test(messaging): audit Task 5 rule t
 
 ### Task 6: Compatibility Core の CONVENTIONS と Operation Grammar を作る
 
+> **Plan change / impact (user-approved):** Task 6 は、CONVENTIONS tests、operation state-machine tests、Message tests、Payload tests、Reply/Failure tests をすべて先に追加して最後に一括実装する順序から、依存関係に沿った七つの垂直 slice へ変更する。common failure shape は Message/Payload と同じ文法を使うため、その共通 validator が完成した後に実装し、Data Representation の format catalog resolution も payload constraint fragment を取得できる checkpoint へ移動する。各 slice は対象 test の RED、最小実装、対象 test と既存回帰 test の GREEN を一つの checkpoint とし、checkpoint ごとに commit 可能な状態で停止する。公開済み interface、rule の意味、Task 6 の最終 coverage、Task 7 以降の依存関係は変更しない。
+
+> **Plan change / impact (user-approved):** Task 5 で固定した root orchestration の責務を維持するため、`tools/lib/validators/core.mjs` へ Task 6 の全 grammar を追加しない。CONVENTIONS の structure/state/catalog/common-shape orchestration を `core-conventions.mjs`、operation file と section orchestration を `core-operations.mjs`、primary/reply/failure-shape が共有する Message/Payload grammar を `core-messages.mjs` に置く。`core.mjs` は各 validator を read-only に統合し、既存の `validateDocumentSet()` diagnostics と `facts.core` の field を維持したまま Task 6 facts を追加する。影響として内部 module 間の入力を `documentSet` と Task 5 の routing/source facts に固定し、Message/Payload の方向規則を一か所で検証する。
+
+**Checkpoint boundaries:**
+
+1. CONVENTIONS の固定 structure と基本 section state（`DM-CONV-001`〜`DM-CONV-002`）
+2. operation file、heading/purpose、Behavior、Operation Bindings、Channel（`DM-OP-001`〜`DM-OP-004`）
+3. Message identity/selection、direction-correct tables、leading collapse（`DM-MSG-001`〜`DM-MSG-003`）
+4. Payload state、representation、field/variant/example と format catalog resolution（`DM-MSG-004`〜`DM-MSG-006`、`DM-CONV-003`）
+5. Reply state、keys/channel、message selection と INDEX routing（`DM-REPLY-001`〜`DM-REPLY-003`）
+6. Failure Handling state/table/reference と common/inline shape（`DM-FAIL-001`〜`DM-FAIL-003`、`DM-CONV-004`）
+7. Task 6 integration、rule catalog/test correspondence、review gate
+
 **Files:**
 
 - Modify: `docai-messaging/tools/lib/validators/core.mjs`
+- Create: `docai-messaging/tools/lib/validators/core-conventions.mjs`
+- Create: `docai-messaging/tools/lib/validators/core-operations.mjs`
+- Create: `docai-messaging/tools/lib/validators/core-messages.mjs`
 - Modify: `docai-messaging/fixtures/rules.json`
 - Test: `docai-messaging/tools/tests/document-set.test.mjs`
 
-- [ ] **Step 1: CONVENTIONS state tests を書く**
-  - fixed headings 全件と順序、`none`、whole-section `unknown`、replacement `unsupported`、expanded state を検証する。
-  - `Format | Role | Meaning` catalog の exact resolution と common failure shape の expanded/replacement forms を検証する。
+- [x] **Step 1: CONVENTIONS structure/state を RED→GREEN で実装する**
+  - `CONVENTIONS.md` の `# Messaging Conventions` と十五個の固定 `##` heading の全件・順序・重複・余分な heading を検証する。
+  - 各 section が exactly one core state を持つことを検証する。authoritatively non-applicable な `none`、whole-section `unknown` と直後の `**unknown**:`、`**unsupported**: replaces CONVENTIONS <heading>:`、non-empty expanded content を positive/negative pair にする。
+  - `DM-CONV-001` を file/title/heading structure、`DM-CONV-002` を section state と marker adjacency に割り当て、catalog と test 名を同じ checkpoint で対応させる。
+  - 対象 test の RED を確認してから `core-conventions.mjs` の最小実装と `core.mjs` への read-only integration を行い、既存回帰 test も GREEN にする。
 
-- [ ] **Step 2: operation section state machine tests を書く**
-  - heading/purpose、Behavior six keys、Operation Bindings、Channel、Messages、Reply、Failure Handling、Related の固定順を検証する。
-  - file-level title/prose wrapper と duplicate operation placement を拒否する。
+- [ ] **Step 2: operation envelope/Behavior/Channel を RED→GREEN で実装する**
+  - channel file に file-level title/prose wrapper がなく、一つ以上の operation が routing row と一致して exactly one file に現れることを検証する。
+  - operation heading/purpose、optional deprecation marker、Behavior six keys、Operation Bindings、Channel Parameters/Bindings と固定 section 順を検証する。
+  - `DM-OP-001`〜`DM-OP-004` を structure、heading/placement、Behavior、bindings/Channel に割り当てる。
 
-- [ ] **Step 3: direction-correct Message tests を書く**
-  - SEND の Required、RECEIVE の Presence、reply の逆方向、nullable、nested ancestor applicability、`$` row invariants を検証する。
+- [ ] **Step 3: direction-correct Message grammar を RED→GREEN で実装する**
+  - Message identity/order/selection/replacement、SEND の Required、RECEIVE の Presence、reply の逆方向、nullable、nested ancestor applicability、`$` row invariants を検証する。
   - Headers/Bindings の leading collapse と、first expanded subsection 後の `none` heading retention を検証する。
+  - `DM-MSG-001`〜`DM-MSG-003` を direction/table、collapse、identity/selection/replacement に割り当て、primary/reply Message が共有する parser を `core-messages.mjs` に実装する。
 
-- [ ] **Step 4: payload representation tests を書く**
+- [ ] **Step 4: Payload representation と format catalog を RED→GREEN で実装する**
   - whole payload marker、media type、nullability、example、field table、raw binary、multiple media selection、tagged/untagged variant boundaryを検証する。
-  - example field coverage、object openness、constraints order、format catalog resolution を検証する。
+  - example field coverage、object openness、constraints order、format/format_annotation fragment の exact `Format | Role | Meaning` resolution と convention dependency closure を検証する。
+  - `DM-MSG-004`〜`DM-MSG-006` を payload state、representation、field/variant/example、`DM-CONV-003` を format catalog に割り当てる。
 
-- [ ] **Step 5: Reply と Failure Handling tests を書く**
-  - reply message set/address/selection fallback、static/dynamic channel、correlation、timeout、reply INDEX entries を検証する。
-  - Failure core states、deviation、common/inline shape exact reference、Action recovery state を検証する。
+- [ ] **Step 5: Reply grammar を RED→GREEN で実装する**
+  - Reply の `none` / whole-section `unknown` / replacement `unsupported` / expanded state、channel/correlation/timeout keys、static/dynamic channel を検証する。
+  - reply message set/address/selection fallback、direction reversal、reply INDEX entries の一致を検証する。
+  - `DM-REPLY-001`〜`DM-REPLY-003` を state、keys/channel、selection/routing に割り当てる。
 
-- [ ] **Step 6: test を RED→GREEN で実装する**
+- [ ] **Step 6: Failure Handling と common/inline shape を RED→GREEN で実装する**
+  - Failure Handling の core states、canonical leading deviation、`Failure | Signal | Condition | Action` table、Action recovery state を検証する。
+  - `common:<label>` / `inline:<label>` の exact whole-cell reference と unique resolution、expanded/replacement shape、Message subsection collapse を共有 grammar で検証する。
+  - `DM-FAIL-001`〜`DM-FAIL-003` を state/deviation、table/reference、inline shape、`DM-CONV-004` を common shape に割り当てる。
+
+- [ ] **Step 7: Task 6 integration と rule correspondence を確認する**
   - Run: `node --test docai-messaging/tools/tests/document-set.test.mjs`
-  - Expected: 新規 test は実装前 FAIL、実装後 PASS。
+  - Expected: CONVENTIONS、operation、Message、Payload、Reply、Failure Handling と既存 tests がすべて PASS。
+  - Task 6 test 名に一つ以上の `DM-CONV-*`、`DM-OP-*`、`DM-MSG-*`、`DM-REPLY-*`、`DM-FAIL-*` rule ID を含め、未使用・未知・重複 catalog entry を checker で失敗させる。
 
 **Review gate:** operation-level `none` が CONVENTIONS を抑止せず、抑止には `**deviation**:` が必要であることを positive/negative pair で確認する。
 
 **Suggested commit message:** `feat(messaging): validate core conventions and operations`
+
+Checkpoint 1 の suggested commit message: `feat(messaging): validate conventions structure and states`
+
+Checkpoint 2 の suggested commit message: `feat(messaging): validate operation behavior and channel grammar`
+
+Checkpoint 3 の suggested commit message: `feat(messaging): validate message direction and structure`
+
+Checkpoint 4 の suggested commit message: `feat(messaging): validate payload representations and formats`
+
+Checkpoint 5 の suggested commit message: `feat(messaging): validate reply grammar and routing`
+
+Checkpoint 6 の suggested commit message: `feat(messaging): validate failure handling and shapes`
+
+Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule correspondence`
 
 ---
 

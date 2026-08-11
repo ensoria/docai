@@ -1,6 +1,7 @@
 import { diagnostic } from "../diagnostics.mjs";
 import { scanMarkdown } from "../markdown.mjs";
 import { parseDocsPath } from "../paths.mjs";
+import { validateCoreConventions } from "./core-conventions.mjs";
 import { validateCoreRouting, validateCoreUnprojected } from "./core-routing.mjs";
 import { validateCoreSources } from "./core-sources.mjs";
 
@@ -127,7 +128,8 @@ export function validateCoreDocumentSet(documentSet) {
     operations: null,
     operationRetrieval: null,
     unprojectedOperations: null,
-    unprojectedRetrieval: null
+    unprojectedRetrieval: null,
+    conventions: null
   };
   if (root === undefined) return { diagnostics: [], facts };
 
@@ -154,13 +156,16 @@ export function validateCoreDocumentSet(documentSet) {
     : { diagnostics: [], facts: { unprojectedOperations: null, unprojectedRetrieval: null } };
   facts.unprojectedOperations = unprojected.facts.unprojectedOperations;
   facts.unprojectedRetrieval = unprojected.facts.unprojectedRetrieval;
+  const conventions = validateCoreConventions(documentSet);
+  facts.conventions = conventions.facts.conventions;
   return {
     diagnostics: [
       ...profile.diagnostics,
       ...structure.diagnostics,
       ...sources.diagnostics,
       ...routing.diagnostics,
-      ...unprojected.diagnostics
+      ...unprojected.diagnostics,
+      ...conventions.diagnostics
     ],
     facts
   };

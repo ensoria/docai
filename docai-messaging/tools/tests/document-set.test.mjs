@@ -21,9 +21,33 @@ const MANIFEST_ID = "b32:a4fmrszmrrfqaux3c2ndbr3aou";
 const restampPath = fileURLToPath(new URL("../restamp-document-set.mjs", import.meta.url));
 const catalogPath = fileURLToPath(new URL("../../fixtures/rules.json", import.meta.url));
 const task5RuleTestNames = [];
+const task6RuleTestNames = [];
+
+const CONVENTION_HEADINGS = [
+  "Environments",
+  "Protocols and Bindings",
+  "Authentication",
+  "Connection and Session",
+  "Serialization",
+  "Message Envelope",
+  "Delivery Semantics",
+  "Idempotency and Deduplication",
+  "Ordering",
+  "Error Handling",
+  "Request-Reply",
+  "Schema Evolution",
+  "Data Representation",
+  "Empty and Omitted Values",
+  "Rate Limits and Quotas"
+];
 
 function task5Test(name, ...arguments_) {
   task5RuleTestNames.push(String(name));
+  return nodeTest(name, ...arguments_);
+}
+
+function task6Test(name, ...arguments_) {
+  task6RuleTestNames.push(String(name));
   return nodeTest(name, ...arguments_);
 }
 
@@ -189,11 +213,23 @@ function minimalRootBody({
   return lines.join("\n");
 }
 
+function conventionsBody(sectionContents = {}) {
+  return [
+    "# Messaging Conventions",
+    ...CONVENTION_HEADINGS.flatMap((heading) => [
+      "",
+      `## ${heading}`,
+      "",
+      ...(sectionContents[heading] ?? ["none"])
+    ])
+  ].join("\n");
+}
+
 function documentSource({ root = false, metadataOverrides, identityOverrides, body } = {}) {
   return [
     metadata(metadataOverrides),
     "",
-    body ?? (root ? minimalRootBody() : "# Conventions"),
+    body ?? (root ? minimalRootBody() : conventionsBody()),
     "",
     identity({ root, ...identityOverrides }),
     ""
@@ -1816,6 +1852,124 @@ task5Test("DM-SRC-001 through DM-SRC-007 and DM-IDX-001 through DM-IDX-010 maint
     catalogRuleIds: catalog.rules.map((entry) => entry.rule_id),
     testNames: task5RuleTestNames,
     rulePrefixes: ["DM-SRC", "DM-IDX"]
+  });
+
+  assert.deepEqual(result, { passed: true, errors: [] });
+});
+
+task6Test("accepts DM-CONV-001 fixed headings and DM-CONV-002 none, unknown, unsupported, and expanded states", (t) => {
+  const root = createSet(t, {
+    childMetadata: { coverage: "requires-source", knowledge: "requires-input" }
+  });
+  write(root, "CONVENTIONS.md", documentSource({
+    metadataOverrides: { coverage: "requires-source", knowledge: "requires-input" },
+    body: conventionsBody({
+      "Protocols and Bindings": [
+        "unknown",
+        "**unknown**: protocol versions require the broker configuration"
+      ],
+      Authentication: [
+        "**unsupported**: replaces CONVENTIONS Authentication: delegated credentials documented at https://example.invalid/auth"
+      ],
+      "Connection and Session": [
+        "Clients reconnect with bounded exponential backoff."
+      ]
+    })
+  }));
+
+  const result = taskScoped(root);
+  assert.deepEqual(result.diagnostics, []);
+  assert.ok(result.facts.core.conventions);
+  assert.deepEqual(result.facts.core.conventions.sections["Environments"], {
+    line: 5,
+    state: "none"
+  });
+  assert.deepEqual(result.facts.core.conventions.sections["Protocols and Bindings"], {
+    line: 9,
+    state: "unknown"
+  });
+  assert.equal(result.facts.core.conventions.sections.Authentication.state, "unsupported");
+  assert.equal(result.facts.core.conventions.sections["Connection and Session"].state, "expanded");
+});
+
+for (const [name, body] of [
+  ["wrong title", conventionsBody().replace("# Messaging Conventions", "# Conventions")],
+  ["content before the title", `unexpected prose\n\n${conventionsBody()}`],
+  ["prose between title and first section", conventionsBody().replace(
+    "# Messaging Conventions\n\n## Environments",
+    "# Messaging Conventions\n\nunexpected prose\n\n## Environments"
+  )],
+  ["missing fixed heading", conventionsBody().replace("\n\n## Authentication\n\nnone", "")],
+  ["reordered fixed headings", conventionsBody().replace(
+    "## Environments\n\nnone\n\n## Protocols and Bindings\n\nnone",
+    "## Protocols and Bindings\n\nnone\n\n## Environments\n\nnone"
+  )],
+  ["duplicate fixed heading", `${conventionsBody()}\n\n## Environments\n\nnone`],
+  ["unexpected level-two heading", `${conventionsBody()}\n\n## Notes\n\nnone`]
+]) {
+  task6Test(`DM-CONV-001 rejects CONVENTIONS with ${name}`, (t) => {
+    const root = createSet(t);
+    write(root, "CONVENTIONS.md", documentSource({ body }));
+    assert.ok(ruleIds(taskScoped(root)).includes("DM-CONV-001"));
+  });
+}
+
+task6Test("DM-CONV-001 rejects a document set without required CONVENTIONS.md", (t) => {
+  const root = createSet(t);
+  fs.unlinkSync(path.join(root, "CONVENTIONS.md"));
+  assert.ok(ruleIds(taskScoped(root)).includes("DM-CONV-001"));
+});
+
+for (const [name, sectionContent] of [
+  ["an empty section", []],
+  ["unknown without its marker", ["unknown"]],
+  ["an empty unknown marker", ["unknown", "**unknown**:"]],
+  ["a whitespace-only unknown marker", ["unknown", "**unknown**: "]],
+  ["an unknown marker without the required space", ["unknown", "**unknown**:reason"]],
+  ["a non-adjacent unknown marker", [
+    "unknown",
+    "",
+    "**unknown**: protocol versions require the broker configuration"
+  ]],
+  ["unknown with additional content", [
+    "unknown",
+    "**unknown**: protocol versions require the broker configuration",
+    "unexpected prose"
+  ]],
+  ["a replacement marker naming another heading", [
+    "**unsupported**: replaces CONVENTIONS Authentication: source feature at https://example.invalid/source"
+  ]],
+  ["a replacement marker with additional content", [
+    "**unsupported**: replaces CONVENTIONS Environments: source feature at https://example.invalid/source",
+    "unexpected prose"
+  ]],
+  ["none mixed with expanded content", ["none", "unexpected prose"]]
+]) {
+  task6Test(`DM-CONV-002 rejects CONVENTIONS Environments with ${name}`, (t) => {
+    const root = createSet(t);
+    write(root, "CONVENTIONS.md", documentSource({
+      metadataOverrides: { coverage: "requires-source", knowledge: "requires-input" },
+      body: conventionsBody({ Environments: sectionContent })
+    }));
+    assert.ok(ruleIds(taskScoped(root)).includes("DM-CONV-002"));
+  });
+}
+
+task6Test("DM-CONV-001 and DM-CONV-002 are cataloged for Task 6 checkpoint 1", () => {
+  const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
+  const cataloged = new Set(catalog.rules.map((entry) => entry.rule_id));
+  assert.deepEqual(
+    ["DM-CONV-001", "DM-CONV-002"].filter((ruleId) => !cataloged.has(ruleId)),
+    []
+  );
+});
+
+task6Test("DM-CONV-001 and DM-CONV-002 maintain Task 6 checkpoint 1 rule correspondence", () => {
+  const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
+  const result = auditRuleTestCorrespondence({
+    catalogRuleIds: catalog.rules.map((entry) => entry.rule_id),
+    testNames: task6RuleTestNames,
+    rulePrefixes: ["DM-CONV"]
   });
 
   assert.deepEqual(result, { passed: true, errors: [] });

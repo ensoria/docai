@@ -169,6 +169,18 @@
       "scope": "core"
     },
     {
+      "rule_id": "DM-CONV-001",
+      "readme_section": "§3.3 CONVENTIONS.md(required)",
+      "description": "CONVENTIONS.md uses its required title and every fixed convention heading exactly once in canonical order without title-level prose.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-CONV-002",
+      "readme_section": "§3.3 CONVENTIONS.md(required) / §3.4 Output Profiles and Incomplete Information",
+      "description": "Every convention section contains exactly one canonical none, whole-section unknown, replacement unsupported, or non-empty expanded core state with required marker adjacency.",
+      "scope": "core"
+    },
+    {
       "rule_id": "DM-PARSE-001",
       "readme_section": "§3.5 Canonical Syntax and Boundaries",
       "description": "Markdown headings and backtick-fenced blocks retain deterministic source-line boundaries.",
