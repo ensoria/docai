@@ -487,7 +487,7 @@ function validOperationHeader(header) {
   return header.slice(cursor).every((column) => column.startsWith("x-"));
 }
 
-function validChannelAddress(value) {
+export function validChannelAddress(value) {
   if (typeof value !== "string" || value === "" || /[\t-\r ]/.test(value)) return false;
   for (let index = 0; index < value.length; index += 1) {
     if (value[index] === "{") {

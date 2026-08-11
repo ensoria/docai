@@ -556,7 +556,7 @@ Checkpoint 5 の suggested commit message: `test(messaging): audit Task 5 rule t
   - `DM-CONV-001` を file/title/heading structure、`DM-CONV-002` を section state と marker adjacency に割り当て、catalog と test 名を同じ checkpoint で対応させる。
   - 対象 test の RED を確認してから `core-conventions.mjs` の最小実装と `core.mjs` への read-only integration を行い、既存回帰 test も GREEN にする。
 
-- [ ] **Step 2: operation envelope/Behavior/Channel を RED→GREEN で実装する**
+- [x] **Step 2: operation envelope/Behavior/Channel を RED→GREEN で実装する**
   - channel file に file-level title/prose wrapper がなく、一つ以上の operation が routing row と一致して exactly one file に現れることを検証する。
   - operation heading/purpose、optional deprecation marker、Behavior six keys、Operation Bindings、Channel Parameters/Bindings と固定 section 順を検証する。
   - `DM-OP-001`〜`DM-OP-004` を structure、heading/placement、Behavior、bindings/Channel に割り当てる。

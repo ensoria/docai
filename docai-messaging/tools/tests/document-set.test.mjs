@@ -182,6 +182,70 @@ function unprojectedShardBody(markers) {
   ].join("\n");
 }
 
+function operationBody(row, overrides = {}) {
+  const [action, channel, operation, messageCell] = row;
+  const primaryMessage = messageCell
+    .split("; ")
+    .find((entry) => !entry.startsWith("reply:")) ?? "message";
+  const behavior = overrides.behavior ?? [
+    "- side_effects: none",
+    "- idempotency: none",
+    "- preconditions: none",
+    "- authorization: none",
+    "- delivery: none",
+    "- ordering: none"
+  ];
+  return [
+    overrides.prelude,
+    overrides.heading ?? `## ${action} ${channel} (${operation})`,
+    "",
+    overrides.deprecated,
+    overrides.purpose ?? "Documents the selected messaging operation.",
+    "",
+    "### Behavior",
+    "",
+    ...behavior,
+    "",
+    "### Operation Bindings",
+    "",
+    ...(overrides.operationBindings ?? ["none"]),
+    "",
+    "### Channel",
+    "",
+    ...(overrides.channel ?? ["- Parameters: none", "- Bindings: none"]),
+    "",
+    overrides.messageHeading ?? `### Message ${primaryMessage}`,
+    "",
+    "#### Headers",
+    "",
+    "none",
+    "",
+    "#### Bindings",
+    "",
+    "none",
+    "",
+    "#### Payload",
+    "",
+    "none",
+    "",
+    "### Reply",
+    "",
+    "none",
+    "",
+    "### Failure Handling",
+    "",
+    "none",
+    "",
+    "### Related",
+    "",
+    "none"
+  ].filter((entry) => entry !== undefined).join("\n");
+}
+
+function channelBody(rows) {
+  return rows.map((row) => operationBody(row)).join("\n\n");
+}
+
 function minimalRootBody({
   profileLink,
   sourcesContent = directSources(),
@@ -383,6 +447,7 @@ function createFlatOperationSet(t, {
   columns,
   channelPath = "channels/orders.md",
   writeChannel = true,
+  channelBody: channelBodyOverride,
   channelSourceRefs = "all",
   sourcesContent,
   childMetadata
@@ -395,7 +460,12 @@ function createFlatOperationSet(t, {
       operationContent: flatOperations([{ path: channelPath, rows, columns }])
     })
   }));
-  if (writeChannel) writeDocument(root, channelPath, { sourceRefs: channelSourceRefs });
+  if (writeChannel) {
+    writeDocument(root, channelPath, {
+      sourceRefs: channelSourceRefs,
+      body: channelBodyOverride ?? channelBody(rows)
+    });
+  }
   return root;
 }
 
@@ -439,9 +509,18 @@ function createShardedOperationSet(t, {
       body: middleBody
     });
   }
-  writeDocument(root, "channels/alpha.md", { sourceRefs: "source-a" });
-  writeDocument(root, "channels/zeta.md", { sourceRefs: "source-a" });
-  writeDocument(root, "channels/middle.md", { sourceRefs: "source-z" });
+  writeDocument(root, "channels/alpha.md", {
+    sourceRefs: "source-a",
+    body: operationBody(ALPHA_OPERATION_ROW)
+  });
+  writeDocument(root, "channels/zeta.md", {
+    sourceRefs: "source-a",
+    body: operationBody(ZETA_OPERATION_ROW)
+  });
+  writeDocument(root, "channels/middle.md", {
+    sourceRefs: "source-z",
+    body: operationBody(MIDDLE_OPERATION_ROW)
+  });
   return root;
 }
 
@@ -1968,8 +2047,507 @@ task6Test("DM-CONV-001 and DM-CONV-002 maintain Task 6 checkpoint 1 rule corresp
   const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
   const result = auditRuleTestCorrespondence({
     catalogRuleIds: catalog.rules.map((entry) => entry.rule_id),
-    testNames: task6RuleTestNames,
+    testNames: task6RuleTestNames.filter((name) => name.includes("DM-CONV-")),
     rulePrefixes: ["DM-CONV"]
+  });
+
+  assert.deepEqual(result, { passed: true, errors: [] });
+});
+
+task6Test("accepts DM-OP-001 fixed operation sections in a routed channel file", (t) => {
+  const root = createFlatOperationSet(t);
+  const result = taskScoped(root);
+
+  assert.deepEqual(result.diagnostics, []);
+  assert.ok(result.facts.core.operationDefinitions);
+  assert.deepEqual(result.facts.core.operationDefinitions.byName["create-order"], {
+    action: "SEND",
+    channel: "orders.commands",
+    deprecated: false,
+    line: 3,
+    name: "create-order",
+    path: "channels/orders.md"
+  });
+});
+
+task6Test("accepts DM-OP-001 multiple routed operations independent of file order", (t) => {
+  const secondRow = [
+    "SEND",
+    "orders.commands",
+    "update-order",
+    "update-order",
+    "update order",
+    "Updates an existing order",
+    "none",
+    "none"
+  ];
+  const root = createFlatOperationSet(t, {
+    rows: [BASIC_OPERATION_ROW, secondRow],
+    channelBody: channelBody([secondRow, BASIC_OPERATION_ROW])
+  });
+
+  const result = taskScoped(root);
+  assert.deepEqual(result.diagnostics, []);
+  assert.deepEqual(Object.keys(result.facts.core.operationDefinitions.byName).sort(), [
+    "create-order",
+    "update-order"
+  ]);
+});
+
+for (const [name, body] of [
+  ["a file-level title", `# Channel Operations\n\n${operationBody(BASIC_OPERATION_ROW)}`],
+  ["a prose wrapper", operationBody(BASIC_OPERATION_ROW, { prelude: "unexpected prose" })],
+  ["no operation definition", "# Placeholder"],
+  ["a missing required section", operationBody(BASIC_OPERATION_ROW).replace("\n\n### Related\n\nnone", "")],
+  ["reordered fixed sections", operationBody(BASIC_OPERATION_ROW)
+    .replace("### Behavior", "### TEMP")
+    .replace("### Operation Bindings", "### Behavior")
+    .replace("### TEMP", "### Operation Bindings")],
+  ["a duplicate fixed section", `${operationBody(BASIC_OPERATION_ROW)}\n\n### Related\n\nnone`],
+  ["an unexpected level-three section", `${operationBody(BASIC_OPERATION_ROW)}\n\n### Notes\n\nnone`],
+  ["no Message section", operationBody(BASIC_OPERATION_ROW).replace("### Message create-order", "#### Message create-order")]
+]) {
+  task6Test(`DM-OP-001 rejects a channel file with ${name}`, (t) => {
+    const root = createFlatOperationSet(t, { channelBody: body });
+    assert.ok(ruleIds(taskScoped(root)).includes("DM-OP-001"));
+  });
+}
+
+task6Test("DM-OP-001 rejects an operation definition absent from its channel route", (t) => {
+  const extraRow = [
+    "SEND",
+    "orders.commands",
+    "cancel-order",
+    "cancel-order",
+    "cancel order",
+    "Cancels an order",
+    "none",
+    "none"
+  ];
+  const root = createFlatOperationSet(t, {
+    channelBody: channelBody([BASIC_OPERATION_ROW, extraRow])
+  });
+
+  assert.ok(ruleIds(taskScoped(root)).includes("DM-OP-001"));
+});
+
+task6Test("accepts DM-OP-002 two-sentence purpose and summary-matched deprecation", (t) => {
+  const row = [...BASIC_OPERATION_ROW];
+  row[5] = "(deprecated) Creates an order command through the legacy channel";
+  const root = createFlatOperationSet(t, {
+    rows: [row],
+    channelBody: operationBody(row, {
+      deprecated: "**deprecated**: use submit-order and migrate producers before retirement",
+      purpose: "Creates an order command. Use this operation only during migration."
+    })
+  });
+
+  const result = taskScoped(root);
+  assert.deepEqual(result.diagnostics, []);
+  assert.equal(result.facts.core.operationDefinitions.byName["create-order"].deprecated, true);
+});
+
+for (const [name, row, body] of [
+  [
+    "an Action that differs from its route",
+    BASIC_OPERATION_ROW,
+    operationBody(BASIC_OPERATION_ROW, { heading: "## RECEIVE orders.commands (create-order)" })
+  ],
+  [
+    "an address that differs from its route",
+    BASIC_OPERATION_ROW,
+    operationBody(BASIC_OPERATION_ROW, { heading: "## SEND orders.events (create-order)" })
+  ],
+  [
+    "a name that differs from its route",
+    BASIC_OPERATION_ROW,
+    operationBody(BASIC_OPERATION_ROW, { heading: "## SEND orders.commands (cancel-order)" })
+  ],
+  [
+    "a malformed heading",
+    BASIC_OPERATION_ROW,
+    operationBody(BASIC_OPERATION_ROW, { heading: "## SEND orders.commands create-order" })
+  ],
+  ["an empty purpose", BASIC_OPERATION_ROW, operationBody(BASIC_OPERATION_ROW, { purpose: "" })],
+  [
+    "purpose without a sentence terminator",
+    BASIC_OPERATION_ROW,
+    operationBody(BASIC_OPERATION_ROW, { purpose: "Documents the selected messaging operation" })
+  ],
+  [
+    "three purpose sentences",
+    BASIC_OPERATION_ROW,
+    operationBody(BASIC_OPERATION_ROW, { purpose: "First sentence. Second sentence. Third sentence." })
+  ],
+  [
+    "an empty deprecation marker",
+    BASIC_OPERATION_ROW,
+    operationBody(BASIC_OPERATION_ROW, { deprecated: "**deprecated**:" })
+  ],
+  [
+    "a deprecation marker after the purpose",
+    BASIC_OPERATION_ROW,
+    operationBody(BASIC_OPERATION_ROW).replace(
+      "Documents the selected messaging operation.",
+      "Documents the selected messaging operation.\n\n**deprecated**: use submit-order instead"
+    )
+  ],
+  [
+    "a deprecation marker without the INDEX summary prefix",
+    BASIC_OPERATION_ROW,
+    operationBody(BASIC_OPERATION_ROW, { deprecated: "**deprecated**: use submit-order instead" })
+  ]
+]) {
+  task6Test(`DM-OP-002 rejects an operation with ${name}`, (t) => {
+    const root = createFlatOperationSet(t, { rows: [row], channelBody: body });
+    assert.ok(ruleIds(taskScoped(root)).includes("DM-OP-002"));
+  });
+}
+
+task6Test("accepts DM-OP-003 canonical Behavior keys and qualified delivery", (t) => {
+  const root = createFlatOperationSet(t, {
+    channelBody: operationBody(BASIC_OPERATION_ROW, {
+      behavior: [
+        "- side_effects: creates the order",
+        "- idempotency: reuse message_id when resending",
+        "- preconditions: the customer exists",
+        "- authorization: requires the orders:write role",
+        "- delivery: at-least-once -- acknowledge after broker persistence",
+        "- ordering: ordered by customer identifier"
+      ]
+    })
+  });
+
+  assert.ok(!ruleIds(taskScoped(root)).includes("DM-OP-003"));
+});
+
+task6Test("accepts DM-OP-003 unknown Behavior values with post-key markers", (t) => {
+  const root = createFlatOperationSet(t, {
+    channelBody: operationBody(BASIC_OPERATION_ROW, {
+      behavior: [
+        "- side_effects: unknown",
+        "- idempotency: none",
+        "- preconditions: none",
+        "- authorization: none",
+        "- delivery: unknown",
+        "- ordering: none",
+        "**unknown**: side_effects requires the handler specification",
+        "**unknown**: delivery requires the broker acknowledgement policy"
+      ]
+    })
+  });
+
+  assert.ok(!ruleIds(taskScoped(root)).includes("DM-OP-003"));
+});
+
+for (const [name, behavior] of [
+  ["a missing canonical key", [
+    "- side_effects: none", "- idempotency: none", "- preconditions: none",
+    "- authorization: none", "- delivery: none"
+  ]],
+  ["canonical keys out of order", [
+    "- idempotency: none", "- side_effects: none", "- preconditions: none",
+    "- authorization: none", "- delivery: none", "- ordering: none"
+  ]],
+  ["a duplicate canonical key", [
+    "- side_effects: none", "- idempotency: none", "- preconditions: none",
+    "- authorization: none", "- delivery: none", "- ordering: none", "- ordering: none"
+  ]],
+  ["an empty canonical value", [
+    "- side_effects:", "- idempotency: none", "- preconditions: none",
+    "- authorization: none", "- delivery: none", "- ordering: none"
+  ]],
+  ["a non-canonical delivery token", [
+    "- side_effects: none", "- idempotency: none", "- preconditions: none",
+    "- authorization: none", "- delivery: best-effort", "- ordering: none"
+  ]],
+  ["an unqualified exactly-once claim", [
+    "- side_effects: none", "- idempotency: none", "- preconditions: none",
+    "- authorization: none", "- delivery: exactly-once", "- ordering: none"
+  ]],
+  ["a malformed delivery separator", [
+    "- side_effects: none", "- idempotency: none", "- preconditions: none",
+    "- authorization: none", "- delivery: at-most-once - acknowledge after publish",
+    "- ordering: none"
+  ]],
+  ["an unknown value without its marker", [
+    "- side_effects: unknown", "- idempotency: none", "- preconditions: none",
+    "- authorization: none", "- delivery: none", "- ordering: none"
+  ]],
+  ["an unknown marker before all six keys", [
+    "- side_effects: unknown", "**unknown**: side_effects requires the handler specification",
+    "- idempotency: none", "- preconditions: none", "- authorization: none",
+    "- delivery: none", "- ordering: none"
+  ]]
+]) {
+  task6Test(`DM-OP-003 rejects Behavior with ${name}`, (t) => {
+    const root = createFlatOperationSet(t, {
+      channelBody: operationBody(BASIC_OPERATION_ROW, { behavior })
+    });
+    assert.ok(ruleIds(taskScoped(root)).includes("DM-OP-003"));
+  });
+}
+
+task6Test("accepts DM-OP-004 expanded bindings and matching channel parameters", (t) => {
+  const row = [...BASIC_OPERATION_ROW];
+  row[1] = "orders.{tenant}";
+  const root = createFlatOperationSet(t, {
+    rows: [row],
+    channelBody: operationBody(row, {
+      operationBindings: [
+        "| Protocol | Property | Value / Rule |",
+        "|---|---|---|",
+        "| kafka | operation-id | `create-order` |"
+      ],
+      channel: [
+        "#### Parameters",
+        "",
+        "| Name | Type | Constraints / Meaning |",
+        "|---|---|---|",
+        "| tenant | string | Tenant ID returned by account creation |",
+        "",
+        "#### Bindings",
+        "",
+        "| Protocol | Property | Value / Rule |",
+        "|---|---|---|",
+        "| kafka | topic | `orders.tenant` |"
+      ]
+    })
+  });
+
+  assert.ok(!ruleIds(taskScoped(root)).includes("DM-OP-004"));
+});
+
+for (const [name, parameters] of [
+  ["whole-subsection unknown Parameters", [
+    "unknown",
+    "**unknown**: parameter details require the channel configuration"
+  ]],
+  ["replacement Parameters", [
+    "**unsupported**: replaces channel Parameters: dynamic source expression at source.json"
+  ]]
+]) {
+  task6Test(`accepts DM-OP-004 parameterized Channel with ${name}`, (t) => {
+    const row = [...BASIC_OPERATION_ROW];
+    row[1] = "orders.{tenant}";
+    const root = createFlatOperationSet(t, {
+      rows: [row],
+      channelBody: operationBody(row, {
+        channel: ["#### Parameters", "", ...parameters, "", "#### Bindings", "", "none"]
+      })
+    });
+
+    assert.ok(!ruleIds(taskScoped(root)).includes("DM-OP-004"));
+  });
+}
+
+for (const [name, address] of [
+  ["a non-letter parameter name", "orders.{1tenant.name}"],
+  ["one row for a repeated parameter name", "orders.{tenant}.{tenant}"]
+]) {
+  task6Test(`accepts DM-OP-004 ${name}`, (t) => {
+    const row = [...BASIC_OPERATION_ROW];
+    row[1] = address;
+    const parameterName = address.includes("1tenant.name") ? "1tenant.name" : "tenant";
+    const root = createFlatOperationSet(t, {
+      rows: [row],
+      channelBody: operationBody(row, {
+        channel: [
+          "#### Parameters", "", "| Name | Type | Constraints / Meaning |",
+          "|---|---|---|", `| ${parameterName} | string | Tenant selection value |`,
+          "", "#### Bindings", "", "none"
+        ]
+      })
+    });
+
+    assert.ok(!ruleIds(taskScoped(root)).includes("DM-OP-004"));
+  });
+}
+
+task6Test("accepts DM-OP-004 canonical post-table markers in Operation Bindings", (t) => {
+  const root = createFlatOperationSet(t, {
+    channelBody: operationBody(BASIC_OPERATION_ROW, {
+      operationBindings: [
+        "| Protocol | Property | Value / Rule | x-Source |",
+        "|---|---|---|---|",
+        "| kafka | acknowledgements | unknown | broker-config |",
+        "**unknown**: Value / Rule for acknowledgements requires the broker configuration",
+        "**unsupported**: localized: retry binding omitted from operation scope at source.json#/bindings"
+      ]
+    })
+  });
+
+  assert.ok(!ruleIds(taskScoped(root)).includes("DM-OP-004"));
+});
+
+task6Test("accepts DM-OP-004 a Parameters table with the collection-level unknown marker", (t) => {
+  const row = [...BASIC_OPERATION_ROW];
+  row[1] = "orders.{tenant}";
+  const root = createFlatOperationSet(t, {
+    rows: [row],
+    channelBody: operationBody(row, {
+      channel: [
+        "#### Parameters", "", ...PARAMETER_TABLE,
+        "**unknown**: additional unnamed parameter requires the channel parameter declaration",
+        "", "#### Bindings", "", "none"
+      ]
+    })
+  });
+
+  assert.ok(!ruleIds(taskScoped(root)).includes("DM-OP-004"));
+});
+
+for (const [name, operationBindings, channel] of [
+  ["whole-section unknown operation bindings", [
+    "unknown",
+    "**unknown**: operation binding facts require the broker contract"
+  ], ["- Parameters: none", "- Bindings: none"]],
+  ["replacement operation bindings", [
+    "**unsupported**: replaces Operation Bindings: source extension at source.json"
+  ], ["- Parameters: none", "- Bindings: none"]],
+  ["a collapsed empty Parameters before expanded Bindings", ["none"], [
+    "- Parameters: none",
+    "#### Bindings",
+    "",
+    "| Protocol | Property | Value / Rule |",
+    "|---|---|---|",
+    "| kafka | topic | `orders.commands` |"
+  ]],
+  ["an expanded Parameters before headed empty Bindings", ["none"], [
+    "#### Parameters",
+    "",
+    "none",
+    "",
+    "#### Bindings",
+    "",
+    "none"
+  ]]
+]) {
+  task6Test(`accepts DM-OP-004 ${name}`, (t) => {
+    const root = createFlatOperationSet(t, {
+      channelBody: operationBody(BASIC_OPERATION_ROW, { operationBindings, channel })
+    });
+    assert.ok(!ruleIds(taskScoped(root)).includes("DM-OP-004"));
+  });
+}
+
+const PARAMETER_TABLE = [
+  "| Name | Type | Constraints / Meaning |",
+  "|---|---|---|",
+  "| tenant | string | Tenant ID returned by account creation |"
+];
+
+for (const [name, row, operationBindings, channel] of [
+  ["a non-canonical operation-binding table header", BASIC_OPERATION_ROW, [
+    "| Protocol | Name | Value / Rule |", "|---|---|---|", "| kafka | topic | orders |"
+  ], ["- Parameters: none", "- Bindings: none"]],
+  ["an empty operation-binding table", BASIC_OPERATION_ROW, [
+    "| Protocol | Property | Value / Rule |", "|---|---|---|"
+  ], ["- Parameters: none", "- Bindings: none"]],
+  ["a split operation-binding table", BASIC_OPERATION_ROW, [
+    "| Protocol | Property | Value / Rule |", "", "|---|---|---|", "| kafka | topic | orders |"
+  ], ["- Parameters: none", "- Bindings: none"]],
+  ["an empty operation-binding table cell", BASIC_OPERATION_ROW, [
+    "| Protocol | Property | Value / Rule |", "|---|---|---|", "| kafka | topic | |"
+  ], ["- Parameters: none", "- Bindings: none"]],
+  ["whole-section unknown operation bindings without a marker", BASIC_OPERATION_ROW, [
+    "unknown"
+  ], ["- Parameters: none", "- Bindings: none"]],
+  ["a non-adjacent whole-section unknown marker", BASIC_OPERATION_ROW, [
+    "unknown", "", "**unknown**: operation binding facts require the broker contract"
+  ], ["- Parameters: none", "- Bindings: none"]],
+  ["an unknown table cell without a post-table marker", BASIC_OPERATION_ROW, [
+    "| Protocol | Property | Value / Rule |", "|---|---|---|",
+    "| kafka | acknowledgements | unknown |"
+  ], ["- Parameters: none", "- Bindings: none"]],
+  ["a non-adjacent post-table marker", BASIC_OPERATION_ROW, [
+    "| Protocol | Property | Value / Rule |", "|---|---|---|",
+    "| kafka | acknowledgements | unknown |", "",
+    "**unknown**: Value / Rule for acknowledgements requires the broker configuration"
+  ], ["- Parameters: none", "- Bindings: none"]],
+  ["a post-table marker group in non-canonical order", BASIC_OPERATION_ROW, [
+    "| Protocol | Property | Value / Rule |", "|---|---|---|",
+    "| kafka | acknowledgements | unknown |",
+    "**unsupported**: localized: retry binding omitted at source.json#/bindings",
+    "**unknown**: Value / Rule for acknowledgements requires the broker configuration"
+  ], ["- Parameters: none", "- Bindings: none"]],
+  ["a non-canonical operation-binding replacement unit", BASIC_OPERATION_ROW, [
+    "**unsupported**: replaces channel Bindings: source extension at source.json"
+  ], ["- Parameters: none", "- Bindings: none"]],
+  ["none mixed with expanded operation bindings", BASIC_OPERATION_ROW, [
+    "none", "| Protocol | Property | Value / Rule |", "|---|---|---|", "| kafka | topic | orders |"
+  ], ["- Parameters: none", "- Bindings: none"]],
+  ["a missing Channel Bindings subsection", BASIC_OPERATION_ROW, ["none"], [
+    "- Parameters: none"
+  ]],
+  ["Channel subsections in reverse order", BASIC_OPERATION_ROW, ["none"], [
+    "#### Bindings", "", "none", "", "#### Parameters", "", "none"
+  ]],
+  ["collapsed Channel Bindings before Parameters", BASIC_OPERATION_ROW, ["none"], [
+    "- Bindings: none", "- Parameters: none"
+  ]],
+  ["a collapsed empty subsection after expanded Parameters", [
+    "SEND", "orders.{tenant}", ...BASIC_OPERATION_ROW.slice(2)
+  ], ["none"], [
+    "#### Parameters", "", ...PARAMETER_TABLE, "", "- Bindings: none"
+  ]],
+  ["a parameter absent from the static address", BASIC_OPERATION_ROW, ["none"], [
+    "#### Parameters", "", ...PARAMETER_TABLE, "", "#### Bindings", "", "none"
+  ]],
+  ["unknown Parameters for a static address", BASIC_OPERATION_ROW, ["none"], [
+    "#### Parameters", "", "unknown", "",
+    "**unknown**: parameter details require the channel configuration",
+    "", "#### Bindings", "", "none"
+  ]],
+  ["a missing address parameter row", [
+    "SEND", "orders.{tenant}", ...BASIC_OPERATION_ROW.slice(2)
+  ], ["none"], ["- Parameters: none", "- Bindings: none"]],
+  ["a non-letter address parameter omitted from Parameters", [
+    "SEND", "orders.{1tenant.name}", ...BASIC_OPERATION_ROW.slice(2)
+  ], ["none"], ["- Parameters: none", "- Bindings: none"]],
+  ["a duplicate address parameter row", [
+    "SEND", "orders.{tenant}", ...BASIC_OPERATION_ROW.slice(2)
+  ], ["none"], [
+    "#### Parameters", "", ...PARAMETER_TABLE,
+    "| tenant | string | Duplicate tenant parameter |",
+    "", "#### Bindings", "", "none"
+  ]],
+  ["a non-canonical parameter table header", [
+    "SEND", "orders.{tenant}", ...BASIC_OPERATION_ROW.slice(2)
+  ], ["none"], [
+    "#### Parameters", "", "| Parameter | Type | Constraints / Meaning |",
+    "|---|---|---|", "| tenant | string | Tenant ID |", "", "#### Bindings", "", "none"
+  ]],
+  ["a non-canonical channel-binding table header", BASIC_OPERATION_ROW, ["none"], [
+    "- Parameters: none", "#### Bindings", "", "| Protocol | Name | Value / Rule |",
+    "|---|---|---|", "| kafka | topic | orders |"
+  ]]
+]) {
+  task6Test(`DM-OP-004 rejects ${name}`, (t) => {
+    const root = createFlatOperationSet(t, {
+      rows: [row],
+      channelBody: operationBody(row, { operationBindings, channel })
+    });
+    assert.ok(ruleIds(taskScoped(root)).includes("DM-OP-004"));
+  });
+}
+
+task6Test("DM-OP-001 through DM-OP-004 are cataloged for Task 6 checkpoint 2", () => {
+  const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
+  const cataloged = new Set(catalog.rules.map((entry) => entry.rule_id));
+  assert.deepEqual(
+    ["DM-OP-001", "DM-OP-002", "DM-OP-003", "DM-OP-004"]
+      .filter((ruleId) => !cataloged.has(ruleId)),
+    []
+  );
+});
+
+task6Test("DM-OP-001 through DM-OP-004 maintain Task 6 checkpoint 2 rule correspondence", () => {
+  const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
+  const result = auditRuleTestCorrespondence({
+    catalogRuleIds: catalog.rules.map((entry) => entry.rule_id),
+    testNames: task6RuleTestNames.filter((name) => name.includes("DM-OP-")),
+    rulePrefixes: ["DM-OP"]
   });
 
   assert.deepEqual(result, { passed: true, errors: [] });

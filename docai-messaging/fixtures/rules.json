@@ -181,6 +181,30 @@
       "scope": "core"
     },
     {
+      "rule_id": "DM-OP-001",
+      "readme_section": "§4 Operation Definition Format",
+      "description": "Each routed channel file contains exactly its routed operation definitions, without a file-level wrapper, and every operation uses the fixed required section order.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-OP-002",
+      "readme_section": "§4.1 Section Rules — Heading",
+      "description": "Each operation heading matches its routed action, channel, and set-unique name and is followed by canonical purpose and deprecation placement.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-OP-003",
+      "readme_section": "§4.1 Section Rules — Behavior",
+      "description": "Behavior contains the six canonical non-empty keys in order, uses post-key markers for unknown facts, and states delivery with a valid qualified guarantee.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-OP-004",
+      "readme_section": "§4.1 Section Rules — Operation Bindings / Channel",
+      "description": "Operation Bindings and Channel Parameters and Bindings use canonical states, tables and post-table markers, subsection order, leading-empty collapse, and exact address-parameter coverage.",
+      "scope": "core"
+    },
+    {
       "rule_id": "DM-PARSE-001",
       "readme_section": "§3.5 Canonical Syntax and Boundaries",
       "description": "Markdown headings and backtick-fenced blocks retain deterministic source-line boundaries.",
