@@ -80,6 +80,49 @@ function sourceShardBody(rows, markers = []) {
   ].join("\n");
 }
 
+function operationTable(rows, columns = [
+  "Action",
+  "Channel",
+  "Operation",
+  "Message",
+  "Task",
+  "Summary",
+  "Required context",
+  "Supplemental context"
+]) {
+  return [
+    `| ${columns.join(" | ")} |`,
+    `|${columns.map(() => "---").join("|")}|`,
+    ...rows.map((row) => `| ${row.join(" | ")} |`)
+  ].join("\n");
+}
+
+function flatOperations(groups) {
+  return groups.map((group) => [
+    `### ${group.path}`,
+    "",
+    operationTable(group.rows, group.columns)
+  ].join("\n")).join("\n\n");
+}
+
+function operationShardRoutes(rows) {
+  return [
+    "| Tasks | Actions | First channel | Last channel | First operation | Last operation | First message | Last message | Summary | Details |",
+    "|---|---|---|---|---|---|---|---|---|---|",
+    ...rows.map((row) => `| ${row.join(" | ")} |`)
+  ].join("\n");
+}
+
+function operationShardBody(groups) {
+  return [
+    "# Messaging Operation Index",
+    "",
+    "## Operations",
+    "",
+    flatOperations(groups)
+  ].join("\n");
+}
+
 function minimalRootBody({
   profileLink,
   sourcesContent = directSources(),
@@ -156,6 +199,162 @@ function writeSourceShard(root, relativePath, {
     metadataOverrides: { source_refs: sourceRefs, knowledge },
     body: body ?? sourceShardBody(rows, markers)
   }));
+}
+
+function writeDocument(root, relativePath, {
+  sourceRefs = "all",
+  body = "# Placeholder"
+} = {}) {
+  write(root, relativePath, documentSource({
+    metadataOverrides: { source_refs: sourceRefs },
+    body
+  }));
+}
+
+function writeOperationShard(root, relativePath, {
+  groups,
+  sourceRefs = "all",
+  body
+}) {
+  writeDocument(root, relativePath, {
+    sourceRefs,
+    body: body ?? operationShardBody(groups)
+  });
+}
+
+const BASIC_OPERATION_ROW = [
+  "SEND",
+  "orders.commands",
+  "create-order",
+  "create-order",
+  "create order",
+  "Creates an order command",
+  "none",
+  "none"
+];
+
+const ALPHA_OPERATION_ROW = [
+  "SEND",
+  "a.events",
+  "a-operation",
+  "a-message",
+  "alpha task",
+  "Handles the alpha event range",
+  "none",
+  "none"
+];
+const MIDDLE_OPERATION_ROW = [
+  "SEND",
+  "m.events",
+  "m-operation",
+  "m-message; reply:m-reply",
+  "middle task",
+  "Handles the middle event and its reply",
+  "none",
+  "none"
+];
+const ZETA_OPERATION_ROW = [
+  "RECEIVE",
+  "z.events",
+  "z-operation",
+  "z-message",
+  "zeta task",
+  "Handles the zeta event range",
+  "none",
+  "none"
+];
+const OVERLAPPING_OPERATION_ROUTES = [
+  [
+    "alpha task; zeta task",
+    "SEND; RECEIVE",
+    "a.events",
+    "z.events",
+    "a-operation",
+    "z-operation",
+    "a-message",
+    "z-message",
+    "Broad operation range",
+    "indexes/operations-broad.md"
+  ],
+  [
+    "middle task",
+    "SEND",
+    "m.events",
+    "m.events",
+    "m-operation",
+    "m-operation",
+    "m-message",
+    "reply:m-reply",
+    "Middle operation range",
+    "indexes/operations-middle.md"
+  ]
+];
+
+function createFlatOperationSet(t, {
+  rows = [BASIC_OPERATION_ROW],
+  columns,
+  channelPath = "channels/orders.md",
+  writeChannel = true,
+  channelSourceRefs = "all",
+  sourcesContent,
+  childMetadata
+} = {}) {
+  const root = createSet(t, { childMetadata });
+  write(root, "INDEX.md", documentSource({
+    root: true,
+    body: minimalRootBody({
+      sourcesContent,
+      operationContent: flatOperations([{ path: channelPath, rows, columns }])
+    })
+  }));
+  if (writeChannel) writeDocument(root, channelPath, { sourceRefs: channelSourceRefs });
+  return root;
+}
+
+function createShardedOperationSet(t, {
+  routes = OVERLAPPING_OPERATION_ROUTES,
+  broadRows = [ALPHA_OPERATION_ROW, ZETA_OPERATION_ROW],
+  middleRows = [MIDDLE_OPERATION_ROW],
+  writeBroad = true,
+  writeMiddle = true,
+  broadBody,
+  middleBody
+} = {}) {
+  const root = createSet(t, { childMetadata: { source_refs: "source-a" } });
+  const sourcesContent = directSources([
+    ["source-a", "pass-through", "none", "none", "none", "a.md", "none"],
+    ["source-q", "configuration", "none", "none", "none", "q.json", "none"],
+    ["source-z", "pass-through", "none", "none", "none", "z.md", "none"]
+  ]);
+  write(root, "INDEX.md", documentSource({
+    root: true,
+    body: minimalRootBody({
+      sourcesContent,
+      operationHeading: "## Operation Shards",
+      operationContent: operationShardRoutes(routes)
+    })
+  }));
+  if (writeBroad) {
+    writeOperationShard(root, "indexes/operations-broad.md", {
+      sourceRefs: "source-q",
+      groups: [
+        { path: "channels/alpha.md", rows: broadRows.slice(0, 1) },
+        { path: "channels/zeta.md", rows: broadRows.slice(1) }
+      ],
+      body: broadBody
+    });
+  }
+  if (writeMiddle) {
+    writeOperationShard(root, "indexes/operations-middle.md", {
+      sourceRefs: "source-q",
+      groups: [{ path: "channels/middle.md", rows: middleRows }],
+      body: middleBody
+    });
+  }
+  writeDocument(root, "channels/alpha.md", { sourceRefs: "source-a" });
+  writeDocument(root, "channels/zeta.md", { sourceRefs: "source-a" });
+  writeDocument(root, "channels/middle.md", { sourceRefs: "source-z" });
+  return root;
 }
 
 function ruleIds(result) {
@@ -739,6 +938,283 @@ test("DM-SRC-001 through DM-SRC-007 are cataloged for Task 5 checkpoint 2", () =
     "DM-SRC-006",
     "DM-SRC-007"
   ];
+  assert.deepEqual(expected.filter((ruleId) => !cataloged.has(ruleId)), []);
+});
+
+test("accepts DM-IDX-003 flat operation rows and records a DM-IDX-007 provenance-closed exact trace", (t) => {
+  const sourcesContent = directSources([
+    ["source-a", "pass-through", "none", "none", "none", "a.md", "none"],
+    ["source-z", "configuration", "none", "none", "none", "z.json", "none"]
+  ]);
+  const row = [
+    "SEND",
+    "orders.commands",
+    "create-order",
+    "create-order; reply:create-order-accepted",
+    "create order",
+    "Creates an order and routes its acceptance reply",
+    "workflows/create-order.md",
+    "references/order-guide.md"
+  ];
+  const root = createFlatOperationSet(t, {
+    rows: [row],
+    sourcesContent,
+    childMetadata: { source_refs: "source-a" },
+    channelSourceRefs: "source-z"
+  });
+  writeDocument(root, "workflows/create-order.md", { sourceRefs: "source-a" });
+  writeDocument(root, "references/order-guide.md", { sourceRefs: "source-z" });
+
+  const result = taskScoped(root);
+
+  assert.deepEqual(result.diagnostics, []);
+  assert.deepEqual(result.facts.core.operations?.rows.map((entry) => entry.operation), ["create-order"]);
+  const trace = result.facts.core.operationRetrieval?.exact.operation["create-order"];
+  assert.deepEqual(trace.loadedIndexPaths, ["INDEX.md"]);
+  assert.deepEqual(trace.matchedOperationNames, ["create-order"]);
+  assert.deepEqual(trace.loadedChannelPaths, ["channels/orders.md"]);
+  assert.deepEqual(trace.requiredContextPaths, ["workflows/create-order.md"]);
+  assert.deepEqual(trace.supplementalContextPaths, ["references/order-guide.md"]);
+  assert.deepEqual(trace.sourceIds, ["source-a", "source-z"]);
+  assert.deepEqual(trace.loadedSourceIndexPaths, ["INDEX.md"]);
+});
+
+test("accepts DM-IDX-005 workflows/none.md as a context path distinct from the none sentinel", (t) => {
+  const row = [...BASIC_OPERATION_ROW];
+  row[6] = "workflows/none.md";
+  const root = createFlatOperationSet(t, { rows: [row] });
+  writeDocument(root, "workflows/none.md");
+
+  assert.deepEqual(taskScoped(root).diagnostics, []);
+});
+
+test("DM-IDX-003 rejects a flat operation table with the wrong standard columns", (t) => {
+  const columns = [
+    "Action",
+    "Channel",
+    "Operation",
+    "Message",
+    "Task",
+    "Description",
+    "Required context",
+    "Supplemental context"
+  ];
+  const root = createFlatOperationSet(t, { columns });
+
+  assert.ok(ruleIds(taskScoped(root)).includes("DM-IDX-003"));
+});
+
+test("DM-IDX-003 rejects a flat channel route whose file is missing", (t) => {
+  const root = createFlatOperationSet(t, { writeChannel: false });
+
+  assert.ok(ruleIds(taskScoped(root)).includes("DM-IDX-003"));
+});
+
+for (const [name, cell, value] of [
+  ["an invalid Action", 0, "PUBLISH"],
+  ["ASCII whitespace in Channel", 1, "orders commands"],
+  ["an invalid Operation name", 2, "create/order"],
+  ["an unsorted primary Message list", 3, "z-message; a-message"],
+  ["a primary Message after a reply entry", 3, "reply:create-order-accepted; create-order"],
+  ["a malformed reply prefix", 3, "create-order; reply:"],
+  ["duplicate Task labels", 4, "create order; create order"],
+  ["an empty Summary", 5, ""],
+  ["a Summary that only repeats its Task", 5, "create order"]
+]) {
+  test(`DM-IDX-004 rejects a flat operation row with ${name}`, (t) => {
+    const row = [...BASIC_OPERATION_ROW];
+    row[cell] = value;
+    const root = createFlatOperationSet(t, { rows: [row] });
+
+    assert.ok(ruleIds(taskScoped(root)).includes("DM-IDX-004"));
+  });
+}
+
+test("DM-IDX-004 rejects a duplicate operation name across channel subsections", (t) => {
+  const root = createSet(t);
+  const secondRow = [...BASIC_OPERATION_ROW];
+  secondRow[1] = "orders.events";
+  write(root, "INDEX.md", documentSource({
+    root: true,
+    body: minimalRootBody({
+      operationContent: flatOperations([
+        { path: "channels/commands.md", rows: [BASIC_OPERATION_ROW] },
+        { path: "channels/events.md", rows: [secondRow] }
+      ])
+    })
+  }));
+  writeDocument(root, "channels/commands.md");
+  writeDocument(root, "channels/events.md");
+
+  assert.ok(ruleIds(taskScoped(root)).includes("DM-IDX-004"));
+});
+
+for (const [name, required, supplemental, files = []] of [
+  ["a non-canonical list delimiter", "workflows/a.md,workflows/b.md", "none"],
+  ["non-ASCII path ordering", "workflows/z.md, workflows/a.md", "none"],
+  ["a duplicate path", "workflows/a.md, workflows/a.md", "none"],
+  ["Reference Material in required context", "references/guide.md", "none", ["references/guide.md"]],
+  ["a channel file in supplemental context", "none", "channels/extra.md", ["channels/extra.md"]],
+  ["one path in both context columns", "workflows/a.md", "workflows/a.md", ["workflows/a.md"]],
+  ["a missing context file", "workflows/missing.md", "none"]
+]) {
+  test(`DM-IDX-005 rejects ${name}`, (t) => {
+    const row = [...BASIC_OPERATION_ROW];
+    row[6] = required;
+    row[7] = supplemental;
+    const root = createFlatOperationSet(t, { rows: [row] });
+    for (const file of files) writeDocument(root, file);
+
+    assert.ok(ruleIds(taskScoped(root)).includes("DM-IDX-005"));
+  });
+}
+
+test("accepts DM-IDX-006 overlapping operation shards and records DM-IDX-007 exact and fallback traces", (t) => {
+  const root = createShardedOperationSet(t);
+
+  const result = taskScoped(root);
+
+  assert.deepEqual(result.diagnostics, []);
+  assert.deepEqual(
+    result.facts.core.operations.rows.map((entry) => entry.operation),
+    ["a-operation", "z-operation", "m-operation"]
+  );
+  const operationTrace = result.facts.core.operationRetrieval.exact.operation["m-operation"];
+  assert.deepEqual(operationTrace.loadedIndexPaths, [
+    "indexes/operations-broad.md",
+    "indexes/operations-middle.md"
+  ]);
+  assert.deepEqual(operationTrace.falsePositiveIndexPaths, ["indexes/operations-broad.md"]);
+  assert.deepEqual(operationTrace.matchedOperationNames, ["m-operation"]);
+  assert.deepEqual(operationTrace.sourceIds, ["source-a", "source-z"]);
+  assert.equal(operationTrace.sourceIds.includes("source-q"), false);
+
+  const replyTrace = result.facts.core.operationRetrieval.exact.message["reply:m-reply"];
+  assert.deepEqual(replyTrace.loadedIndexPaths, [
+    "indexes/operations-broad.md",
+    "indexes/operations-middle.md"
+  ]);
+  assert.deepEqual(replyTrace.falsePositiveIndexPaths, ["indexes/operations-broad.md"]);
+  assert.deepEqual(replyTrace.matchedOperationNames, ["m-operation"]);
+
+  const fallback = result.facts.core.operationRetrieval.semanticFallback;
+  assert.deepEqual(fallback.loadedIndexPaths, [
+    "indexes/operations-broad.md",
+    "indexes/operations-middle.md"
+  ]);
+  assert.deepEqual(fallback.matchedOperationNames, ["a-operation", "m-operation", "z-operation"]);
+  assert.deepEqual(fallback.sourceIds, ["source-a", "source-z"]);
+});
+
+for (const [name, routeIndex, cellIndex, value] of [
+  ["Task membership that omits a shard task", 0, 0, "alpha task"],
+  ["Actions that do not equal shard actions", 0, 1, "SEND"],
+  ["a First channel that does not equal the shard minimum", 0, 2, "b.events"],
+  ["a First operation that does not equal the shard minimum", 0, 4, "b-operation"],
+  ["reply-prefixed Message bounds that omit the reply", 1, 7, "m-message"],
+  ["an empty route Summary", 1, 8, ""]
+]) {
+  test(`DM-IDX-006 rejects ${name}`, (t) => {
+    const routes = OVERLAPPING_OPERATION_ROUTES.map((row) => [...row]);
+    routes[routeIndex][cellIndex] = value;
+    const root = createShardedOperationSet(t, { routes });
+
+    assert.ok(ruleIds(taskScoped(root)).includes("DM-IDX-006"));
+  });
+}
+
+test("DM-IDX-006 rejects a missing operation-index shard", (t) => {
+  const root = createShardedOperationSet(t, { writeMiddle: false });
+
+  assert.ok(ruleIds(taskScoped(root)).includes("DM-IDX-006"));
+});
+
+test("DM-IDX-006 rejects an operation-index shard with the wrong structure", (t) => {
+  const root = createShardedOperationSet(t, { middleBody: "# Wrong Operation Index" });
+
+  assert.ok(ruleIds(taskScoped(root)).includes("DM-IDX-006"));
+});
+
+test("DM-IDX-006 rejects an empty operation-index shard", (t) => {
+  const root = createShardedOperationSet(t, {
+    middleBody: "# Messaging Operation Index\n\n## Operations\n\nnone"
+  });
+
+  assert.ok(ruleIds(taskScoped(root)).includes("DM-IDX-006"));
+});
+
+test("DM-IDX-006 rejects an unlisted operation-index shard", (t) => {
+  const root = createShardedOperationSet(t);
+  writeDocument(root, "channels/extra.md");
+  writeOperationShard(root, "indexes/operations-extra.md", {
+    groups: [{
+      path: "channels/extra.md",
+      rows: [[
+        "SEND",
+        "extra.events",
+        "extra-operation",
+        "extra-message",
+        "extra task",
+        "Handles an extra operation",
+        "none",
+        "none"
+      ]]
+    }]
+  });
+
+  assert.ok(ruleIds(taskScoped(root)).includes("DM-IDX-006"));
+});
+
+test("DM-IDX-004 rejects a duplicate operation name across operation-index shards", (t) => {
+  const duplicate = [...MIDDLE_OPERATION_ROW];
+  duplicate[2] = "a-operation";
+  const root = createShardedOperationSet(t, { middleRows: [duplicate] });
+
+  assert.ok(ruleIds(taskScoped(root)).includes("DM-IDX-004"));
+});
+
+test("DM-IDX-003 rejects one channel-file subsection split across operation-index shards", (t) => {
+  const root = createShardedOperationSet(t);
+  writeOperationShard(root, "indexes/operations-middle.md", {
+    sourceRefs: "source-q",
+    groups: [{ path: "channels/alpha.md", rows: [MIDDLE_OPERATION_ROW] }]
+  });
+
+  assert.ok(ruleIds(taskScoped(root)).includes("DM-IDX-003"));
+});
+
+test("DM-IDX-006 diagnoses a short-column Operation Shards table without throwing", (t) => {
+  const root = createSet(t);
+  write(root, "INDEX.md", documentSource({
+    root: true,
+    body: minimalRootBody({
+      operationHeading: "## Operation Shards",
+      operationContent: "| Tasks | Details |\n|---|---|\n| orders | indexes/orders.md |"
+    })
+  }));
+  let result;
+  assert.doesNotThrow(() => {
+    result = taskScoped(root);
+  });
+  assert.ok(ruleIds(result).includes("DM-IDX-006"));
+});
+
+test("DM-IDX-006 rejects content after the root Operation Shards routing table", (t) => {
+  const root = createShardedOperationSet(t);
+  const indexPath = path.join(root, "INDEX.md");
+  const content = fs.readFileSync(indexPath, "utf8").replace(
+    "\n\n## Workflows",
+    "\n\nUnexpected routing prose.\n\n## Workflows"
+  );
+  write(root, "INDEX.md", content);
+
+  assert.ok(ruleIds(taskScoped(root)).includes("DM-IDX-006"));
+});
+
+test("DM-IDX-003 through DM-IDX-007 are cataloged for Task 5 checkpoint 3", () => {
+  const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
+  const cataloged = new Set(catalog.rules.map((entry) => entry.rule_id));
+  const expected = ["DM-IDX-003", "DM-IDX-004", "DM-IDX-005", "DM-IDX-006", "DM-IDX-007"];
   assert.deepEqual(expected.filter((ruleId) => !cataloged.has(ruleId)), []);
 });
 

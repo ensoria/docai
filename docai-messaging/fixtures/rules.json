@@ -121,6 +121,36 @@
       "scope": "core"
     },
     {
+      "rule_id": "DM-IDX-003",
+      "readme_section": "§3.2 INDEX.md(required)",
+      "description": "Flat and sharded Operations content uses non-empty channel-file subsections with canonical operation-table columns and unique existing channel paths.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-IDX-004",
+      "readme_section": "§3.2 INDEX.md(required) / §3.5 Canonical Syntax and Boundaries",
+      "description": "Operation routing rows use valid actions, channels, set-unique operation names, canonical primary and reply message routing, task labels, and informative summaries.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-IDX-005",
+      "readme_section": "§3.2 INDEX.md(required)",
+      "description": "Required and supplemental context lists use canonical unique paths, preserve the none sentinel distinction, target eligible existing files, and never overlap.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-IDX-006",
+      "readme_section": "§3.2 INDEX.md(required)",
+      "description": "Operation Shards routes to unique non-empty operation-index files whose structure, Tasks, Actions, and inclusive routing bounds match their actual rows.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-IDX-007",
+      "readme_section": "§3.2 INDEX.md(required) / §6.1 Recommended Retrieval Recipe",
+      "description": "Simulated exact retrieval records every matching and false-positive shard, semantic uncertainty loads all shards, and source provenance comes from selected contract files rather than aggregate operation-index scope.",
+      "scope": "core"
+    },
+    {
       "rule_id": "DM-PARSE-001",
       "readme_section": "§3.5 Canonical Syntax and Boundaries",
       "description": "Markdown headings and backtick-fenced blocks retain deterministic source-line boundaries.",

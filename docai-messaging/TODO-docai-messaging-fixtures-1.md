@@ -460,6 +460,8 @@ test("fails when an invalid case does not emit its expected rule", () => {
 
 > **Plan change / impact (user-approved):** Task 5 は、Step 1〜4 の全 test を先に RED にして Step 5 で一括実装する順序から、`root INDEX structure`、`Sources direct/sharded resolution`、`operation routing/retrieval`、`Unprojected Operations`、`rule catalog correspondence` の垂直 slice 順へ変更する。各 slice は、対象 test の RED、最小実装、対象 test と既存回帰 test の GREEN を一つの checkpoint とし、checkpoint ごとに commit 可能な状態で停止できるようにする。公開済み interface、rule の意味、Task 5 の最終 coverage、Task 6 以降の依存関係は変更しない。`tools/lib/validators/core.mjs` は slice ごとに段階的に拡張し、`validateDocumentSet()` が identity diagnostics と Core diagnostics を一つの read-only 結果へ統合する。元の Step 5 に相当する実装は各 Step 1〜4 へ移動し、Task 5 全体の integration regression は新しい Step 5 で確認する。
 
+> **Plan change / impact (user-approved):** Checkpoint 3 の開始前に、肥大化した `tools/lib/validators/core.mjs` を Core root orchestration、Sources、operation routing の責務へ分割する。`core.mjs` は root structure と各 validator の統合だけを担当し、既存 Sources 実装を `core-sources.mjs`、Checkpoint 3 の routing model と simulated retrieval trace を `core-routing.mjs` に置く。これは内部構成だけの変更であり、`validateDocumentSet()`、既存 diagnostics、`facts.core.sources`、`facts.core.sourceResolutions` の契約を維持する。影響として内部 module 間の入力を `documentSet`、root file、root Markdown scan に固定し、Task 6 以降も対象 validator module を拡張して `core.mjs` の再肥大化を避ける。Checkpoint 3 の commit にはこの責務分割を含める。
+
 **Checkpoint boundaries:**
 
 1. root INDEX の固定構造、profile link、flat empty Operations/Workflows
@@ -470,7 +472,9 @@ test("fails when an invalid case does not emit its expected rule", () => {
 
 **Files:**
 
-- Create: `docai-messaging/tools/lib/validators/core.mjs`
+- Modify: `docai-messaging/tools/lib/validators/core.mjs`
+- Create: `docai-messaging/tools/lib/validators/core-sources.mjs`
+- Create: `docai-messaging/tools/lib/validators/core-routing.mjs`
 - Modify: `docai-messaging/fixtures/rules.json`
 - Test: `docai-messaging/tools/tests/document-set.test.mjs`
 
@@ -485,9 +489,10 @@ test("fails when an invalid case does not emit its expected rule", () => {
   - overlapping ranges、false positive load、transitive contributor chain、contributor cycle、duplicate/missing row の fixed-point resolution を検証する。
   - 対象 test の RED を確認してから最小実装し、Sources checkpoint の GREEN を確認する。
 
-- [ ] **Step 3: operation routing と retrieval trace を RED→GREEN で実装する**
+- [x] **Step 3: operation routing と retrieval trace を RED→GREEN で実装する**
   - flat rows、hierarchical bounds、Task membership、reply prefix、context list separator/order/eligibility、routing-provenance closure を検証する。
   - exact selector、semantic fallback の load-all は fixture runner の simulated retrieval trace として検証する。
+  - `facts.core.operationRetrieval` に Task、Action、Channel、Operation、Message ごとの exact trace と semantic fallback trace を保持し、fixture validator が loaded/false-positive shard、selected contract path、source resolution を検査できるようにする。operation-index shard の aggregate `source_refs` は selected-operation provenance に含めない。
   - 対象 test の RED を確認してから最小実装し、operation-routing checkpoint の GREEN を確認する。
 
 - [ ] **Step 4: Unprojected Operations を RED→GREEN で実装する**
@@ -511,6 +516,8 @@ test("fails when an invalid case does not emit its expected rule", () => {
 Checkpoint 1 の suggested commit message: `feat(messaging): validate core root index structure`
 
 Checkpoint 2 の suggested commit message: `feat(messaging): validate source catalogs and shard resolution`
+
+Checkpoint 3 の suggested commit message: `feat(messaging): validate operation routing and retrieval traces`
 
 ---
 
