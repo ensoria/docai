@@ -480,7 +480,7 @@ test("fails when an invalid case does not emit its expected rule", () => {
   - failing tests が `DM-IDX-*` の期待した欠落・順序違反で RED になることを確認してから、root structure に必要な最小 validator を実装する。
   - 対象 test と既存の document-set regression tests が GREEN であることを確認し、最初の checkpoint とする。
 
-- [ ] **Step 2: Sources direct/sharded resolution を RED→GREEN で実装する**
+- [x] **Step 2: Sources direct/sharded resolution を RED→GREEN で実装する**
   - global unique ID、ASCII order、`all` reservation、API identity/version unknown markers、Revision `none` を検証する。
   - overlapping ranges、false positive load、transitive contributor chain、contributor cycle、duplicate/missing row の fixed-point resolution を検証する。
   - 対象 test の RED を確認してから最小実装し、Sources checkpoint の GREEN を確認する。
@@ -509,6 +509,8 @@ test("fails when an invalid case does not emit its expected rule", () => {
 **Suggested commit message:** `feat(messaging): validate core index and source routing`
 
 Checkpoint 1 の suggested commit message: `feat(messaging): validate core root index structure`
+
+Checkpoint 2 の suggested commit message: `feat(messaging): validate source catalogs and shard resolution`
 
 ---
 

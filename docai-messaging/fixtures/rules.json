@@ -69,7 +69,43 @@
     {
       "rule_id": "DM-SRC-001",
       "readme_section": "§3.2 INDEX.md(required)",
-      "description": "The Sources catalog identifies the authoritative inputs for a document set.",
+      "description": "A direct Sources catalog uses its required columns and contains at least one structurally valid authoritative-input row.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-SRC-002",
+      "readme_section": "§3.2 INDEX.md(required)",
+      "description": "Source IDs use the fixed grammar, exclude the reserved all value, and are globally unique in ASCII lexical order.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-SRC-003",
+      "readme_section": "§3.2 INDEX.md(required)",
+      "description": "Unknown API identity or contract version cells have source-qualified localized markers and propagate requires-input knowledge.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-SRC-004",
+      "readme_section": "§3.2 INDEX.md(required)",
+      "description": "A sha256 source Revision contains exactly 64 lowercase hexadecimal characters; none remains valid when no stable revision exists.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-SRC-005",
+      "readme_section": "§3 File Structure / §3.2 INDEX.md(required)",
+      "description": "source_refs is all or a unique ASCII-ordered canonical ID list that resolves within the Sources catalog and covers each source shard's own rows.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-SRC-006",
+      "readme_section": "§3.2 INDEX.md(required)",
+      "description": "Source Shards routes to unique source-index files whose structure, inclusive bounds, Kinds, and non-empty rows match the root route.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-SRC-007",
+      "readme_section": "§3.2 INDEX.md(required)",
+      "description": "Fixed-point source resolution loads every matching and transitive shard, terminates contributor cycles, and finds each requested ID exactly once.",
       "scope": "core"
     },
     {
