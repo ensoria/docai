@@ -205,6 +205,24 @@
       "scope": "core"
     },
     {
+      "rule_id": "DM-MSG-001",
+      "readme_section": "§4.1 Section Rules — Message sections",
+      "description": "Primary and reply header and payload-field tables use direction-correct Required or Presence columns and values, valid Nullable values and unknown markers, and direction-correct root-row invariants.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-MSG-002",
+      "readme_section": "§4.1 Section Rules — Message sections",
+      "description": "Expanded Messages contain Headers, Bindings, and non-collapsed Payload in order, with canonical subsection states and only leading empty Headers or Bindings eligible for collapse.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-MSG-003",
+      "readme_section": "§3.4 Output Profiles and Incomplete Information / §4.1 Section Rules — Message sections",
+      "description": "Message names are valid, operation-unique, routed and lexically ordered; multi-message selections are observable one- or two-sentence rules; complete replacements retain only required routing prose and the exact matching marker.",
+      "scope": "core"
+    },
+    {
       "rule_id": "DM-PARSE-001",
       "readme_section": "§3.5 Canonical Syntax and Boundaries",
       "description": "Markdown headings and backtick-fenced blocks retain deterministic source-line boundaries.",

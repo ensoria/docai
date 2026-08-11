@@ -561,7 +561,7 @@ Checkpoint 5 の suggested commit message: `test(messaging): audit Task 5 rule t
   - operation heading/purpose、optional deprecation marker、Behavior six keys、Operation Bindings、Channel Parameters/Bindings と固定 section 順を検証する。
   - `DM-OP-001`〜`DM-OP-004` を structure、heading/placement、Behavior、bindings/Channel に割り当てる。
 
-- [ ] **Step 3: direction-correct Message grammar を RED→GREEN で実装する**
+- [x] **Step 3: direction-correct Message grammar を RED→GREEN で実装する**
   - Message identity/order/selection/replacement、SEND の Required、RECEIVE の Presence、reply の逆方向、nullable、nested ancestor applicability、`$` row invariants を検証する。
   - Headers/Bindings の leading collapse と、first expanded subsection 後の `none` heading retention を検証する。
   - `DM-MSG-001`〜`DM-MSG-003` を direction/table、collapse、identity/selection/replacement に割り当て、primary/reply Message が共有する parser を `core-messages.mjs` に実装する。

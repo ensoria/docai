@@ -195,6 +195,21 @@ function operationBody(row, overrides = {}) {
     "- delivery: none",
     "- ordering: none"
   ];
+  const messages = overrides.messages ?? [
+    overrides.messageHeading ?? `### Message ${primaryMessage}`,
+    "",
+    "#### Headers",
+    "",
+    "none",
+    "",
+    "#### Bindings",
+    "",
+    "none",
+    "",
+    "#### Payload",
+    "",
+    "none"
+  ];
   return [
     overrides.prelude,
     overrides.heading ?? `## ${action} ${channel} (${operation})`,
@@ -214,23 +229,11 @@ function operationBody(row, overrides = {}) {
     "",
     ...(overrides.channel ?? ["- Parameters: none", "- Bindings: none"]),
     "",
-    overrides.messageHeading ?? `### Message ${primaryMessage}`,
-    "",
-    "#### Headers",
-    "",
-    "none",
-    "",
-    "#### Bindings",
-    "",
-    "none",
-    "",
-    "#### Payload",
-    "",
-    "none",
+    ...messages,
     "",
     "### Reply",
     "",
-    "none",
+    ...(overrides.reply ?? ["none"]),
     "",
     "### Failure Handling",
     "",
@@ -240,6 +243,33 @@ function operationBody(row, overrides = {}) {
     "",
     "none"
   ].filter((entry) => entry !== undefined).join("\n");
+}
+
+function messageSection(name, {
+  level = 3,
+  selection,
+  content
+} = {}) {
+  const heading = "#".repeat(level);
+  const subsection = "#".repeat(level + 1);
+  return [
+    `${heading} Message ${name}`,
+    "",
+    selection,
+    ...(content ?? [
+      `${subsection} Headers`,
+      "",
+      "none",
+      "",
+      `${subsection} Bindings`,
+      "",
+      "none",
+      "",
+      `${subsection} Payload`,
+      "",
+      "none"
+    ])
+  ].filter((entry) => entry !== undefined);
 }
 
 function channelBody(rows) {
@@ -2548,6 +2578,706 @@ task6Test("DM-OP-001 through DM-OP-004 maintain Task 6 checkpoint 2 rule corresp
     catalogRuleIds: catalog.rules.map((entry) => entry.rule_id),
     testNames: task6RuleTestNames.filter((name) => name.includes("DM-OP-")),
     rulePrefixes: ["DM-OP"]
+  });
+
+  assert.deepEqual(result, { passed: true, errors: [] });
+});
+
+task6Test("accepts DM-MSG-001 SEND Required headers and nested payload fields", (t) => {
+  const root = createFlatOperationSet(t, {
+    channelBody: operationBody(BASIC_OPERATION_ROW, {
+      messages: messageSection("create-order", { content: [
+        "#### Headers", "",
+        "| Name | Type | Required | Nullable | Constraints / Meaning |",
+        "|---|---|---|---|---|",
+        "| trace-id | string | yes | no | Correlates the command trace |",
+        "", "#### Bindings", "", "none",
+        "", "#### Payload", "",
+        "**payload_required**: no", "",
+        "**media_type**: application/json", "",
+        "**payload_nullable**: no", "",
+        "```json", "{\"customer\":{\"id\":\"cus_01\"}}", "```", "",
+        "| Field | Type | Required | Nullable | Constraints / Meaning |",
+        "|---|---|---|---|---|",
+        "| customer | object | no | no | Additional properties forbidden |",
+        "| customer.id | string | yes | no | Required when customer is present and non-null |"
+      ] })
+    })
+  });
+
+  assert.ok(!ruleIds(taskScoped(root)).includes("DM-MSG-001"));
+});
+
+task6Test("accepts DM-MSG-001 RECEIVE Presence headers and a nullable root row", (t) => {
+  const row = ["RECEIVE", ...BASIC_OPERATION_ROW.slice(1)];
+  const root = createFlatOperationSet(t, {
+    rows: [row],
+    channelBody: operationBody(row, {
+      messages: messageSection("create-order", { content: [
+        "#### Headers", "",
+        "| Name | Type | Presence | Nullable | Meaning |",
+        "|---|---|---|---|---|",
+        "| trace-id | string | optional | no | May accompany the command |",
+        "", "#### Bindings", "", "none",
+        "", "#### Payload", "",
+        "**payload_presence**: always", "",
+        "**media_type**: application/json", "",
+        "**payload_nullable**: yes", "",
+        "```json", "null", "```", "",
+        "| Field | Type | Presence | Nullable | Meaning |",
+        "|---|---|---|---|---|",
+        "| $ | object | always | yes | Decoded root value |"
+      ] })
+    })
+  });
+
+  assert.ok(!ruleIds(taskScoped(root)).includes("DM-MSG-001"));
+});
+
+task6Test("accepts DM-MSG-001 reply tables with the operation direction reversed", (t) => {
+  const row = [...BASIC_OPERATION_ROW];
+  row[3] = "create-order; reply:create-order-reply";
+  const root = createFlatOperationSet(t, {
+    rows: [row],
+    channelBody: operationBody(row, {
+      reply: [
+        "- channel: orders.replies",
+        "- correlation: trace-id matches the request trace-id header",
+        "- timeout: 30 seconds -- report the order as unresolved",
+        "",
+        "#### Channel", "", "- Parameters: none", "- Bindings: none", "",
+        ...messageSection("create-order-reply", { level: 4, content: [
+          "##### Headers", "",
+          "| Name | Type | Presence | Nullable | Meaning |",
+          "|---|---|---|---|---|",
+          "| trace-id | string | always | no | Matches the request |",
+          "", "##### Bindings", "", "none",
+          "", "##### Payload", "", "none"
+        ] })
+      ]
+    })
+  });
+
+  assert.ok(!ruleIds(taskScoped(root)).includes("DM-MSG-001"));
+});
+
+task6Test("accepts DM-MSG-001 a RECEIVE operation reply with Required semantics", (t) => {
+  const row = ["RECEIVE", ...BASIC_OPERATION_ROW.slice(1)];
+  row[3] = "create-order; reply:create-order-reply";
+  const root = createFlatOperationSet(t, {
+    rows: [row],
+    channelBody: operationBody(row, { reply: [
+      "- channel: orders.replies", "- correlation: trace-id matches the request",
+      "- timeout: none", "", "#### Channel", "",
+      "- Parameters: none", "- Bindings: none", "",
+      ...messageSection("create-order-reply", { level: 4, content: [
+        "##### Headers", "",
+        "| Name | Type | Required | Nullable | Constraints / Meaning |",
+        "|---|---|---|---|---|",
+        "| trace-id | string | yes | no | Matches the request |",
+        "", "##### Bindings", "", "none", "", "##### Payload", "", "none"
+      ] })
+    ] })
+  });
+
+  assert.ok(!ruleIds(taskScoped(root)).includes("DM-MSG-001"));
+});
+
+task6Test("DM-MSG-001 rejects send-side columns in a RECEIVE payload field table", (t) => {
+  const row = ["RECEIVE", ...BASIC_OPERATION_ROW.slice(1)];
+  const root = createFlatOperationSet(t, {
+    rows: [row],
+    channelBody: operationBody(row, {
+      messages: messageSection("create-order", { content: [
+        "#### Headers", "", "none", "", "#### Bindings", "", "none",
+        "", "#### Payload", "", "**payload_presence**: always", "",
+        "**media_type**: application/json", "", "**payload_nullable**: no", "",
+        "```json", "{\"id\":\"ord_01\"}", "```", "",
+        "| Field | Type | Required | Nullable | Constraints / Meaning |",
+        "|---|---|---|---|---|",
+        "| id | string | yes | no | Order identifier |"
+      ] })
+    })
+  });
+
+  assert.ok(ruleIds(taskScoped(root)).includes("DM-MSG-001"));
+});
+
+task6Test("accepts DM-MSG-001 a normalized payload table with a final x- column", (t) => {
+  const root = createFlatOperationSet(t, {
+    channelBody: operationBody(BASIC_OPERATION_ROW, {
+      messages: messageSection("create-order", { content: [
+        "#### Headers", "", "none", "", "#### Bindings", "", "none",
+        "", "#### Payload", "", "**payload_required**: yes", "",
+        "**media_type**: application/json", "", "**payload_nullable**: no", "",
+        "```json", "{\"id\":\"ord_01\"}", "```", "",
+        "  |Field | Type | Required | Nullable | Constraints / Meaning | x-Source |  ",
+        "|---|---|---|---|---|---|",
+        "| id | string | yes | no | Order identifier | source.json |"
+      ] })
+    })
+  });
+
+  assert.ok(!ruleIds(taskScoped(root)).includes("DM-MSG-001"));
+});
+
+task6Test("accepts DM-MSG-001 empty receive-side Meaning cells", (t) => {
+  const row = ["RECEIVE", ...BASIC_OPERATION_ROW.slice(1)];
+  const root = createFlatOperationSet(t, {
+    rows: [row],
+    channelBody: operationBody(row, {
+      messages: messageSection("create-order", { content: [
+        "#### Headers", "",
+        "| Name | Type | Presence | Nullable | Meaning |",
+        "|---|---|---|---|---|",
+        "| trace-id | string | optional | no | |",
+        "", "#### Bindings", "", "none", "", "#### Payload", "",
+        "**payload_presence**: optional", "", "**media_type**: application/json", "",
+        "**payload_nullable**: no", "", "```json", "{\"id\":\"ord_01\"}", "```", "",
+        "| Field | Type | Presence | Nullable | Meaning |",
+        "|---|---|---|---|---|",
+        "| id | string | always | no | |"
+      ] })
+    })
+  });
+
+  assert.ok(!ruleIds(taskScoped(root)).includes("DM-MSG-001"));
+  assert.ok(!ruleIds(taskScoped(root)).includes("DM-MSG-002"));
+});
+
+task6Test("accepts DM-MSG-001 an empty Meaning cell in a receive-side reply", (t) => {
+  const row = [...BASIC_OPERATION_ROW];
+  row[3] = "create-order; reply:create-order-reply";
+  const root = createFlatOperationSet(t, {
+    rows: [row],
+    channelBody: operationBody(row, { reply: [
+      "- channel: orders.replies", "- correlation: trace-id matches the request",
+      "- timeout: 30 seconds -- report unresolved", "", "#### Channel", "",
+      "- Parameters: none", "- Bindings: none", "",
+      ...messageSection("create-order-reply", { level: 4, content: [
+        "##### Headers", "",
+        "| Name | Type | Presence | Nullable | Meaning |",
+        "|---|---|---|---|---|",
+        "| trace-id | string | always | no | |",
+        "", "##### Bindings", "", "none", "", "##### Payload", "", "none"
+      ] })
+    ] })
+  });
+
+  assert.ok(!ruleIds(taskScoped(root)).includes("DM-MSG-001"));
+  assert.ok(!ruleIds(taskScoped(root)).includes("DM-MSG-002"));
+});
+
+for (const [name, header, separator, row] of [
+  [
+    "a wrong payload-table first column",
+    "| Name | Type | Required | Nullable | Constraints / Meaning |",
+    "|---|---|---|---|---|",
+    "| id | string | yes | no | Order identifier |"
+  ],
+  [
+    "an x- column before the standard payload columns",
+    "| x-Source | Field | Type | Required | Nullable | Constraints / Meaning |",
+    "|---|---|---|---|---|---|",
+    "| source.json | id | string | yes | no | Order identifier |"
+  ]
+]) {
+  task6Test(`DM-MSG-001 rejects ${name}`, (t) => {
+    const root = createFlatOperationSet(t, {
+      channelBody: operationBody(BASIC_OPERATION_ROW, {
+        messages: messageSection("create-order", { content: [
+          "#### Headers", "", "none", "", "#### Bindings", "", "none",
+          "", "#### Payload", "", "**payload_required**: yes", "",
+          "**media_type**: application/json", "", "**payload_nullable**: no", "",
+          "```json", "{\"id\":\"ord_01\"}", "```", "",
+          header, separator, row
+        ] })
+      })
+    });
+    assert.ok(ruleIds(taskScoped(root)).includes("DM-MSG-001"));
+  });
+}
+
+for (const [name, table] of [
+  ["a malformed payload-table separator", [
+    "| Field | Type | Required | Nullable | Constraints / Meaning |",
+    "|---|---|---|---|--|",
+    "| id | string | yes | no | Order identifier |"
+  ]],
+  ["an inconsistent payload-table row width", [
+    "| Field | Type | Required | Nullable | Constraints / Meaning |",
+    "|---|---|---|---|---|",
+    "| id | string | yes | no |"
+  ]]
+]) {
+  task6Test(`DM-MSG-001 rejects ${name}`, (t) => {
+    const root = createFlatOperationSet(t, {
+      channelBody: operationBody(BASIC_OPERATION_ROW, {
+        messages: messageSection("create-order", { content: [
+          "#### Headers", "", "none", "", "#### Bindings", "", "none",
+          "", "#### Payload", "", "**payload_required**: yes", "",
+          "**media_type**: application/json", "", "**payload_nullable**: no", "",
+          "```json", "{\"id\":\"ord_01\"}", "```", "", ...table
+        ] })
+      })
+    });
+    assert.ok(ruleIds(taskScoped(root)).includes("DM-MSG-001"));
+  });
+}
+
+for (const [name, action, headers] of [
+  ["Presence columns in SEND headers", "SEND", [
+    "| Name | Type | Presence | Nullable | Meaning |", "|---|---|---|---|---|",
+    "| trace-id | string | always | no | Trace identifier |"
+  ]],
+  ["Required columns in RECEIVE headers", "RECEIVE", [
+    "| Name | Type | Required | Nullable | Constraints / Meaning |", "|---|---|---|---|---|",
+    "| trace-id | string | yes | no | Trace identifier |"
+  ]],
+  ["an invalid Required value", "SEND", [
+    "| Name | Type | Required | Nullable | Constraints / Meaning |", "|---|---|---|---|---|",
+    "| trace-id | string | always | no | Trace identifier |"
+  ]],
+  ["bare conditional Presence", "RECEIVE", [
+    "| Name | Type | Presence | Nullable | Meaning |", "|---|---|---|---|---|",
+    "| trace-id | string | conditional | no | Present for traced requests |"
+  ]],
+  ["the reserved none Presence value", "RECEIVE", [
+    "| Name | Type | Presence | Nullable | Meaning |", "|---|---|---|---|---|",
+    "| trace-id | string | none | no | Trace identifier |"
+  ]],
+  ["an invalid Nullable value", "SEND", [
+    "| Name | Type | Required | Nullable | Constraints / Meaning |", "|---|---|---|---|---|",
+    "| trace-id | string | yes | optional | Trace identifier |"
+  ]]
+]) {
+  task6Test(`DM-MSG-001 rejects ${name}`, (t) => {
+    const row = [action, ...BASIC_OPERATION_ROW.slice(1)];
+    const root = createFlatOperationSet(t, {
+      rows: [row],
+      channelBody: operationBody(row, {
+        messages: messageSection("create-order", { content: [
+          "#### Headers", "", ...headers,
+          "", "#### Bindings", "", "none",
+          "", "#### Payload", "", "none"
+        ] })
+      })
+    });
+    assert.ok(ruleIds(taskScoped(root)).includes("DM-MSG-001"));
+  });
+}
+
+task6Test("accepts DM-MSG-001 an unknown header cell with its post-table marker", (t) => {
+  const root = createFlatOperationSet(t, {
+    childMetadata: { knowledge: "requires-input" },
+    channelBody: operationBody(BASIC_OPERATION_ROW, {
+      messages: messageSection("create-order", { content: [
+        "#### Headers", "",
+        "| Name | Type | Required | Nullable | Constraints / Meaning |",
+        "|---|---|---|---|---|",
+        "| trace-id | unknown | yes | no | Trace identifier |",
+        "**unknown**: Type for trace-id requires the message schema",
+        "", "#### Bindings", "", "none",
+        "", "#### Payload", "", "none"
+      ] })
+    })
+  });
+
+  assert.ok(!ruleIds(taskScoped(root)).includes("DM-MSG-001"));
+});
+
+task6Test("DM-MSG-001 rejects an unknown header cell without a post-table marker", (t) => {
+  const root = createFlatOperationSet(t, {
+    channelBody: operationBody(BASIC_OPERATION_ROW, {
+      messages: messageSection("create-order", { content: [
+        "#### Headers", "",
+        "| Name | Type | Required | Nullable | Constraints / Meaning |",
+        "|---|---|---|---|---|",
+        "| trace-id | unknown | yes | no | Trace identifier |",
+        "", "#### Bindings", "", "none",
+        "", "#### Payload", "", "none"
+      ] })
+    })
+  });
+
+  assert.ok(ruleIds(taskScoped(root)).includes("DM-MSG-001"));
+});
+
+for (const [name, action, rootRow, payloadNullable] of [
+  ["a SEND root row that is not Required", "SEND", "| $ | object | no | no | Closed object |", "no"],
+  ["a RECEIVE root row that is not always present", "RECEIVE", "| $ | object | optional | no | Closed object |", "no"],
+  ["a root row whose Nullable differs from payload_nullable", "SEND", "| $ | object | yes | yes | Closed object |", "no"]
+]) {
+  task6Test(`DM-MSG-001 rejects ${name}`, (t) => {
+    const row = [action, ...BASIC_OPERATION_ROW.slice(1)];
+    const send = action === "SEND";
+    const root = createFlatOperationSet(t, {
+      rows: [row],
+      channelBody: operationBody(row, {
+        messages: messageSection("create-order", { content: [
+          "#### Headers", "", "none",
+          "", "#### Bindings", "", "none",
+          "", "#### Payload", "",
+          send ? "**payload_required**: yes" : "**payload_presence**: always", "",
+          "**media_type**: application/json", "",
+          `**payload_nullable**: ${payloadNullable}`, "",
+          "```json", "{}", "```", "",
+          send
+            ? "| Field | Type | Required | Nullable | Constraints / Meaning |"
+            : "| Field | Type | Presence | Nullable | Meaning |",
+          "|---|---|---|---|---|",
+          rootRow
+        ] })
+      })
+    });
+    assert.ok(ruleIds(taskScoped(root)).includes("DM-MSG-001"));
+  });
+}
+
+for (const [name, content] of [
+  ["both leading empty subsections collapsed", [
+    "- Headers: none", "- Bindings: none", "#### Payload", "", "none"
+  ]],
+  ["collapsed Headers before expanded Bindings", [
+    "- Headers: none",
+    "#### Bindings", "",
+    "| Protocol | Property | Value / Rule |",
+    "|---|---|---|",
+    "| kafka | key | customer identifier |",
+    "", "#### Payload", "", "none"
+  ]],
+  ["headed empty Headers before collapsed Bindings", [
+    "#### Headers", "", "none",
+    "", "- Bindings: none",
+    "#### Payload", "", "none"
+  ]],
+  ["headed empty Bindings after expanded Headers", [
+    "#### Headers", "",
+    "| Name | Type | Required | Nullable | Constraints / Meaning |",
+    "|---|---|---|---|---|",
+    "| trace-id | string | yes | no | Trace identifier |",
+    "", "#### Bindings", "", "none",
+    "", "#### Payload", "", "none"
+  ]]
+]) {
+  task6Test(`accepts DM-MSG-002 ${name}`, (t) => {
+    const root = createFlatOperationSet(t, {
+      channelBody: operationBody(BASIC_OPERATION_ROW, {
+        messages: messageSection("create-order", { content })
+      })
+    });
+    assert.ok(!ruleIds(taskScoped(root)).includes("DM-MSG-002"));
+  });
+}
+
+task6Test("accepts DM-MSG-002 exact primary and reply subsection replacements", (t) => {
+  const row = [...BASIC_OPERATION_ROW];
+  row[3] = "create-order; reply:create-order-reply";
+  const root = createFlatOperationSet(t, {
+    rows: [row],
+    channelBody: operationBody(row, {
+      messages: messageSection("create-order", { content: [
+        "#### Headers", "",
+        "**unsupported**: replaces message Headers create-order: encoded headers at source.json#/headers",
+        "", "#### Bindings", "", "none", "", "#### Payload", "", "none"
+      ] }),
+      reply: [
+        "- channel: orders.replies", "- correlation: trace-id matches the request",
+        "- timeout: 30 seconds -- report unresolved", "", "#### Channel", "",
+        "- Parameters: none", "- Bindings: none", "",
+        ...messageSection("create-order-reply", { level: 4, content: [
+          "- Headers: none", "##### Bindings", "",
+          "**unsupported**: replaces reply message Bindings create-order-reply: encoded binding at source.json#/binding",
+          "", "##### Payload", "", "none"
+        ] })
+      ]
+    })
+  });
+
+  assert.ok(!ruleIds(taskScoped(root)).includes("DM-MSG-002"));
+});
+
+for (const [name, marker] of [
+  ["a wrong primary Headers replacement unit", "**unsupported**: replaces Reply: encoded headers at source.json#/headers"],
+  ["a wrong primary Headers replacement name", "**unsupported**: replaces message Headers submit-order: encoded headers at source.json#/headers"]
+]) {
+  task6Test(`DM-MSG-002 rejects ${name}`, (t) => {
+    const root = createFlatOperationSet(t, {
+      channelBody: operationBody(BASIC_OPERATION_ROW, {
+        messages: messageSection("create-order", { content: [
+          "#### Headers", "", marker,
+          "", "#### Bindings", "", "none", "", "#### Payload", "", "none"
+        ] })
+      })
+    });
+    assert.ok(ruleIds(taskScoped(root)).includes("DM-MSG-002"));
+  });
+}
+
+task6Test("DM-MSG-002 rejects a primary replacement unit in reply Bindings", (t) => {
+  const row = [...BASIC_OPERATION_ROW];
+  row[3] = "create-order; reply:create-order-reply";
+  const root = createFlatOperationSet(t, {
+    rows: [row],
+    channelBody: operationBody(row, { reply: [
+      "- channel: orders.replies", "- correlation: trace-id matches the request",
+      "- timeout: 30 seconds -- report unresolved", "", "#### Channel", "",
+      "- Parameters: none", "- Bindings: none", "",
+      ...messageSection("create-order-reply", { level: 4, content: [
+        "- Headers: none", "##### Bindings", "",
+        "**unsupported**: replaces message Bindings create-order-reply: encoded binding at source.json#/binding",
+        "", "##### Payload", "", "none"
+      ] })
+    ] })
+  });
+
+  assert.ok(ruleIds(taskScoped(root)).includes("DM-MSG-002"));
+});
+
+task6Test("accepts DM-MSG-003 lexical primary Messages with observable selection rules", (t) => {
+  const row = [...BASIC_OPERATION_ROW];
+  row[3] = "created-order; updated-order";
+  const messages = [
+    ...messageSection("created-order", {
+      selection: "Use this message when the `event` header is `created`.",
+      content: ["- Headers: none", "- Bindings: none", "#### Payload", "", "none"]
+    }),
+    "",
+    ...messageSection("updated-order", {
+      selection: "Use this message when the `event` header is `updated`.",
+      content: ["- Headers: none", "- Bindings: none", "#### Payload", "", "none"]
+    })
+  ];
+  const root = createFlatOperationSet(t, {
+    rows: [row],
+    channelBody: operationBody(row, { messages })
+  });
+
+  const result = taskScoped(root);
+  assert.ok(!ruleIds(result).includes("DM-MSG-003"));
+  assert.deepEqual(
+    result.facts.core.messageDefinitions.byOperation["create-order"].map((entry) => entry.name),
+    ["created-order", "updated-order"]
+  );
+});
+
+task6Test("accepts DM-MSG-003 a prototype-named operation in message facts", (t) => {
+  const row = [...BASIC_OPERATION_ROW];
+  row[2] = "__proto__";
+  row[3] = "safe-message";
+  const root = createFlatOperationSet(t, { rows: [row] });
+
+  let result;
+  assert.doesNotThrow(() => {
+    result = taskScoped(root);
+  });
+  assert.equal(
+    Object.hasOwn(result.facts.core.messageDefinitions.byOperation, "__proto__"),
+    true
+  );
+});
+
+task6Test("accepts DM-MSG-003 complete primary and reply Message replacements", (t) => {
+  const row = [...BASIC_OPERATION_ROW];
+  row[3] = "create-order; reply:create-order-reply";
+  const root = createFlatOperationSet(t, {
+    rows: [row],
+    channelBody: operationBody(row, {
+      messages: messageSection("create-order", { content: [
+        "**unsupported**: replaces Message create-order: encoded envelope at source.json#/messages/create"
+      ] }),
+      reply: [
+        "- channel: orders.replies",
+        "- correlation: trace-id matches the request trace-id header",
+        "- timeout: 30 seconds -- report the order as unresolved",
+        "", "#### Channel", "", "- Parameters: none", "- Bindings: none", "",
+        ...messageSection("create-order-reply", { level: 4, content: [
+          "**unsupported**: replaces reply Message create-order-reply: encoded reply at source.json#/messages/reply"
+        ] })
+      ]
+    })
+  });
+
+  assert.ok(!ruleIds(taskScoped(root)).includes("DM-MSG-003"));
+});
+
+task6Test("accepts DM-MSG-003 selection prose retained by multi-reply replacements", (t) => {
+  const row = [...BASIC_OPERATION_ROW];
+  row[3] = "create-order; reply:accepted-reply; reply:rejected-reply";
+  const replyMessages = [
+    ...messageSection("accepted-reply", {
+      level: 4,
+      selection: "Use when the `status` header is `accepted`.",
+      content: [
+        "**unsupported**: replaces reply Message accepted-reply: encoded reply at source.json#/accepted"
+      ]
+    }),
+    "",
+    ...messageSection("rejected-reply", {
+      level: 4,
+      selection: "Use when the `status` header is `rejected`.",
+      content: ["- Headers: none", "- Bindings: none", "##### Payload", "", "none"]
+    })
+  ];
+  const root = createFlatOperationSet(t, {
+    rows: [row],
+    channelBody: operationBody(row, { reply: [
+      "- channel: orders.replies", "- correlation: trace-id matches the request",
+      "- timeout: 30 seconds -- report unresolved", "",
+      "#### Channel", "", "- Parameters: none", "- Bindings: none", "",
+      ...replyMessages
+    ] })
+  });
+
+  assert.ok(!ruleIds(taskScoped(root)).includes("DM-MSG-003"));
+});
+
+task6Test("DM-MSG-003 rejects a missing multi-reply selection rule", (t) => {
+  const row = [...BASIC_OPERATION_ROW];
+  row[3] = "create-order; reply:accepted-reply; reply:rejected-reply";
+  const root = createFlatOperationSet(t, {
+    rows: [row],
+    channelBody: operationBody(row, { reply: [
+      "- channel: orders.replies", "- correlation: trace-id matches the request",
+      "- timeout: 30 seconds -- report unresolved", "",
+      "#### Channel", "", "- Parameters: none", "- Bindings: none", "",
+      ...messageSection("accepted-reply", { level: 4 }), "",
+      ...messageSection("rejected-reply", {
+        level: 4,
+        selection: "Use when the `status` header is `rejected`."
+      })
+    ] })
+  });
+
+  assert.ok(ruleIds(taskScoped(root)).includes("DM-MSG-003"));
+});
+
+for (const [name, rowMessage, messages] of [
+  ["an invalid name", "create-order", messageSection("create/order")],
+  ["a Message set that differs from INDEX routing", "create-order", messageSection("submit-order")],
+  ["duplicate names", "create-order", [
+    ...messageSection("create-order"), "", ...messageSection("create-order")
+  ]],
+  ["primary Messages outside lexical order", "alpha-order; zeta-order", [
+    ...messageSection("zeta-order", { selection: "Use when the kind header is zeta." }), "",
+    ...messageSection("alpha-order", { selection: "Use when the kind header is alpha." })
+  ]],
+  ["a missing multi-Message selection rule", "alpha-order; zeta-order", [
+    ...messageSection("alpha-order"), "",
+    ...messageSection("zeta-order", { selection: "Use when the kind header is zeta." })
+  ]],
+  ["an unterminated multi-Message selection rule", "alpha-order; zeta-order", [
+    ...messageSection("alpha-order", { selection: "Use when the kind header is alpha" }), "",
+    ...messageSection("zeta-order", { selection: "Use when the kind header is zeta." })
+  ]],
+  ["a three-sentence multi-Message selection rule", "alpha-order; zeta-order", [
+    ...messageSection("alpha-order", { selection: "First condition. Second condition. Third condition." }), "",
+    ...messageSection("zeta-order", { selection: "Use when the kind header is zeta." })
+  ]],
+  ["selection prose on a single expanded Message", "create-order", messageSection("create-order", {
+    selection: "Use the only message."
+  })],
+  ["a replacement naming another Message", "create-order", messageSection("create-order", { content: [
+    "**unsupported**: replaces Message submit-order: encoded envelope at source.json#/messages/create"
+  ] })],
+  ["extra prose after a complete replacement", "create-order", messageSection("create-order", { content: [
+    "**unsupported**: replaces Message create-order: encoded envelope at source.json#/messages/create",
+    "Unexpected contract prose."
+  ] })],
+  ["normal subsections after a complete replacement", "create-order", messageSection("create-order", { content: [
+    "**unsupported**: replaces Message create-order: encoded envelope at source.json#/messages/create",
+    "#### Headers", "", "none", "", "#### Bindings", "", "none", "", "#### Payload", "", "none"
+  ] })]
+]) {
+  task6Test(`DM-MSG-003 rejects ${name}`, (t) => {
+    const row = [...BASIC_OPERATION_ROW];
+    row[3] = rowMessage;
+    const root = createFlatOperationSet(t, {
+      rows: [row],
+      channelBody: operationBody(row, { messages })
+    });
+    assert.ok(ruleIds(taskScoped(root)).includes("DM-MSG-003"));
+  });
+}
+
+task6Test("DM-MSG-003 rejects a reply Message name duplicated by a primary Message", (t) => {
+  const row = [...BASIC_OPERATION_ROW];
+  row[3] = "create-order; reply:create-order-reply";
+  const root = createFlatOperationSet(t, {
+    rows: [row],
+    channelBody: operationBody(row, {
+      reply: [
+        "- channel: orders.replies", "- correlation: none", "- timeout: none",
+        "", "#### Channel", "", "- Parameters: none", "- Bindings: none", "",
+        ...messageSection("create-order", { level: 4 })
+      ]
+    })
+  });
+
+  assert.ok(ruleIds(taskScoped(root)).includes("DM-MSG-003"));
+});
+
+for (const [name, content] of [
+  ["collapsed Bindings after expanded Headers", [
+    "#### Headers", "",
+    "| Name | Type | Required | Nullable | Constraints / Meaning |",
+    "|---|---|---|---|---|",
+    "| trace-id | string | yes | no | Trace identifier |",
+    "", "- Bindings: none", "#### Payload", "", "none"
+  ]],
+  ["a collapsed Payload", [
+    "- Headers: none", "- Bindings: none", "- Payload: none"
+  ]],
+  ["reordered Headers and Bindings", [
+    "#### Bindings", "", "none",
+    "", "#### Headers", "", "none",
+    "", "#### Payload", "", "none"
+  ]],
+  ["a missing Bindings subsection", [
+    "#### Headers", "", "none", "", "#### Payload", "", "none"
+  ]],
+  ["an empty Payload subsection", [
+    "- Headers: none", "- Bindings: none", "#### Payload"
+  ]],
+  ["whole-subsection unknown Headers without its marker", [
+    "#### Headers", "", "unknown",
+    "", "#### Bindings", "", "none",
+    "", "#### Payload", "", "none"
+  ]],
+  ["a malformed message Bindings table", [
+    "- Headers: none", "#### Bindings", "",
+    "| Protocol | Name | Value / Rule |",
+    "|---|---|---|",
+    "| kafka | key | customer identifier |",
+    "", "#### Payload", "", "none"
+  ]]
+]) {
+  task6Test(`DM-MSG-002 rejects ${name}`, (t) => {
+    const root = createFlatOperationSet(t, {
+      channelBody: operationBody(BASIC_OPERATION_ROW, {
+        messages: messageSection("create-order", { content })
+      })
+    });
+    assert.ok(ruleIds(taskScoped(root)).includes("DM-MSG-002"));
+  });
+}
+
+task6Test("DM-MSG-001 through DM-MSG-003 are cataloged for Task 6 checkpoint 3", () => {
+  const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
+  const cataloged = new Set(catalog.rules.map((entry) => entry.rule_id));
+  assert.deepEqual(
+    ["DM-MSG-001", "DM-MSG-002", "DM-MSG-003"]
+      .filter((ruleId) => !cataloged.has(ruleId)),
+    []
+  );
+});
+
+task6Test("DM-MSG-001 through DM-MSG-003 maintain Task 6 checkpoint 3 rule correspondence", () => {
+  const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
+  const result = auditRuleTestCorrespondence({
+    catalogRuleIds: catalog.rules.map((entry) => entry.rule_id),
+    testNames: task6RuleTestNames.filter((name) => name.includes("DM-MSG-")),
+    rulePrefixes: ["DM-MSG"]
   });
 
   assert.deepEqual(result, { passed: true, errors: [] });
