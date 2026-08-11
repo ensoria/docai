@@ -6,6 +6,7 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { loadDocumentSet, validateDocumentSet } from "../lib/document-set.mjs";
+import * as coreRouting from "../lib/validators/core-routing.mjs";
 import { restampDocumentSet } from "../restamp-document-set.mjs";
 
 const SET_DIGEST = "sha256:813b7cf8b838a5e3ba2fa494405bbf061bd1c6c0f693077d7349fd4c4d45dd2b";
@@ -123,6 +124,33 @@ function operationShardBody(groups) {
   ].join("\n");
 }
 
+function unprojectedMarker({ dimension, sourceId, identity: operationIdentity, reason }) {
+  const prefix = dimension === "unsupported"
+    ? "**unsupported**: localized: source operation"
+    : "**unknown**: source operation";
+  return `${prefix} ${sourceId} ${Buffer.byteLength(operationIdentity, "utf8")}:${operationIdentity}: ${reason}`;
+}
+
+function unprojectedShardRoutes(rows) {
+  return [
+    "### Unprojected Operation Shards",
+    "",
+    "| Source refs | Summary | Details |",
+    "|---|---|---|",
+    ...rows.map((row) => `| ${row.join(" | ")} |`)
+  ].join("\n");
+}
+
+function unprojectedShardBody(markers) {
+  return [
+    "# Messaging Unprojected Operation Index",
+    "",
+    "## Unprojected Operations",
+    "",
+    ...markers
+  ].join("\n");
+}
+
 function minimalRootBody({
   profileLink,
   sourcesContent = directSources(),
@@ -220,6 +248,23 @@ function writeOperationShard(root, relativePath, {
     sourceRefs,
     body: body ?? operationShardBody(groups)
   });
+}
+
+function writeUnprojectedShard(root, relativePath, {
+  markers,
+  sourceRefs,
+  coverage = markers.some((entry) => entry.startsWith("**unsupported**:"))
+    ? "requires-source"
+    : "complete",
+  knowledge = markers.some((entry) => entry.startsWith("**unknown**:"))
+    ? "requires-input"
+    : "complete",
+  body
+}) {
+  write(root, relativePath, documentSource({
+    metadataOverrides: { source_refs: sourceRefs, coverage, knowledge },
+    body: body ?? unprojectedShardBody(markers)
+  }));
 }
 
 const BASIC_OPERATION_ROW = [
@@ -409,7 +454,7 @@ test("accepts the DM-IDX-001 optional final Unprojected Operations section struc
     root: true,
     metadataOverrides: { coverage: "requires-source" },
     body: minimalRootBody({
-      unprojectedContent: "**unsupported**: localized: source operation source-a 7:legacy-1: unsupported source feature at source.json"
+      unprojectedContent: "**unsupported**: localized: source operation source-a 8:legacy-1: unsupported source feature at source.json"
     })
   }));
   assert.equal(ruleIds(taskScoped(root)).includes("DM-IDX-001"), false);
@@ -1215,6 +1260,546 @@ test("DM-IDX-003 through DM-IDX-007 are cataloged for Task 5 checkpoint 3", () =
   const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
   const cataloged = new Set(catalog.rules.map((entry) => entry.rule_id));
   const expected = ["DM-IDX-003", "DM-IDX-004", "DM-IDX-005", "DM-IDX-006", "DM-IDX-007"];
+  assert.deepEqual(expected.filter((ruleId) => !cataloged.has(ruleId)), []);
+});
+
+test("accepts DM-IDX-008 direct Unprojected Operations with length-prefixed ASCII and multibyte identities", (t) => {
+  const markers = [
+    unprojectedMarker({
+      dimension: "unsupported",
+      sourceId: "source-a",
+      identity: "legacy: route",
+      reason: "routing-critical selector at source.json#/operations/0"
+    }),
+    unprojectedMarker({
+      dimension: "unknown",
+      sourceId: "source-a",
+      identity: "legacy: route",
+      reason: "counterpart mapping requires projection configuration"
+    }),
+    unprojectedMarker({
+      dimension: "unknown",
+      sourceId: "source-z",
+      identity: "操作: 二",
+      reason: "operation action requires source.json#/operations/1"
+    })
+  ];
+  const root = createSet(t);
+  write(root, "INDEX.md", documentSource({
+    root: true,
+    metadataOverrides: { coverage: "requires-source", knowledge: "requires-input" },
+    body: minimalRootBody({
+      sourcesContent: directSources([
+        ["source-a", "pass-through", "none", "none", "none", "a.json", "none"],
+        ["source-z", "pass-through", "none", "none", "none", "z.json", "none"]
+      ]),
+      unprojectedContent: markers.join("\n")
+    })
+  }));
+
+  const result = taskScoped(root);
+
+  assert.deepEqual(result.diagnostics, []);
+  assert.equal(result.facts.core.unprojectedOperations.form, "direct");
+  assert.deepEqual(
+    result.facts.core.unprojectedOperations.groups.map((entry) => ({
+      sourceId: entry.sourceId,
+      identity: entry.identity,
+      dimensions: entry.dimensions
+    })),
+    [
+      { sourceId: "source-a", identity: "legacy: route", dimensions: ["unsupported", "unknown"] },
+      { sourceId: "source-z", identity: "操作: 二", dimensions: ["unknown"] }
+    ]
+  );
+  assert.deepEqual(
+    result.facts.core.unprojectedRetrieval.exactBySourceId["source-a"].loadedIndexPaths,
+    ["INDEX.md"]
+  );
+});
+
+for (const [name, transform] of [
+  ["a leading-zero identity length", (marker) => marker.replace(" 12:legacy", " 012:legacy")],
+  ["a UTF-8 byte-length mismatch", (marker) => marker.replace(/ (\d+):操作/, " 2:操作")],
+  ["a missing exact reason delimiter", (marker) => marker.replace(": operation action", ":operation action")]
+]) {
+  test(`DM-IDX-008 rejects ${name}`, (t) => {
+    const original = unprojectedMarker({
+      dimension: "unknown",
+      sourceId: "source-a",
+      identity: name.includes("UTF-8") ? "操作: 二" : "legacy route",
+      reason: "operation action requires source.json#/operations/0"
+    });
+    const root = createSet(t);
+    write(root, "INDEX.md", documentSource({
+      root: true,
+      metadataOverrides: { knowledge: "requires-input" },
+      body: minimalRootBody({ unprojectedContent: transform(original) })
+    }));
+
+    assert.ok(ruleIds(taskScoped(root)).includes("DM-IDX-008"));
+  });
+}
+
+test("DM-IDX-008 rejects an Unprojected Operations marker for an unknown source ID", (t) => {
+  const root = createSet(t);
+  write(root, "INDEX.md", documentSource({
+    root: true,
+    metadataOverrides: { coverage: "requires-source" },
+    body: minimalRootBody({
+      unprojectedContent: unprojectedMarker({
+        dimension: "unsupported",
+        sourceId: "source-missing",
+        identity: "legacy-operation",
+        reason: "zero-message operation at missing.json#/operations/0"
+      })
+    })
+  }));
+
+  assert.ok(ruleIds(taskScoped(root)).includes("DM-IDX-008"));
+});
+
+test("DM-IDX-008 rejects duplicate completeness markers for one grouping key", (t) => {
+  const marker = unprojectedMarker({
+    dimension: "unknown",
+    sourceId: "source-a",
+    identity: "legacy-operation",
+    reason: "operation action requires source.json#/operations/0"
+  });
+  const root = createSet(t);
+  write(root, "INDEX.md", documentSource({
+    root: true,
+    metadataOverrides: { knowledge: "requires-input" },
+    body: minimalRootBody({ unprojectedContent: `${marker}\n${marker}` })
+  }));
+
+  assert.ok(ruleIds(taskScoped(root)).includes("DM-IDX-008"));
+});
+
+test("DM-IDX-008 rejects marker completeness that is not aggregated by root metadata", (t) => {
+  const root = createSet(t);
+  write(root, "INDEX.md", documentSource({
+    root: true,
+    body: minimalRootBody({
+      unprojectedContent: unprojectedMarker({
+        dimension: "unsupported",
+        sourceId: "source-a",
+        identity: "legacy-operation",
+        reason: "zero-message operation at source.json#/operations/0"
+      })
+    })
+  }));
+
+  assert.ok(ruleIds(taskScoped(root)).includes("DM-IDX-008"));
+});
+
+test("accepts DM-IDX-009 sharded Unprojected Operations and records DM-IDX-010 exact and fallback traces", (t) => {
+  const firstMarkers = [
+    unprojectedMarker({
+      dimension: "unsupported",
+      sourceId: "source-a",
+      identity: "legacy-a",
+      reason: "sensitive routing-critical value withheld at source-a.json#/operations/0"
+    }),
+    unprojectedMarker({
+      dimension: "unknown",
+      sourceId: "source-z",
+      identity: "legacy-z",
+      reason: "operation action requires source-z.json#/operations/0"
+    })
+  ];
+  const secondMarkers = [unprojectedMarker({
+    dimension: "unknown",
+    sourceId: "source-a",
+    identity: "legacy-a-2",
+    reason: "counterpart mapping requires projection configuration"
+  })];
+  const root = createSet(t, { childMetadata: { source_refs: "source-a" } });
+  write(root, "INDEX.md", documentSource({
+    root: true,
+    metadataOverrides: { coverage: "requires-source", knowledge: "requires-input" },
+    body: minimalRootBody({
+      sourcesContent: directSources([
+        ["source-a", "pass-through", "none", "none", "none", "a.json", "none"],
+        ["source-z", "pass-through", "none", "none", "none", "z.json", "none"]
+      ]),
+      unprojectedContent: unprojectedShardRoutes([
+        ["source-a; source-z", "Legacy A and Z operations", "indexes/unprojected-a-z.md"],
+        ["source-a", "Additional legacy A operations", "indexes/unprojected-a.md"]
+      ])
+    })
+  }));
+  writeUnprojectedShard(root, "indexes/unprojected-a-z.md", {
+    markers: firstMarkers,
+    sourceRefs: "source-a, source-z"
+  });
+  writeUnprojectedShard(root, "indexes/unprojected-a.md", {
+    markers: secondMarkers,
+    sourceRefs: "source-a"
+  });
+
+  const result = taskScoped(root);
+
+  assert.deepEqual(result.diagnostics, []);
+  assert.equal(result.facts.core.unprojectedOperations.form, "sharded");
+  assert.deepEqual(result.facts.core.unprojectedRetrieval.exactBySourceId["source-a"], {
+    selector: { sourceId: "source-a" },
+    loadedIndexPaths: ["indexes/unprojected-a-z.md", "indexes/unprojected-a.md"],
+    matchedGroupingKeys: [
+      "source-a\u0000legacy-a",
+      "source-a\u0000legacy-a-2",
+      "source-z\u0000legacy-z"
+    ]
+  });
+  assert.deepEqual(
+    result.facts.core.unprojectedRetrieval.exactBySourceId["source-z"].loadedIndexPaths,
+    ["indexes/unprojected-a-z.md"]
+  );
+  assert.deepEqual(result.facts.core.unprojectedRetrieval.semanticFallback.loadedIndexPaths, [
+    "indexes/unprojected-a-z.md",
+    "indexes/unprojected-a.md"
+  ]);
+});
+
+for (const [name, mutate] of [
+  ["route Source refs that do not match shard markers", (routes) => { routes[0][0] = "source-z"; }],
+  ["a duplicate Details path", (routes) => { routes[1][2] = routes[0][2]; }],
+  ["an empty route Summary", (routes) => { routes[0][1] = ""; }]
+]) {
+  test(`DM-IDX-009 rejects ${name}`, (t) => {
+    const marker = unprojectedMarker({
+      dimension: "unknown",
+      sourceId: "source-a",
+      identity: "legacy-a",
+      reason: "operation action requires source-a.json#/operations/0"
+    });
+    const routes = [
+      ["source-a", "First shard", "indexes/unprojected-a.md"],
+      ["source-a", "Second shard", "indexes/unprojected-b.md"]
+    ];
+    mutate(routes);
+    const root = createSet(t, { childMetadata: { source_refs: "source-a" } });
+    write(root, "INDEX.md", documentSource({
+      root: true,
+      metadataOverrides: { knowledge: "requires-input" },
+      body: minimalRootBody({ unprojectedContent: unprojectedShardRoutes(routes) })
+    }));
+    writeUnprojectedShard(root, "indexes/unprojected-a.md", { markers: [marker], sourceRefs: "source-a" });
+    writeUnprojectedShard(root, "indexes/unprojected-b.md", {
+      markers: [marker.replace("legacy-a", "legacy-b")],
+      sourceRefs: "source-a"
+    });
+
+    assert.ok(ruleIds(taskScoped(root)).includes("DM-IDX-009"));
+  });
+}
+
+test("DM-IDX-009 rejects one grouping key split across unprojected-operation shards", (t) => {
+  const marker = unprojectedMarker({
+    dimension: "unknown",
+    sourceId: "source-a",
+    identity: "legacy-a",
+    reason: "operation action requires source-a.json#/operations/0"
+  });
+  const root = createSet(t, { childMetadata: { source_refs: "source-a" } });
+  write(root, "INDEX.md", documentSource({
+    root: true,
+    metadataOverrides: { coverage: "requires-source", knowledge: "requires-input" },
+    body: minimalRootBody({
+      unprojectedContent: unprojectedShardRoutes([
+        ["source-a", "Unknown dimension", "indexes/unprojected-unknown.md"],
+        ["source-a", "Unsupported dimension", "indexes/unprojected-unsupported.md"]
+      ])
+    })
+  }));
+  writeUnprojectedShard(root, "indexes/unprojected-unknown.md", { markers: [marker], sourceRefs: "source-a" });
+  writeUnprojectedShard(root, "indexes/unprojected-unsupported.md", {
+    markers: [marker.replace(
+      "**unknown**: source operation",
+      "**unsupported**: localized: source operation"
+    )],
+    sourceRefs: "source-a"
+  });
+
+  assert.ok(ruleIds(taskScoped(root)).includes("DM-IDX-009"));
+});
+
+test("DM-IDX-009 rejects a missing unprojected-operation shard", (t) => {
+  const root = createSet(t);
+  write(root, "INDEX.md", documentSource({
+    root: true,
+    metadataOverrides: { knowledge: "requires-input" },
+    body: minimalRootBody({
+      unprojectedContent: unprojectedShardRoutes([
+        ["source-a", "Missing legacy operations", "indexes/unprojected-missing.md"]
+      ])
+    })
+  }));
+
+  assert.ok(ruleIds(taskScoped(root)).includes("DM-IDX-009"));
+});
+
+test("DM-IDX-009 rejects an unlisted unprojected-operation shard", (t) => {
+  const marker = unprojectedMarker({
+    dimension: "unknown",
+    sourceId: "source-a",
+    identity: "legacy-a",
+    reason: "operation action requires source-a.json#/operations/0"
+  });
+  const root = createSet(t, { childMetadata: { source_refs: "source-a" } });
+  write(root, "INDEX.md", documentSource({
+    root: true,
+    metadataOverrides: { knowledge: "requires-input" },
+    body: minimalRootBody({
+      unprojectedContent: unprojectedShardRoutes([
+        ["source-a", "Listed legacy operations", "indexes/unprojected-listed.md"]
+      ])
+    })
+  }));
+  writeUnprojectedShard(root, "indexes/unprojected-listed.md", { markers: [marker], sourceRefs: "source-a" });
+  writeUnprojectedShard(root, "indexes/unprojected-unlisted.md", {
+    markers: [marker.replace("legacy-a", "legacy-unlisted")],
+    sourceRefs: "source-a"
+  });
+
+  assert.ok(ruleIds(taskScoped(root)).includes("DM-IDX-009"));
+});
+
+test("DM-IDX-009 rejects an unprojected-operation shard with the wrong fixed structure", (t) => {
+  const root = createSet(t, { childMetadata: { source_refs: "source-a" } });
+  write(root, "INDEX.md", documentSource({
+    root: true,
+    metadataOverrides: { knowledge: "requires-input" },
+    body: minimalRootBody({
+      unprojectedContent: unprojectedShardRoutes([
+        ["source-a", "Malformed legacy operations", "indexes/unprojected-malformed.md"]
+      ])
+    })
+  }));
+  writeUnprojectedShard(root, "indexes/unprojected-malformed.md", {
+    markers: [],
+    sourceRefs: "source-a",
+    body: "# Wrong Unprojected Operation Index"
+  });
+
+  assert.ok(ruleIds(taskScoped(root)).includes("DM-IDX-009"));
+});
+
+test("DM-IDX-009 rejects an empty unprojected-operation shard", (t) => {
+  const root = createSet(t, { childMetadata: { source_refs: "source-a" } });
+  write(root, "INDEX.md", documentSource({
+    root: true,
+    metadataOverrides: { knowledge: "requires-input" },
+    body: minimalRootBody({
+      unprojectedContent: unprojectedShardRoutes([
+        ["source-a", "Empty legacy operations", "indexes/unprojected-empty.md"]
+      ])
+    })
+  }));
+  writeUnprojectedShard(root, "indexes/unprojected-empty.md", {
+    markers: [],
+    sourceRefs: "source-a"
+  });
+
+  assert.ok(ruleIds(taskScoped(root)).includes("DM-IDX-009"));
+});
+
+test("DM-IDX-009 rejects shard completeness metadata that does not match its markers", (t) => {
+  const marker = unprojectedMarker({
+    dimension: "unknown",
+    sourceId: "source-a",
+    identity: "legacy-a",
+    reason: "operation action requires source-a.json#/operations/0"
+  });
+  const root = createSet(t, { childMetadata: { source_refs: "source-a" } });
+  write(root, "INDEX.md", documentSource({
+    root: true,
+    metadataOverrides: { knowledge: "requires-input" },
+    body: minimalRootBody({
+      unprojectedContent: unprojectedShardRoutes([
+        ["source-a", "Legacy operations", "indexes/unprojected-a.md"]
+      ])
+    })
+  }));
+  writeUnprojectedShard(root, "indexes/unprojected-a.md", {
+    markers: [marker],
+    sourceRefs: "source-a",
+    knowledge: "complete"
+  });
+
+  assert.ok(ruleIds(taskScoped(root)).includes("DM-IDX-009"));
+});
+
+test("DM-IDX-009 rejects shard source_refs that omits a marker source ID", (t) => {
+  const marker = unprojectedMarker({
+    dimension: "unknown",
+    sourceId: "source-a",
+    identity: "legacy-a",
+    reason: "operation action requires source-a.json#/operations/0"
+  });
+  const root = createSet(t, { childMetadata: { source_refs: "source-a" } });
+  write(root, "INDEX.md", documentSource({
+    root: true,
+    metadataOverrides: { knowledge: "requires-input" },
+    body: minimalRootBody({
+      sourcesContent: directSources([
+        ["source-a", "pass-through", "none", "none", "none", "a.json", "none"],
+        ["source-z", "configuration", "none", "none", "none", "z.json", "none"]
+      ]),
+      unprojectedContent: unprojectedShardRoutes([
+        ["source-a", "Legacy operations", "indexes/unprojected-a.md"]
+      ])
+    })
+  }));
+  writeUnprojectedShard(root, "indexes/unprojected-a.md", {
+    markers: [marker],
+    sourceRefs: "source-z"
+  });
+
+  assert.ok(ruleIds(taskScoped(root)).includes("DM-IDX-009"));
+});
+
+test("accepts DM-IDX-009 contributor source refs beyond the marker source and routes DM-IDX-010 retrieval", (t) => {
+  const marker = unprojectedMarker({
+    dimension: "unknown",
+    sourceId: "source-a",
+    identity: "legacy-a",
+    reason: "counterpart mapping requires configuration.json#/mappings/0"
+  });
+  const root = createSet(t, { childMetadata: { source_refs: "source-a" } });
+  write(root, "INDEX.md", documentSource({
+    root: true,
+    metadataOverrides: { knowledge: "requires-input" },
+    body: minimalRootBody({
+      sourcesContent: directSources([
+        ["source-a", "pass-through", "none", "none", "none", "a.json", "none"],
+        ["source-z", "configuration", "none", "none", "none", "configuration.json", "none"]
+      ]),
+      unprojectedContent: unprojectedShardRoutes([
+        ["source-a; source-z", "Legacy operation and its mapping input", "indexes/unprojected-a.md"]
+      ])
+    })
+  }));
+  writeUnprojectedShard(root, "indexes/unprojected-a.md", {
+    markers: [marker],
+    sourceRefs: "source-a, source-z"
+  });
+
+  const result = taskScoped(root);
+
+  assert.deepEqual(result.diagnostics, []);
+  assert.deepEqual(result.facts.core.unprojectedRetrieval.exactBySourceId["source-z"], {
+    selector: { sourceId: "source-z" },
+    loadedIndexPaths: ["indexes/unprojected-a.md"],
+    matchedGroupingKeys: ["source-a\u0000legacy-a"]
+  });
+});
+
+test("DM-IDX-009 diagnoses a short-column shard table without throwing", (t) => {
+  const root = createSet(t);
+  write(root, "INDEX.md", documentSource({
+    root: true,
+    body: minimalRootBody({
+      unprojectedContent: "### Unprojected Operation Shards\n\n| Source refs | Details |\n|---|---|\n| source-a | indexes/unprojected-a.md |"
+    })
+  }));
+  let result;
+  assert.doesNotThrow(() => {
+    result = taskScoped(root);
+  });
+  assert.ok(ruleIds(result).includes("DM-IDX-009"));
+});
+
+test("records DM-IDX-008 source-aware generation-failure and sensitive-withholding expectations separately", () => {
+  assert.equal(typeof coreRouting.evaluateUnprojectedSourceExpectations, "function");
+  const result = coreRouting.evaluateUnprojectedSourceExpectations([
+    {
+      sourceOperationId: "operation-1",
+      sourceId: "source-a",
+      operationIdentity: "safe-operation-1",
+      publicationSafeLocation: "source.json#/operations/0",
+      sensitiveFeatureClass: "routing-critical",
+      sensitiveValue: "tenant-secret-route"
+    },
+    {
+      sourceOperationId: "operation-2",
+      sourceId: "source-a",
+      operationIdentity: "safe-operation-1",
+      publicationSafeLocation: "source.json#/operations/1"
+    },
+    {
+      sourceOperationId: "operation-3",
+      sourceId: "source-a",
+      operationIdentity: null,
+      publicationSafeLocation: "source.json#/operations/2"
+    },
+    {
+      sourceOperationId: "operation-4",
+      sourceId: "source-a",
+      operationIdentity: "safe-operation-4",
+      publicationSafeLocation: null
+    }
+  ]);
+
+  assert.deepEqual(result, [
+    {
+      sourceOperationId: "operation-1",
+      expectation: "generation-failure",
+      reason: "grouping-key-collision"
+    },
+    {
+      sourceOperationId: "operation-2",
+      expectation: "generation-failure",
+      reason: "grouping-key-collision"
+    },
+    {
+      sourceOperationId: "operation-3",
+      expectation: "generation-failure",
+      reason: "publication-safe-operation-identity-unavailable"
+    },
+    {
+      sourceOperationId: "operation-4",
+      expectation: "generation-failure",
+      reason: "publication-safe-source-location-unavailable"
+    }
+  ]);
+
+  const nonColliding = coreRouting.evaluateUnprojectedSourceExpectations([{
+    sourceOperationId: "operation-sensitive",
+    sourceId: "source-a",
+    operationIdentity: "safe-operation-sensitive",
+    publicationSafeLocation: "source.json#/operations/3",
+    sensitiveFeatureClass: "routing-critical",
+    sensitiveValue: "tenant-secret-route"
+  }]);
+  assert.deepEqual(nonColliding, [{
+    sourceOperationId: "operation-sensitive",
+    expectation: "emit-unsupported",
+    reason: "sensitive routing-critical value withheld at source.json#/operations/3",
+    prohibitedValues: ["tenant-secret-route"]
+  }]);
+  assert.equal(nonColliding[0].reason.includes("tenant-secret-route"), false);
+
+  const revealingClass = coreRouting.evaluateUnprojectedSourceExpectations([{
+    sourceOperationId: "operation-revealing-class",
+    sourceId: "source-a",
+    operationIdentity: "safe-operation-revealing-class",
+    publicationSafeLocation: "source.json#/operations/4",
+    sensitiveFeatureClass: "routing-critical tenant-secret-route",
+    sensitiveValue: "tenant-secret-route"
+  }]);
+  assert.deepEqual(revealingClass, [{
+    sourceOperationId: "operation-revealing-class",
+    expectation: "generation-failure",
+    reason: "canonical-sensitive-feature-class-unavailable"
+  }]);
+  assert.equal(revealingClass[0].reason.includes("tenant-secret-route"), false);
+});
+
+test("DM-IDX-008 through DM-IDX-010 are cataloged for Task 5 checkpoint 4", () => {
+  const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
+  const cataloged = new Set(catalog.rules.map((entry) => entry.rule_id));
+  const expected = ["DM-IDX-008", "DM-IDX-009", "DM-IDX-010"];
   assert.deepEqual(expected.filter((ruleId) => !cataloged.has(ruleId)), []);
 });
 

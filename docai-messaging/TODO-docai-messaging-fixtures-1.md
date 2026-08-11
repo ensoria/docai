@@ -495,7 +495,7 @@ test("fails when an invalid case does not emit its expected rule", () => {
   - `facts.core.operationRetrieval` に Task、Action、Channel、Operation、Message ごとの exact trace と semantic fallback trace を保持し、fixture validator が loaded/false-positive shard、selected contract path、source resolution を検査できるようにする。operation-index shard の aggregate `source_refs` は selected-operation provenance に含めない。
   - 対象 test の RED を確認してから最小実装し、operation-routing checkpoint の GREEN を確認する。
 
-- [ ] **Step 4: Unprojected Operations を RED→GREEN で実装する**
+- [x] **Step 4: Unprojected Operations を RED→GREEN で実装する**
   - length-prefixed ASCII/multibyte identity、embedded delimiter、leading zero、byte mismatch、grouping collision、one marker per completeness dimension を検証する。
   - sensitive routing value の非開示と safe identity/location 不在時の generation-failure expectation を source-aware case として記録する。
   - 対象 test の RED を確認してから最小実装し、Unprojected Operations checkpoint の GREEN を確認する。
@@ -518,6 +518,8 @@ Checkpoint 1 の suggested commit message: `feat(messaging): validate core root 
 Checkpoint 2 の suggested commit message: `feat(messaging): validate source catalogs and shard resolution`
 
 Checkpoint 3 の suggested commit message: `feat(messaging): validate operation routing and retrieval traces`
+
+Checkpoint 4 の suggested commit message: `feat(messaging): validate unprojected operation routing`
 
 ---
 

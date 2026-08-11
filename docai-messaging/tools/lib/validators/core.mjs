@@ -1,7 +1,7 @@
 import { diagnostic } from "../diagnostics.mjs";
 import { scanMarkdown } from "../markdown.mjs";
 import { parseDocsPath } from "../paths.mjs";
-import { validateCoreRouting } from "./core-routing.mjs";
+import { validateCoreRouting, validateCoreUnprojected } from "./core-routing.mjs";
 import { validateCoreSources } from "./core-sources.mjs";
 
 function indexDiagnostic(ruleId, root, line, message) {
@@ -125,7 +125,9 @@ export function validateCoreDocumentSet(documentSet) {
     sources: null,
     sourceResolutions: {},
     operations: null,
-    operationRetrieval: null
+    operationRetrieval: null,
+    unprojectedOperations: null,
+    unprojectedRetrieval: null
   };
   if (root === undefined) return { diagnostics: [], facts };
 
@@ -147,12 +149,18 @@ export function validateCoreDocumentSet(documentSet) {
     : { diagnostics: [], facts: { operations: null, operationRetrieval: null } };
   facts.operations = routing.facts.operations;
   facts.operationRetrieval = routing.facts.operationRetrieval;
+  const unprojected = structure.diagnostics.length === 0
+    ? validateCoreUnprojected(documentSet, root, scanned.value, sources.facts)
+    : { diagnostics: [], facts: { unprojectedOperations: null, unprojectedRetrieval: null } };
+  facts.unprojectedOperations = unprojected.facts.unprojectedOperations;
+  facts.unprojectedRetrieval = unprojected.facts.unprojectedRetrieval;
   return {
     diagnostics: [
       ...profile.diagnostics,
       ...structure.diagnostics,
       ...sources.diagnostics,
-      ...routing.diagnostics
+      ...routing.diagnostics,
+      ...unprojected.diagnostics
     ],
     facts
   };

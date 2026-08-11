@@ -151,6 +151,24 @@
       "scope": "core"
     },
     {
+      "rule_id": "DM-IDX-008",
+      "readme_section": "§3.2 INDEX.md(required) / §3.6 Source Integration and Publication Safety",
+      "description": "Direct Unprojected Operations use source-resolving UTF-8 byte-length-prefixed grouping keys, at most one marker per completeness dimension, root completeness aggregation, and source-aware non-disclosure or generation-failure expectations.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-IDX-009",
+      "readme_section": "§3.2 INDEX.md(required)",
+      "description": "Unprojected Operation Shards routes to unique non-empty index files whose fixed structure, Source refs, marker completeness, and grouping-key ownership match their actual markers.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-IDX-010",
+      "readme_section": "§3.2 INDEX.md(required) / §6.1 Recommended Retrieval Recipe",
+      "description": "Unprojected-operation exact retrieval loads every shard listing the selected source ID, while semantic uncertainty loads every unprojected-operation shard.",
+      "scope": "core"
+    },
+    {
       "rule_id": "DM-PARSE-001",
       "readme_section": "§3.5 Canonical Syntax and Boundaries",
       "description": "Markdown headings and backtick-fenced blocks retain deterministic source-line boundaries.",
