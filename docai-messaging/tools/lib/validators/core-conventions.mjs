@@ -1,7 +1,9 @@
 import { diagnostic } from "../diagnostics.mjs";
+import { parseExactJson } from "../json-value.mjs";
 import { scanMarkdown } from "../markdown.mjs";
+import { parsePipeTable } from "../tables.mjs";
 
-const CONVENTION_HEADINGS = [
+export const CONVENTION_HEADINGS = [
   "Environments",
   "Protocols and Bindings",
   "Authentication",
@@ -161,4 +163,215 @@ export function validateCoreConventions(documentSet) {
       }
     }
   };
+}
+
+function scalarCompare(left, right) {
+  const leftScalars = Array.from(left, (value) => value.codePointAt(0));
+  const rightScalars = Array.from(right, (value) => value.codePointAt(0));
+  for (let index = 0; index < Math.min(leftScalars.length, rightScalars.length); index += 1) {
+    if (leftScalars[index] !== rightScalars[index]) return leftScalars[index] - rightScalars[index];
+  }
+  return leftScalars.length - rightScalars.length;
+}
+
+function compactJsonString(source) {
+  let value;
+  try { value = parseExactJson(source); } catch { return false; }
+  if (typeof value !== "string") return false;
+  let inString = false;
+  let escaped = false;
+  for (const character of source) {
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (character === "\\") escaped = true;
+      else if (character === '"') inString = false;
+    } else if (character === '"') {
+      inString = true;
+    } else if (/\s/u.test(character)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function formatUses(messageFacts) {
+  return Object.values(messageFacts?.messageDefinitions?.byOperation ?? {})
+    .flatMap((definitions) => definitions)
+    .flatMap((definition) => (definition.formatUses ?? []).map((use) => ({
+      ...use,
+      path: definition.path
+    })));
+}
+
+function cellFormatFragments(cell) {
+  const fragments = [];
+  let cursor = 0;
+  while (cursor < cell.length) {
+    const start = cell.indexOf("`", cursor);
+    if (start === -1) break;
+    let delimiterLength = 1;
+    while (cell[start + delimiterLength] === "`") delimiterLength += 1;
+    const delimiter = "`".repeat(delimiterLength);
+    const end = cell.indexOf(delimiter, start + delimiterLength);
+    if (end === -1) break;
+    const content = cell.slice(start + delimiterLength, end);
+    for (const keyword of ["format", "format_annotation"]) {
+      const prefix = `${keyword}=`;
+      if (content.startsWith(prefix)) {
+        fragments.push({
+          format: content.slice(prefix.length),
+          role: keyword === "format" ? "constraint" : "annotation"
+        });
+      }
+    }
+    cursor = end + delimiterLength;
+  }
+  return fragments;
+}
+
+function scannedFormatUses(documentSet, routingFacts) {
+  const uses = [];
+  const rows = routingFacts.operations?.rows ?? [];
+  const eligiblePaths = new Set(rows.flatMap((row) => [row.channelPath, ...row.requiredContexts]));
+  for (const file of documentSet.files) {
+    if (!eligiblePaths.has(file.path)) continue;
+    const scanned = scanMarkdown({ text: file.content, file: file.path });
+    if (scanned.value === null) continue;
+    const lines = scanned.value.lines.filter((line) => !line.inFence);
+    for (let index = 0; index < lines.length; index += 1) {
+      if (!lines[index].text.trimStart().startsWith("|")) continue;
+      const table = parsePipeTable(lines.slice(index)).value;
+      if (table === null) continue;
+      const operationHeading = [...scanned.value.headings]
+        .reverse()
+        .find((heading) => heading.level === 2 && heading.line < table.startLine);
+      const operation = operationHeading?.text.match(/\(([^()]+)\)$/)?.[1] ?? null;
+      const meaningIndex = table.header.findIndex((cell) => (
+        cell === "Constraints / Meaning" || cell === "Meaning"
+      ));
+      if (meaningIndex === -1) {
+        while (lines[index + 1]?.line <= table.endLine) index += 1;
+        continue;
+      }
+      for (const row of table.rows) {
+        for (const fragment of cellFormatFragments(row[meaningIndex])) {
+          uses.push({ ...fragment, operation, path: file.path });
+        }
+      }
+      while (lines[index + 1]?.line <= table.endLine) index += 1;
+    }
+  }
+  return uses;
+}
+
+export function validateCoreFormatCatalog(documentSet, routingFacts, messageFacts) {
+  const combinedUses = [...formatUses(messageFacts), ...scannedFormatUses(documentSet, routingFacts)];
+  const uses = combinedUses.filter((use, index) => combinedUses.findIndex((candidate) => (
+    candidate.format === use.format
+      && candidate.role === use.role
+      && candidate.operation === use.operation
+      && candidate.path === use.path
+  )) === index);
+  if (uses.length === 0) return { diagnostics: [], facts: { formats: [] } };
+  const file = documentSet.files.find((entry) => entry.path === "CONVENTIONS.md");
+  if (file === undefined) {
+    return { diagnostics: [conventionsDiagnostic("DM-CONV-003", null, 1, "Format fragments require a Data Representation catalog.")], facts: { formats: [] } };
+  }
+  const scanned = scanMarkdown({ text: file.content, file: file.path });
+  if (scanned.value === null) return { diagnostics: [], facts: { formats: [] } };
+  const heading = scanned.value.headings.find((entry) => entry.level === 2 && entry.text === "Data Representation");
+  const next = scanned.value.headings.find((entry) => entry.level <= 2 && entry.line > (heading?.line ?? Number.MAX_SAFE_INTEGER));
+  const lines = heading === undefined ? [] : sectionLines(file, scanned.value, heading, next);
+  const first = lines.findIndex((line) => line.text !== "");
+  const table = first === -1 ? null : parsePipeTable(lines.slice(first)).value;
+  const diagnostics = [];
+  const rows = [];
+  if (table === null
+    || table.header.length !== 3
+    || !["Format", "Role", "Meaning"].every((cell, index) => table.header[index] === cell)
+    || table.rows.length === 0) {
+    diagnostics.push(conventionsDiagnostic(
+      "DM-CONV-003",
+      file,
+      lines[first]?.line ?? heading?.line ?? 1,
+      "Expanded Data Representation must begin with one non-empty Format | Role | Meaning table when format fragments are used."
+    ));
+  } else {
+    const additionalFormatTable = lines.some((line, index) => {
+      if (line.line <= table.endLine || !line.text.trimStart().startsWith("|")) return false;
+      const parsed = parsePipeTable(lines.slice(index)).value;
+      return parsed !== null
+        && parsed.header.length === 3
+        && ["Format", "Role", "Meaning"].every((cell, column) => parsed.header[column] === cell);
+    });
+    if (additionalFormatTable) {
+      diagnostics.push(conventionsDiagnostic(
+        "DM-CONV-003",
+        file,
+        table.endLine + 1,
+        "Data Representation contains exactly one Format catalog table."
+      ));
+    }
+    const keys = new Set();
+    let previous = null;
+    const meanings = new Map();
+    for (const row of table.rows) {
+      const [format, role, meaning] = row;
+      const key = `${format}\u0000${role}`;
+      const ordered = previous === null
+        || scalarCompare(previous.format, format) < 0
+        || (previous.format === format && previous.role < role);
+      if (!compactJsonString(format)
+        || !["constraint", "annotation"].includes(role)
+        || meaning === ""
+        || keys.has(key)
+        || !ordered) {
+        diagnostics.push(conventionsDiagnostic(
+          "DM-CONV-003",
+          file,
+          table.startLine,
+          "Format catalog rows require compact JSON-string identities, canonical roles, complete meanings, uniqueness, and canonical ordering."
+        ));
+        break;
+      }
+      keys.add(key);
+      rows.push({ format, role, meaning });
+      const priorMeaning = meanings.get(format);
+      if (priorMeaning !== undefined && priorMeaning === meaning) {
+        diagnostics.push(conventionsDiagnostic(
+          "DM-CONV-003",
+          file,
+          table.startLine,
+          "Constraint and annotation roles for one Format must state their behavioral distinction."
+        ));
+      }
+      meanings.set(format, meaning);
+      previous = { format, role };
+    }
+  }
+  for (const use of uses) {
+    if (rows.filter((row) => row.format === use.format && row.role === use.role).length !== 1) {
+      diagnostics.push(conventionsDiagnostic(
+        "DM-CONV-003",
+        file,
+        heading?.line ?? 1,
+        `Format fragment ${use.format} (${use.role}) must resolve to exactly one Data Representation row.`
+      ));
+    }
+    const affectedRows = (routingFacts.operations?.rows ?? []).filter((row) => (
+      row.operation === use.operation || row.requiredContexts.includes(use.path)
+    ));
+    for (const routed of affectedRows) {
+      if (routed.conventions !== "all"
+        && !(Array.isArray(routed.conventions) && routed.conventions.includes("Data Representation"))) {
+        diagnostics.push(conventionsDiagnostic(
+          "DM-CONV-003",
+          file,
+          heading?.line ?? 1,
+          `Operation '${routed.operation}' or one of its required workflows uses a format fragment but its selective convention dependency closure omits Data Representation.`
+        ));
+      }
+    }
+  }
+  return { diagnostics, facts: { formats: rows } };
 }

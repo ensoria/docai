@@ -272,6 +272,47 @@ function messageSection(name, {
   ].filter((entry) => entry !== undefined);
 }
 
+function payloadMessage(name, payload, { level = 3, selection } = {}) {
+  const subsection = "#".repeat(level + 1);
+  return messageSection(name, {
+    level,
+    selection,
+    content: [
+      `${subsection} Headers`, "", "none",
+      "", `${subsection} Bindings`, "", "none",
+      "", `${subsection} Payload`, "", ...payload
+    ]
+  });
+}
+
+function jsonPayload({
+  direction = "SEND",
+  marker,
+  mediaType = "application/json",
+  nullable = "no",
+  example = '{"id":"ord_01"}',
+  rows = ["| id | string | yes | no | Order identifier |"],
+  beforeRepresentation = [],
+  afterRepresentation = []
+} = {}) {
+  const send = direction === "SEND";
+  return [
+    marker ?? (send ? "**payload_required**: yes" : "**payload_presence**: always"),
+    "",
+    ...beforeRepresentation,
+    ...(beforeRepresentation.length === 0 ? [] : [""]),
+    `**media_type**: ${mediaType}`, "",
+    `**payload_nullable**: ${nullable}`, "",
+    "```json", example, "```", "",
+    send
+      ? "| Field | Type | Required | Nullable | Constraints / Meaning |"
+      : "| Field | Type | Presence | Nullable | Meaning |",
+    "|---|---|---|---|---|",
+    ...rows,
+    ...afterRepresentation
+  ];
+}
+
 function channelBody(rows) {
   return rows.map((row) => operationBody(row)).join("\n\n");
 }
@@ -3280,6 +3321,595 @@ task6Test("DM-MSG-001 through DM-MSG-003 maintain Task 6 checkpoint 3 rule corre
     rulePrefixes: ["DM-MSG"]
   });
 
+  assert.deepEqual(result, { passed: true, errors: [] });
+});
+
+task6Test("accepts DM-MSG-004 whole-payload representation-set unknown", (t) => {
+  const root = createFlatOperationSet(t, {
+    childMetadata: { knowledge: "requires-input" },
+    channelBody: operationBody(BASIC_OPERATION_ROW, {
+      messages: payloadMessage("create-order", [
+        "**payload_required**: unknown",
+        "**unknown**: payload requiredness requires the message schema",
+        "unknown",
+        "**unknown**: payload representation set requires the wire contract"
+      ])
+    })
+  });
+  assert.ok(!ruleIds(taskScoped(root)).includes("DM-MSG-004"));
+});
+
+task6Test("accepts DM-MSG-004 representation-local field-collection unknown", (t) => {
+  const root = createFlatOperationSet(t, {
+    childMetadata: { knowledge: "requires-input" },
+    channelBody: operationBody(BASIC_OPERATION_ROW, {
+      messages: payloadMessage("create-order", [
+        "**payload_required**: yes", "",
+        "**media_type**: application/json", "",
+        "**payload_nullable**: unknown",
+        "**unknown**: payload nullability requires the message schema",
+        "unknown",
+        "**unknown**: payload field collection requires the message schema"
+      ])
+    })
+  });
+  assert.ok(!ruleIds(taskScoped(root)).includes("DM-MSG-004"));
+});
+
+task6Test("accepts DM-MSG-004 a named-sibling field table with canonical example omission", (t) => {
+  const root = createFlatOperationSet(t, {
+    childMetadata: { knowledge: "requires-input" },
+    channelBody: operationBody(BASIC_OPERATION_ROW, {
+      messages: payloadMessage("create-order", [
+        "**payload_required**: yes", "", "**media_type**: application/json", "",
+        "**payload_nullable**: no", "",
+        "| Field | Type | Required | Nullable | Constraints / Meaning |",
+        "|---|---|---|---|---|",
+        "| id | string | yes | no | Order identifier |",
+        "**unknown**: additional unnamed field requires the complete message schema"
+      ])
+    })
+  });
+  const ids = ruleIds(taskScoped(root));
+  assert.ok(!ids.includes("DM-MSG-001"));
+  assert.ok(!ids.includes("DM-MSG-004"));
+  assert.ok(!ids.includes("DM-MSG-005"));
+});
+
+task6Test("accepts DM-MSG-004 an opaque raw-binary representation", (t) => {
+  const root = createFlatOperationSet(t, {
+    channelBody: operationBody(BASIC_OPERATION_ROW, {
+      messages: payloadMessage("create-order", [
+        "**payload_required**: yes", "",
+        "**media_type**: application/octet-stream", "",
+        "Opaque image bytes are limited to 2 MiB and carry a SHA-256 integrity digest."
+      ])
+    })
+  });
+  assert.ok(!ruleIds(taskScoped(root)).includes("DM-MSG-004"));
+});
+
+task6Test("accepts DM-MSG-004 an exact payload-representation replacement", (t) => {
+  const root = createFlatOperationSet(t, {
+    childMetadata: { coverage: "requires-source" },
+    channelBody: operationBody(BASIC_OPERATION_ROW, {
+      messages: payloadMessage("create-order", [
+        "**payload_required**: yes", "",
+        "**unsupported**: replaces payload representation create-order 16:application/json: recursive schema at source.json#/payload"
+      ])
+    })
+  });
+  assert.ok(!ruleIds(taskScoped(root)).includes("DM-MSG-004"));
+});
+
+task6Test("accepts DM-MSG-004 receive-side exact-condition payload presence", (t) => {
+  const row = ["RECEIVE", ...BASIC_OPERATION_ROW.slice(1)];
+  const root = createFlatOperationSet(t, {
+    rows: [row],
+    channelBody: operationBody(row, {
+      messages: payloadMessage("create-order", jsonPayload({
+        direction: "RECEIVE",
+        marker: "**payload_presence**: when the broker delivery contains content bytes",
+        rows: ["| id | string | always | no | Order identifier |"]
+      }))
+    })
+  });
+  assert.ok(!ruleIds(taskScoped(root)).includes("DM-MSG-004"));
+});
+
+task6Test("accepts DM-MSG-004 a non-empty reply Payload in the reversed direction", (t) => {
+  const row = [...BASIC_OPERATION_ROW];
+  row[3] = "create-order; reply:create-order-reply";
+  const root = createFlatOperationSet(t, {
+    rows: [row],
+    channelBody: operationBody(row, { reply: [
+      "- channel: orders.replies", "- correlation: trace-id matches the request",
+      "- timeout: 30 seconds -- report unresolved", "", "#### Channel", "",
+      "- Parameters: none", "- Bindings: none", "",
+      ...payloadMessage("create-order-reply", jsonPayload({
+        direction: "RECEIVE",
+        rows: ["| id | string | always | no | Order identifier |"]
+      }), { level: 4 })
+    ] })
+  });
+  assert.ok(!ruleIds(taskScoped(root)).includes("DM-MSG-004"));
+});
+
+for (const [name, payload] of [
+  ["a receive-side marker in SEND", jsonPayload({ marker: "**payload_presence**: always" })],
+  ["an invalid whole-payload value", jsonPayload({ marker: "**payload_required**: optional" })],
+  ["a missing key-local marker", [
+    "**payload_required**: unknown", "", "**media_type**: application/json", "",
+    "**payload_nullable**: no", "", "```json", "{}", "```", "",
+    "| Field | Type | Required | Nullable | Constraints / Meaning |",
+    "|---|---|---|---|---|", "| $ | object | yes | no | Additional properties forbidden |"
+  ]],
+  ["the forbidden unknown media type", jsonPayload({ mediaType: "unknown" })],
+  ["a non-canonical media type", jsonPayload({ mediaType: "Application/JSON" })],
+  ["an invalid payload_nullable value", jsonPayload({ nullable: "optional" })],
+  ["a missing concrete example", [
+    "**payload_required**: yes", "", "**media_type**: application/json", "",
+    "**payload_nullable**: no", "",
+    "| Field | Type | Required | Nullable | Constraints / Meaning |",
+    "|---|---|---|---|---|", "| id | string | yes | no | Order identifier |"
+  ]],
+  ["a whole-payload unknown form with a representation", [
+    "**payload_required**: yes", "", "unknown",
+    "**unknown**: payload representation set requires the wire contract", "",
+    "**media_type**: application/json"
+  ]],
+  ["a byte-length-mismatched representation replacement", [
+    "**payload_required**: yes", "",
+    "**unsupported**: replaces payload representation create-order 15:application/json: recursive schema"
+  ]],
+  ["structured JSON disguised as raw binary", [
+    "**payload_required**: yes", "", "**media_type**: application/json", "",
+    "Opaque structured bytes are limited to 2 MiB and have no integrity metadata."
+  ]],
+  ["structured XML disguised as raw binary", [
+    "**payload_required**: yes", "", "**media_type**: application/xml", "",
+    "Opaque structured bytes are limited to 2 MiB and have no integrity metadata."
+  ]],
+  ["parameterized JSON disguised as raw binary", [
+    "**payload_required**: yes", "", "**media_type**: application/json;charset=utf-8", "",
+    "Opaque structured bytes are limited to 2 MiB and have no integrity metadata."
+  ]],
+  ["structured YAML disguised as raw binary", [
+    "**payload_required**: yes", "", "**media_type**: application/yaml", "",
+    "Opaque structured bytes are limited to 2 MiB and have no integrity metadata."
+  ]],
+  ["prose between payload nullability and its concrete example", [
+    "**payload_required**: yes", "", "**media_type**: application/json", "",
+    "**payload_nullable**: no", "", "Unexpected representation prose.", "",
+    "```json", '{"id":"ord_01"}', "```", "",
+    "| Field | Type | Required | Nullable | Constraints / Meaning |",
+    "|---|---|---|---|---|", "| id | string | yes | no | Order identifier |"
+  ]]
+]) {
+  task6Test(`DM-MSG-004 rejects ${name}`, (t) => {
+    const root = createFlatOperationSet(t, {
+      channelBody: operationBody(BASIC_OPERATION_ROW, {
+        messages: payloadMessage("create-order", payload)
+      })
+    });
+    assert.ok(ruleIds(taskScoped(root)).includes("DM-MSG-004"));
+  });
+}
+
+task6Test("accepts DM-MSG-005 nested example coverage, object openness, and ordered constraints", (t) => {
+  const root = createFlatOperationSet(t, {
+    channelBody: operationBody(BASIC_OPERATION_ROW, {
+      messages: payloadMessage("create-order", jsonPayload({
+        example: '{"customer":{"id":"cus_01"},"attempts":2}',
+        rows: [
+          "| customer | object | yes | no | Additional properties forbidden |",
+          "| customer.id | string | yes | no | `minLength=1`; `maxLength=40`; Customer identifier |",
+          "| attempts | int | yes | no | `minimum=0`; `maximum=5`; Attempt count |"
+        ]
+      }))
+    })
+  });
+  assert.ok(!ruleIds(taskScoped(root)).includes("DM-MSG-005"));
+});
+
+task6Test("accepts DM-MSG-005 object openness through an API-wide Data Representation default", (t) => {
+  const root = createFlatOperationSet(t, {
+    channelBody: operationBody(BASIC_OPERATION_ROW, {
+      messages: payloadMessage("create-order", jsonPayload({
+        example: '{"customer":{"id":"cus_01"}}',
+        rows: [
+          "| customer | object | yes | no | Customer record |",
+          "| customer.id | string | yes | no | Customer identifier |"
+        ]
+      }))
+    })
+  });
+  write(root, "CONVENTIONS.md", documentSource({ body: conventionsBody({
+    "Data Representation": ["Object containers forbid additional properties by default unless a local deviation states otherwise."]
+  }) }));
+  assert.ok(!ruleIds(taskScoped(root)).includes("DM-MSG-005"));
+});
+
+task6Test("accepts DM-MSG-005 homogeneous array container and item field paths", (t) => {
+  const root = createFlatOperationSet(t, {
+    channelBody: operationBody(BASIC_OPERATION_ROW, {
+      messages: payloadMessage("create-order", jsonPayload({
+        example: '{"items":[{"id":"item_01"}]}',
+        rows: [
+          "| items | object[] | yes | no | Order items |",
+          "| items[] | object | yes | no | Additional properties forbidden |",
+          "| items[].id | string | yes | no | Item identifier |"
+        ]
+      }))
+    })
+  });
+  assert.ok(!ruleIds(taskScoped(root)).includes("DM-MSG-005"));
+});
+
+task6Test("accepts DM-MSG-005 null independently of non-null numeric constraints", (t) => {
+  const root = createFlatOperationSet(t, {
+    channelBody: operationBody(BASIC_OPERATION_ROW, {
+      messages: payloadMessage("create-order", jsonPayload({
+        example: '{"age":null}',
+        rows: ["| age | int | yes | yes | `minimum=10`; `maximum=5`; Age when non-null |"]
+      }))
+    })
+  });
+  assert.ok(!ruleIds(taskScoped(root)).includes("DM-MSG-005"));
+});
+
+for (const [name, payload] of [
+  ["an invalid field path", jsonPayload({ rows: [
+    "| customer..id | string | yes | no | Customer identifier |"
+  ] })],
+  ["an invalid field type", jsonPayload({ rows: [
+    "| id | uuid | yes | no | Order identifier |"
+  ] })],
+  ["a null Type row that is not nullable", jsonPayload({
+    example: '{"id":null}', rows: ["| id | null | yes | no | Exact null value |"]
+  })],
+  ["a null root example when the payload is non-nullable", jsonPayload({
+    example: "null", rows: ["| $ | object | yes | no | Decoded object root |"]
+  })],
+  ["an example value that disagrees with its field Type", jsonPayload({
+    example: '{"id":42}', rows: ["| id | string | yes | no | Order identifier |"]
+  })],
+  ["heterogeneous example array items", jsonPayload({
+    example: '{"items":[1,"two"]}', rows: [
+      "| items | number[] | yes | no | Numeric values |",
+      "| items[] | number | yes | no | Numeric value |"
+    ]
+  })],
+  ["an example member missing from the field table", jsonPayload({
+    example: '{"id":"ord_01","status":"created"}'
+  })],
+  ["a missing top-level required example field", jsonPayload({
+    example: "{}", rows: ["| id | string | yes | no | Order identifier |"]
+  })],
+  ["a missing nested required field under a present ancestor", jsonPayload({
+    example: '{"customer":{}}', rows: [
+      "| customer | object | yes | no | Additional properties forbidden |",
+      "| customer.id | string | yes | no | Customer identifier |"
+    ]
+  })],
+  ["an object row without an openness rule", jsonPayload({
+    example: '{"customer":{"id":"cus_01"}}',
+    rows: [
+      "| customer | object | yes | no | Customer record |",
+      "| customer.id | string | yes | no | Customer identifier |"
+    ]
+  })],
+  ["out-of-order constraint fragments", jsonPayload({ rows: [
+    "| id | string | yes | no | `maxLength=40`; `minLength=1`; Order identifier |"
+  ] })],
+  ["a non-compact constraint value", jsonPayload({ rows: [
+    "| id | string | yes | no | `enum=[\"a\", \"b\"]`; Order identifier |"
+  ] })],
+  ["a type-invalid constraint value", jsonPayload({ rows: [
+    "| id | string | yes | no | `minLength=\"one\"`; Order identifier |"
+  ] })],
+  ["a type-invalid const on an optional absent field", jsonPayload({ rows: [
+    "| id | string | yes | no | Order identifier |",
+    "| status | string | no | no | `const=1`; Optional status |"
+  ] })],
+  ["an invalid pattern on an optional absent field", jsonPayload({ rows: [
+    "| id | string | yes | no | Order identifier |",
+    "| status | string | no | no | `pattern=\"[\"`; Optional status |"
+  ] })],
+  ["mutually exclusive format constraint roles", jsonPayload({ rows: [
+    "| id | string | yes | no | `format=\"uuid\"`; `format_annotation=\"uuid\"`; Order identifier |"
+  ] })],
+  ["contradictory constraints on an optional absent field", jsonPayload({ rows: [
+    "| id | string | yes | no | Order identifier |",
+    "| attempts | int | no | no | `minimum=10`; `maximum=5`; Attempt count |"
+  ] })],
+  ["an enormous integer constraint without throwing", jsonPayload({ rows: [
+    "| id | string | yes | no | `minLength=1e999999999999999999999`; Order identifier |"
+  ] })],
+  ["duplicate JSON example object names", jsonPayload({ example: '{"id":"a","id":"b"}' })],
+  ["malformed JSON example content", jsonPayload({ example: '{"id":}' })]
+]) {
+  task6Test(`DM-MSG-005 rejects ${name}`, (t) => {
+    const root = createFlatOperationSet(t, {
+      channelBody: operationBody(BASIC_OPERATION_ROW, {
+        messages: payloadMessage("create-order", payload)
+      })
+    });
+    assert.ok(ruleIds(taskScoped(root)).includes("DM-MSG-005"));
+  });
+}
+
+task6Test("accepts DM-MSG-006 multiple media types with explicit selection and branching", (t) => {
+  const second = jsonPayload({
+    mediaType: "application/vnd.order+json",
+    example: '{"code":"created"}',
+    rows: ["| code | string | yes | no | Result code |"]
+  }).slice(2);
+  const root = createFlatOperationSet(t, {
+    channelBody: operationBody(BASIC_OPERATION_ROW, {
+      messages: payloadMessage("create-order", [
+        ...jsonPayload({
+          beforeRepresentation: [
+            "The sender selects the vendor representation when negotiated, and the receiver branches on the wire media type."
+          ]
+        }),
+        "", ...second
+      ])
+    })
+  });
+  assert.ok(!ruleIds(taskScoped(root)).includes("DM-MSG-006"));
+});
+
+task6Test("accepts DM-MSG-006 ordered tagged variants with exact discriminator const values", (t) => {
+  const root = createFlatOperationSet(t, {
+    channelBody: operationBody(BASIC_OPERATION_ROW, {
+      messages: payloadMessage("create-order", [
+        "**payload_required**: yes", "", "**media_type**: application/json", "",
+        "**payload_nullable**: no", "",
+        "**variant**: kind = \"created\"", "",
+        "```json", '{"kind":"created","id":"ord_01"}', "```", "",
+        "| Field | Type | Required | Nullable | Constraints / Meaning |",
+        "|---|---|---|---|---|",
+        "| kind | string | yes | no | `const=\"created\"`; Variant discriminator |",
+        "| id | string | yes | no | Order identifier |", "",
+        "**variant**: kind = \"rejected\"", "",
+        "```json", '{"kind":"rejected","reason":"invalid"}', "```", "",
+        "| Field | Type | Required | Nullable | Constraints / Meaning |",
+        "|---|---|---|---|---|",
+        "| kind | string | yes | no | `const=\"rejected\"`; Variant discriminator |",
+        "| reason | string | yes | no | Rejection reason |"
+      ])
+    })
+  });
+  assert.ok(!ruleIds(taskScoped(root)).includes("DM-MSG-006"));
+});
+
+task6Test("accepts DM-MSG-006 ordered untagged complete variants", (t) => {
+  const root = createFlatOperationSet(t, {
+    channelBody: operationBody(BASIC_OPERATION_ROW, {
+      messages: payloadMessage("create-order", [
+        "**payload_required**: yes", "", "**media_type**: application/json", "",
+        "**payload_nullable**: no", "", "The sender selects the applicable command shape.", "",
+        "**variant**: create", "", "```json", '{"id":"ord_01"}', "```", "",
+        "| Field | Type | Required | Nullable | Constraints / Meaning |",
+        "|---|---|---|---|---|", "| id | string | yes | no | Order identifier |", "",
+        "**variant**: \u00a0delete\u00a0", "", "```json", '{"reason":"expired"}', "```", "",
+        "| Field | Type | Required | Nullable | Constraints / Meaning |",
+        "|---|---|---|---|---|", "| reason | string | yes | no | Deletion reason |"
+      ])
+    })
+  });
+  assert.ok(!ruleIds(taskScoped(root)).includes("DM-MSG-006"));
+});
+
+for (const [name, payload] of [
+  ["duplicate concrete media types", [
+    ...jsonPayload(), "", ...jsonPayload().slice(2)
+  ]],
+  ["multiple media types without selection and branch prose", [
+    ...jsonPayload(), "", ...jsonPayload({ mediaType: "application/vnd.order+json" }).slice(2)
+  ]],
+  ["a tagged variant with non-compact JSON", [
+    "**payload_required**: yes", "", "**media_type**: application/json", "",
+    "**payload_nullable**: no", "", "**variant**: kind = \"created\" ", ""
+  ]],
+  ["a tagged discriminator const mismatch", [
+    "**payload_required**: yes", "", "**media_type**: application/json", "",
+    "**payload_nullable**: no", "", "**variant**: kind = \"created\"", "",
+    "```json", '{"kind":"created"}', "```", "",
+    "| Field | Type | Required | Nullable | Constraints / Meaning |",
+    "|---|---|---|---|---|", "| kind | string | yes | no | `const=\"rejected\"` |"
+  ]],
+  ["out-of-order tagged variants", [
+    "**payload_required**: yes", "", "**media_type**: application/json", "",
+    "**payload_nullable**: no", "", "**variant**: kind = \"z\"", "",
+    "```json", '{"kind":"z"}', "```", "",
+    "| Field | Type | Required | Nullable | Constraints / Meaning |",
+    "|---|---|---|---|---|", "| kind | string | yes | no | `const=\"z\"` |", "",
+    "**variant**: kind = \"a\"", "", "```json", '{"kind":"a"}', "```", "",
+    "| Field | Type | Required | Nullable | Constraints / Meaning |",
+    "|---|---|---|---|---|", "| kind | string | yes | no | `const=\"a\"` |"
+  ]],
+  ["tagged variants using different discriminator paths", [
+    "**payload_required**: yes", "", "**media_type**: application/json", "",
+    "**payload_nullable**: no", "", "**variant**: kind = \"a\"", "",
+    "```json", '{"kind":"a"}', "```", "",
+    "| Field | Type | Required | Nullable | Constraints / Meaning |",
+    "|---|---|---|---|---|", "| kind | string | yes | no | `const=\"a\"` |", "",
+    "**variant**: type = \"b\"", "", "```json", '{"type":"b"}', "```", "",
+    "| Field | Type | Required | Nullable | Constraints / Meaning |",
+    "|---|---|---|---|---|", "| type | string | yes | no | `const=\"b\"` |"
+  ]]
+]) {
+  task6Test(`DM-MSG-006 rejects ${name}`, (t) => {
+    const root = createFlatOperationSet(t, {
+      channelBody: operationBody(BASIC_OPERATION_ROW, {
+        messages: payloadMessage("create-order", payload)
+      })
+    });
+    assert.ok(ruleIds(taskScoped(root)).includes("DM-MSG-006"));
+  });
+}
+
+task6Test("accepts DM-CONV-003 exact format catalog resolution and selective dependency closure", (t) => {
+  const row = [...BASIC_OPERATION_ROW, "Data Representation"];
+  const root = createFlatOperationSet(t, {
+    rows: [row],
+    columns: [
+      "Action", "Channel", "Operation", "Message", "Task", "Summary",
+      "Required context", "Supplemental context", "Conventions"
+    ],
+    channelBody: operationBody(row, {
+      messages: payloadMessage("create-order", jsonPayload({ rows: [
+        "| id | string | yes | no | `format=\"uuid\"`; UUID construction and validation |"
+      ] }))
+    })
+  });
+  write(root, "CONVENTIONS.md", documentSource({ body: conventionsBody({
+    "Data Representation": [
+      "| Format | Role | Meaning |", "|---|---|---|",
+      "| \"uuid\" | constraint | Accept canonical UUID strings and construct and validate them without narrowing. |"
+    ]
+  }) }));
+  assert.ok(!ruleIds(taskScoped(root)).includes("DM-CONV-003"));
+});
+
+task6Test("accepts DM-CONV-003 format_annotation resolution from a Message Headers table", (t) => {
+  const root = createFlatOperationSet(t, {
+    channelBody: operationBody(BASIC_OPERATION_ROW, {
+      messages: messageSection("create-order", { content: [
+        "#### Headers", "",
+        "| Name | Type | Required | Nullable | Constraints / Meaning |",
+        "|---|---|---|---|---|",
+        "| sent-at | string | yes | no | `format_annotation=\"date-time\"`; Representation hint only |",
+        "", "#### Bindings", "", "none", "", "#### Payload", "", "none"
+      ] })
+    })
+  });
+  write(root, "CONVENTIONS.md", documentSource({ body: conventionsBody({
+    "Data Representation": [
+      "| Format | Role | Meaning |", "|---|---|---|",
+      "| \"date-time\" | annotation | Preserve date-time representation intent without adding validation or construction behavior. |"
+    ]
+  }) }));
+  assert.ok(!ruleIds(taskScoped(root)).includes("DM-CONV-003"));
+});
+
+task6Test("DM-CONV-003 rejects an unresolved Channel Parameter format fragment", (t) => {
+  const row = [...BASIC_OPERATION_ROW];
+  row[1] = "orders.{tenant}";
+  const root = createFlatOperationSet(t, {
+    rows: [row],
+    channelBody: operationBody(row, { channel: [
+      "#### Parameters", "",
+      "| Name | Type | Constraints / Meaning |", "|---|---|---|",
+      "| tenant | string | `format=\"uuid\"`; Tenant identifier |",
+      "", "#### Bindings", "", "none"
+    ] })
+  });
+  assert.ok(ruleIds(taskScoped(root)).includes("DM-CONV-003"));
+});
+
+task6Test("DM-CONV-003 rejects a selective closure that omits a required workflow format", (t) => {
+  const row = [...BASIC_OPERATION_ROW];
+  row[6] = "workflows/formatted.md";
+  row.push("Serialization");
+  const root = createFlatOperationSet(t, {
+    rows: [row],
+    columns: [
+      "Action", "Channel", "Operation", "Message", "Task", "Summary",
+      "Required context", "Supplemental context", "Conventions"
+    ]
+  });
+  writeDocument(root, "workflows/formatted.md", { body: [
+    "# Formatted workflow", "", "## Data", "",
+    "| Field | Type | Required | Nullable | Constraints / Meaning |",
+    "|---|---|---|---|---|",
+    "| id | string | yes | no | `format=\"uuid\"`; Workflow identifier |"
+  ].join("\n") });
+  write(root, "CONVENTIONS.md", documentSource({ body: conventionsBody({
+    "Data Representation": [
+      "| Format | Role | Meaning |", "|---|---|---|",
+      "| \"uuid\" | constraint | Construct and validate canonical UUID strings without narrowing. |"
+    ]
+  }) }));
+  assert.ok(ruleIds(taskScoped(root)).includes("DM-CONV-003"));
+});
+
+task5Test("DM-IDX-004 rejects an invalid optional Conventions selector", (t) => {
+  const row = [...BASIC_OPERATION_ROW, "Data Representation, Unknown Convention"];
+  const root = createFlatOperationSet(t, {
+    rows: [row],
+    columns: [
+      "Action", "Channel", "Operation", "Message", "Task", "Summary",
+      "Required context", "Supplemental context", "Conventions"
+    ]
+  });
+  assert.ok(ruleIds(taskScoped(root)).includes("DM-IDX-004"));
+});
+
+for (const [name, conventionContent, selector = "Data Representation"] of [
+  ["a missing matching format row", ["Data representation prose."], "Data Representation"],
+  ["a duplicate matching format row", [
+    "|Format| Role |Meaning|", "|---|---|---|",
+    "| \"uuid\" | constraint | First complete meaning. |",
+    "| \"uuid\" | constraint | Second complete meaning. |"
+  ]],
+  ["a second Format catalog table", [
+    "| Format | Role | Meaning |", "|---|---|---|",
+    "| \"uuid\" | constraint | First complete meaning. |", "",
+    "Additional format prose.", "",
+    "|Format|Role|Meaning|", "|---|---|---|",
+    "| \"uuid\" | constraint | Second complete meaning. |"
+  ]],
+  ["out-of-order format rows", [
+    "| Format | Role | Meaning |", "|---|---|---|",
+    "| \"uuid\" | constraint | UUID meaning. |",
+    "| \"date-time\" | constraint | Date-time meaning. |"
+  ]],
+  ["a selective convention closure missing Data Representation", [
+    "| Format | Role | Meaning |", "|---|---|---|",
+    "| \"uuid\" | constraint | UUID construction and validation meaning. |"
+  ], "Serialization"]
+]) {
+  task6Test(`DM-CONV-003 rejects ${name}`, (t) => {
+    const row = [...BASIC_OPERATION_ROW, selector];
+    const root = createFlatOperationSet(t, {
+      rows: [row],
+      columns: [
+        "Action", "Channel", "Operation", "Message", "Task", "Summary",
+        "Required context", "Supplemental context", "Conventions"
+      ],
+      channelBody: operationBody(row, {
+        messages: payloadMessage("create-order", jsonPayload({ rows: [
+          "| id | string | yes | no | `format=\"uuid\"`; UUID construction and validation |"
+        ] }))
+      })
+    });
+    write(root, "CONVENTIONS.md", documentSource({ body: conventionsBody({
+      "Data Representation": conventionContent
+    }) }));
+    assert.ok(ruleIds(taskScoped(root)).includes("DM-CONV-003"));
+  });
+}
+
+task6Test("DM-MSG-004 through DM-MSG-006 and DM-CONV-003 are cataloged for Task 6 checkpoint 4", () => {
+  const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
+  const cataloged = new Set(catalog.rules.map((entry) => entry.rule_id));
+  assert.deepEqual(
+    ["DM-MSG-004", "DM-MSG-005", "DM-MSG-006", "DM-CONV-003"]
+      .filter((ruleId) => !cataloged.has(ruleId)),
+    []
+  );
+});
+
+task6Test("DM-MSG-004 through DM-MSG-006 and DM-CONV-003 maintain Task 6 checkpoint 4 rule correspondence", () => {
+  const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
+  const result = auditRuleTestCorrespondence({
+    catalogRuleIds: catalog.rules.map((entry) => entry.rule_id),
+    testNames: task6RuleTestNames.filter((name) => /DM-(?:MSG|CONV)-/.test(name)),
+    rulePrefixes: ["DM-MSG", "DM-CONV"]
+  });
   assert.deepEqual(result, { passed: true, errors: [] });
 });
 

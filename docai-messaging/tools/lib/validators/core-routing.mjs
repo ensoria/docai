@@ -2,6 +2,7 @@ import { diagnostic } from "../diagnostics.mjs";
 import { scanMarkdown } from "../markdown.mjs";
 import { parseDocsPath } from "../paths.mjs";
 import { parsePipeTable } from "../tables.mjs";
+import { CONVENTION_HEADINGS } from "./core-conventions.mjs";
 
 const OPERATION_COLUMNS = [
   "Action",
@@ -591,6 +592,16 @@ function operationRow(documentSet, file, table, cells, rowIndex, channelPath) {
   const diagnostics = [];
   const line = table.startLine + rowIndex + 2;
   const [action, channel, operation, message, task, summary, required, supplemental] = cells;
+  const conventionsCell = table.header[8] === "Conventions" ? cells[8] : "all";
+  const conventionEntries = conventionsCell.split(", ");
+  const conventions = conventionsCell === "all" || conventionsCell === "none"
+    ? conventionsCell
+    : conventionEntries.length > 0
+      && conventionEntries.join(", ") === conventionsCell
+      && new Set(conventionEntries).size === conventionEntries.length
+      && conventionEntries.every((entry) => CONVENTION_HEADINGS.includes(entry))
+      ? conventionEntries
+      : null;
   const messages = parseMessages(message);
   const tasks = parseSemicolonList(task);
   if (!["SEND", "RECEIVE"].includes(action)
@@ -598,6 +609,7 @@ function operationRow(documentSet, file, table, cells, rowIndex, channelPath) {
     || !ROUTING_NAME.test(operation ?? "")
     || messages === null
     || tasks === null
+    || conventions === null
     || summary === ""
     || tasks?.includes(summary)) {
     diagnostics.push(routingDiagnostic(
@@ -631,6 +643,7 @@ function operationRow(documentSet, file, table, cells, rowIndex, channelPath) {
       summary,
       requiredContexts: requiredContexts.paths,
       supplementalContexts: supplementalContexts.paths,
+      conventions,
       channelPath,
       indexPath: file.path,
       line

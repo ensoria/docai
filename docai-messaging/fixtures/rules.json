@@ -181,6 +181,12 @@
       "scope": "core"
     },
     {
+      "rule_id": "DM-CONV-003",
+      "readme_section": "§3.3 CONVENTIONS.md(required) / §3.6 Authoritative Input Resolution and Schema Representability",
+      "description": "Format and format_annotation fragments resolve exactly once through a unique ordered Data Representation format catalog, and affected operations retain that convention in their dependency closure.",
+      "scope": "core"
+    },
+    {
       "rule_id": "DM-OP-001",
       "readme_section": "§4 Operation Definition Format",
       "description": "Each routed channel file contains exactly its routed operation definitions, without a file-level wrapper, and every operation uses the fixed required section order.",
@@ -220,6 +226,24 @@
       "rule_id": "DM-MSG-003",
       "readme_section": "§3.4 Output Profiles and Incomplete Information / §4.1 Section Rules — Message sections",
       "description": "Message names are valid, operation-unique, routed and lexically ordered; multi-message selections are observable one- or two-sentence rules; complete replacements retain only required routing prose and the exact matching marker.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-MSG-004",
+      "readme_section": "§3.4 Output Profiles and Incomplete Information / §4.1 Section Rules — Message Payload",
+      "description": "Payloads use their direction-correct whole state, canonical representation boundaries, media types, nullability, unknown or replacement forms, adapter-correct examples, or opaque raw-binary prose in fixed order.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-MSG-005",
+      "readme_section": "§3.5 Canonical Syntax and Boundaries / §3.6 Schema Representability / §4.1 Section Rules — Message Payload",
+      "description": "Payload field tables use valid paths, types, object openness and canonically ordered constraints and cover every represented example field with exact JSON parsing.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-MSG-006",
+      "readme_section": "§4.1 Section Rules — Message Payload",
+      "description": "Concrete media types are unique with explicit sender selection and receiver branching for alternatives, while tagged and untagged variants are complete, canonical, ordered and exactly discriminated.",
       "scope": "core"
     },
     {

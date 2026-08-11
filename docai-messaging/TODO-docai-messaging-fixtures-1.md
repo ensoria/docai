@@ -566,7 +566,7 @@ Checkpoint 5 の suggested commit message: `test(messaging): audit Task 5 rule t
   - Headers/Bindings の leading collapse と、first expanded subsection 後の `none` heading retention を検証する。
   - `DM-MSG-001`〜`DM-MSG-003` を direction/table、collapse、identity/selection/replacement に割り当て、primary/reply Message が共有する parser を `core-messages.mjs` に実装する。
 
-- [ ] **Step 4: Payload representation と format catalog を RED→GREEN で実装する**
+- [x] **Step 4: Payload representation と format catalog を RED→GREEN で実装する**
   - whole payload marker、media type、nullability、example、field table、raw binary、multiple media selection、tagged/untagged variant boundaryを検証する。
   - example field coverage、object openness、constraints order、format/format_annotation fragment の exact `Format | Role | Meaning` resolution と convention dependency closure を検証する。
   - `DM-MSG-004`〜`DM-MSG-006` を payload state、representation、field/variant/example、`DM-CONV-003` を format catalog に割り当てる。

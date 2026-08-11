@@ -1,7 +1,7 @@
 import { diagnostic } from "../diagnostics.mjs";
 import { scanMarkdown } from "../markdown.mjs";
 import { parseDocsPath } from "../paths.mjs";
-import { validateCoreConventions } from "./core-conventions.mjs";
+import { validateCoreConventions, validateCoreFormatCatalog } from "./core-conventions.mjs";
 import { validateCoreMessages } from "./core-messages.mjs";
 import { validateCoreOperations } from "./core-operations.mjs";
 import { validateCoreRouting, validateCoreUnprojected } from "./core-routing.mjs";
@@ -132,6 +132,7 @@ export function validateCoreDocumentSet(documentSet) {
     unprojectedOperations: null,
     unprojectedRetrieval: null,
     conventions: null,
+    formats: null,
     operationDefinitions: null,
     messageDefinitions: null
   };
@@ -172,6 +173,14 @@ export function validateCoreDocumentSet(documentSet) {
     ? validateCoreMessages(documentSet, routing.facts)
     : { diagnostics: [], facts: { messageDefinitions: null } };
   facts.messageDefinitions = messages.facts.messageDefinitions;
+  const formats = structure.diagnostics.length === 0
+    && routing.diagnostics.length === 0
+    && conventions.diagnostics.length === 0
+    && operationDefinitions.diagnostics.length === 0
+    && messages.diagnostics.length === 0
+    ? validateCoreFormatCatalog(documentSet, routing.facts, messages.facts)
+    : { diagnostics: [], facts: { formats: null } };
+  facts.formats = formats.facts.formats;
   return {
     diagnostics: [
       ...profile.diagnostics,
@@ -181,7 +190,8 @@ export function validateCoreDocumentSet(documentSet) {
       ...unprojected.diagnostics,
       ...conventions.diagnostics,
       ...operationDefinitions.diagnostics,
-      ...messages.diagnostics
+      ...messages.diagnostics,
+      ...formats.diagnostics
     ],
     facts
   };

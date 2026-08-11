@@ -1,9 +1,18 @@
 import { diagnostic } from "../diagnostics.mjs";
+import { equalExactJson, parseExactJson } from "../json-value.mjs";
 import { scanMarkdown } from "../markdown.mjs";
+import { canonicalizeMediaType } from "../media-type.mjs";
 import { validateSentenceLine } from "../sentence.mjs";
 import { parsePipeTable } from "../tables.mjs";
 
 const MESSAGE_NAME = /^[A-Za-z0-9._-]+$/;
+const CONSTRAINT_KEYWORDS = [
+  "const", "enum", "default", "default_annotation", "format", "format_annotation",
+  "minimum", "exclusiveMinimum", "maximum", "exclusiveMaximum", "multipleOf",
+  "minLength", "maxLength", "pattern", "minItems", "maxItems", "uniqueItems",
+  "minProperties", "maxProperties"
+];
+const SIMPLE_TYPES = new Set(["string", "int", "number", "bool", "null", "any", "object", "unknown"]);
 
 function messageDiagnostic(ruleId, file, line, message) {
   return diagnostic(ruleId, file.path, line, message);
@@ -153,12 +162,18 @@ function validateDirectionTable(file, lines, startIndex, direction, firstColumn,
   const expected = standardColumns(direction, firstColumn);
   const markers = postTableMarkers(lines, table);
   const hasUnknown = table.rows.some((row) => row.includes("unknown"));
-  const hasUnknownMarker = markers.some((marker) => marker.kind.type === "unknown");
+  const unknownMarkers = markers.filter((marker) => marker.kind.type === "unknown");
+  const hasUnknownMarker = unknownMarkers.length > 0;
+  const unnamedKind = firstColumn === "Name" ? "header" : "field";
+  const validMarkerOnlyUnknowns = unknownMarkers.every((marker) => (
+    marker.text.startsWith(`**unknown**: additional unnamed ${unnamedKind} requires `)
+      || (firstColumn === "Field" && marker.text.startsWith("**unknown**: valid example values require "))
+  ));
   if (!validHeader(table.header, expected)
     || table.rows.length === 0
     || !validDirectionRows(table, direction, payloadNullable)
     || !validMarkerOrder(markers)
-    || hasUnknown !== hasUnknownMarker) {
+    || (hasUnknown ? !hasUnknownMarker : !validMarkerOnlyUnknowns)) {
     return [messageDiagnostic(
       "DM-MSG-001",
       file,
@@ -217,6 +232,885 @@ function validateMessageTables(file, markdown, message, direction, endLine) {
     }
   }
   return diagnostics;
+}
+
+function compactJson(source) {
+  let inString = false;
+  let escaped = false;
+  for (const character of source) {
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (character === "\\") escaped = true;
+      else if (character === '"') inString = false;
+    } else if (character === '"') {
+      inString = true;
+    } else if (/\s/u.test(character)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function parseCompactJson(source) {
+  if (!compactJson(source)) return null;
+  try {
+    return { value: parseExactJson(source) };
+  } catch {
+    return null;
+  }
+}
+
+function validFieldPath(path) {
+  if (path === "$") return true;
+  let cursor = 0;
+  if (path[cursor] === "$") {
+    cursor += 1;
+    while (path.startsWith("[]", cursor)) cursor += 2;
+    if (cursor === path.length) return true;
+    if (path[cursor] !== ".") return false;
+    cursor += 1;
+  }
+  let needSegment = true;
+  while (cursor < path.length) {
+    if (!needSegment) {
+      if (path.startsWith("[]", cursor)) {
+        cursor += 2;
+        continue;
+      }
+      if (path[cursor] !== ".") return false;
+      cursor += 1;
+      needSegment = true;
+      continue;
+    }
+    let length = 0;
+    if (path.startsWith("{key}", cursor)) {
+      cursor += 5;
+      needSegment = false;
+      continue;
+    }
+    while (cursor < path.length) {
+      const character = path[cursor];
+      if (character === "\\") {
+        if (cursor + 1 >= path.length || !/[\\.\[\]{}$]/.test(path[cursor + 1])) return false;
+        cursor += 2;
+        length += 1;
+        continue;
+      }
+      if (character === "." || character === "[" || character === "{" || character === "$") break;
+      if (character === "]" || character === "}" || character === "\r" || character === "\n") return false;
+      cursor += 1;
+      length += 1;
+    }
+    if (length === 0) return false;
+    needSegment = false;
+  }
+  return !needSegment;
+}
+
+function validType(type) {
+  let source = type;
+  while (source.endsWith("[]")) source = source.slice(0, -2);
+  while (source.startsWith("map<string, ") && source.endsWith(">")) {
+    source = source.slice("map<string, ".length, -1);
+    while (source.endsWith("[]")) source = source.slice(0, -2);
+  }
+  return SIMPLE_TYPES.has(source);
+}
+
+function codeSpanAt(source, start) {
+  if (source[start] !== "`") return null;
+  let delimiterLength = 1;
+  while (source[start + delimiterLength] === "`") delimiterLength += 1;
+  const delimiter = "`".repeat(delimiterLength);
+  const end = source.indexOf(delimiter, start + delimiterLength);
+  if (end === -1) return null;
+  return {
+    content: source.slice(start + delimiterLength, end),
+    end: end + delimiterLength
+  };
+}
+
+function parseConstraints(meaning) {
+  const fragments = [];
+  let cursor = 0;
+  while (meaning[cursor] === "`") {
+    const span = codeSpanAt(meaning, cursor);
+    if (span === null) return { valid: false, fragments: [] };
+    const equals = span.content.indexOf("=");
+    if (equals <= 0) return { valid: false, fragments: [] };
+    const keyword = span.content.slice(0, equals);
+    const source = span.content.slice(equals + 1);
+    const parsed = parseCompactJson(source);
+    if (!CONSTRAINT_KEYWORDS.includes(keyword) || parsed === null) {
+      return { valid: false, fragments: [] };
+    }
+    fragments.push({ keyword, source, value: parsed.value });
+    cursor = span.end;
+    if (meaning.slice(cursor, cursor + 2) === "; " && meaning[cursor + 2] === "`") {
+      cursor += 2;
+      continue;
+    }
+    break;
+  }
+  const order = fragments.map((fragment) => CONSTRAINT_KEYWORDS.indexOf(fragment.keyword));
+  const unique = new Set(fragments.map((fragment) => fragment.keyword));
+  const validOrder = order.every((rank, index) => index === 0 || order[index - 1] < rank);
+  const laterFragment = /`(?:const|enum|default|default_annotation|format|format_annotation|minimum|exclusiveMinimum|maximum|exclusiveMaximum|multipleOf|minLength|maxLength|pattern|minItems|maxItems|uniqueItems|minProperties|maxProperties)=/.test(meaning.slice(cursor));
+  const validValues = fragments.every((fragment) => {
+    if (fragment.keyword === "enum") return Array.isArray(fragment.value) && fragment.value.length > 0;
+    if (["format", "format_annotation", "pattern"].includes(fragment.keyword)) {
+      return typeof fragment.value === "string";
+    }
+    if (["minimum", "exclusiveMinimum", "maximum", "exclusiveMaximum"].includes(fragment.keyword)) {
+      return exactNumber(fragment.value);
+    }
+    if (fragment.keyword === "multipleOf") return positiveExactNumber(fragment.value);
+    if (["minLength", "maxLength", "minItems", "maxItems", "minProperties", "maxProperties"].includes(fragment.keyword)) {
+      return nonNegativeInteger(fragment.value) !== null;
+    }
+    if (fragment.keyword === "uniqueItems") return fragment.value === true;
+    return true;
+  });
+  const names = new Set(fragments.map((fragment) => fragment.keyword));
+  const exclusivePairs = !(names.has("default") && names.has("default_annotation"))
+    && !(names.has("format") && names.has("format_annotation"));
+  return {
+    valid: validOrder && unique.size === fragments.length && !laterFragment && validValues && exclusivePairs,
+    fragments
+  };
+}
+
+function fieldPathAncestors(path) {
+  const ancestors = new Set();
+  let cursor = 0;
+  let prefix = "";
+  while (cursor < path.length) {
+    if (path[cursor] === "\\") {
+      prefix += path.slice(cursor, cursor + 2);
+      cursor += 2;
+      continue;
+    }
+    if (path[cursor] === ".") {
+      if (prefix !== "") ancestors.add(prefix);
+      prefix += ".";
+      cursor += 1;
+      continue;
+    }
+    if (path.startsWith("[]", cursor)) {
+      if (prefix !== "") ancestors.add(prefix);
+      prefix += "[]";
+      cursor += 2;
+      continue;
+    }
+    if (path.startsWith("{key}", cursor)) {
+      prefix += "{key}";
+      cursor += 5;
+      continue;
+    }
+    prefix += path[cursor];
+    cursor += 1;
+  }
+  ancestors.delete(path);
+  return [...ancestors];
+}
+
+function escapePathSegment(value) {
+  return value.replace(/[\\.\[\]{}$]/g, "\\$&");
+}
+
+function examplePaths(value, path = null, paths = new Set()) {
+  if (value instanceof Map) {
+    for (const [name, child] of value) {
+      const childPath = path === null ? escapePathSegment(name) : `${path}.${escapePathSegment(name)}`;
+      paths.add(childPath);
+      examplePaths(child, childPath, paths);
+    }
+    return paths;
+  }
+  if (Array.isArray(value)) {
+    if (path === null) paths.add("$");
+    const itemPath = path === null ? "$[]" : `${path}[]`;
+    for (const child of value) {
+      paths.add(itemPath);
+      examplePaths(child, itemPath, paths);
+    }
+    return paths;
+  }
+  if (path === null) paths.add("$");
+  return paths;
+}
+
+function fieldPathTokens(path) {
+  if (path === "$") return [];
+  let cursor = path.startsWith("$") ? 1 : 0;
+  if (path[cursor] === ".") cursor += 1;
+  const tokens = [];
+  let segment = "";
+  const flush = () => {
+    if (segment !== "") tokens.push({ kind: "property", name: segment });
+    segment = "";
+  };
+  while (cursor < path.length) {
+    if (path[cursor] === "\\") {
+      segment += path[cursor + 1];
+      cursor += 2;
+    } else if (path[cursor] === ".") {
+      flush();
+      cursor += 1;
+    } else if (path.startsWith("[]", cursor)) {
+      flush();
+      tokens.push({ kind: "items" });
+      cursor += 2;
+    } else if (path.startsWith("{key}", cursor)) {
+      flush();
+      tokens.push({ kind: "values" });
+      cursor += 5;
+    } else {
+      segment += path[cursor];
+      cursor += 1;
+    }
+  }
+  flush();
+  return tokens;
+}
+
+function observeFieldPath(example, path) {
+  const tokens = fieldPathTokens(path);
+  if (tokens.length === 0) return { applicable: 1, present: 1, values: [example] };
+  let contexts = [example];
+  let applicable = 0;
+  let present = 0;
+  for (let index = 0; index < tokens.length; index += 1) {
+    const token = tokens[index];
+    const next = [];
+    applicable = 0;
+    present = 0;
+    if (token.kind === "property") {
+      for (const context of contexts) {
+        if (!(context instanceof Map)) continue;
+        applicable += 1;
+        if (context.has(token.name)) {
+          present += 1;
+          next.push(context.get(token.name));
+        }
+      }
+    } else if (token.kind === "items") {
+      for (const context of contexts) {
+        if (!Array.isArray(context)) continue;
+        applicable += context.length;
+        present += context.length;
+        next.push(...context);
+      }
+    } else {
+      for (const context of contexts) {
+        if (!(context instanceof Map)) continue;
+        applicable += context.size;
+        present += context.size;
+        next.push(...context.values());
+      }
+    }
+    contexts = index === tokens.length - 1 ? next : next.filter((value) => value !== null);
+  }
+  return { applicable, present, values: contexts };
+}
+
+function valueMatchesType(value, type, nullable) {
+  if (value === null) return nullable === "yes";
+  if (type === "any" || type === "unknown") return true;
+  if (value instanceof Map) return type === "object" || type.startsWith("map<string, ");
+  if (Array.isArray(value)) return type.endsWith("[]");
+  if (typeof value === "string") return type === "string";
+  if (typeof value === "boolean") return type === "bool";
+  if (value !== null && typeof value === "object" && value.kind === "number") {
+    return type === "number" || (type === "int" && value.exponent >= 0n);
+  }
+  return false;
+}
+
+function exactNumber(value) {
+  return value !== null && typeof value === "object" && value.kind === "number";
+}
+
+function compareExactNumbers(left, right) {
+  if (!exactNumber(left) || !exactNumber(right)) return null;
+  if (left.sign !== right.sign) return left.sign < right.sign ? -1 : 1;
+  if (left.sign === 0) return 0;
+  const leftOrder = BigInt(left.coefficient.length) + left.exponent;
+  const rightOrder = BigInt(right.coefficient.length) + right.exponent;
+  let magnitude;
+  if (leftOrder !== rightOrder) {
+    magnitude = leftOrder < rightOrder ? -1 : 1;
+  } else {
+    const length = Math.max(left.coefficient.length, right.coefficient.length);
+    magnitude = 0;
+    for (let index = 0; index < length; index += 1) {
+      const leftDigit = left.coefficient[index] ?? "0";
+      const rightDigit = right.coefficient[index] ?? "0";
+      if (leftDigit !== rightDigit) {
+        magnitude = leftDigit < rightDigit ? -1 : 1;
+        break;
+      }
+    }
+  }
+  return left.sign < 0 ? -magnitude : magnitude;
+}
+
+function positiveExactNumber(value) {
+  return exactNumber(value) && value.sign > 0;
+}
+
+function exactMultipleOf(value, divisor) {
+  if (!exactNumber(value) || !positiveExactNumber(divisor)) return false;
+  if (value.sign === 0) return true;
+  const exponentDifference = value.exponent - divisor.exponent;
+  if (exponentDifference < 0n) return false;
+  let numerator = BigInt(value.coefficient);
+  let denominator = BigInt(divisor.coefficient);
+  const gcd = (left, right) => {
+    let a = left;
+    let b = right;
+    while (b !== 0n) [a, b] = [b, a % b];
+    return a;
+  };
+  const common = gcd(numerator, denominator);
+  numerator /= common;
+  denominator /= common;
+  let twos = 0n;
+  let fives = 0n;
+  while (denominator % 2n === 0n) {
+    denominator /= 2n;
+    twos += 1n;
+  }
+  while (denominator % 5n === 0n) {
+    denominator /= 5n;
+    fives += 1n;
+  }
+  return denominator === 1n && twos <= exponentDifference && fives <= exponentDifference;
+}
+
+function nonNegativeInteger(value) {
+  return exactNumber(value) && value.sign >= 0 && value.exponent >= 0n ? value : null;
+}
+
+function compareCountToExact(count, exact) {
+  const value = count === 0
+    ? { kind: "number", sign: 0, coefficient: "0", exponent: 0n }
+    : { kind: "number", sign: 1, coefficient: String(count), exponent: 0n };
+  return compareExactNumbers(value, exact);
+}
+
+function satisfiesConstraints(value, fragments) {
+  for (const fragment of fragments) {
+    const constraint = fragment.value;
+    if (fragment.keyword === "const" && !equalExactJson(value, constraint)) return false;
+    if (fragment.keyword === "enum") {
+      if (!Array.isArray(constraint) || !constraint.some((entry) => equalExactJson(value, entry))) return false;
+    }
+    if (["minimum", "exclusiveMinimum", "maximum", "exclusiveMaximum"].includes(fragment.keyword)) {
+      const comparison = compareExactNumbers(value, constraint);
+      if (comparison === null) return false;
+      if (fragment.keyword === "minimum" && comparison < 0) return false;
+      if (fragment.keyword === "exclusiveMinimum" && comparison <= 0) return false;
+      if (fragment.keyword === "maximum" && comparison > 0) return false;
+      if (fragment.keyword === "exclusiveMaximum" && comparison >= 0) return false;
+    }
+    if (fragment.keyword === "multipleOf" && !exactMultipleOf(value, constraint)) return false;
+    if (["minLength", "maxLength"].includes(fragment.keyword)) {
+      const limit = nonNegativeInteger(constraint);
+      if (typeof value !== "string" || limit === null) return false;
+      const length = Array.from(value).length;
+      if (fragment.keyword === "minLength" && compareCountToExact(length, limit) < 0) return false;
+      if (fragment.keyword === "maxLength" && compareCountToExact(length, limit) > 0) return false;
+    }
+    if (fragment.keyword === "pattern") {
+      if (typeof value !== "string" || typeof constraint !== "string") return false;
+      try {
+        if (!new RegExp(constraint, "u").test(value)) return false;
+      } catch {
+        return false;
+      }
+    }
+    if (["minItems", "maxItems"].includes(fragment.keyword)) {
+      const limit = nonNegativeInteger(constraint);
+      if (!Array.isArray(value) || limit === null) return false;
+      if (fragment.keyword === "minItems" && compareCountToExact(value.length, limit) < 0) return false;
+      if (fragment.keyword === "maxItems" && compareCountToExact(value.length, limit) > 0) return false;
+    }
+    if (fragment.keyword === "uniqueItems") {
+      if (!Array.isArray(value) || constraint !== true) return false;
+      for (let left = 0; left < value.length; left += 1) {
+        for (let right = left + 1; right < value.length; right += 1) {
+          if (equalExactJson(value[left], value[right])) return false;
+        }
+      }
+    }
+    if (["minProperties", "maxProperties"].includes(fragment.keyword)) {
+      const limit = nonNegativeInteger(constraint);
+      if (!(value instanceof Map) || limit === null) return false;
+      if (fragment.keyword === "minProperties" && compareCountToExact(value.size, limit) < 0) return false;
+      if (fragment.keyword === "maxProperties" && compareCountToExact(value.size, limit) > 0) return false;
+    }
+  }
+  return true;
+}
+
+function constraintsCompatibleWithType(type, nullable, fragments) {
+  const keywords = new Set(fragments.map((fragment) => fragment.keyword));
+  const numeric = ["minimum", "exclusiveMinimum", "maximum", "exclusiveMaximum", "multipleOf"];
+  if (numeric.some((keyword) => keywords.has(keyword)) && !["int", "number", "any"].includes(type)) return false;
+  if (["minLength", "maxLength", "pattern"].some((keyword) => keywords.has(keyword))
+    && !["string", "any"].includes(type)) return false;
+  if (["minItems", "maxItems", "uniqueItems"].some((keyword) => keywords.has(keyword))
+    && type !== "any" && !type.endsWith("[]")) return false;
+  if (["minProperties", "maxProperties"].some((keyword) => keywords.has(keyword))
+    && type !== "any" && type !== "object" && !type.startsWith("map<string, ")) return false;
+  for (const fragment of fragments) {
+    if (["const", "default", "default_annotation"].includes(fragment.keyword)
+      && !valueMatchesType(fragment.value, type, nullable)) return false;
+    if (fragment.keyword === "enum"
+      && !fragment.value.every((value) => valueMatchesType(value, type, nullable))) return false;
+    if (fragment.keyword === "pattern") {
+      try { new RegExp(fragment.value, "u"); } catch { return false; }
+    }
+  }
+  return true;
+}
+
+function constraintsSatisfiable(fragments, nullable) {
+  const byName = new Map(fragments.map((fragment) => [fragment.keyword, fragment]));
+  const nullAllowedByConst = !byName.has("const") || byName.get("const").value === null;
+  const nullAllowedByEnum = !byName.has("enum")
+    || byName.get("enum").value.some((value) => value === null);
+  if (nullable === "yes" && nullAllowedByConst && nullAllowedByEnum) return true;
+  const lower = ["minimum", "exclusiveMinimum"].flatMap((name) => byName.has(name) ? [byName.get(name)] : []);
+  const upper = ["maximum", "exclusiveMaximum"].flatMap((name) => byName.has(name) ? [byName.get(name)] : []);
+  for (const minimum of lower) {
+    for (const maximum of upper) {
+      const comparison = compareExactNumbers(minimum.value, maximum.value);
+      if (comparison > 0 || (comparison === 0
+        && (minimum.keyword === "exclusiveMinimum" || maximum.keyword === "exclusiveMaximum"))) return false;
+    }
+  }
+  for (const [minimumName, maximumName] of [
+    ["minLength", "maxLength"],
+    ["minItems", "maxItems"],
+    ["minProperties", "maxProperties"]
+  ]) {
+    if (byName.has(minimumName) && byName.has(maximumName)
+      && compareExactNumbers(byName.get(minimumName).value, byName.get(maximumName).value) > 0) return false;
+  }
+  const other = fragments.filter((fragment) => fragment.keyword !== "const");
+  if (byName.has("const") && !satisfiesConstraints(byName.get("const").value, other)) return false;
+  if (byName.has("enum")
+    && !byName.get("enum").value.some((value) => satisfiesConstraints(
+      value,
+      fragments.filter((fragment) => !["enum", "const"].includes(fragment.keyword))
+    ))) return false;
+  return true;
+}
+
+function exampleFence(markdown, startLine, endLine) {
+  const fences = markdown.fences.filter((fence) => fence.startLine > startLine && fence.endLine < endLine);
+  if (fences.length !== 1) return null;
+  const fence = fences[0];
+  const content = markdown.lines
+    .filter((line) => line.line > fence.startLine && line.line < fence.endLine)
+    .map((line) => line.text)
+    .join("\n");
+  const longest = [...content.matchAll(/`+/g)].reduce((maximum, match) => Math.max(maximum, match[0].length), 0);
+  if (fence.delimiterLength !== Math.max(3, longest + 1)) return null;
+  return { ...fence, content };
+}
+
+function statesObjectOpenness(meaning) {
+  if (/additional properties (?:are )?forbidden/i.test(meaning)) return true;
+  const allowed = meaning.match(/additional properties (?:are )?allowed(.*)$/i);
+  return allowed !== null
+    && /(?:string|int|number|bool|null|any|object|map<string, [^>]+>)(?: values?)?/i.test(allowed[1]);
+}
+
+function tableFollowingFence(markdown, fence, endLine) {
+  const lines = sourceLines(markdown, fence.endLine, endLine);
+  const first = lines.findIndex((line) => line.text !== "");
+  if (first === -1) return null;
+  return tableAt(lines, first);
+}
+
+function validateFields(table, example, operation, message, formatUses, objectOpennessDefault = false, payloadNullable = null) {
+  if (table === null) return false;
+  const rowsByPath = new Map();
+  for (const row of table.rows) {
+    if (!validFieldPath(row[0]) || !validType(row[1]) || rowsByPath.has(row[0])) return false;
+    if (row[1] === "null" && row[3] !== "yes") return false;
+    if (!objectOpennessDefault && row[1] === "object" && !statesObjectOpenness(row[4])) return false;
+    const constraints = parseConstraints(row[4]);
+    if (!constraints.valid
+      || !constraintsCompatibleWithType(row[1], row[3], constraints.fragments)
+      || !constraintsSatisfiable(constraints.fragments, row[3])) return false;
+    for (const fragment of constraints.fragments) {
+      if (["format", "format_annotation"].includes(fragment.keyword)) {
+        if (typeof fragment.value !== "string") return false;
+        formatUses.push({
+          format: fragment.source,
+          operation,
+          message,
+          role: fragment.keyword === "format" ? "constraint" : "annotation"
+        });
+      }
+    }
+    rowsByPath.set(row[0], { row, constraints });
+  }
+  for (const [path] of rowsByPath) {
+    for (const ancestor of fieldPathAncestors(path)) {
+      const entry = rowsByPath.get(ancestor);
+      if (entry === undefined) return false;
+      const followedByItems = path.startsWith(`${ancestor}[]`);
+      const followedByKeys = path.startsWith(`${ancestor}{key}`);
+      if (followedByItems && !entry.row[1].endsWith("[]")) return false;
+      if (followedByKeys && !entry.row[1].startsWith("map<string, ") && entry.row[1] !== "object") return false;
+      if (!followedByItems && !followedByKeys
+        && entry.row[1] !== "object"
+        && !entry.row[1].startsWith("map<string, ")) return false;
+    }
+  }
+  if (example === undefined) return true;
+  if (example === null && payloadNullable !== "yes") return false;
+  if (![...examplePaths(example)].every((path) => rowsByPath.has(path))) return false;
+  for (const [path, entry] of rowsByPath) {
+    const observed = observeFieldPath(example, path);
+    const mandatory = entry.row[2] === "yes" || entry.row[2] === "always";
+    if (mandatory && observed.present !== observed.applicable) return false;
+    for (const value of observed.values) {
+      if (!valueMatchesType(value, entry.row[1], entry.row[3])) return false;
+      if (value !== null && !satisfiesConstraints(value, entry.constraints.fragments)) return false;
+    }
+  }
+  return true;
+}
+
+function canonicalMediaType(value) {
+  if (value === "unknown") return null;
+  try {
+    const canonical = canonicalizeMediaType(value);
+    return canonical === value ? canonical : null;
+  } catch {
+    return null;
+  }
+}
+
+function directJsonMediaType(mediaType) {
+  const base = mediaType.split(";", 1)[0];
+  const slash = base.indexOf("/");
+  return !mediaType.includes(";")
+    && (base === "application/json" || (slash !== -1 && base.slice(slash + 1).endsWith("+json")));
+}
+
+function structuredRepresentationMediaType(mediaType) {
+  const base = mediaType.split(";", 1)[0];
+  const subtype = base.slice(base.indexOf("/") + 1);
+  return directJsonMediaType(mediaType)
+    || base === "application/json"
+    || subtype.endsWith("+json")
+    || base.startsWith("text/")
+    || subtype.endsWith("+xml")
+    || subtype.endsWith("+yaml")
+    || [
+      "xml", "yaml", "x-yaml", "csv", "cbor", "msgpack", "protobuf", "avro",
+      "ndjson", "x-ndjson", "x-www-form-urlencoded"
+    ].includes(subtype);
+}
+
+function representationReplacementMediaType(text, name) {
+  const prefix = `**unsupported**: replaces payload representation ${name} `;
+  if (!text.startsWith(prefix)) return null;
+  const source = text.slice(prefix.length);
+  const lengthMatch = source.match(/^([1-9][0-9]*):/);
+  if (lengthMatch === null) return null;
+  const byteLength = Number(lengthMatch[1]);
+  const remainder = source.slice(lengthMatch[0].length);
+  let cursor = 0;
+  let consumed = 0;
+  while (cursor < remainder.length && consumed < byteLength) {
+    const character = String.fromCodePoint(remainder.codePointAt(cursor));
+    consumed += Buffer.byteLength(character, "utf8");
+    cursor += character.length;
+  }
+  if (consumed !== byteLength || !remainder.slice(cursor).startsWith(": ")) return null;
+  const mediaType = remainder.slice(0, cursor);
+  return canonicalMediaType(mediaType) !== null && remainder.slice(cursor + 2).length > 0
+    ? mediaType
+    : null;
+}
+
+function payloadDiagnostic(ruleId, file, line, message) {
+  return [messageDiagnostic(ruleId, file, line, message)];
+}
+
+function nonEmptyMarker(text, prefix) {
+  return text?.startsWith(prefix) && text.length > prefix.length;
+}
+
+function validateVariantBlocks(file, markdown, region, direction, operation, message, formatUses, objectOpennessDefault, payloadNullable) {
+  const markers = region.filter((line) => line.text.startsWith("**variant**: "));
+  if (markers.length === 0) return { diagnostics: [], valid: false };
+  const diagnostics = [];
+  const identities = [];
+  let taggedKind = null;
+  let taggedDiscriminator = null;
+  for (let index = 0; index < markers.length; index += 1) {
+    const marker = markers[index];
+    const value = marker.text.slice("**variant**: ".length);
+    const delimiter = value.indexOf(" = ");
+    const tagged = delimiter !== -1;
+    if (taggedKind === null) taggedKind = tagged;
+    const invalidAsciiBoundary = !tagged && (value.startsWith(" ") || value.endsWith(" "));
+    if (taggedKind !== tagged || value === "" || invalidAsciiBoundary) {
+      diagnostics.push(...payloadDiagnostic("DM-MSG-006", file, marker.line, "Variant markers must use one canonical tagged or untagged form."));
+      continue;
+    }
+    let discriminator = null;
+    let discriminatorValue = null;
+    let identity = value;
+    if (tagged) {
+      discriminator = value.slice(0, delimiter);
+      const source = value.slice(delimiter + 3);
+      const parsed = parseCompactJson(source);
+      identity = source;
+      if (!validFieldPath(discriminator) || discriminator.includes(" = ") || parsed === null) {
+        diagnostics.push(...payloadDiagnostic("DM-MSG-006", file, marker.line, "Tagged variants require a valid field path and compact exact JSON value."));
+        continue;
+      }
+      if (taggedDiscriminator === null) taggedDiscriminator = discriminator;
+      else if (taggedDiscriminator !== discriminator) {
+        diagnostics.push(...payloadDiagnostic("DM-MSG-006", file, marker.line, "Every tagged variant block in one representation uses the same discriminator field path."));
+      }
+      discriminatorValue = parsed.value;
+    } else if (value.includes(" = ")) {
+      diagnostics.push(...payloadDiagnostic("DM-MSG-006", file, marker.line, "An invalid tagged marker cannot fall back to an untagged label."));
+      continue;
+    }
+    identities.push(identity);
+    const blockEnd = markers[index + 1]?.line ?? region.at(-1).line + 1;
+    const fence = exampleFence(markdown, marker.line, blockEnd);
+    const table = fence === null ? null : tableFollowingFence(markdown, fence, blockEnd);
+    let example = null;
+    if (fence !== null && fence.info === "json") {
+      try { example = parseExactJson(fence.content); } catch { example = null; }
+    }
+    if (fence === null || example === null || table === null) {
+      diagnostics.push(...payloadDiagnostic("DM-MSG-006", file, marker.line, "Every variant requires one complete adapter-correct example and field table."));
+      continue;
+    }
+    if (region.some((line) => line.line > table.endLine && line.line < blockEnd && line.text.startsWith("|"))) {
+      diagnostics.push(...payloadDiagnostic("DM-MSG-006", file, table.endLine + 1, "A variant contains exactly one field table."));
+    }
+    if (!validateFields(table, example, operation, message, formatUses, objectOpennessDefault, payloadNullable)) {
+      diagnostics.push(...payloadDiagnostic("DM-MSG-005", file, table.startLine, "Variant examples and field tables require valid paths, types, constraints, openness, and complete example coverage."));
+    }
+    if (tagged) {
+      const row = table.rows.find((entry) => entry[0] === discriminator);
+      const constFragment = row === undefined
+        ? null
+        : parseConstraints(row[4]).fragments.find((fragment) => fragment.keyword === "const");
+      if (constFragment === undefined || constFragment === null
+        || !equalExactJson(constFragment.value, discriminatorValue)) {
+        diagnostics.push(...payloadDiagnostic("DM-MSG-006", file, marker.line, "A tagged variant discriminator row requires an exactly equal const fragment."));
+      }
+    }
+  }
+  if (identities.some((identity, index) => index > 0
+    && unicodeScalarCompare(identities[index - 1], identity) >= 0)) {
+    diagnostics.push(...payloadDiagnostic("DM-MSG-006", file, markers[0].line, "Variant blocks must be unique and ordered by their canonical identity."));
+  }
+  return { diagnostics, valid: true };
+}
+
+function validateExpandedRepresentation(file, markdown, region, direction, operation, name, formatUses, objectOpennessDefault) {
+  const diagnostics = [];
+  const mediaLine = region[0];
+  const mediaType = canonicalMediaType(mediaLine.text.slice("**media_type**: ".length));
+  if (mediaType === null) {
+    return { diagnostics: payloadDiagnostic("DM-MSG-004", file, mediaLine.line, "Payload media types must be concrete canonical RFC 9110 media types."), mediaType: null };
+  }
+  const content = region.slice(1).filter((line) => line.text !== "");
+  if (!content[0]?.text.startsWith("**payload_nullable**: ")) {
+    const rawValid = !structuredRepresentationMediaType(mediaType)
+      && content.length > 0
+      && content.every((line) => !line.text.startsWith("**") && !line.text.startsWith("|") && !line.text.startsWith("```"))
+      && validateSentenceLine({ text: content.map((line) => line.text).join(" "), file: file.path, line: content[0]?.line ?? mediaLine.line }, 1, 2).value !== null;
+    if (!rawValid) diagnostics.push(...payloadDiagnostic("DM-MSG-004", file, mediaLine.line, "A raw payload requires canonical media-type-plus-prose form; structured representations require nullability, example, and table."));
+    return { diagnostics, mediaType };
+  }
+  const nullableLine = content[0];
+  const nullable = nullableLine.text.slice("**payload_nullable**: ".length);
+  if (!["yes", "no", "unknown"].includes(nullable)) {
+    diagnostics.push(...payloadDiagnostic("DM-MSG-004", file, nullableLine.line, "payload_nullable must be yes, no, or unknown."));
+    return { diagnostics, mediaType };
+  }
+  let cursor = 1;
+  if (nullable === "unknown") {
+    const marker = content[cursor];
+    if (marker?.line !== nullableLine.line + 1 || !nonEmptyMarker(marker.text, "**unknown**: ")) {
+      diagnostics.push(...payloadDiagnostic("DM-MSG-004", file, nullableLine.line, "Unknown payload nullability requires its immediately adjacent key-local marker."));
+      return { diagnostics, mediaType };
+    }
+    cursor += 1;
+  }
+  const remaining = content.slice(cursor);
+  if (remaining[0]?.text === "unknown") {
+    const marker = remaining[1];
+    if (remaining.length !== 2 || marker?.line !== remaining[0].line + 1
+      || !nonEmptyMarker(marker.text, "**unknown**: payload field collection requires ")) {
+      diagnostics.push(...payloadDiagnostic("DM-MSG-004", file, remaining[0].line, "Representation-local field unknown requires its exclusive canonical two-line form."));
+    }
+    return { diagnostics, mediaType };
+  }
+  if (remaining[0]?.text.startsWith("|")) {
+    const table = tableAt(remaining, 0);
+    const markers = table === null ? [] : postTableMarkers(remaining, table);
+    const collectionMarker = markers.find((marker) => nonEmptyMarker(marker.text, "**unknown**: additional unnamed field requires "));
+    const consumed = markers.at(-1)?.line ?? table?.endLine;
+    if (table === null || collectionMarker === undefined
+      || remaining.some((line) => line.line > consumed)
+      || !validateFields(table, undefined, operation, name, formatUses, objectOpennessDefault)) {
+      diagnostics.push(...payloadDiagnostic("DM-MSG-004", file, remaining[0].line, "A named-sibling example omission requires one field table and its immediate additional-unnamed-field marker."));
+    }
+    return { diagnostics, mediaType };
+  }
+  const variants = validateVariantBlocks(file, markdown, remaining, direction, operation, name, formatUses, objectOpennessDefault, nullable);
+  if (variants.valid) {
+    diagnostics.push(...variants.diagnostics);
+    const firstVariant = remaining.findIndex((line) => line.text.startsWith("**variant**: "));
+    if (remaining.slice(0, firstVariant).some((line) => line.text.startsWith("```") || line.text.startsWith("|"))) {
+      diagnostics.push(...payloadDiagnostic("DM-MSG-006", file, remaining[0]?.line ?? nullableLine.line, "A polymorphic representation has no unlabeled example or common field table."));
+    }
+    return { diagnostics, mediaType };
+  }
+  const regionEnd = region.at(-1)?.line + 1 ?? nullableLine.line + 1;
+  const fence = exampleFence(markdown, nullableLine.line, regionEnd);
+  const table = fence === null ? null : tableFollowingFence(markdown, fence, regionEnd);
+  let example = null;
+  if (fence === null
+    || remaining[0]?.line !== fence.startLine
+    || fence.info !== "json"
+    || !directJsonMediaType(mediaType)
+    || table === null) {
+    diagnostics.push(...payloadDiagnostic("DM-MSG-004", file, nullableLine.line, "A complete structured representation requires one adapter-correct concrete example followed by its field table."));
+    return { diagnostics, mediaType };
+  }
+  if (region.some((line) => line.line > table.endLine && line.text.startsWith("|"))) {
+    diagnostics.push(...payloadDiagnostic("DM-MSG-004", file, table.endLine + 1, "A structured representation contains exactly one field table."));
+  }
+  try { example = parseExactJson(fence.content); } catch {
+    diagnostics.push(...payloadDiagnostic("DM-MSG-005", file, fence.startLine, "A JSON payload example must parse exactly without duplicate object names or numeric narrowing."));
+    return { diagnostics, mediaType };
+  }
+  if (example === null && nullable !== "yes") {
+    diagnostics.push(...payloadDiagnostic("DM-MSG-005", file, fence.startLine, "A null root example requires payload_nullable=yes."));
+  } else if (!validateFields(table, example, operation, name, formatUses, objectOpennessDefault, nullable)) {
+    diagnostics.push(...payloadDiagnostic("DM-MSG-005", file, table.startLine, "Payload examples and field tables require valid paths, types, constraints, openness, and complete example coverage."));
+  }
+  return { diagnostics, mediaType };
+}
+
+function validatePayload(file, markdown, message, direction, endLine, reply, operation, objectOpennessDefault) {
+  const level = message.level + 1;
+  const payload = markdown.headings.find((heading) => (
+    heading.level === level && heading.text === "Payload"
+      && heading.line > message.line && heading.line < endLine
+  ));
+  if (payload === undefined) return { diagnostics: [], formatUses: [] };
+  const lines = markdown.lines.filter((line) => line.line > payload.line && line.line < endLine);
+  const visible = lines.filter((line) => !line.inFence && line.text !== "");
+  let cursor = 0;
+  while (visible[cursor]?.text.startsWith("**deviation**: ")) cursor += 1;
+  const core = visible.slice(cursor);
+  if (core.length === 1 && core[0].text === "none") return { diagnostics: [], formatUses: [] };
+  const expectedMarker = direction === "SEND" ? "**payload_required**: " : "**payload_presence**: ";
+  const first = core[0];
+  if (first === undefined || !first.text.startsWith(expectedMarker)) {
+    return { diagnostics: payloadDiagnostic("DM-MSG-004", file, first?.line ?? payload.line, "A non-empty Payload begins with its direction-correct whole-payload marker."), formatUses: [] };
+  }
+  const value = first.text.slice(expectedMarker.length);
+  const validValue = direction === "SEND"
+    ? ["yes", "no", "unknown"].includes(value)
+    : value !== ""
+      && value === value.trim()
+      && !/^(?:\*\*|#|\||```|- )/.test(value)
+      && !["conditional", "none", "yes", "no"].includes(value);
+  if (!validValue) {
+    return { diagnostics: payloadDiagnostic("DM-MSG-004", file, first.line, "The whole-payload marker has a canonical direction-correct value."), formatUses: [] };
+  }
+  let index = 1;
+  if (value === "unknown") {
+    const marker = core[index];
+    if (marker?.line !== first.line + 1 || !nonEmptyMarker(marker.text, "**unknown**: ")) {
+      return { diagnostics: payloadDiagnostic("DM-MSG-004", file, first.line, "Unknown whole-payload state requires its immediately adjacent key-local marker."), formatUses: [] };
+    }
+    index += 1;
+  }
+  const remaining = core.slice(index);
+  if (remaining[0]?.text === "unknown") {
+    const marker = remaining[1];
+    const valid = remaining.length === 2 && marker?.line === remaining[0].line + 1
+      && nonEmptyMarker(marker.text, "**unknown**: payload representation set requires ");
+    return {
+      diagnostics: valid ? [] : payloadDiagnostic("DM-MSG-004", file, remaining[0].line, "Whole-payload representation unknown requires its exclusive canonical two-line form."),
+      formatUses: []
+    };
+  }
+  const payloadReplacement = `${reply ? "reply message" : "message"} Payload ${messageName(message)}`;
+  const payloadReplacementPrefix = `**unsupported**: replaces ${payloadReplacement}: `;
+  if (remaining[0]?.text.startsWith("**unsupported**: replaces ")
+    && !remaining[0].text.startsWith("**unsupported**: replaces payload representation ")) {
+    const valid = remaining.length === 1 && remaining[0].text.startsWith(payloadReplacementPrefix)
+      && remaining[0].text.length > payloadReplacementPrefix.length;
+    return { diagnostics: valid ? [] : payloadDiagnostic("DM-MSG-004", file, remaining[0].line, "Payload replacement must name its exact containing Message Payload unit."), formatUses: [] };
+  }
+  const markerIndices = [];
+  for (let position = 0; position < remaining.length; position += 1) {
+    if (remaining[position].text.startsWith("**media_type**: ")
+      || remaining[position].text.startsWith("**unsupported**: replaces payload representation ")) {
+      markerIndices.push(position);
+    }
+  }
+  if (markerIndices.length === 0) {
+    return { diagnostics: payloadDiagnostic("DM-MSG-004", file, remaining[0]?.line ?? first.line, "A known non-empty Payload requires at least one representation."), formatUses: [] };
+  }
+  const diagnostics = [];
+  const formatUses = [];
+  const mediaTypes = [];
+  const leading = remaining.slice(0, markerIndices[0]);
+  for (let marker = 0; marker < markerIndices.length; marker += 1) {
+    const start = markerIndices[marker];
+    const finish = markerIndices[marker + 1] ?? remaining.length;
+    const region = remaining.slice(start, finish);
+    if (region[0].text.startsWith("**unsupported**:")) {
+      const mediaType = representationReplacementMediaType(region[0].text, messageName(message));
+      if (region.length !== 1 || mediaType === null) {
+        diagnostics.push(...payloadDiagnostic("DM-MSG-004", file, region[0].line, "Representation replacement uses the exact message name, UTF-8 byte length, canonical media type, and reason delimiter."));
+      } else {
+        mediaTypes.push(mediaType);
+      }
+      continue;
+    }
+    const parsed = validateExpandedRepresentation(file, markdown, region, direction, operation, messageName(message), formatUses, objectOpennessDefault);
+    diagnostics.push(...parsed.diagnostics);
+    if (parsed.mediaType !== null) mediaTypes.push(parsed.mediaType);
+  }
+  if (new Set(mediaTypes).size !== mediaTypes.length) {
+    diagnostics.push(...payloadDiagnostic("DM-MSG-006", file, remaining[markerIndices[0]].line, "Concrete media types are unique within one Payload."));
+  }
+  if (mediaTypes.length > 1) {
+    const selection = leading.map((line) => line.text).join(" ");
+    if (!/sender/i.test(selection) || !/select/i.test(selection)
+      || !/receiver/i.test(selection) || !/(?:branch|wire (?:format|media type))/i.test(selection)) {
+      diagnostics.push(...payloadDiagnostic("DM-MSG-006", file, leading[0]?.line ?? first.line, "Multiple media types require explicit sender selection and receiver wire-format branching prose."));
+    }
+  } else if (leading.length > 0) {
+    diagnostics.push(...payloadDiagnostic("DM-MSG-004", file, leading[0].line, "Payload representation prose must occur only in a structurally assigned position."));
+  }
+  return { diagnostics, formatUses };
 }
 
 function canonicalUnitState(lines, { bindingTable = false, replacementUnit } = {}) {
@@ -436,7 +1330,7 @@ function validateMessageIdentity(file, markdown, operationHeading, operationEnd,
   return diagnostics;
 }
 
-function parseMessageBlocks(file, markdown, operationHeading, operationEnd, routedRow) {
+function parseMessageBlocks(file, markdown, operationHeading, operationEnd, routedRow, objectOpennessDefault) {
   const diagnostics = [];
   const definitions = [];
   const primary = markdown.headings.filter((heading) => (
@@ -485,8 +1379,22 @@ function parseMessageBlocks(file, markdown, operationHeading, operationEnd, rout
     if (!isReplacement) {
       diagnostics.push(...validateMessageStructure(file, markdown, heading, endLine, reply));
     }
+    const payload = isReplacement || !["SEND", "RECEIVE"].includes(direction)
+      ? { diagnostics: [], formatUses: [] }
+      : validatePayload(
+        file,
+        markdown,
+        heading,
+        direction,
+        endLine,
+        reply,
+        routedRow?.operation ?? operationName(operationHeading),
+        objectOpennessDefault
+      );
+    diagnostics.push(...payload.diagnostics);
     definitions.push({
       direction,
+      formatUses: payload.formatUses,
       line: heading.line,
       name: messageName(heading),
       operation: routedRow?.operation ?? operationName(operationHeading),
@@ -497,7 +1405,7 @@ function parseMessageBlocks(file, markdown, operationHeading, operationEnd, rout
   return { diagnostics, definitions };
 }
 
-function parseMessageFile(file, routedRows) {
+function parseMessageFile(file, routedRows, objectOpennessDefault) {
   const scanned = scanMarkdown({ text: file.content, file: file.path });
   if (scanned.value === null) return { diagnostics: scanned.diagnostics, definitions: [] };
   const markdown = scanned.value;
@@ -509,11 +1417,26 @@ function parseMessageFile(file, routedRows) {
     const endLine = operations[index + 1]?.line ?? file.identityLine ?? Number.MAX_SAFE_INTEGER;
     const name = operationName(heading);
     const routedRow = routedRows.find((row) => row.operation === name);
-    const parsed = parseMessageBlocks(file, markdown, heading, endLine, routedRow);
+    const parsed = parseMessageBlocks(file, markdown, heading, endLine, routedRow, objectOpennessDefault);
     diagnostics.push(...parsed.diagnostics);
     definitions.push(...parsed.definitions);
   }
   return { diagnostics, definitions };
+}
+
+function hasObjectOpennessDefault(documentSet) {
+  const file = documentSet.files.find((entry) => entry.path === "CONVENTIONS.md");
+  if (file === undefined) return false;
+  const scanned = scanMarkdown({ text: file.content, file: file.path });
+  if (scanned.value === null) return false;
+  const heading = scanned.value.headings.find((entry) => entry.level === 2 && entry.text === "Data Representation");
+  if (heading === undefined) return false;
+  const endLine = scanned.value.headings.find((entry) => entry.level <= 2 && entry.line > heading.line)?.line
+    ?? file.identityLine
+    ?? Number.MAX_SAFE_INTEGER;
+  const content = sourceLines(scanned.value, heading.line, endLine).map((line) => line.text).join("\n");
+  return /additional properties[^\n]*forbidden[^\n]*by default|forbid[^\n]*additional properties[^\n]*by default/i.test(content)
+    || /additional properties[^\n]*allowed[^\n]*(?:string|int|number|bool|null|any|object|map<string, [^>]+>)[^\n]*by default|allow[^\n]*additional properties[^\n]*(?:string|int|number|bool|null|any|object|map<string, [^>]+>)[^\n]*by default/i.test(content);
 }
 
 export function validateCoreMessages(documentSet, routingFacts) {
@@ -521,10 +1444,11 @@ export function validateCoreMessages(documentSet, routingFacts) {
   const paths = [...new Set(rows.map((row) => row.channelPath))];
   const diagnostics = [];
   const definitions = [];
+  const objectOpennessDefault = hasObjectOpennessDefault(documentSet);
   for (const path of paths) {
     const file = documentSet.files.find((entry) => entry.path === path);
     if (file === undefined) continue;
-    const parsed = parseMessageFile(file, rows.filter((row) => row.channelPath === path));
+    const parsed = parseMessageFile(file, rows.filter((row) => row.channelPath === path), objectOpennessDefault);
     diagnostics.push(...parsed.diagnostics);
     definitions.push(...parsed.definitions);
   }
