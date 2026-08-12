@@ -4567,6 +4567,90 @@ task6Test("DM-FAIL-001 through DM-FAIL-003 and DM-CONV-004 maintain Task 6 check
   assert.deepEqual(result, { passed: true, errors: [] });
 });
 
+task6Test("accepts DM-FAIL-001 operation none without suppressing inherited common failure handling", (t) => {
+  const root = createFlatOperationSet(t);
+  write(root, "CONVENTIONS.md", documentSource({ body: conventionsBody({
+    "Error Handling": [
+      "Messages that exhaust delivery retries use the common signal.", "",
+      ...failureShape("dead-letter")
+    ]
+  }) }));
+  const result = taskScoped(root);
+  assert.ok(!ruleIds(result).includes("DM-FAIL-001"));
+  assert.deepEqual(result.facts.core.failureShapes.common.map((shape) => shape.label), [
+    "dead-letter"
+  ]);
+  assert.deepEqual(result.facts.core.failureShapes.inline, []);
+});
+
+task6Test("DM-FAIL-001 rejects suppression prose before none without a deviation marker", (t) => {
+  const root = createFlatOperationSet(t, {
+    channelBody: operationBody(BASIC_OPERATION_ROW, { failureHandling: [
+      "This operation suppresses the inherited retry rule.",
+      "none"
+    ] })
+  });
+  assert.ok(ruleIds(taskScoped(root)).includes("DM-FAIL-001"));
+});
+
+task6Test("accepts DM-CONV-004 DM-OP-004 DM-MSG-005 DM-REPLY-003 and DM-FAIL-002 as one integrated core contract", (t) => {
+  const row = [...BASIC_OPERATION_ROW];
+  row[3] = "create-order; reply:create-order-reply";
+  const root = createFlatOperationSet(t, {
+    rows: [row],
+    channelBody: operationBody(row, {
+      operationBindings: [
+        "| Protocol | Property | Value / Rule |", "|---|---|---|",
+        "| kafka | acks | all |"
+      ],
+      messages: payloadMessage("create-order", jsonPayload()),
+      reply: expandedReply("create-order-reply", {
+        messages: payloadMessage("create-order-reply", jsonPayload({
+          direction: "RECEIVE",
+          example: '{"status":"accepted"}',
+          rows: ["| status | string | always | no | Final order acceptance state |"]
+        }), { level: 4 })
+      }),
+      failureHandling: failureTable([[
+        "dead-letter", "common:dead-letter", "Delivery retries are exhausted",
+        "Inspect the failed state and escalate without retrying the message"
+      ]])
+    })
+  });
+  write(root, "CONVENTIONS.md", documentSource({ body: conventionsBody({
+    "Error Handling": [
+      "Messages that exhaust delivery retries use the common signal.", "",
+      ...failureShape("dead-letter")
+    ]
+  }) }));
+  const result = taskScoped(root);
+  assert.deepEqual(result.diagnostics, []);
+  assert.deepEqual(
+    result.facts.core.messageDefinitions.byOperation["create-order"].map((entry) => ({
+      name: entry.name,
+      reply: entry.reply
+    })),
+    [
+      { name: "create-order", reply: false },
+      { name: "create-order-reply", reply: true }
+    ]
+  );
+  assert.deepEqual(result.facts.core.failureShapes.commonReferences, [{
+    label: "dead-letter",
+    operation: "create-order"
+  }]);
+});
+
+task6Test("DM-CONV-001 DM-OP-001 DM-MSG-001 DM-REPLY-001 and DM-FAIL-001 maintain Task 6 integration rule correspondence", () => {
+  const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
+  const result = auditRuleTestCorrespondence({
+    catalogRuleIds: catalog.rules.map((entry) => entry.rule_id),
+    testNames: task6RuleTestNames,
+    rulePrefixes: ["DM-CONV", "DM-OP", "DM-MSG", "DM-REPLY", "DM-FAIL"]
+  });
+  assert.deepEqual(result, { passed: true, errors: [] });
+});
+
 nodeTest("accepts source and evidence siblings outside a closed document-set root", (t) => {
   const publication = temporaryDirectory(t, "docai-messaging-publication-");
   const root = createSet(t, { rootDir: path.join(publication, "valid", "full") });

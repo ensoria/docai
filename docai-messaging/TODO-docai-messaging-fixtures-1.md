@@ -581,7 +581,7 @@ Checkpoint 5 の suggested commit message: `test(messaging): audit Task 5 rule t
   - `common:<label>` / `inline:<label>` の exact whole-cell reference と unique resolution、expanded/replacement shape、Message subsection collapse を共有 grammar で検証する。
   - `DM-FAIL-001`〜`DM-FAIL-003` を state/deviation、table/reference、inline shape、`DM-CONV-004` を common shape に割り当てる。
 
-- [ ] **Step 7: Task 6 integration と rule correspondence を確認する**
+- [x] **Step 7: Task 6 integration と rule correspondence を確認する**
   - Run: `node --test docai-messaging/tools/tests/document-set.test.mjs`
   - Expected: CONVENTIONS、operation、Message、Payload、Reply、Failure Handling と既存 tests がすべて PASS。
   - Task 6 test 名に一つ以上の `DM-CONV-*`、`DM-OP-*`、`DM-MSG-*`、`DM-REPLY-*`、`DM-FAIL-*` rule ID を含め、未使用・未知・重複 catalog entry を checker で失敗させる。
