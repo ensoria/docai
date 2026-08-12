@@ -331,6 +331,30 @@
       "scope": "core"
     },
     {
+      "rule_id": "DM-ADAPTER-001",
+      "readme_section": "§3.6 Authoritative Input Resolution and Schema Representability",
+      "description": "Schema adapter selection resolves AsyncAPI 3.0.0 and 3.1.0 source defaults and only the exact registered AsyncAPI Schema Object and JSON Schema Draft 07 targets; any established unmapped target uses the smallest unsupported projection.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-ADAPTER-002",
+      "readme_section": "§3.6 Authoritative Input Resolution and Schema Representability",
+      "description": "The direct JSON wire adapter accepts only parameterless application/json and parameterless lowercase-subtype +json targets; parameterized or other established unmapped wire targets replace the affected payload representation as unsupported.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-ADAPTER-003",
+      "readme_section": "§3.6 Authoritative Input Resolution and Schema Representability",
+      "description": "A logical header map is supported only by one exact-version header-encoding mapping that defines both wire encoding and client-library exposure; an established target without that mapping replaces the header representation as unsupported.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-ADAPTER-004",
+      "readme_section": "§3.6 Authoritative Input Resolution and Schema Representability",
+      "description": "Protocol binding projection requires one exact mapping for protocol, binding scope, and binding or specification version; an established target without that mapping uses the smallest binding-local unsupported form.",
+      "scope": "core"
+    },
+    {
       "rule_id": "DM-PARSE-001",
       "readme_section": "§3.5 Canonical Syntax and Boundaries",
       "description": "Markdown headings and backtick-fenced blocks retain deterministic source-line boundaries.",

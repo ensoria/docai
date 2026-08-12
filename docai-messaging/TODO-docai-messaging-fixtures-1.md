@@ -625,7 +625,7 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 - [x] **Step 3: perspective/counterpart cases を test 化する**
   - same-application carry-through、complete counterpart mapping、missing mapping、conflicting mapping、action-only inversion rejection を検証する。
 
-- [ ] **Step 4: direct adapter boundary cases を test 化する**
+- [x] **Step 4: direct adapter boundary cases を test 化する**
   - AsyncAPI 3.0.0 / 3.1.0 schemaFormat default、registered aliases、JSON Schema Draft 07、parameterless JSON/+json wire、parameterized/unregistered wire unsupported を検証する。
   - header encoding/exposure と protocol binding mapping の有無を source-aware expectation として記録する。
 

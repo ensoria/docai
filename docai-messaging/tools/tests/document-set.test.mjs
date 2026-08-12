@@ -4877,7 +4877,7 @@ task7Test("DM-INC-001 through DM-INC-003 maintain Task 7 Step 1 rule corresponde
   const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
   const result = auditRuleTestCorrespondence({
     catalogRuleIds: catalog.rules.map((entry) => entry.rule_id),
-    testNames: task7RuleTestNames,
+    testNames: task7RuleTestNames.filter((name) => name.includes("DM-INC-")),
     rulePrefixes: ["DM-INC"]
   });
   assert.deepEqual(result, { passed: true, errors: [] });
@@ -5019,7 +5019,7 @@ task7Test("DM-INC-004 and DM-INC-005 maintain Task 7 Step 2 rule correspondence"
   const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
   const result = auditRuleTestCorrespondence({
     catalogRuleIds: catalog.rules.map((entry) => entry.rule_id),
-    testNames: task7RuleTestNames,
+    testNames: task7RuleTestNames.filter((name) => name.includes("DM-INC-")),
     rulePrefixes: ["DM-INC"]
   });
   assert.deepEqual(result, { passed: true, errors: [] });
@@ -5225,8 +5225,371 @@ task7Test("DM-INC-001 DM-INC-006 and DM-INC-007 maintain Task 7 Step 3 rule corr
   const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
   const result = auditRuleTestCorrespondence({
     catalogRuleIds: catalog.rules.map((entry) => entry.rule_id),
-    testNames: task7RuleTestNames,
+    testNames: task7RuleTestNames.filter((name) => name.includes("DM-INC-")),
     rulePrefixes: ["DM-INC"]
+  });
+  assert.deepEqual(result, { passed: true, errors: [] });
+});
+
+task7Test("DM-ADAPTER-001 resolves only exact directly registered schema targets", () => {
+  assert.equal(typeof coreValidator.evaluateAdapterSourceExpectations, "function");
+  const cases = [
+    {
+      input: {
+        caseId: "asyncapi-3.0-default",
+        adapterClass: "schema",
+        sourceSpecification: "AsyncAPI 3.0.0",
+        schemaFormat: null,
+        publicationMappings: []
+      },
+      want: {
+        caseId: "asyncapi-3.0-default",
+        outcome: "supported",
+        resolution: "source-default",
+        effectiveTarget: "application/vnd.aai.asyncapi+json;version=3.0.0",
+        ruleId: "direct-asyncapi-schema-object-3.0.0",
+        ruleVersion: "0.17.1",
+        ordinaryReaderRequirement: "normalized-contract-only"
+      }
+    },
+    {
+      input: {
+        caseId: "asyncapi-3.1-default",
+        adapterClass: "schema",
+        sourceSpecification: "AsyncAPI 3.1.0",
+        schemaFormat: null,
+        publicationMappings: []
+      },
+      want: {
+        caseId: "asyncapi-3.1-default",
+        outcome: "supported",
+        resolution: "source-default",
+        effectiveTarget: "application/vnd.aai.asyncapi+json;version=3.1.0",
+        ruleId: "direct-asyncapi-schema-object-3.1.0",
+        ruleVersion: "0.17.1",
+        ordinaryReaderRequirement: "normalized-contract-only"
+      }
+    },
+    ...[
+      ["asyncapi-3.0-alias-1", "application/vnd.aai.asyncapi;version=3.0.0"],
+      ["asyncapi-3.0-alias-2", "application/vnd.aai.asyncapi+json;version=3.0.0"],
+      ["asyncapi-3.0-alias-3", "application/vnd.aai.asyncapi+yaml;version=3.0.0"]
+    ].map(([caseId, schemaFormat]) => ({
+      input: {
+        caseId,
+        adapterClass: "schema",
+        sourceSpecification: "AsyncAPI 3.0.0",
+        schemaFormat,
+        publicationMappings: []
+      },
+      want: {
+        caseId,
+        outcome: "supported",
+        resolution: "direct",
+        effectiveTarget: schemaFormat,
+        ruleId: "direct-asyncapi-schema-object-3.0.0",
+        ruleVersion: "0.17.1",
+        ordinaryReaderRequirement: "normalized-contract-only"
+      }
+    })),
+    ...[
+      ["asyncapi-3.1-alias-1", "application/vnd.aai.asyncapi;version=3.1.0"],
+      ["asyncapi-3.1-alias-2", "application/vnd.aai.asyncapi+json;version=3.1.0"],
+      ["asyncapi-3.1-alias-3", "application/vnd.aai.asyncapi+yaml;version=3.1.0"]
+    ].map(([caseId, schemaFormat]) => ({
+      input: {
+        caseId,
+        adapterClass: "schema",
+        sourceSpecification: "AsyncAPI 3.1.0",
+        schemaFormat,
+        publicationMappings: []
+      },
+      want: {
+        caseId,
+        outcome: "supported",
+        resolution: "direct",
+        effectiveTarget: schemaFormat,
+        ruleId: "direct-asyncapi-schema-object-3.1.0",
+        ruleVersion: "0.17.1",
+        ordinaryReaderRequirement: "normalized-contract-only"
+      }
+    })),
+    {
+      input: {
+        caseId: "json-schema-draft-07-json",
+        adapterClass: "schema",
+        sourceSpecification: "JSON Schema Draft 07",
+        schemaFormat: "application/schema+json;version=draft-07",
+        publicationMappings: []
+      },
+      want: {
+        caseId: "json-schema-draft-07-json",
+        outcome: "supported",
+        resolution: "direct",
+        effectiveTarget: "application/schema+json;version=draft-07",
+        ruleId: "direct-json-schema-draft-07",
+        ruleVersion: "0.17.1",
+        ordinaryReaderRequirement: "normalized-contract-only"
+      }
+    },
+    {
+      input: {
+        caseId: "json-schema-draft-07-yaml",
+        adapterClass: "schema",
+        sourceSpecification: "JSON Schema Draft 07",
+        schemaFormat: "application/schema+yaml;version=draft-07",
+        publicationMappings: []
+      },
+      want: {
+        caseId: "json-schema-draft-07-yaml",
+        outcome: "supported",
+        resolution: "direct",
+        effectiveTarget: "application/schema+yaml;version=draft-07",
+        ruleId: "direct-json-schema-draft-07",
+        ruleVersion: "0.17.1",
+        ordinaryReaderRequirement: "normalized-contract-only"
+      }
+    },
+    {
+      input: {
+        caseId: "case-mismatched-schema-target",
+        adapterClass: "schema",
+        sourceSpecification: "JSON Schema Draft 07",
+        schemaFormat: "Application/Schema+JSON;version=draft-07",
+        publicationMappings: []
+      },
+      want: {
+        caseId: "case-mismatched-schema-target",
+        outcome: "emit-unsupported",
+        resolution: "no-exact-mapping",
+        effectiveTarget: "Application/Schema+JSON;version=draft-07",
+        projection: "smallest-applicable-unsupported",
+        ordinaryReaderRequirement: "normalized-contract-only"
+      }
+    }
+  ];
+
+  const result = coreValidator.evaluateAdapterSourceExpectations({
+    docaiMessagingVersion: "0.17.1",
+    cases: cases.map((entry) => entry.input)
+  });
+  assert.deepEqual(result, cases.map((entry) => entry.want));
+});
+
+task7Test("DM-ADAPTER-002 distinguishes direct JSON wire targets from mapped-only targets", () => {
+  assert.equal(typeof coreValidator.evaluateAdapterSourceExpectations, "function");
+  const result = coreValidator.evaluateAdapterSourceExpectations({
+    docaiMessagingVersion: "0.17.1",
+    cases: [
+      {
+        caseId: "application-json",
+        adapterClass: "payload-wire",
+        mediaType: "application/json",
+        publicationMappings: []
+      },
+      {
+        caseId: "problem-json",
+        adapterClass: "payload-wire",
+        mediaType: "application/problem+json",
+        publicationMappings: []
+      },
+      {
+        caseId: "parameterized-json",
+        adapterClass: "payload-wire",
+        mediaType: "application/json;charset=utf-8",
+        publicationMappings: []
+      },
+      {
+        caseId: "unregistered-xml",
+        adapterClass: "payload-wire",
+        mediaType: "application/xml",
+        publicationMappings: []
+      }
+    ]
+  });
+
+  assert.deepEqual(result, [
+    {
+      caseId: "application-json",
+      outcome: "supported",
+      resolution: "direct",
+      effectiveTarget: "application/json",
+      ruleId: "direct-json-wire",
+      ruleVersion: "0.17.1",
+      ordinaryReaderRequirement: "normalized-contract-only"
+    },
+    {
+      caseId: "problem-json",
+      outcome: "supported",
+      resolution: "direct",
+      effectiveTarget: "application/problem+json",
+      ruleId: "direct-json-wire",
+      ruleVersion: "0.17.1",
+      ordinaryReaderRequirement: "normalized-contract-only"
+    },
+    {
+      caseId: "parameterized-json",
+      outcome: "emit-unsupported",
+      resolution: "no-exact-mapping",
+      effectiveTarget: "application/json;charset=utf-8",
+      projection: "replace-payload-representation",
+      ordinaryReaderRequirement: "normalized-contract-only"
+    },
+    {
+      caseId: "unregistered-xml",
+      outcome: "emit-unsupported",
+      resolution: "no-exact-mapping",
+      effectiveTarget: "application/xml",
+      projection: "replace-payload-representation",
+      ordinaryReaderRequirement: "normalized-contract-only"
+    }
+  ]);
+});
+
+task7Test("DM-ADAPTER-003 records exact header encoding and exposure mapping availability", () => {
+  assert.equal(typeof coreValidator.evaluateAdapterSourceExpectations, "function");
+  const result = coreValidator.evaluateAdapterSourceExpectations({
+    docaiMessagingVersion: "0.17.1",
+    cases: [
+      {
+        caseId: "mapped-kafka-headers",
+        adapterClass: "header-encoding",
+        target: {
+          protocol: "kafka",
+          encoding: "record-headers",
+          specificationVersion: "asyncapi-kafka-binding-0.5.0"
+        },
+        publicationMappings: [{
+          sourceId: "adapter-catalog",
+          docaiMessagingVersion: "0.17.1",
+          adapterClass: "header-encoding",
+          target: {
+            protocol: "kafka",
+            encoding: "record-headers",
+            specificationVersion: "asyncapi-kafka-binding-0.5.0"
+          },
+          ruleId: "kafka-header-map",
+          ruleVersion: "1.0.0",
+          defines: ["encoding", "exposure"]
+        }]
+      },
+      {
+        caseId: "unmapped-kafka-headers",
+        adapterClass: "header-encoding",
+        target: {
+          protocol: "kafka",
+          encoding: "record-headers",
+          specificationVersion: "asyncapi-kafka-binding-0.5.0"
+        },
+        publicationMappings: [{
+          sourceId: "old-adapter-catalog",
+          docaiMessagingVersion: "0.17.1",
+          adapterClass: "header-encoding",
+          target: {
+            protocol: "kafka",
+            encoding: "record-headers",
+            specificationVersion: "asyncapi-kafka-binding-0.4.0"
+          },
+          ruleId: "old-kafka-header-map",
+          ruleVersion: "1.0.0",
+          defines: ["encoding", "exposure"]
+        }]
+      }
+    ]
+  });
+
+  assert.deepEqual(result, [
+    {
+      caseId: "mapped-kafka-headers",
+      outcome: "supported",
+      resolution: "publication-mapping",
+      ruleId: "kafka-header-map",
+      ruleVersion: "1.0.0",
+      mappingSourceIds: ["adapter-catalog"],
+      projection: "emit-header-map",
+      ordinaryReaderRequirement: "normalized-contract-only"
+    },
+    {
+      caseId: "unmapped-kafka-headers",
+      outcome: "emit-unsupported",
+      resolution: "no-exact-mapping",
+      projection: "replace-header-representation",
+      ordinaryReaderRequirement: "normalized-contract-only"
+    }
+  ]);
+});
+
+task7Test("DM-ADAPTER-004 records exact protocol binding mapping availability", () => {
+  assert.equal(typeof coreValidator.evaluateAdapterSourceExpectations, "function");
+  const result = coreValidator.evaluateAdapterSourceExpectations({
+    docaiMessagingVersion: "0.17.1",
+    cases: [
+      {
+        caseId: "mapped-kafka-channel-binding",
+        adapterClass: "protocol-binding",
+        target: { protocol: "kafka", scope: "channel", bindingVersion: "0.5.0" },
+        publicationMappings: [{
+          sourceId: "adapter-catalog",
+          docaiMessagingVersion: "0.17.1",
+          adapterClass: "protocol-binding",
+          target: { protocol: "kafka", scope: "channel", bindingVersion: "0.5.0" },
+          ruleId: "kafka-channel-binding-map",
+          ruleVersion: "1.0.0"
+        }]
+      },
+      {
+        caseId: "unmapped-kafka-channel-binding",
+        adapterClass: "protocol-binding",
+        target: { protocol: "kafka", scope: "channel", bindingVersion: "0.5.0" },
+        publicationMappings: [{
+          sourceId: "old-adapter-catalog",
+          docaiMessagingVersion: "0.17.1",
+          adapterClass: "protocol-binding",
+          target: { protocol: "kafka", scope: "channel", bindingVersion: "0.4.0" },
+          ruleId: "old-kafka-channel-binding-map",
+          ruleVersion: "1.0.0"
+        }]
+      }
+    ]
+  });
+
+  assert.deepEqual(result, [
+    {
+      caseId: "mapped-kafka-channel-binding",
+      outcome: "supported",
+      resolution: "publication-mapping",
+      ruleId: "kafka-channel-binding-map",
+      ruleVersion: "1.0.0",
+      mappingSourceIds: ["adapter-catalog"],
+      projection: "emit-channel-binding",
+      ordinaryReaderRequirement: "normalized-contract-only"
+    },
+    {
+      caseId: "unmapped-kafka-channel-binding",
+      outcome: "emit-unsupported",
+      resolution: "no-exact-mapping",
+      projection: "smallest-channel-binding-unsupported",
+      ordinaryReaderRequirement: "normalized-contract-only"
+    }
+  ]);
+});
+
+task7Test("DM-ADAPTER-001 through DM-ADAPTER-004 are cataloged for Task 7 Step 4", () => {
+  const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
+  const cataloged = new Set(catalog.rules.map((entry) => entry.rule_id));
+  assert.deepEqual(
+    ["DM-ADAPTER-001", "DM-ADAPTER-002", "DM-ADAPTER-003", "DM-ADAPTER-004"]
+      .filter((ruleId) => !cataloged.has(ruleId)),
+    []
+  );
+});
+
+task7Test("DM-ADAPTER-001 through DM-ADAPTER-004 maintain Task 7 Step 4 rule correspondence", () => {
+  const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
+  const result = auditRuleTestCorrespondence({
+    catalogRuleIds: catalog.rules.map((entry) => entry.rule_id),
+    testNames: task7RuleTestNames.filter((name) => name.includes("DM-ADAPTER-")),
+    rulePrefixes: ["DM-ADAPTER"]
   });
   assert.deepEqual(result, { passed: true, errors: [] });
 });
