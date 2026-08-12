@@ -2,6 +2,7 @@ import { diagnostic } from "../diagnostics.mjs";
 import { parseExactJson } from "../json-value.mjs";
 import { scanMarkdown } from "../markdown.mjs";
 import { parsePipeTable } from "../tables.mjs";
+import { hasObjectOpennessDefault, validateCommonFailureShapes } from "./core-messages.mjs";
 
 export const CONVENTION_HEADINGS = [
   "Environments",
@@ -81,6 +82,11 @@ function sectionState(heading, lines) {
 
   const first = lines[firstIndex];
   const nonEmpty = lines.filter((line) => line.text !== "");
+  const firstShapeIndex = heading.text === "Error Handling"
+    ? lines.findIndex((line) => line.text.startsWith("**message_shape**: "))
+    : -1;
+  const outerNonEmpty = (firstShapeIndex === -1 ? lines : lines.slice(0, firstShapeIndex))
+    .filter((line) => line.text !== "");
   if (first.text === "none") {
     return nonEmpty.length === 1 ? { line: heading.line, state: "none" } : null;
   }
@@ -102,8 +108,8 @@ function sectionState(heading, lines) {
       : null;
   }
   if (first.text.startsWith("**unknown**:")) return null;
-  if (nonEmpty.some((line) => line.text === "none" || line.text === "unknown")) return null;
-  if (nonEmpty.some((line) => line.text.startsWith("**unsupported**: replaces CONVENTIONS "))) {
+  if (outerNonEmpty.some((line) => line.text === "none" || line.text === "unknown")) return null;
+  if (outerNonEmpty.some((line) => line.text.startsWith("**unsupported**: replaces CONVENTIONS "))) {
     return null;
   }
   return { line: heading.line, state: "expanded" };
@@ -154,10 +160,16 @@ export function validateCoreConventions(documentSet) {
   }
 
   const states = validateStates(file, scanned.value);
+  const failureShapes = validateCommonFailureShapes(
+    file,
+    scanned.value,
+    hasObjectOpennessDefault(documentSet)
+  );
   return {
-    diagnostics: states.diagnostics,
+    diagnostics: [...states.diagnostics, ...failureShapes.diagnostics],
     facts: {
       conventions: {
+        failureShapes: failureShapes.definitions,
         path: file.path,
         sections: states.sections
       }
@@ -195,12 +207,31 @@ function compactJsonString(source) {
 }
 
 function formatUses(messageFacts) {
-  return Object.values(messageFacts?.messageDefinitions?.byOperation ?? {})
+  const messageUses = Object.values(messageFacts?.messageDefinitions?.byOperation ?? {})
     .flatMap((definitions) => definitions)
     .flatMap((definition) => (definition.formatUses ?? []).map((use) => ({
       ...use,
       path: definition.path
     })));
+  const failureShapes = messageFacts?.failureShapes ?? {};
+  const shapeUses = [...(failureShapes.common ?? []), ...(failureShapes.inline ?? [])]
+    .flatMap((definition) => (definition.formatUses ?? []).map((use) => ({
+      ...use,
+      operation: definition.operation,
+      path: definition.path
+    })));
+  const commonByLabel = new Map((failureShapes.common ?? []).map((definition) => (
+    [definition.label, definition]
+  )));
+  const referencedCommonUses = (failureShapes.commonReferences ?? []).flatMap((reference) => {
+    const definition = commonByLabel.get(reference.label);
+    return (definition?.formatUses ?? []).map((use) => ({
+      ...use,
+      operation: reference.operation,
+      path: definition.path
+    }));
+  });
+  return [...messageUses, ...shapeUses, ...referencedCommonUses];
 }
 
 function cellFormatFragments(cell) {

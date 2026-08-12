@@ -576,7 +576,7 @@ Checkpoint 5 の suggested commit message: `test(messaging): audit Task 5 rule t
   - reply message set/address/selection fallback、direction reversal、reply INDEX entries の一致を検証する。
   - `DM-REPLY-001`〜`DM-REPLY-003` を state、keys/channel、selection/routing に割り当てる。
 
-- [ ] **Step 6: Failure Handling と common/inline shape を RED→GREEN で実装する**
+- [x] **Step 6: Failure Handling と common/inline shape を RED→GREEN で実装する**
   - Failure Handling の core states、canonical leading deviation、`Failure | Signal | Condition | Action` table、Action recovery state を検証する。
   - `common:<label>` / `inline:<label>` の exact whole-cell reference と unique resolution、expanded/replacement shape、Message subsection collapse を共有 grammar で検証する。
   - `DM-FAIL-001`〜`DM-FAIL-003` を state/deviation、table/reference、inline shape、`DM-CONV-004` を common shape に割り当てる。

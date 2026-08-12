@@ -7,6 +7,7 @@ import { parsePipeTable } from "../tables.mjs";
 import { validChannelAddress } from "./core-routing.mjs";
 
 const MESSAGE_NAME = /^[A-Za-z0-9._-]+$/;
+const FAILURE_SHAPE_LABEL = /^[a-z][a-z0-9_-]*$/;
 const CONSTRAINT_KEYWORDS = [
   "const", "enum", "default", "default_annotation", "format", "format_annotation",
   "minimum", "exclusiveMinimum", "maximum", "exclusiveMaximum", "multipleOf",
@@ -1641,9 +1642,357 @@ function validateMessageIdentity(file, markdown, operationHeading, operationEnd,
   return diagnostics;
 }
 
-function parseMessageBlocks(file, markdown, operationHeading, operationEnd, routedRow, objectOpennessDefault) {
+function remapDiagnostics(diagnostics, ruleId) {
+  return diagnostics.map((entry) => ({ ...entry, ruleId }));
+}
+
+function failureShapeMarkers(markdown, startLine, endLine) {
+  return markdown.lines.flatMap((line) => {
+    if (line.inFence
+      || line.line <= startLine
+      || line.line >= endLine
+      || !line.text.startsWith("**message_shape**")) return [];
+    const matched = line.text.match(/^\*\*message_shape\*\*: (.*)$/);
+    return [{ label: matched?.[1] ?? "", line: line.line }];
+  });
+}
+
+function failureShapeFormatUses(markdown, startLine, endLine, operation, label) {
+  const lines = sourceLines(markdown, startLine, endLine);
+  const uses = [];
+  for (let index = 0; index < lines.length; index += 1) {
+    if (!lines[index].text.trimStart().startsWith("|")) continue;
+    const table = tableAt(lines, index);
+    if (table === null) continue;
+    const meaningIndex = table.header.findIndex((cell) => (
+      cell === "Meaning" || cell === "Constraints / Meaning"
+    ));
+    if (meaningIndex !== -1) {
+      for (const row of table.rows) {
+        const constraints = parseConstraints(row[meaningIndex]);
+        for (const fragment of constraints.fragments) {
+          if (!["format", "format_annotation"].includes(fragment.keyword)) continue;
+          uses.push({
+            format: fragment.source,
+            message: label,
+            operation,
+            role: fragment.keyword === "format" ? "constraint" : "annotation"
+          });
+        }
+      }
+    }
+    while (lines[index + 1]?.line <= table.endLine) index += 1;
+  }
+  return uses;
+}
+
+function validateFailureShape(file, markdown, marker, endLine, ruleId, operation, objectOpennessDefault) {
+  const diagnostics = [];
+  const lines = sourceLines(markdown, marker.line, endLine);
+  const content = nonEmptyLines(lines);
+  const replacementPrefix = `**unsupported**: replaces failure shape ${marker.label}: `;
+  const replacement = content[0]?.text.startsWith("**unsupported**: replaces ") ?? false;
+  if (!FAILURE_SHAPE_LABEL.test(marker.label)) {
+    diagnostics.push(messageDiagnostic(
+      ruleId,
+      file,
+      marker.line,
+      "A failure-shape label starts with a lowercase ASCII letter and contains only lowercase letters, digits, underscores, or hyphens."
+    ));
+  }
+  if (replacement) {
+    const blank = markdown.lines.find((line) => line.line === marker.line + 1);
+    const valid = content.length === 1
+      && content[0].line === marker.line + 2
+      && blank?.text === ""
+      && content[0].text.startsWith(replacementPrefix)
+      && content[0].text.length > replacementPrefix.length;
+    if (!valid) {
+      diagnostics.push(messageDiagnostic(
+        ruleId,
+        file,
+        content[0]?.line ?? marker.line,
+        "A replacement failure shape contains only its exact matching replacement marker after one blank line."
+      ));
+    }
+    return {
+      definition: {
+        formatUses: [],
+        label: marker.label,
+        line: marker.line,
+        operation,
+        path: file.path,
+        replacement: true
+      },
+      diagnostics
+    };
+  }
+
+  const firstStructure = content.findIndex((line) => (
+    /^#### (Headers|Bindings|Payload)$/.test(line.text)
+      || /^- (Headers|Bindings|Payload): none$/.test(line.text)
+  ));
+  if (firstStructure !== 0
+    || content.some((line) => line.text.startsWith("**deviation**: "))
+    || content.some((line) => line.text.startsWith("**unsupported**: replaces "))) {
+    diagnostics.push(messageDiagnostic(
+      ruleId,
+      file,
+      content[0]?.line ?? marker.line,
+      "An expanded failure shape begins directly with its shared Headers, Bindings, and Payload grammar and carries no deviation or replacement marker."
+    ));
+  }
+
+  const pseudoMessage = { level: 3, line: marker.line, text: `Message ${marker.label}` };
+  diagnostics.push(...remapDiagnostics(
+    validateMessageStructure(file, markdown, pseudoMessage, endLine, false),
+    ruleId
+  ));
+  diagnostics.push(...remapDiagnostics(
+    validateMessageTables(file, markdown, pseudoMessage, "RECEIVE", endLine),
+    ruleId
+  ));
+  const payload = validatePayload(
+    file,
+    markdown,
+    pseudoMessage,
+    "RECEIVE",
+    endLine,
+    false,
+    operation,
+    objectOpennessDefault
+  );
+  diagnostics.push(...remapDiagnostics(payload.diagnostics, ruleId));
+  const formatUses = failureShapeFormatUses(
+    markdown,
+    marker.line,
+    endLine,
+    operation,
+    marker.label
+  );
+  return {
+    definition: {
+      formatUses,
+      label: marker.label,
+      line: marker.line,
+      operation,
+      path: file.path,
+      replacement: false
+    },
+    diagnostics
+  };
+}
+
+export function validateCommonFailureShapes(file, markdown, objectOpennessDefault) {
+  const errorHeading = markdown.headings.find((heading) => (
+    heading.level === 2 && heading.text === "Error Handling"
+  ));
+  const errorEnd = errorHeading === undefined
+    ? file.identityLine ?? Number.MAX_SAFE_INTEGER
+    : markdown.headings.find((heading) => (
+      heading.line > errorHeading.line && heading.level <= errorHeading.level
+    ))?.line ?? file.identityLine ?? Number.MAX_SAFE_INTEGER;
+  const allMarkers = failureShapeMarkers(
+    markdown,
+    file.metadataLine ?? 0,
+    file.identityLine ?? Number.MAX_SAFE_INTEGER
+  );
+  const commonMarkers = errorHeading === undefined ? [] : allMarkers.filter((marker) => (
+    marker.line > errorHeading.line && marker.line < errorEnd
+  ));
   const diagnostics = [];
   const definitions = [];
+  for (const marker of allMarkers.filter((entry) => !commonMarkers.includes(entry))) {
+    diagnostics.push(messageDiagnostic(
+      "DM-CONV-004",
+      file,
+      marker.line,
+      "Common failure shapes may appear only inside CONVENTIONS Error Handling."
+    ));
+  }
+  for (let index = 0; index < commonMarkers.length; index += 1) {
+    const marker = commonMarkers[index];
+    const parsed = validateFailureShape(
+      file,
+      markdown,
+      marker,
+      commonMarkers[index + 1]?.line ?? errorEnd,
+      "DM-CONV-004",
+      null,
+      objectOpennessDefault
+    );
+    diagnostics.push(...parsed.diagnostics);
+    definitions.push(parsed.definition);
+  }
+  const counts = new Map();
+  for (const definition of definitions) {
+    counts.set(definition.label, (counts.get(definition.label) ?? 0) + 1);
+  }
+  for (const definition of definitions.filter((entry) => counts.get(entry.label) !== 1)) {
+    diagnostics.push(messageDiagnostic(
+      "DM-CONV-004",
+      file,
+      definition.line,
+      "Every common failure-shape label is unique across CONVENTIONS Error Handling."
+    ));
+  }
+  return { definitions, diagnostics };
+}
+
+function actionDescribesRecovery(value) {
+  const nextAction = /\b(?:acknowledge|nack|negative(?:ly)? acknowledge|reject|discard|drop|quarantine|retry|resend|re-process|reprocess|route|dead-letter|escalate|report|mark|return|continue|stop|preserve|inspect)\b/i.test(value);
+  const recovery = /\b(?:state|failed|processed|unprocessed|unresolved|discard|drop|quarantine|retry|resend|re-process|reprocess|dead-letter|escalate|continue|stop|preserve|inspect)\b/i.test(value);
+  return nextAction && recovery;
+}
+
+function failureHandlingState(markdown, heading, endLine) {
+  const lines = nonEmptyLines(sourceLines(markdown, heading.line, endLine));
+  let index = 0;
+  while (lines[index]?.text.startsWith("**deviation**:")) index += 1;
+  const deviations = lines.slice(0, index);
+  const core = lines.slice(index);
+  if (!validLeadingDeviations(deviations)) return { core, lines, state: "invalid" };
+  if (core.length === 1 && core[0].text === "none") return { core, lines, state: "none" };
+  if (core.length === 2
+    && core[0].text === "unknown"
+    && core[1].line === core[0].line + 1
+    && core[1].text.startsWith("**unknown**: ")
+    && core[1].text.length > "**unknown**: ".length) {
+    return { core, lines, state: "unknown" };
+  }
+  const replacementPrefix = "**unsupported**: replaces Failure Handling: ";
+  if (core.length === 1
+    && core[0].text.startsWith(replacementPrefix)
+    && core[0].text.length > replacementPrefix.length) {
+    return { core, lines, state: "unsupported" };
+  }
+  if (core[0]?.text.startsWith("|")) return { core, lines, state: "expanded" };
+  return { core, lines, state: "invalid" };
+}
+
+function validateFailureHandling(
+  file,
+  markdown,
+  operationHeading,
+  operationEnd,
+  operation,
+  commonShapes,
+  objectOpennessDefault
+) {
+  const heading = markdown.headings.find((entry) => (
+    entry.level === 3
+      && entry.text === "Failure Handling"
+      && entry.line > operationHeading.line
+      && entry.line < operationEnd
+  ));
+  if (heading === undefined) return { commonReferences: [], definitions: [], diagnostics: [] };
+  const endLine = blockEndLine(markdown, heading, operationEnd);
+  const state = failureHandlingState(markdown, heading, endLine);
+  if (state.state === "invalid") {
+    return {
+      commonReferences: [],
+      definitions: [],
+      diagnostics: [messageDiagnostic(
+        "DM-FAIL-001",
+        file,
+        state.core[0]?.line ?? heading.line,
+        "Failure Handling requires ordered leading deviations followed by exactly one none, whole-section unknown, replacement unsupported, or expanded table state."
+      )]
+    };
+  }
+  if (state.state !== "expanded") {
+    return { commonReferences: [], definitions: [], diagnostics: [] };
+  }
+
+  const table = tableAt(state.core, 0);
+  const markers = table === null ? [] : postTableMarkers(state.core, table);
+  const consumedLine = markers.at(-1)?.line ?? table?.endLine;
+  const shapeMarkers = failureShapeMarkers(markdown, consumedLine ?? heading.line, endLine);
+  const firstShapeLine = shapeMarkers[0]?.line ?? endLine;
+  const tailContent = table === null ? [] : nonEmptyLines(sourceLines(markdown, consumedLine, firstShapeLine));
+  const expected = ["Failure", "Signal", "Condition", "Action"];
+  const tableValid = table !== null
+    && validHeader(table.header, expected)
+    && table.rows.length > 0
+    && table.rows.every((row) => row.slice(0, expected.length).every((cell) => cell !== ""))
+    && new Set(table.rows.map((row) => row[0])).size === table.rows.length
+    && table.rows.every((row) => actionDescribesRecovery(row[3]))
+    && tailContent.length === 0
+    && validMarkerOrder(markers)
+    && (table.rows.some((row) => row.includes("unknown"))
+      ? markers.some((marker) => marker.kind.type === "unknown")
+      : markers.every((marker) => marker.kind.type !== "unknown"));
+  const diagnostics = [];
+  if (!tableValid) {
+    diagnostics.push(messageDiagnostic(
+      "DM-FAIL-002",
+      file,
+      table?.startLine ?? state.core[0]?.line ?? heading.line,
+      "Expanded Failure Handling requires its canonical non-empty table, unique failures, complete recovery actions, and canonical post-table markers."
+    ));
+  }
+
+  const commonCounts = new Map();
+  for (const shape of commonShapes) {
+    commonCounts.set(shape.label, (commonCounts.get(shape.label) ?? 0) + 1);
+  }
+  const commonReferences = [];
+  const inlineFirstUse = [];
+  let referencesValid = table !== null;
+  for (const row of table?.rows ?? []) {
+    const signal = row[1];
+    const reference = signal.match(/^(common|inline):([a-z][a-z0-9_-]*)$/);
+    if (reference === null) {
+      if (signal.includes("common:") || signal.includes("inline:")) referencesValid = false;
+      continue;
+    }
+    const [, kind, label] = reference;
+    if (kind === "common") {
+      commonReferences.push({ label, operation });
+      if (commonCounts.get(label) !== 1) referencesValid = false;
+    } else if (!inlineFirstUse.includes(label)) {
+      inlineFirstUse.push(label);
+    }
+  }
+  if (!sameNames(shapeMarkers.map((marker) => marker.label), inlineFirstUse)) referencesValid = false;
+  if (!referencesValid) {
+    diagnostics.push(messageDiagnostic(
+      "DM-FAIL-002",
+      file,
+      table?.startLine ?? heading.line,
+      "Failure shape references use exact whole Signal cells and resolve exactly once, with inline definitions in first-use order."
+    ));
+  }
+
+  const definitions = [];
+  for (let index = 0; index < shapeMarkers.length; index += 1) {
+    const parsed = validateFailureShape(
+      file,
+      markdown,
+      shapeMarkers[index],
+      shapeMarkers[index + 1]?.line ?? endLine,
+      "DM-FAIL-003",
+      operation,
+      objectOpennessDefault
+    );
+    diagnostics.push(...parsed.diagnostics);
+    definitions.push(parsed.definition);
+  }
+  return { commonReferences, definitions, diagnostics };
+}
+
+function parseMessageBlocks(
+  file,
+  markdown,
+  operationHeading,
+  operationEnd,
+  routedRow,
+  objectOpennessDefault,
+  commonShapes
+) {
+  const diagnostics = [];
+  const definitions = [];
+  const operation = routedRow?.operation ?? operationName(operationHeading);
   const primary = markdown.headings.filter((heading) => (
     heading.level === 3
       && heading.text.startsWith("Message ")
@@ -1683,6 +2032,16 @@ function parseMessageBlocks(file, markdown, operationHeading, operationEnd, rout
     primary,
     replies
   ));
+  const failures = validateFailureHandling(
+    file,
+    markdown,
+    operationHeading,
+    operationEnd,
+    operation,
+    commonShapes,
+    objectOpennessDefault
+  );
+  diagnostics.push(...failures.diagnostics);
 
   for (const [heading, reply] of [
     ...primary.map((entry) => [entry, false]),
@@ -1708,7 +2067,7 @@ function parseMessageBlocks(file, markdown, operationHeading, operationEnd, rout
         direction,
         endLine,
         reply,
-        routedRow?.operation ?? operationName(operationHeading),
+        operation,
         objectOpennessDefault
       );
     diagnostics.push(...payload.diagnostics);
@@ -1717,34 +2076,53 @@ function parseMessageBlocks(file, markdown, operationHeading, operationEnd, rout
       formatUses: payload.formatUses,
       line: heading.line,
       name: messageName(heading),
-      operation: routedRow?.operation ?? operationName(operationHeading),
+      operation,
       path: file.path,
       reply
     });
   }
-  return { diagnostics, definitions };
+  return {
+    commonReferences: failures.commonReferences,
+    diagnostics,
+    failureShapes: failures.definitions,
+    definitions
+  };
 }
 
-function parseMessageFile(file, routedRows, objectOpennessDefault) {
+function parseMessageFile(file, routedRows, objectOpennessDefault, commonShapes) {
   const scanned = scanMarkdown({ text: file.content, file: file.path });
-  if (scanned.value === null) return { diagnostics: scanned.diagnostics, definitions: [] };
+  if (scanned.value === null) {
+    return { commonReferences: [], diagnostics: scanned.diagnostics, failureShapes: [], definitions: [] };
+  }
   const markdown = scanned.value;
   const diagnostics = [];
   const definitions = [];
+  const failureShapes = [];
+  const commonReferences = [];
   const operations = markdown.headings.filter((heading) => heading.level === 2);
   for (let index = 0; index < operations.length; index += 1) {
     const heading = operations[index];
     const endLine = operations[index + 1]?.line ?? file.identityLine ?? Number.MAX_SAFE_INTEGER;
     const name = operationName(heading);
     const routedRow = routedRows.find((row) => row.operation === name);
-    const parsed = parseMessageBlocks(file, markdown, heading, endLine, routedRow, objectOpennessDefault);
+    const parsed = parseMessageBlocks(
+      file,
+      markdown,
+      heading,
+      endLine,
+      routedRow,
+      objectOpennessDefault,
+      commonShapes
+    );
     diagnostics.push(...parsed.diagnostics);
     definitions.push(...parsed.definitions);
+    failureShapes.push(...parsed.failureShapes);
+    commonReferences.push(...parsed.commonReferences);
   }
-  return { diagnostics, definitions };
+  return { commonReferences, diagnostics, failureShapes, definitions };
 }
 
-function hasObjectOpennessDefault(documentSet) {
+export function hasObjectOpennessDefault(documentSet) {
   const file = documentSet.files.find((entry) => entry.path === "CONVENTIONS.md");
   if (file === undefined) return false;
   const scanned = scanMarkdown({ text: file.content, file: file.path });
@@ -1759,18 +2137,28 @@ function hasObjectOpennessDefault(documentSet) {
     || /additional properties[^\n]*allowed[^\n]*(?:string|int|number|bool|null|any|object|map<string, [^>]+>)[^\n]*by default|allow[^\n]*additional properties[^\n]*(?:string|int|number|bool|null|any|object|map<string, [^>]+>)[^\n]*by default/i.test(content);
 }
 
-export function validateCoreMessages(documentSet, routingFacts) {
+export function validateCoreMessages(documentSet, routingFacts, conventionFacts = {}) {
   const rows = routingFacts.operations?.rows ?? [];
   const paths = [...new Set(rows.map((row) => row.channelPath))];
   const diagnostics = [];
   const definitions = [];
+  const failureShapes = [];
+  const commonReferences = [];
+  const commonShapes = conventionFacts.conventions?.failureShapes ?? [];
   const objectOpennessDefault = hasObjectOpennessDefault(documentSet);
   for (const path of paths) {
     const file = documentSet.files.find((entry) => entry.path === path);
     if (file === undefined) continue;
-    const parsed = parseMessageFile(file, rows.filter((row) => row.channelPath === path), objectOpennessDefault);
+    const parsed = parseMessageFile(
+      file,
+      rows.filter((row) => row.channelPath === path),
+      objectOpennessDefault,
+      commonShapes
+    );
     diagnostics.push(...parsed.diagnostics);
     definitions.push(...parsed.definitions);
+    failureShapes.push(...parsed.failureShapes);
+    commonReferences.push(...parsed.commonReferences);
   }
   const groups = new Map();
   for (const definition of definitions) {
@@ -1782,6 +2170,11 @@ export function validateCoreMessages(documentSet, routingFacts) {
   return {
     diagnostics,
     facts: {
+      failureShapes: {
+        common: commonShapes,
+        commonReferences,
+        inline: failureShapes
+      },
       messageDefinitions: { byOperation }
     }
   };

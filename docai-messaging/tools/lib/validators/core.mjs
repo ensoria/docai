@@ -134,7 +134,8 @@ export function validateCoreDocumentSet(documentSet) {
     conventions: null,
     formats: null,
     operationDefinitions: null,
-    messageDefinitions: null
+    messageDefinitions: null,
+    failureShapes: null
   };
   if (root === undefined) return { diagnostics: [], facts };
 
@@ -170,9 +171,10 @@ export function validateCoreDocumentSet(documentSet) {
   const messages = structure.diagnostics.length === 0
     && routing.diagnostics.length === 0
     && operationDefinitions.diagnostics.length === 0
-    ? validateCoreMessages(documentSet, routing.facts)
-    : { diagnostics: [], facts: { messageDefinitions: null } };
+    ? validateCoreMessages(documentSet, routing.facts, conventions.facts)
+    : { diagnostics: [], facts: { failureShapes: null, messageDefinitions: null } };
   facts.messageDefinitions = messages.facts.messageDefinitions;
+  facts.failureShapes = messages.facts.failureShapes;
   const formats = structure.diagnostics.length === 0
     && routing.diagnostics.length === 0
     && conventions.diagnostics.length === 0

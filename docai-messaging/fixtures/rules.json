@@ -187,6 +187,12 @@
       "scope": "core"
     },
     {
+      "rule_id": "DM-CONV-004",
+      "readme_section": "§3.3 CONVENTIONS.md / §3.4 Output Profiles and Incomplete Information",
+      "description": "Error Handling defines each valid common failure-signal shape exactly once as a receive-side expanded block or an exact whole-shape replacement.",
+      "scope": "core"
+    },
+    {
       "rule_id": "DM-OP-001",
       "readme_section": "§4 Operation Definition Format",
       "description": "Each routed channel file contains exactly its routed operation definitions, without a file-level wrapper, and every operation uses the fixed required section order.",
@@ -262,6 +268,24 @@
       "rule_id": "DM-REPLY-003",
       "readme_section": "§4.1 Section Rules — Reply",
       "description": "Only expanded Reply contributes an exact lexically ordered reply Message set to its containing operation's INDEX routing, with complete observable selection and no synthesized operation.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-FAIL-001",
+      "readme_section": "§4.1 Section Rules — Failure Handling",
+      "description": "Failure Handling contains canonically ordered leading deviations followed by exactly one none, whole-section unknown, replacement unsupported, or expanded table state.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-FAIL-002",
+      "readme_section": "§4.1 Section Rules — Failure Handling",
+      "description": "Expanded Failure Handling uses the canonical non-empty table and exact common or inline Signal references that resolve once, with inline shapes in first-use order.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-FAIL-003",
+      "readme_section": "§3.4 Output Profiles and Incomplete Information / §4.1 Section Rules — Failure Handling",
+      "description": "Inline failure shapes have valid labels and use the shared receive-side Headers, Bindings, and non-collapsed Payload grammar or an exact whole-shape replacement.",
       "scope": "core"
     },
     {

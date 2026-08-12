@@ -241,7 +241,7 @@ function operationBody(row, overrides = {}) {
     "",
     "### Failure Handling",
     "",
-    "none",
+    ...(overrides.failureHandling ?? ["none"]),
     "",
     "### Related",
     "",
@@ -336,6 +336,35 @@ function expandedReply(name = "create-order-reply", {
     ...channelContent,
     "",
     ...(messages ?? messageSection(name, { level: 4 }))
+  ];
+}
+
+function failureShape(label, { replacement, content } = {}) {
+  return [
+    `**message_shape**: ${label}`,
+    "",
+    ...(replacement === undefined
+      ? (content ?? [
+        "- Headers: none",
+        "- Bindings: none",
+        "#### Payload",
+        "",
+        "none"
+      ])
+      : [`**unsupported**: replaces failure shape ${replacement}: encoded failure shape source.json#/failures`])
+  ];
+}
+
+function failureTable(rows = [[
+  "publish-timeout",
+  "broker timeout",
+  "The broker does not confirm the publish before the deadline",
+  "Report the outcome as unresolved and resend with the same message ID"
+]]) {
+  return [
+    "| Failure | Signal | Condition | Action |",
+    "|---|---|---|---|",
+    ...rows.map((row) => `| ${row.join(" | ")} |`)
   ];
 }
 
@@ -4209,6 +4238,331 @@ task6Test("DM-REPLY-001 through DM-REPLY-003 maintain Task 6 checkpoint 5 rule c
     catalogRuleIds: catalog.rules.map((entry) => entry.rule_id),
     testNames: task6RuleTestNames.filter((name) => name.includes("DM-REPLY-")),
     rulePrefixes: ["DM-REPLY"]
+  });
+  assert.deepEqual(result, { passed: true, errors: [] });
+});
+
+for (const [name, failureHandling] of [
+  ["none", ["none"]],
+  ["whole-section unknown", [
+    "unknown", "**unknown**: operation failure handling requires the broker retry policy"
+  ]],
+  ["whole-section replacement", [
+    "**unsupported**: replaces Failure Handling: broker-specific recovery source.json#/failures"
+  ]],
+  ["a suppression deviation followed by none", [
+    "**deviation**: this operation suppresses the inherited retry rule",
+    "none"
+  ]],
+  ["a deviation followed by an expanded table", [
+    "**deviation**: this operation replaces the inherited publish-timeout rule",
+    ...failureTable()
+  ]]
+]) {
+  task6Test(`accepts DM-FAIL-001 Failure Handling state ${name}`, (t) => {
+    const root = createFlatOperationSet(t, {
+      channelBody: operationBody(BASIC_OPERATION_ROW, { failureHandling })
+    });
+    assert.ok(!ruleIds(taskScoped(root)).includes("DM-FAIL-001"));
+  });
+}
+
+for (const [name, failureHandling] of [
+  ["an empty section", []],
+  ["unknown without its marker", ["unknown"]],
+  ["unknown with a non-adjacent marker", [
+    "unknown", "", "**unknown**: failure behavior requires the broker contract"
+  ]],
+  ["none mixed with expanded content", ["none", ...failureTable()]],
+  ["a replacement naming another unit", [
+    "**unsupported**: replaces Reply: failure behavior source.json#/failures"
+  ]],
+  ["a replacement followed by normal content", [
+    "**unsupported**: replaces Failure Handling: recovery extension source.json#/failures",
+    ...failureTable()
+  ]],
+  ["unsorted leading deviations", [
+    "**deviation**: zeta inherited failure rule is suppressed",
+    "**deviation**: alpha inherited failure rule is replaced",
+    "none"
+  ]],
+  ["a deviation without a core state", [
+    "**deviation**: the inherited failure rule is suppressed"
+  ]]
+]) {
+  task6Test(`DM-FAIL-001 rejects ${name}`, (t) => {
+    const root = createFlatOperationSet(t, {
+      channelBody: operationBody(BASIC_OPERATION_ROW, { failureHandling })
+    });
+    assert.ok(ruleIds(taskScoped(root)).includes("DM-FAIL-001"));
+  });
+}
+
+task6Test("accepts DM-FAIL-002 a failure table with non-shape and common signals", (t) => {
+  const root = createFlatOperationSet(t, {
+    channelBody: operationBody(BASIC_OPERATION_ROW, { failureHandling: failureTable([
+      ["broker-timeout", "broker timeout", "The publish deadline expires", "Report the outcome as unresolved and resend with the same message ID"],
+      ["dead-letter", "common:dead-letter", "Delivery retries are exhausted", "Inspect the failed state and escalate without retrying the message"]
+    ]) })
+  });
+  write(root, "CONVENTIONS.md", documentSource({ body: conventionsBody({
+    "Error Handling": [
+      "Messages that exhaust delivery retries use the common signal.", "",
+      ...failureShape("dead-letter")
+    ]
+  }) }));
+  const result = taskScoped(root);
+  assert.ok(!ruleIds(result).includes("DM-FAIL-002"));
+  assert.deepEqual(result.facts.core.failureShapes.commonReferences, [{
+    label: "dead-letter",
+    operation: "create-order"
+  }]);
+});
+
+task6Test("accepts DM-FAIL-002 repeated inline references resolved once", (t) => {
+  const root = createFlatOperationSet(t, {
+    channelBody: operationBody(BASIC_OPERATION_ROW, { failureHandling: [
+      ...failureTable([
+        ["invalid-header", "inline:invalid-message", "A required header is malformed", "Reject the message and report its state as unprocessed"],
+        ["invalid-payload", "inline:invalid-message", "The payload cannot be decoded", "Reject the message and report its state as unprocessed"]
+      ]),
+      "",
+      ...failureShape("invalid-message")
+    ] })
+  });
+  assert.ok(!ruleIds(taskScoped(root)).includes("DM-FAIL-002"));
+});
+
+for (const [name, failureHandling] of [
+  ["a non-canonical table header", [
+    "| Name | Signal | Condition | Action |", "|---|---|---|---|",
+    "| timeout | broker timeout | Publish deadline expires | Report unresolved and do not retry |"
+  ]],
+  ["an empty Action cell", [
+    "| Failure | Signal | Condition | Action |", "|---|---|---|---|",
+    "| timeout | broker timeout | Publish deadline expires | |"
+  ]],
+  ["an Action without a next step or recovery state", failureTable([[
+    "timeout", "broker timeout", "The publish deadline expires", "Record the failure details"
+  ]])],
+  ["a duplicate Failure label", failureTable([
+    ["timeout", "broker timeout", "First timeout condition", "Report the first outcome as unresolved"],
+    ["timeout", "negative acknowledgement", "Second timeout condition", "Escalate the second outcome without retrying"]
+  ])],
+  ["an embedded common reference token", failureTable([[
+    "dead-letter", "received common:dead-letter signal", "Delivery retries are exhausted", "Escalate and preserve the failed state"
+  ]])],
+  ["an unresolved common reference", failureTable([[
+    "dead-letter", "common:missing-shape", "Delivery retries are exhausted", "Escalate and preserve the failed state"
+  ]])],
+  ["an unresolved inline reference", failureTable([[
+    "invalid", "inline:invalid-message", "The message cannot be decoded", "Reject and preserve the message as unprocessed"
+  ]])],
+  ["an unreferenced inline shape", [
+    ...failureTable(), "", ...failureShape("unused-shape")
+  ]],
+  ["inline shapes outside first-reference order", [
+    ...failureTable([
+      ["alpha", "inline:alpha-shape", "The alpha condition occurs", "Report the alpha state and stop processing"],
+      ["zeta", "inline:zeta-shape", "The zeta condition occurs", "Report the zeta state and stop processing"]
+    ]), "", ...failureShape("zeta-shape"), "", ...failureShape("alpha-shape")
+  ]]
+]) {
+  task6Test(`DM-FAIL-002 rejects ${name}`, (t) => {
+    const root = createFlatOperationSet(t, {
+      channelBody: operationBody(BASIC_OPERATION_ROW, { failureHandling })
+    });
+    assert.ok(ruleIds(taskScoped(root)).includes("DM-FAIL-002"));
+  });
+}
+
+task6Test("accepts DM-FAIL-003 an expanded inline Presence shape", (t) => {
+  const root = createFlatOperationSet(t, {
+    channelBody: operationBody(BASIC_OPERATION_ROW, { failureHandling: [
+      ...failureTable([[
+        "rejected", "inline:rejection", "The command is rejected", "Report the rejection state and do not retry"
+      ]]), "",
+      ...failureShape("rejection", { content: [
+        "#### Headers", "",
+        "| Name | Type | Presence | Nullable | Meaning |",
+        "|---|---|---|---|---|",
+        "| error-code | string | always | no | Machine-readable rejection code |",
+        "", "#### Bindings", "", "none",
+        "", "#### Payload", "",
+        ...jsonPayload({
+          direction: "RECEIVE",
+          rows: ["| reason | string | always | no | Human-readable rejection reason |"],
+          example: '{"reason":"credit limit exceeded"}'
+        })
+      ] })
+    ] })
+  });
+  const result = taskScoped(root);
+  assert.ok(!ruleIds(result).includes("DM-FAIL-003"));
+  assert.deepEqual(result.facts.core.failureShapes.inline.map((shape) => shape.label), ["rejection"]);
+});
+
+task6Test("accepts DM-FAIL-003 an exact inline failure-shape replacement", (t) => {
+  const root = createFlatOperationSet(t, {
+    channelBody: operationBody(BASIC_OPERATION_ROW, { failureHandling: [
+      ...failureTable([[
+        "encoded", "inline:encoded-signal", "The encoded failure is received", "Preserve the unresolved state and escalate"
+      ]]), "", ...failureShape("encoded-signal", { replacement: "encoded-signal" })
+    ] })
+  });
+  assert.ok(!ruleIds(taskScoped(root)).includes("DM-FAIL-003"));
+});
+
+for (const [name, shape] of [
+  ["an invalid inline label", failureShape("Invalid.Shape")],
+  ["a replacement naming another label", failureShape("encoded-signal", { replacement: "other-signal" })],
+  ["a replacement followed by subsections", [
+    ...failureShape("encoded-signal", { replacement: "encoded-signal" }),
+    "", "#### Payload", "", "none"
+  ]],
+  ["reordered shape subsections", failureShape("encoded-signal", { content: [
+    "#### Bindings", "", "none", "", "#### Headers", "", "none",
+    "", "#### Payload", "", "none"
+  ] })],
+  ["a collapsed Payload", failureShape("encoded-signal", { content: [
+    "- Headers: none", "- Bindings: none", "- Payload: none"
+  ] })],
+  ["collapsed Bindings after expanded Headers", failureShape("encoded-signal", { content: [
+    "#### Headers", "",
+    "| Name | Type | Presence | Nullable | Meaning |", "|---|---|---|---|---|",
+    "| error | string | always | no | Failure code |", "",
+    "- Bindings: none", "#### Payload", "", "none"
+  ] })],
+  ["Required semantics in a failure shape", failureShape("encoded-signal", { content: [
+    "#### Headers", "",
+    "| Name | Type | Required | Nullable | Constraints / Meaning |", "|---|---|---|---|---|",
+    "| error | string | yes | no | Failure code |", "",
+    "#### Bindings", "", "none", "", "#### Payload", "", "none"
+  ] })],
+  ["a forbidden shape-local deviation", failureShape("encoded-signal", { content: [
+    "**deviation**: this shape changes the inherited envelope",
+    "- Headers: none", "- Bindings: none", "#### Payload", "", "none"
+  ] })]
+]) {
+  task6Test(`DM-FAIL-003 rejects ${name}`, (t) => {
+    const root = createFlatOperationSet(t, {
+      channelBody: operationBody(BASIC_OPERATION_ROW, { failureHandling: [
+        ...failureTable([[
+          "encoded", "inline:encoded-signal", "The encoded failure is received", "Preserve the unresolved state and escalate"
+        ]]), "", ...shape
+      ] })
+    });
+    assert.ok(ruleIds(taskScoped(root)).includes("DM-FAIL-003"));
+  });
+}
+
+task6Test("accepts DM-CONV-004 expanded and replacement common failure shapes", (t) => {
+  const root = createFlatOperationSet(t);
+  write(root, "CONVENTIONS.md", documentSource({ body: conventionsBody({
+    "Error Handling": [
+      "Common failure signals are defined below.", "",
+      ...failureShape("dead-letter"), "",
+      ...failureShape("encoded-failure", { replacement: "encoded-failure" })
+    ]
+  }) }));
+  const diagnostics = ruleIds(taskScoped(root));
+  assert.ok(!diagnostics.includes("DM-CONV-002"));
+  assert.ok(!diagnostics.includes("DM-CONV-004"));
+});
+
+for (const [name, selector, expectedDiagnostic] of [
+  ["resolves a referenced common-shape format through Data Representation", "Data Representation", false],
+  ["requires a referenced common-shape format in selective convention closure", "Serialization", true]
+]) {
+  task6Test(`DM-CONV-003 ${name}`, (t) => {
+    const row = [...BASIC_OPERATION_ROW, selector];
+    const root = createFlatOperationSet(t, {
+      rows: [row],
+      columns: [
+        "Action", "Channel", "Operation", "Message", "Task", "Summary",
+        "Required context", "Supplemental context", "Conventions"
+      ],
+      channelBody: operationBody(row, { failureHandling: failureTable([[
+        "dead-letter", "common:dead-letter", "Delivery retries are exhausted",
+        "Inspect the failed state and escalate without retrying the message"
+      ]]) })
+    });
+    write(root, "CONVENTIONS.md", documentSource({ body: conventionsBody({
+      "Error Handling": [
+        "Messages that exhaust delivery retries use the common signal.", "",
+        ...failureShape("dead-letter", { content: [
+          "#### Headers", "",
+          "| Name | Type | Presence | Nullable | Meaning |", "|---|---|---|---|---|",
+          "| failure-id | string | always | no | `format=\"uuid\"`; Failure identifier |", "",
+          "#### Bindings", "", "none", "", "#### Payload", "", "none"
+        ] })
+      ],
+      "Data Representation": [
+        "| Format | Role | Meaning |", "|---|---|---|",
+        "| \"uuid\" | constraint | Accept canonical UUID strings and construct and validate them without narrowing. |"
+      ]
+    }) }));
+    const result = taskScoped(root);
+    assert.equal(
+      ruleIds(result).includes("DM-CONV-003"),
+      expectedDiagnostic,
+      JSON.stringify({
+        failures: result.facts.core.failureShapes,
+        operations: result.facts.core.operations,
+        formats: result.facts.core.formats,
+        diagnostics: result.diagnostics
+      })
+    );
+  });
+}
+
+for (const [name, shapes] of [
+  ["an invalid common label", [failureShape("Dead.Letter")]],
+  ["a malformed common marker", [[
+    "**message_shape**:dead-letter", "", "- Headers: none", "- Bindings: none",
+    "#### Payload", "", "none"
+  ]]],
+  ["a duplicate common label", [failureShape("dead-letter"), failureShape("dead-letter")]],
+  ["a mismatched common replacement label", [
+    failureShape("dead-letter", { replacement: "other-shape" })
+  ]],
+  ["Required semantics in a common shape", [failureShape("dead-letter", { content: [
+    "#### Headers", "",
+    "| Name | Type | Required | Nullable | Constraints / Meaning |", "|---|---|---|---|---|",
+    "| error | string | yes | no | Failure code |", "",
+    "#### Bindings", "", "none", "", "#### Payload", "", "none"
+  ] })]],
+  ["a common shape outside Error Handling", []]
+]) {
+  task6Test(`DM-CONV-004 rejects ${name}`, (t) => {
+    const root = createFlatOperationSet(t);
+    const sectionContents = name === "a common shape outside Error Handling"
+      ? { Authentication: failureShape("dead-letter") }
+      : { "Error Handling": [
+        "Common failure signals are defined below.",
+        ...shapes.flatMap((shape, index) => index === 0 ? shape : ["", ...shape])
+      ] };
+    write(root, "CONVENTIONS.md", documentSource({ body: conventionsBody(sectionContents) }));
+    assert.ok(ruleIds(taskScoped(root)).includes("DM-CONV-004"));
+  });
+}
+
+task6Test("DM-FAIL-001 through DM-FAIL-003 and DM-CONV-004 are cataloged for Task 6 checkpoint 6", () => {
+  const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
+  const cataloged = new Set(catalog.rules.map((entry) => entry.rule_id));
+  assert.deepEqual(
+    ["DM-FAIL-001", "DM-FAIL-002", "DM-FAIL-003", "DM-CONV-004"]
+      .filter((ruleId) => !cataloged.has(ruleId)),
+    []
+  );
+});
+
+task6Test("DM-FAIL-001 through DM-FAIL-003 and DM-CONV-004 maintain Task 6 checkpoint 6 rule correspondence", () => {
+  const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
+  const result = auditRuleTestCorrespondence({
+    catalogRuleIds: catalog.rules.map((entry) => entry.rule_id),
+    testNames: task6RuleTestNames.filter((name) => /DM-(?:FAIL|CONV)-/.test(name)),
+    rulePrefixes: ["DM-FAIL", "DM-CONV"]
   });
   assert.deepEqual(result, { passed: true, errors: [] });
 });
