@@ -247,6 +247,24 @@
       "scope": "core"
     },
     {
+      "rule_id": "DM-REPLY-001",
+      "readme_section": "§3.4 Output Profiles and Incomplete Information / §4.1 Section Rules — Reply",
+      "description": "Reply contains canonically ordered leading deviations followed by exactly one none, whole-section unknown, replacement unsupported, or expanded core state.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-REPLY-002",
+      "readme_section": "§4.1 Section Rules — Reply",
+      "description": "Expanded Reply uses canonical channel, correlation, and timeout keys plus a static or dynamic addressed Channel with exact Parameters and scoped Bindings.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-REPLY-003",
+      "readme_section": "§4.1 Section Rules — Reply",
+      "description": "Only expanded Reply contributes an exact lexically ordered reply Message set to its containing operation's INDEX routing, with complete observable selection and no synthesized operation.",
+      "scope": "core"
+    },
+    {
       "rule_id": "DM-PARSE-001",
       "readme_section": "§3.5 Canonical Syntax and Boundaries",
       "description": "Markdown headings and backtick-fenced blocks retain deterministic source-line boundaries.",

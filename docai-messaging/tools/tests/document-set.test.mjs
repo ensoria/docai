@@ -184,9 +184,11 @@ function unprojectedShardBody(markers) {
 
 function operationBody(row, overrides = {}) {
   const [action, channel, operation, messageCell] = row;
-  const primaryMessage = messageCell
-    .split("; ")
-    .find((entry) => !entry.startsWith("reply:")) ?? "message";
+  const routedMessages = messageCell.split("; ");
+  const primaryMessage = routedMessages.find((entry) => !entry.startsWith("reply:")) ?? "message";
+  const replyMessages = routedMessages
+    .filter((entry) => entry.startsWith("reply:"))
+    .map((entry) => entry.slice("reply:".length));
   const behavior = overrides.behavior ?? [
     "- side_effects: none",
     "- idempotency: none",
@@ -233,7 +235,9 @@ function operationBody(row, overrides = {}) {
     "",
     "### Reply",
     "",
-    ...(overrides.reply ?? ["none"]),
+    ...(overrides.reply ?? (replyMessages.length === 1
+      ? expandedReply(replyMessages[0])
+      : ["none"])),
     "",
     "### Failure Handling",
     "",
@@ -310,6 +314,28 @@ function jsonPayload({
     "|---|---|---|---|---|",
     ...rows,
     ...afterRepresentation
+  ];
+}
+
+function expandedReply(name = "create-order-reply", {
+  channel = "orders.replies",
+  correlation = "the `correlation_id` header equals the request `message_id` header",
+  timeout = "30 seconds -- report the request as unresolved",
+  keyMarkers = [],
+  channelContent = ["- Parameters: none", "- Bindings: none"],
+  messages
+} = {}) {
+  return [
+    `- channel: ${channel}`,
+    `- correlation: ${correlation}`,
+    `- timeout: ${timeout}`,
+    ...keyMarkers,
+    "",
+    "#### Channel",
+    "",
+    ...channelContent,
+    "",
+    ...(messages ?? messageSection(name, { level: 4 }))
   ];
 }
 
@@ -3909,6 +3935,280 @@ task6Test("DM-MSG-004 through DM-MSG-006 and DM-CONV-003 maintain Task 6 checkpo
     catalogRuleIds: catalog.rules.map((entry) => entry.rule_id),
     testNames: task6RuleTestNames.filter((name) => /DM-(?:MSG|CONV)-/.test(name)),
     rulePrefixes: ["DM-MSG", "DM-CONV"]
+  });
+  assert.deepEqual(result, { passed: true, errors: [] });
+});
+
+for (const [name, reply] of [
+  ["none", ["none"]],
+  ["whole-section unknown", [
+    "unknown",
+    "**unknown**: reply message set requires an authoritative reply selection"
+  ]],
+  ["whole-section replacement", [
+    "**unsupported**: replaces Reply: zero-message reply source.json#/reply/messages"
+  ]],
+  ["a deviation followed by none", [
+    "**deviation**: this operation suppresses the inherited reply retry rule",
+    "none"
+  ]]
+]) {
+  task6Test(`accepts DM-REPLY-001 Reply state ${name}`, (t) => {
+    const root = createFlatOperationSet(t, {
+      channelBody: operationBody(BASIC_OPERATION_ROW, { reply })
+    });
+    assert.ok(!ruleIds(taskScoped(root)).includes("DM-REPLY-001"));
+  });
+}
+
+for (const [name, reply] of [
+  ["unknown without its marker", ["unknown"]],
+  ["unknown with a non-adjacent marker", [
+    "unknown", "", "**unknown**: reply channel requires the reply contract"
+  ]],
+  ["unknown with a non-reply marker", [
+    "unknown", "**unknown**: reply keys require the reply contract"
+  ]],
+  ["unknown mixed with Reply keys", [
+    "unknown", "**unknown**: reply message set requires an authoritative selection",
+    "- channel: orders.replies"
+  ]],
+  ["a replacement naming another unit", [
+    "**unsupported**: replaces reply Message create-order-reply: zero-message reply source.json#/reply"
+  ]],
+  ["a replacement followed by normal content", [
+    "**unsupported**: replaces Reply: unsupported selector source.json#/reply",
+    "- channel: orders.replies"
+  ]],
+  ["none mixed with an expanded Channel", [
+    "none", "", "#### Channel", "", "- Parameters: none", "- Bindings: none"
+  ]],
+  ["an unsorted leading deviation group", [
+    "**deviation**: zeta inherited reply rule is suppressed",
+    "**deviation**: alpha inherited reply rule is replaced",
+    "none"
+  ]],
+  ["a deviation without a core state", [
+    "**deviation**: the inherited reply rule is suppressed"
+  ]]
+]) {
+  task6Test(`DM-REPLY-001 rejects ${name}`, (t) => {
+    const root = createFlatOperationSet(t, {
+      channelBody: operationBody(BASIC_OPERATION_ROW, { reply })
+    });
+    assert.ok(ruleIds(taskScoped(root)).includes("DM-REPLY-001"));
+  });
+}
+
+task6Test("accepts DM-REPLY-002 an expanded static Reply with exact address parameters", (t) => {
+  const row = [...BASIC_OPERATION_ROW];
+  row[3] = "create-order; reply:create-order-reply";
+  const root = createFlatOperationSet(t, {
+    rows: [row],
+    channelBody: operationBody(row, { reply: expandedReply("create-order-reply", {
+      channel: "orders.{tenant}.replies",
+      channelContent: [
+        "##### Parameters", "",
+        "| Name | Type | Constraints / Meaning |",
+        "|---|---|---|",
+        "| tenant | string | Tenant identifier returned by authentication |",
+        "", "##### Bindings", "", "none"
+      ]
+    }) })
+  });
+  assert.ok(!ruleIds(taskScoped(root)).includes("DM-REPLY-002"));
+});
+
+task6Test("accepts DM-REPLY-002 a dynamic Reply channel and key-local unknowns", (t) => {
+  const row = [...BASIC_OPERATION_ROW];
+  row[3] = "create-order; reply:create-order-reply";
+  const root = createFlatOperationSet(t, {
+    rows: [row],
+    channelBody: operationBody(row, { reply: expandedReply("create-order-reply", {
+      channel: "dynamic -- taken from the request `reply_to` header",
+      correlation: "unknown",
+      timeout: "unknown",
+      keyMarkers: [
+        "**unknown**: correlation rule requires the reply contract",
+        "**unknown**: timeout behavior requires the retry policy"
+      ]
+    }) })
+  });
+  assert.ok(!ruleIds(taskScoped(root)).includes("DM-REPLY-002"));
+});
+
+task6Test("accepts DM-REPLY-002 timeout none for a RECEIVE operation", (t) => {
+  const row = ["RECEIVE", ...BASIC_OPERATION_ROW.slice(1)];
+  row[3] = "create-order; reply:create-order-reply";
+  const root = createFlatOperationSet(t, {
+    rows: [row],
+    channelBody: operationBody(row, { reply: expandedReply("create-order-reply", {
+      timeout: "none"
+    }) })
+  });
+  assert.ok(!ruleIds(taskScoped(root)).includes("DM-REPLY-002"));
+});
+
+task6Test("accepts DM-REPLY-002 a static address beginning with dynamic", (t) => {
+  const row = [...BASIC_OPERATION_ROW];
+  row[3] = "create-order; reply:create-order-reply";
+  const root = createFlatOperationSet(t, {
+    rows: [row],
+    channelBody: operationBody(row, { reply: expandedReply("create-order-reply", {
+      channel: "dynamic.orders.replies"
+    }) })
+  });
+  assert.ok(!ruleIds(taskScoped(root)).includes("DM-REPLY-002"));
+});
+
+for (const [name, reply] of [
+  ["Reply keys in the wrong order", [
+    "- correlation: matches the request", "- channel: orders.replies",
+    "- timeout: 30 seconds -- report unresolved", "",
+    "#### Channel", "", "- Parameters: none", "- Bindings: none", "",
+    ...messageSection("create-order-reply", { level: 4 })
+  ]],
+  ["a missing correlation key", [
+    "- channel: orders.replies", "- timeout: 30 seconds -- report unresolved", "",
+    "#### Channel", "", "- Parameters: none", "- Bindings: none", "",
+    ...messageSection("create-order-reply", { level: 4 })
+  ]],
+  ["channel unknown", expandedReply("create-order-reply", { channel: "unknown" })],
+  ["channel unknown even with a key-local marker", expandedReply("create-order-reply", {
+    channel: "unknown",
+    keyMarkers: ["**unknown**: reply channel requires the reply contract"]
+  })],
+  ["a malformed dynamic channel", expandedReply("create-order-reply", { channel: "dynamic -- " })],
+  ["an invalid static channel", expandedReply("create-order-reply", { channel: "orders replies" })],
+  ["correlation none", expandedReply("create-order-reply", { correlation: "none" })],
+  ["timeout none for SEND", expandedReply("create-order-reply", { timeout: "none" })],
+  ["an unknown key without a marker", expandedReply("create-order-reply", { correlation: "unknown" })],
+  ["an unknown marker without an unknown key", expandedReply("create-order-reply", {
+    keyMarkers: ["**unknown**: timeout behavior requires the retry policy"]
+  })],
+  ["a missing reply Channel", [
+    "- channel: orders.replies", "- correlation: matches the request",
+    "- timeout: 30 seconds -- report unresolved", "",
+    ...messageSection("create-order-reply", { level: 4 })
+  ]],
+  ["reply Channel subsections in reverse order", expandedReply("create-order-reply", {
+    channelContent: [
+      "##### Bindings", "", "none", "", "##### Parameters", "", "none"
+    ]
+  })],
+  ["collapsed reply Bindings after expanded Parameters", expandedReply("create-order-reply", {
+    channel: "orders.{tenant}.replies",
+    channelContent: [
+      "##### Parameters", "",
+      "| Name | Type | Constraints / Meaning |", "|---|---|---|",
+      "| tenant | string | Tenant identifier |", "", "- Bindings: none"
+    ]
+  })],
+  ["a static reply parameter omitted from Parameters", expandedReply("create-order-reply", {
+    channel: "orders.{tenant}.replies"
+  })],
+  ["Parameters on a dynamic reply channel", expandedReply("create-order-reply", {
+    channel: "dynamic -- taken from the request `reply_to` header",
+    channelContent: [
+      "##### Parameters", "",
+      "| Name | Type | Constraints / Meaning |", "|---|---|---|",
+      "| tenant | string | Tenant identifier |", "", "##### Bindings", "", "none"
+    ]
+  })],
+  ["a primary-channel replacement unit in reply Bindings", expandedReply("create-order-reply", {
+    channelContent: [
+      "- Parameters: none", "##### Bindings", "",
+      "**unsupported**: replaces channel Bindings: broker extension source.json#/reply/channel"
+    ]
+  })],
+  ["unsorted reply Channel deviations", expandedReply("create-order-reply", {
+    channelContent: [
+      "**deviation**: zeta environment rule is replaced",
+      "**deviation**: alpha environment rule is replaced",
+      "- Parameters: none", "- Bindings: none"
+    ]
+  })]
+]) {
+  task6Test(`DM-REPLY-002 rejects ${name}`, (t) => {
+    const row = [...BASIC_OPERATION_ROW];
+    row[3] = "create-order; reply:create-order-reply";
+    const root = createFlatOperationSet(t, {
+      rows: [row],
+      channelBody: operationBody(row, { reply })
+    });
+    assert.ok(ruleIds(taskScoped(root)).includes("DM-REPLY-002"));
+  });
+}
+
+task6Test("accepts DM-REPLY-003 exact reply routing without synthesizing an operation", (t) => {
+  const row = [...BASIC_OPERATION_ROW];
+  row[3] = "create-order; reply:create-order-reply";
+  const root = createFlatOperationSet(t, { rows: [row] });
+  const result = taskScoped(root);
+  assert.ok(!ruleIds(result).includes("DM-REPLY-003"));
+  assert.deepEqual(Object.keys(result.facts.core.operationDefinitions.byName), ["create-order"]);
+});
+
+for (const [name, rowMessage, reply] of [
+  ["a reply INDEX entry beside Reply none", "create-order; reply:create-order-reply", ["none"]],
+  ["a reply INDEX entry beside whole-Reply unknown", "create-order; reply:create-order-reply", [
+    "unknown", "**unknown**: reply message set requires an authoritative selection"
+  ]],
+  ["a reply INDEX entry beside a whole-Reply replacement", "create-order; reply:create-order-reply", [
+    "**unsupported**: replaces Reply: zero-message reply source.json#/reply/messages"
+  ]],
+  ["an expanded Reply omitted from INDEX", "create-order", expandedReply("create-order-reply")],
+  ["an INDEX reply name differing from the expanded Message", "create-order; reply:accepted-reply",
+    expandedReply("create-order-reply")],
+  ["an expanded Reply without a reply Message", "create-order", [
+    "- channel: orders.replies", "- correlation: matches the request",
+    "- timeout: 30 seconds -- report unresolved", "", "#### Channel", "",
+    "- Parameters: none", "- Bindings: none"
+  ]]
+]) {
+  task6Test(`DM-REPLY-003 rejects ${name}`, (t) => {
+    const row = [...BASIC_OPERATION_ROW];
+    row[3] = rowMessage;
+    const root = createFlatOperationSet(t, {
+      rows: [row],
+      channelBody: operationBody(row, { reply })
+    });
+    assert.ok(ruleIds(taskScoped(root)).includes("DM-REPLY-003"));
+  });
+}
+
+task6Test("DM-REPLY-003 rejects an expanded multi-message Reply without every selection rule", (t) => {
+  const row = [...BASIC_OPERATION_ROW];
+  row[3] = "create-order; reply:accepted-reply; reply:rejected-reply";
+  const root = createFlatOperationSet(t, {
+    rows: [row],
+    channelBody: operationBody(row, { reply: expandedReply("accepted-reply", { messages: [
+      ...messageSection("accepted-reply", { level: 4 }), "",
+      ...messageSection("rejected-reply", {
+        level: 4,
+        selection: "Use when the reply status is rejected."
+      })
+    ] }) })
+  });
+  assert.ok(ruleIds(taskScoped(root)).includes("DM-REPLY-003"));
+});
+
+task6Test("DM-REPLY-001 through DM-REPLY-003 are cataloged for Task 6 checkpoint 5", () => {
+  const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
+  const cataloged = new Set(catalog.rules.map((entry) => entry.rule_id));
+  assert.deepEqual(
+    ["DM-REPLY-001", "DM-REPLY-002", "DM-REPLY-003"]
+      .filter((ruleId) => !cataloged.has(ruleId)),
+    []
+  );
+});
+
+task6Test("DM-REPLY-001 through DM-REPLY-003 maintain Task 6 checkpoint 5 rule correspondence", () => {
+  const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
+  const result = auditRuleTestCorrespondence({
+    catalogRuleIds: catalog.rules.map((entry) => entry.rule_id),
+    testNames: task6RuleTestNames.filter((name) => name.includes("DM-REPLY-")),
+    rulePrefixes: ["DM-REPLY"]
   });
   assert.deepEqual(result, { passed: true, errors: [] });
 });

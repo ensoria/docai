@@ -4,6 +4,7 @@ import { scanMarkdown } from "../markdown.mjs";
 import { canonicalizeMediaType } from "../media-type.mjs";
 import { validateSentenceLine } from "../sentence.mjs";
 import { parsePipeTable } from "../tables.mjs";
+import { validChannelAddress } from "./core-routing.mjs";
 
 const MESSAGE_NAME = /^[A-Za-z0-9._-]+$/;
 const CONSTRAINT_KEYWORDS = [
@@ -1225,6 +1226,316 @@ function sameNames(actual, expected) {
     && actual.every((name, index) => name === expected[index]);
 }
 
+function validLeadingDeviations(lines) {
+  if (lines.some((line) => (
+    !line.text.startsWith("**deviation**: ")
+      || line.text.length <= "**deviation**: ".length
+  ))) return false;
+  return lines.every((line, index) => (
+    index === 0 || unicodeScalarCompare(lines[index - 1].text, line.text) < 0
+  ));
+}
+
+function replyState(markdown, heading, endLine) {
+  const lines = nonEmptyLines(sourceLines(markdown, heading.line, endLine));
+  let index = 0;
+  while (lines[index]?.text.startsWith("**deviation**:")) index += 1;
+  const deviations = lines.slice(0, index);
+  const core = lines.slice(index);
+  if (!validLeadingDeviations(deviations)) return { state: "invalid", lines, core };
+  if (core.length === 1 && core[0].text === "none") return { state: "none", lines, core };
+  const unknownPrefixes = [
+    "**unknown**: reply message set requires ",
+    "**unknown**: reply message identity requires ",
+    "**unknown**: reply channel requires ",
+    "**unknown**: reply message selection rules require "
+  ];
+  if (core.length === 2
+    && core[0].text === "unknown"
+    && core[1].line === core[0].line + 1
+    && unknownPrefixes.some((prefix) => (
+      core[1].text.startsWith(prefix) && core[1].text.length > prefix.length
+    ))) {
+    return { state: "unknown", lines, core };
+  }
+  const replacement = "**unsupported**: replaces Reply: ";
+  if (core.length === 1
+    && core[0].text.startsWith(replacement)
+    && core[0].text.length > replacement.length) {
+    return { state: "unsupported", lines, core };
+  }
+  if (/^- (?:channel|correlation|timeout):/.test(core[0]?.text ?? "")) {
+    return { state: "expanded", lines, core };
+  }
+  return { state: "invalid", lines, core };
+}
+
+function addressParameters(address) {
+  return [...new Set([...address.matchAll(/\{([^{}]+)\}/g)].map((match) => match[1]))];
+}
+
+function sameUnorderedNames(actual, expected) {
+  const left = [...actual].sort(unicodeScalarCompare);
+  const right = [...expected].sort(unicodeScalarCompare);
+  return sameNames(left, right);
+}
+
+function replyChannelUnitState(lines, { parameter, replacementUnit }) {
+  const content = nonEmptyLines(lines);
+  let index = 0;
+  while (content[index]?.text.startsWith("**deviation**:")) index += 1;
+  if (!validLeadingDeviations(content.slice(0, index))) return null;
+  const core = content.slice(index);
+  if (core.length === 1 && core[0].text === "none") {
+    return { state: "none", table: null };
+  }
+  if (core.length === 2
+    && core[0].text === "unknown"
+    && core[1].line === core[0].line + 1
+    && core[1].text.startsWith("**unknown**: ")
+    && core[1].text.length > "**unknown**: ".length) {
+    return { state: "unknown", table: null };
+  }
+  const replacementPrefix = `**unsupported**: replaces ${replacementUnit}: `;
+  if (core.length === 1
+    && core[0].text.startsWith(replacementPrefix)
+    && core[0].text.length > replacementPrefix.length) {
+    return { state: "unsupported", table: null };
+  }
+  const table = tableAt(core, 0);
+  if (table === null || table.rows.length === 0) return null;
+  const expectedHeader = parameter
+    ? ["Name", "Type", "Constraints / Meaning"]
+    : ["Protocol", "Property", "Value / Rule"];
+  const markers = postTableMarkers(core, table);
+  const consumedLine = markers.at(-1)?.line ?? table.endLine;
+  const unknownMarkers = markers.filter((marker) => marker.kind.type === "unknown");
+  const hasUnknown = table.rows.some((row) => row.includes("unknown"));
+  const collectionMarkers = parameter && unknownMarkers.every((marker) => (
+    marker.text.startsWith("**unknown**: additional unnamed parameter requires ")
+      && marker.text.length > "**unknown**: additional unnamed parameter requires ".length
+  ));
+  if (!validHeader(table.header, expectedHeader)
+    || table.rows.some((row) => row.some((cell) => cell === ""))
+    || core.some((line) => line.line > consumedLine)
+    || !validMarkerOrder(markers)
+    || (hasUnknown ? unknownMarkers.length === 0 : unknownMarkers.length > 0 && !collectionMarkers)) {
+    return null;
+  }
+  return { state: "expanded", table };
+}
+
+function replyChannelEntries(markdown, channelHeading, channelEnd) {
+  const lines = sourceLines(markdown, channelHeading.line, channelEnd);
+  const directHeadings = markdown.headings.filter((heading) => (
+    heading.level === 5
+      && heading.line > channelHeading.line
+      && heading.line < channelEnd
+  ));
+  const entries = [
+    ...directHeadings.map((heading) => ({
+      collapsed: false,
+      heading,
+      line: heading.line,
+      name: heading.text
+    })),
+    ...lines.flatMap((line) => {
+      const matched = line.text.match(/^- (Parameters|Bindings): none$/);
+      return matched === null ? [] : [{ collapsed: true, heading: null, line: line.line, name: matched[1] }];
+    })
+  ].sort((left, right) => left.line - right.line);
+  if (entries.length !== 2
+    || entries[0]?.name !== "Parameters"
+    || entries[1]?.name !== "Bindings"
+    || directHeadings.some((heading) => !["Parameters", "Bindings"].includes(heading.text))) {
+    return null;
+  }
+  const leading = nonEmptyLines(lines.filter((line) => line.line < entries[0].line));
+  if (!validLeadingDeviations(leading)) return null;
+
+  const states = [];
+  let firstNonEmpty = false;
+  for (let index = 0; index < entries.length; index += 1) {
+    const entry = entries[index];
+    let state;
+    if (entry.collapsed) {
+      if (firstNonEmpty) return null;
+      state = { state: "none", table: null };
+    } else {
+      const nextLine = entries[index + 1]?.line ?? channelEnd;
+      const content = lines.filter((line) => line.line > entry.line && line.line < nextLine);
+      state = replyChannelUnitState(content, {
+        parameter: entry.name === "Parameters",
+        replacementUnit: entry.name === "Parameters"
+          ? "reply channel Parameters"
+          : "reply channel Bindings"
+      });
+      if (state === null) return null;
+    }
+    if (state.state !== "none") firstNonEmpty = true;
+    states.push(state);
+  }
+  return { parameters: states[0], bindings: states[1] };
+}
+
+function validateExpandedReply(file, markdown, replyHeading, replyEnd, routedRow, state) {
+  const core = state.core;
+  const channelHeading = markdown.headings.find((heading) => (
+    heading.level === 4
+      && heading.text === "Channel"
+      && heading.line > replyHeading.line
+      && heading.line < replyEnd
+  ));
+  const directHeadings = markdown.headings.filter((heading) => (
+    heading.level === 4
+      && heading.line > replyHeading.line
+      && heading.line < replyEnd
+  ));
+  if (channelHeading === undefined
+    || directHeadings[0] !== channelHeading
+    || directHeadings.some((heading, index) => (
+      index > 0 && !heading.text.startsWith("Message ")
+    ))) {
+    return [messageDiagnostic(
+      "DM-REPLY-002",
+      file,
+      directHeadings[0]?.line ?? replyHeading.line,
+      "Expanded Reply requires one Channel followed only by its reply Message sections."
+    )];
+  }
+
+  const preChannel = core.filter((line) => line.line < channelHeading.line);
+  const keys = ["channel", "correlation", "timeout"];
+  const values = [];
+  for (let index = 0; index < keys.length; index += 1) {
+    const matched = preChannel[index]?.text.match(new RegExp(`^- ${keys[index]}: (.+)$`));
+    if (matched === null || matched === undefined) {
+      return [messageDiagnostic(
+        "DM-REPLY-002",
+        file,
+        preChannel[index]?.line ?? replyHeading.line,
+        "Expanded Reply requires non-empty channel, correlation, and timeout keys exactly once and in order."
+      )];
+    }
+    values.push(matched[1]);
+  }
+  const markers = preChannel.slice(keys.length);
+  const markerLinesValid = markers.length === 0 || (
+    markers[0].line === preChannel[2].line + 1
+      && markers.every((line, index) => (
+        line.text.startsWith("**unknown**: ")
+          && line.text.length > "**unknown**: ".length
+          && (index === 0 || line.line === markers[index - 1].line + 1)
+      ))
+  );
+  const unknownValues = values.filter((value) => value === "unknown").length;
+  const dynamicPrefix = values[0].startsWith("dynamic -- ");
+  const dynamic = dynamicPrefix && values[0].length > "dynamic -- ".length;
+  const staticChannel = !dynamicPrefix
+    && values[0] !== "dynamic"
+    && values[0] !== "unknown"
+    && validChannelAddress(values[0]);
+  if ((!dynamic && !staticChannel)
+    || values[1] === "none"
+    || (values[2] === "none" && routedRow?.action !== "RECEIVE")
+    || !markerLinesValid
+    || (unknownValues > 0) !== (markers.length > 0)) {
+    return [messageDiagnostic(
+      "DM-REPLY-002",
+      file,
+      preChannel[0]?.line ?? replyHeading.line,
+      "Reply keys require an established static or dynamic channel, correlation, direction-correct timeout, and markers for key-local unknown values."
+    )];
+  }
+
+  const channelEnd = directHeadings[1]?.line ?? replyEnd;
+  const channel = replyChannelEntries(markdown, channelHeading, channelEnd);
+  if (channel === null) {
+    return [messageDiagnostic(
+      "DM-REPLY-002",
+      file,
+      channelHeading.line,
+      "Reply Channel requires Parameters then Bindings with canonical states, leading-empty collapse, and reply-scoped replacement units."
+    )];
+  }
+  const actualParameters = channel.parameters.table?.rows.map((row) => row[0]) ?? [];
+  const expectedParameters = dynamic ? [] : addressParameters(values[0]);
+  const parameterStateValid = dynamic
+    ? channel.parameters.state === "none"
+    : channel.parameters.state === "expanded"
+      ? new Set(actualParameters).size === actualParameters.length
+        && sameUnorderedNames(actualParameters, expectedParameters)
+      : channel.parameters.state === "none"
+        ? expectedParameters.length === 0
+        : expectedParameters.length > 0;
+  if (!parameterStateValid) {
+    return [messageDiagnostic(
+      "DM-REPLY-002",
+      file,
+      channelHeading.line,
+      "Reply Channel Parameters must exactly cover a static address or be none for a dynamic address."
+    )];
+  }
+  return [];
+}
+
+function validateReply(file, markdown, operationHeading, operationEnd, routedRow, replies) {
+  const replyHeading = markdown.headings.find((heading) => (
+    heading.level === 3
+      && heading.text === "Reply"
+      && heading.line > operationHeading.line
+      && heading.line < operationEnd
+  ));
+  if (replyHeading === undefined) return { diagnostics: [], state: "invalid" };
+  const replyEnd = blockEndLine(markdown, replyHeading, operationEnd);
+  const state = replyState(markdown, replyHeading, replyEnd);
+  const diagnostics = [];
+  if (state.state === "invalid") {
+    diagnostics.push(messageDiagnostic(
+      "DM-REPLY-001",
+      file,
+      state.core[0]?.line ?? replyHeading.line,
+      "Reply requires ordered leading deviations followed by exactly one none, whole-section unknown, replacement unsupported, or expanded core state."
+    ));
+  } else if (state.state === "expanded") {
+    diagnostics.push(...validateExpandedReply(
+      file,
+      markdown,
+      replyHeading,
+      replyEnd,
+      routedRow,
+      state
+    ));
+  }
+
+  const expectedReplies = (routedRow?.messages ?? [])
+    .filter((name) => name.startsWith("reply:"))
+    .map((name) => name.slice("reply:".length));
+  const actualReplies = replies.map(messageName);
+  const selectionInvalid = state.state === "expanded"
+    && replies.length > 1
+    && replies.some((heading) => validateSelectionAndReplacement(
+      file,
+      markdown,
+      heading,
+      blockEndLine(markdown, heading, replyEnd),
+      replies.length,
+      true
+    ).length > 0);
+  const routingInvalid = state.state === "expanded"
+    ? replies.length === 0 || !sameNames(actualReplies, expectedReplies)
+    : expectedReplies.length !== 0;
+  if (routingInvalid || selectionInvalid) {
+    diagnostics.push(messageDiagnostic(
+      "DM-REPLY-003",
+      file,
+      replies[0]?.line ?? replyHeading.line,
+      "Only an expanded Reply contributes its exact selected reply Message set to INDEX routing, and every multi-message selection must remain observable."
+    ));
+  }
+  return { diagnostics, state: state.state };
+}
+
 function validateSelectionAndReplacement(file, markdown, heading, endLine, siblingCount, reply) {
   const lines = nonEmptyLines(sourceLines(markdown, heading.line, endLine));
   const subsectionPrefix = `${"#".repeat(heading.level + 1)} `;
@@ -1354,6 +1665,15 @@ function parseMessageBlocks(file, markdown, operationHeading, operationEnd, rout
       && heading.line > replyHeading.line
       && heading.line < replyEnd
   ));
+  const reply = validateReply(
+    file,
+    markdown,
+    operationHeading,
+    operationEnd,
+    routedRow,
+    replies
+  );
+  diagnostics.push(...reply.diagnostics);
   diagnostics.push(...validateMessageIdentity(
     file,
     markdown,

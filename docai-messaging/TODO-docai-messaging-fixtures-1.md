@@ -571,7 +571,7 @@ Checkpoint 5 の suggested commit message: `test(messaging): audit Task 5 rule t
   - example field coverage、object openness、constraints order、format/format_annotation fragment の exact `Format | Role | Meaning` resolution と convention dependency closure を検証する。
   - `DM-MSG-004`〜`DM-MSG-006` を payload state、representation、field/variant/example、`DM-CONV-003` を format catalog に割り当てる。
 
-- [ ] **Step 5: Reply grammar を RED→GREEN で実装する**
+- [x] **Step 5: Reply grammar を RED→GREEN で実装する**
   - Reply の `none` / whole-section `unknown` / replacement `unsupported` / expanded state、channel/correlation/timeout keys、static/dynamic channel を検証する。
   - reply message set/address/selection fallback、direction reversal、reply INDEX entries の一致を検証する。
   - `DM-REPLY-001`〜`DM-REPLY-003` を state、keys/channel、selection/routing に割り当てる。
