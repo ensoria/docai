@@ -618,7 +618,7 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
   - missing knowledge、known unrepresentable、known absence、equally authoritative conflict を別結果にする。
   - file/root coverage と knowledge propagation、unrelated marker の selected-operation non-blocking behavior を検証する。
 
-- [ ] **Step 2: partial unnamed collection cases を test 化する**
+- [x] **Step 2: partial unnamed collection cases を test 化する**
   - named siblings retained、collection-level marker、no synthetic row、canonical example omissionを検証する。
   - no-sibling Headers/Parameters と representation-local payload form を区別する。
 

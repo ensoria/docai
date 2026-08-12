@@ -4883,6 +4883,148 @@ task7Test("DM-INC-001 through DM-INC-003 maintain Task 7 Step 1 rule corresponde
   assert.deepEqual(result, { passed: true, errors: [] });
 });
 
+task7Test("DM-INC-004 retains named siblings without synthetic rows and omits an unfaithful payload example", () => {
+  assert.equal(typeof coreValidator.evaluatePartialCollectionSourceExpectations, "function");
+  const result = coreValidator.evaluatePartialCollectionSourceExpectations([
+    {
+      collectionId: "request-headers",
+      memberKind: "header",
+      namedMembers: ["correlation-id"],
+      unnamedMembers: 1
+    },
+    {
+      collectionId: "channel-parameters",
+      memberKind: "parameter",
+      namedMembers: ["tenant"],
+      unnamedMembers: 1
+    },
+    {
+      collectionId: "request-fields",
+      memberKind: "field",
+      namedMembers: ["id"],
+      unnamedMembers: 1,
+      polymorphic: false,
+      exampleFaithful: false,
+      representation: {
+        mediaType: "application/json",
+        nullable: "no"
+      }
+    }
+  ]);
+
+  assert.deepEqual(result, [
+    {
+      collectionId: "request-headers",
+      form: "partial-table",
+      retainedNames: ["correlation-id"],
+      marker: "additional unnamed header"
+    },
+    {
+      collectionId: "channel-parameters",
+      form: "partial-table",
+      retainedNames: ["tenant"],
+      marker: "additional unnamed parameter"
+    },
+    {
+      collectionId: "request-fields",
+      form: "partial-table",
+      retainedNames: ["id"],
+      marker: "additional unnamed field",
+      canonicalExample: "omit",
+      representation: {
+        mediaType: "application/json",
+        nullable: "no"
+      }
+    }
+  ]);
+});
+
+task7Test("DM-INC-005 distinguishes no-sibling Headers and Parameters from payload field collections", () => {
+  assert.equal(typeof coreValidator.evaluatePartialCollectionSourceExpectations, "function");
+  const result = coreValidator.evaluatePartialCollectionSourceExpectations([
+    {
+      collectionId: "response-headers",
+      memberKind: "header",
+      namedMembers: [],
+      unnamedMembers: 1
+    },
+    {
+      collectionId: "reply-parameters",
+      memberKind: "parameter",
+      namedMembers: [],
+      unnamedMembers: 2
+    },
+    {
+      collectionId: "response-fields",
+      memberKind: "field",
+      namedMembers: [],
+      unnamedMembers: 1,
+      polymorphic: false,
+      representation: {
+        mediaType: "application/json",
+        nullable: "yes"
+      }
+    },
+    {
+      collectionId: "event-variants",
+      memberKind: "field",
+      namedMembers: ["eventType"],
+      unnamedMembers: 1,
+      polymorphic: true,
+      representation: {
+        mediaType: "application/json",
+        nullable: "no"
+      }
+    }
+  ]);
+
+  assert.deepEqual(result, [
+    {
+      collectionId: "response-headers",
+      form: "whole-section-unknown"
+    },
+    {
+      collectionId: "reply-parameters",
+      form: "whole-section-unknown"
+    },
+    {
+      collectionId: "response-fields",
+      form: "representation-local-unknown",
+      representation: {
+        mediaType: "application/json",
+        nullable: "yes"
+      }
+    },
+    {
+      collectionId: "event-variants",
+      form: "representation-local-unknown",
+      representation: {
+        mediaType: "application/json",
+        nullable: "no"
+      }
+    }
+  ]);
+});
+
+task7Test("DM-INC-004 and DM-INC-005 are cataloged for Task 7 Step 2", () => {
+  const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
+  const cataloged = new Set(catalog.rules.map((entry) => entry.rule_id));
+  assert.deepEqual(
+    ["DM-INC-004", "DM-INC-005"].filter((ruleId) => !cataloged.has(ruleId)),
+    []
+  );
+});
+
+task7Test("DM-INC-004 and DM-INC-005 maintain Task 7 Step 2 rule correspondence", () => {
+  const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
+  const result = auditRuleTestCorrespondence({
+    catalogRuleIds: catalog.rules.map((entry) => entry.rule_id),
+    testNames: task7RuleTestNames,
+    rulePrefixes: ["DM-INC"]
+  });
+  assert.deepEqual(result, { passed: true, errors: [] });
+});
+
 nodeTest("accepts source and evidence siblings outside a closed document-set root", (t) => {
   const publication = temporaryDirectory(t, "docai-messaging-publication-");
   const root = createSet(t, { rootDir: path.join(publication, "valid", "full") });

@@ -307,6 +307,18 @@
       "scope": "core"
     },
     {
+      "rule_id": "DM-INC-004",
+      "readme_section": "§3.4 Output Profiles and Incomplete Information",
+      "description": "A partially known header, parameter, or non-polymorphic field collection retains every named sibling in its table, adds exactly one member-kind collection marker without a synthetic row, and omits a payload example that cannot faithfully represent the unnamed member.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-INC-005",
+      "readme_section": "§3.4 Output Profiles and Incomplete Information",
+      "description": "A header or parameter collection with no named sibling uses whole-section unknown, while a known payload representation with no representable complete field collection retains media type and nullability in the representation-local unknown form.",
+      "scope": "core"
+    },
+    {
       "rule_id": "DM-PARSE-001",
       "readme_section": "§3.5 Canonical Syntax and Boundaries",
       "description": "Markdown headings and backtick-fenced blocks retain deterministic source-line boundaries.",
