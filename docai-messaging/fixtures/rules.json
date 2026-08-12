@@ -289,6 +289,24 @@
       "scope": "core"
     },
     {
+      "rule_id": "DM-INC-001",
+      "readme_section": "§3.4 Output Profiles and Incomplete Information / §3.6 Authoritative Input Resolution and Schema Representability",
+      "description": "Authoritative inputs distinguish known absence, missing knowledge, known unrepresentability, and unresolved equal-priority conflicts as none, unknown, unsupported, and generation failure respectively.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-INC-002",
+      "readme_section": "§3 Opening Metadata / §3.4 Output Profiles and Incomplete Information",
+      "description": "Each file's coverage and knowledge exactly match its unsupported and unknown markers, and root INDEX aggregates those states across the whole set without inventing incompleteness.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-INC-003",
+      "readme_section": "§3 Contract Completeness and Implementation Readiness / §6.1 Recommended Retrieval Recipe",
+      "description": "Selected-operation readiness is blocked only by unknown or unsupported facts in the selected operation's required retrieval scope, not by markers confined to unrelated units.",
+      "scope": "core"
+    },
+    {
       "rule_id": "DM-PARSE-001",
       "readme_section": "§3.5 Canonical Syntax and Boundaries",
       "description": "Markdown headings and backtick-fenced blocks retain deterministic source-line boundaries.",

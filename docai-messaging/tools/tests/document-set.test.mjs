@@ -7,6 +7,7 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { loadDocumentSet, validateDocumentSet } from "../lib/document-set.mjs";
 import { auditRuleTestCorrespondence } from "../lib/fixture-runner.mjs";
+import * as coreValidator from "../lib/validators/core.mjs";
 import * as coreRouting from "../lib/validators/core-routing.mjs";
 import { restampDocumentSet } from "../restamp-document-set.mjs";
 
@@ -22,6 +23,7 @@ const restampPath = fileURLToPath(new URL("../restamp-document-set.mjs", import.
 const catalogPath = fileURLToPath(new URL("../../fixtures/rules.json", import.meta.url));
 const task5RuleTestNames = [];
 const task6RuleTestNames = [];
+const task7RuleTestNames = [];
 
 const CONVENTION_HEADINGS = [
   "Environments",
@@ -48,6 +50,11 @@ function task5Test(name, ...arguments_) {
 
 function task6Test(name, ...arguments_) {
   task6RuleTestNames.push(String(name));
+  return nodeTest(name, ...arguments_);
+}
+
+function task7Test(name, ...arguments_) {
+  task7RuleTestNames.push(String(name));
   return nodeTest(name, ...arguments_);
 }
 
@@ -4647,6 +4654,231 @@ task6Test("DM-CONV-001 DM-OP-001 DM-MSG-001 DM-REPLY-001 and DM-FAIL-001 maintai
     catalogRuleIds: catalog.rules.map((entry) => entry.rule_id),
     testNames: task6RuleTestNames,
     rulePrefixes: ["DM-CONV", "DM-OP", "DM-MSG", "DM-REPLY", "DM-FAIL"]
+  });
+  assert.deepEqual(result, { passed: true, errors: [] });
+});
+
+task7Test("DM-INC-001 classifies missing knowledge known absence known unrepresentable and authoritative conflict separately", () => {
+  assert.equal(typeof coreValidator.evaluateIncompleteSourceExpectations, "function");
+  const result = coreValidator.evaluateIncompleteSourceExpectations([
+    {
+      factId: "missing-authorization",
+      inputs: []
+    },
+    {
+      factId: "no-operation-binding",
+      inputs: [{ sourceId: "source-a", priority: 0, state: "absent" }]
+    },
+    {
+      factId: "recursive-payload",
+      representable: false,
+      inputs: [{ sourceId: "source-a", priority: 0, state: "value", value: "recursive-schema" }]
+    },
+    {
+      factId: "conflicting-delivery",
+      inputs: [
+        { sourceId: "source-a", priority: 0, state: "value", value: "at-least-once" },
+        { sourceId: "source-b", priority: 0, state: "value", value: "at-most-once" }
+      ]
+    },
+    {
+      factId: "resolved-delivery",
+      inputs: [
+        { sourceId: "source-a", priority: 0, state: "value", value: "at-least-once" },
+        { sourceId: "source-b", priority: 1, state: "value", value: "at-most-once" }
+      ]
+    }
+  ]);
+  assert.deepEqual(result, [
+    {
+      factId: "missing-authorization",
+      outcome: "emit-unknown",
+      coverage: "complete",
+      knowledge: "requires-input"
+    },
+    {
+      factId: "no-operation-binding",
+      outcome: "emit-none",
+      coverage: "complete",
+      knowledge: "complete"
+    },
+    {
+      factId: "recursive-payload",
+      outcome: "emit-unsupported",
+      coverage: "requires-source",
+      knowledge: "complete"
+    },
+    {
+      factId: "conflicting-delivery",
+      outcome: "generation-failure",
+      reason: "authoritative-conflict"
+    },
+    {
+      factId: "resolved-delivery",
+      outcome: "emit-expanded",
+      value: "at-least-once",
+      coverage: "complete",
+      knowledge: "complete"
+    }
+  ]);
+});
+
+function incompleteConventionSet(t, {
+  content = ["none"],
+  childCoverage = "complete",
+  childKnowledge = "complete",
+  rootCoverage = "complete",
+  rootKnowledge = "complete"
+} = {}) {
+  const root = createSet(t, {
+    childMetadata: { coverage: childCoverage, knowledge: childKnowledge }
+  });
+  write(root, "INDEX.md", documentSource({
+    root: true,
+    metadataOverrides: { coverage: rootCoverage, knowledge: rootKnowledge }
+  }));
+  write(root, "CONVENTIONS.md", documentSource({
+    metadataOverrides: { coverage: childCoverage, knowledge: childKnowledge },
+    body: conventionsBody({ Authentication: content })
+  }));
+  return root;
+}
+
+for (const [name, options] of [
+  ["unsupported coverage", {
+    content: [
+      "Authentication uses a source-defined mechanism.",
+      "**unsupported**: localized: recursive authentication schema source.json#/authentication"
+    ],
+    childCoverage: "requires-source",
+    rootCoverage: "requires-source"
+  }],
+  ["unknown knowledge", {
+    content: [
+      "Authentication applies to the API.",
+      "**unknown**: credential acquisition requires the deployment configuration"
+    ],
+    childKnowledge: "requires-input",
+    rootKnowledge: "requires-input"
+  }],
+  ["known absence", {}]
+]) {
+  task7Test(`accepts DM-INC-002 exact file and root propagation for ${name}`, (t) => {
+    const root = incompleteConventionSet(t, options);
+    assert.ok(!ruleIds(taskScoped(root)).includes("DM-INC-002"));
+  });
+}
+
+for (const [name, options] of [
+  ["unsupported marker with complete file coverage", {
+    content: [
+      "Authentication uses a source-defined mechanism.",
+      "**unsupported**: localized: recursive authentication schema source.json#/authentication"
+    ],
+    rootCoverage: "requires-source"
+  }],
+  ["unsupported child omitted from root coverage", {
+    content: [
+      "Authentication uses a source-defined mechanism.",
+      "**unsupported**: localized: recursive authentication schema source.json#/authentication"
+    ],
+    childCoverage: "requires-source"
+  }],
+  ["unknown marker with complete file knowledge", {
+    content: [
+      "Authentication applies to the API.",
+      "**unknown**: credential acquisition requires the deployment configuration"
+    ],
+    rootKnowledge: "requires-input"
+  }],
+  ["unknown child omitted from root knowledge", {
+    content: [
+      "Authentication applies to the API.",
+      "**unknown**: credential acquisition requires the deployment configuration"
+    ],
+    childKnowledge: "requires-input"
+  }],
+  ["requires-source without an unsupported marker", {
+    childCoverage: "requires-source",
+    rootCoverage: "requires-source"
+  }],
+  ["requires-input without an unknown marker", {
+    childKnowledge: "requires-input",
+    rootKnowledge: "requires-input"
+  }]
+]) {
+  task7Test(`DM-INC-002 rejects ${name}`, (t) => {
+    const root = incompleteConventionSet(t, options);
+    assert.ok(ruleIds(taskScoped(root)).includes("DM-INC-002"));
+  });
+}
+
+task7Test("DM-INC-003 keeps an unrelated marker from blocking selected-operation readiness", (t) => {
+  const archiveRow = [
+    "SEND", "orders.archive", "archive-order", "archive-order", "archive order",
+    "Archives an order command", "none", "none"
+  ];
+  const root = createSet(t);
+  write(root, "INDEX.md", documentSource({
+    root: true,
+    metadataOverrides: { coverage: "requires-source" },
+    body: minimalRootBody({
+      operationContent: flatOperations([
+        { path: "channels/orders.md", rows: [BASIC_OPERATION_ROW] },
+        { path: "channels/archive.md", rows: [archiveRow] }
+      ])
+    })
+  }));
+  writeDocument(root, "channels/orders.md", { body: operationBody(BASIC_OPERATION_ROW) });
+  write(root, "channels/archive.md", documentSource({
+    metadataOverrides: { coverage: "requires-source" },
+    body: operationBody(archiveRow, { messages: [
+      "### Message archive-order", "",
+      "**unsupported**: replaces Message archive-order: recursive schema source.json#/archive"
+    ] })
+  }));
+  const documentSet = loadDocumentSet(root);
+  const validation = validateDocumentSet(documentSet, { wholeSet: false });
+  assert.equal(typeof coreValidator.evaluateSelectedOperationReadiness, "function");
+  const selected = coreValidator.evaluateSelectedOperationReadiness(
+    documentSet,
+    validation.facts.core,
+    { operation: "create-order" }
+  );
+  const unrelated = coreValidator.evaluateSelectedOperationReadiness(
+    documentSet,
+    validation.facts.core,
+    { operation: "archive-order" }
+  );
+  assert.deepEqual(selected, {
+    operation: "create-order",
+    ready: true,
+    selectedPaths: ["CONVENTIONS.md", "INDEX.md", "channels/orders.md"],
+    blockingMarkers: []
+  });
+  assert.deepEqual(unrelated, {
+    operation: "archive-order",
+    ready: false,
+    selectedPaths: ["CONVENTIONS.md", "INDEX.md", "channels/archive.md"],
+    blockingMarkers: [{ kind: "unsupported", path: "channels/archive.md" }]
+  });
+});
+
+task7Test("DM-INC-001 through DM-INC-003 are cataloged for Task 7 Step 1", () => {
+  const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
+  const cataloged = new Set(catalog.rules.map((entry) => entry.rule_id));
+  assert.deepEqual(
+    ["DM-INC-001", "DM-INC-002", "DM-INC-003"].filter((ruleId) => !cataloged.has(ruleId)),
+    []
+  );
+});
+
+task7Test("DM-INC-001 through DM-INC-003 maintain Task 7 Step 1 rule correspondence", () => {
+  const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
+  const result = auditRuleTestCorrespondence({
+    catalogRuleIds: catalog.rules.map((entry) => entry.rule_id),
+    testNames: task7RuleTestNames,
+    rulePrefixes: ["DM-INC"]
   });
   assert.deepEqual(result, { passed: true, errors: [] });
 });

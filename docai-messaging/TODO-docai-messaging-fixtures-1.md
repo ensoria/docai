@@ -614,7 +614,7 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 - Modify: `docai-messaging/fixtures/rules.json`
 - Test: `docai-messaging/tools/tests/document-set.test.mjs`
 
-- [ ] **Step 1: `none` / `unknown` / `unsupported` / conflict matrix を test 化する**
+- [x] **Step 1: `none` / `unknown` / `unsupported` / conflict matrix を test 化する**
   - missing knowledge、known unrepresentable、known absence、equally authoritative conflict を別結果にする。
   - file/root coverage と knowledge propagation、unrelated marker の selected-operation non-blocking behavior を検証する。
 
