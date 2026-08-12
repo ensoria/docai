@@ -622,7 +622,7 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
   - named siblings retained、collection-level marker、no synthetic row、canonical example omissionを検証する。
   - no-sibling Headers/Parameters と representation-local payload form を区別する。
 
-- [ ] **Step 3: perspective/counterpart cases を test 化する**
+- [x] **Step 3: perspective/counterpart cases を test 化する**
   - same-application carry-through、complete counterpart mapping、missing mapping、conflicting mapping、action-only inversion rejection を検証する。
 
 - [ ] **Step 4: direct adapter boundary cases を test 化する**

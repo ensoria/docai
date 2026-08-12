@@ -319,6 +319,18 @@
       "scope": "core"
     },
     {
+      "rule_id": "DM-INC-006",
+      "readme_section": "§3.6 Authoritative Input Resolution and Schema Representability / §7 Relationship with AsyncAPI",
+      "description": "An operation for the source-described application carries send or receive through directly, while another perspective uses only a complete authoritative counterpart mapping that establishes routing, topology and bindings, authorization, behavior, and message applicability.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-INC-007",
+      "readme_section": "§3.2 INDEX.md / §3.6 Authoritative Input Resolution and Schema Representability",
+      "description": "A missing or routing-incomplete counterpart mapping makes the source operation unrouteable and emits an Unprojected Operations unknown marker; reversing the action alone never establishes a counterpart contract.",
+      "scope": "core"
+    },
+    {
       "rule_id": "DM-PARSE-001",
       "readme_section": "§3.5 Canonical Syntax and Boundaries",
       "description": "Markdown headings and backtick-fenced blocks retain deterministic source-line boundaries.",

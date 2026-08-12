@@ -5025,6 +5025,212 @@ task7Test("DM-INC-004 and DM-INC-005 maintain Task 7 Step 2 rule correspondence"
   assert.deepEqual(result, { passed: true, errors: [] });
 });
 
+for (const [sourceAction, expectedAction] of [["send", "SEND"], ["receive", "RECEIVE"]]) {
+  task7Test(`DM-INC-006 carries through same-application ${sourceAction} as ${expectedAction}`, () => {
+    assert.equal(typeof coreValidator.evaluatePerspectiveSourceExpectations, "function");
+    const result = coreValidator.evaluatePerspectiveSourceExpectations([{
+      caseId: `same-application-${sourceAction}`,
+      perspective: "order-service",
+      sourceApplication: "order-service",
+      sourceOperation: {
+        id: "create-order",
+        action: sourceAction,
+        channel: "orders.commands",
+        primaryMessages: ["create-order"]
+      },
+      counterpartMappings: []
+    }]);
+
+    assert.deepEqual(result, [{
+      caseId: `same-application-${sourceAction}`,
+      outcome: "emit-operation",
+      resolution: "source-application-carry-through",
+      action: expectedAction,
+      channel: "orders.commands",
+      primaryMessages: ["create-order"]
+    }]);
+  });
+}
+
+task7Test("DM-INC-006 applies a complete authoritative counterpart mapping", () => {
+  assert.equal(typeof coreValidator.evaluatePerspectiveSourceExpectations, "function");
+  const result = coreValidator.evaluatePerspectiveSourceExpectations([{
+    caseId: "complete-counterpart",
+    perspective: "storefront",
+    sourceApplication: "order-service",
+    sourceOperation: {
+      id: "accept-order",
+      action: "receive",
+      channel: "internal.orders",
+      primaryMessages: ["internal-order"]
+    },
+    counterpartMappings: [{
+      sourceId: "storefront-mapping",
+      priority: 0,
+      sourceOperationId: "accept-order",
+      targetApplication: "storefront",
+      target: {
+        action: "SEND",
+        channel: "storefront.orders",
+        primaryMessages: ["create-order"],
+        replyMessages: ["order-accepted"]
+      },
+      coverage: {
+        serverEnvironmentAndBindings: "confirmed-shared",
+        authorization: "replaced",
+        purposeAndBehavior: "replaced",
+        messageApplicability: "replaced"
+      }
+    }]
+  }]);
+
+  assert.deepEqual(result, [{
+    caseId: "complete-counterpart",
+    outcome: "emit-operation",
+    resolution: "authoritative-counterpart",
+    action: "SEND",
+    channel: "storefront.orders",
+    primaryMessages: ["create-order"],
+    replyMessages: ["order-accepted"],
+    contributingSourceIds: ["storefront-mapping"]
+  }]);
+});
+
+task7Test("DM-INC-007 emits an unprojected unknown when a counterpart mapping is missing", () => {
+  assert.equal(typeof coreValidator.evaluatePerspectiveSourceExpectations, "function");
+  const result = coreValidator.evaluatePerspectiveSourceExpectations([{
+    caseId: "missing-counterpart",
+    perspective: "storefront",
+    sourceApplication: "order-service",
+    sourceOperation: {
+      id: "accept-order",
+      action: "receive",
+      channel: "internal.orders",
+      primaryMessages: ["internal-order"]
+    },
+    counterpartMappings: []
+  }]);
+
+  assert.deepEqual(result, [{
+    caseId: "missing-counterpart",
+    outcome: "emit-unprojected-unknown",
+    reason: "counterpart mapping",
+    knowledge: "requires-input"
+  }]);
+});
+
+task7Test("DM-INC-007 rejects action-only counterpart inversion", () => {
+  assert.equal(typeof coreValidator.evaluatePerspectiveSourceExpectations, "function");
+  const result = coreValidator.evaluatePerspectiveSourceExpectations([{
+    caseId: "action-only-counterpart",
+    perspective: "storefront",
+    sourceApplication: "order-service",
+    sourceOperation: {
+      id: "accept-order",
+      action: "receive",
+      channel: "internal.orders",
+      primaryMessages: ["internal-order"]
+    },
+    counterpartMappings: [{
+      sourceId: "action-only-mapping",
+      priority: 0,
+      sourceOperationId: "accept-order",
+      targetApplication: "storefront",
+      target: { action: "SEND" },
+      coverage: {}
+    }]
+  }]);
+
+  assert.deepEqual(result, [{
+    caseId: "action-only-counterpart",
+    outcome: "emit-unprojected-unknown",
+    reason: "incomplete counterpart mapping",
+    missing: [
+      "channel-address",
+      "server-environment-and-bindings",
+      "authorization",
+      "purpose-and-behavior",
+      "message-applicability"
+    ],
+    knowledge: "requires-input"
+  }]);
+});
+
+task7Test("DM-INC-001 fails generation for conflicting authoritative counterpart mappings", () => {
+  assert.equal(typeof coreValidator.evaluatePerspectiveSourceExpectations, "function");
+  const completeCoverage = {
+    serverEnvironmentAndBindings: "confirmed-shared",
+    authorization: "confirmed-shared",
+    purposeAndBehavior: "confirmed-shared",
+    messageApplicability: "replaced"
+  };
+  const result = coreValidator.evaluatePerspectiveSourceExpectations([{
+    caseId: "conflicting-counterparts",
+    perspective: "storefront",
+    sourceApplication: "order-service",
+    sourceOperation: {
+      id: "accept-order",
+      action: "receive",
+      channel: "internal.orders",
+      primaryMessages: ["internal-order"]
+    },
+    counterpartMappings: [
+      {
+        sourceId: "mapping-a",
+        priority: 0,
+        sourceOperationId: "accept-order",
+        targetApplication: "storefront",
+        target: {
+          action: "SEND",
+          channel: "storefront.orders-a",
+          primaryMessages: ["create-order"],
+          replyMessages: []
+        },
+        coverage: completeCoverage
+      },
+      {
+        sourceId: "mapping-b",
+        priority: 0,
+        sourceOperationId: "accept-order",
+        targetApplication: "storefront",
+        target: {
+          action: "SEND",
+          channel: "storefront.orders-b",
+          primaryMessages: ["create-order"],
+          replyMessages: []
+        },
+        coverage: completeCoverage
+      }
+    ]
+  }]);
+
+  assert.deepEqual(result, [{
+    caseId: "conflicting-counterparts",
+    outcome: "generation-failure",
+    reason: "authoritative-conflict",
+    conflictingSourceIds: ["mapping-a", "mapping-b"]
+  }]);
+});
+
+task7Test("DM-INC-006 and DM-INC-007 are cataloged for Task 7 Step 3", () => {
+  const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
+  const cataloged = new Set(catalog.rules.map((entry) => entry.rule_id));
+  assert.deepEqual(
+    ["DM-INC-006", "DM-INC-007"].filter((ruleId) => !cataloged.has(ruleId)),
+    []
+  );
+});
+
+task7Test("DM-INC-001 DM-INC-006 and DM-INC-007 maintain Task 7 Step 3 rule correspondence", () => {
+  const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
+  const result = auditRuleTestCorrespondence({
+    catalogRuleIds: catalog.rules.map((entry) => entry.rule_id),
+    testNames: task7RuleTestNames,
+    rulePrefixes: ["DM-INC"]
+  });
+  assert.deepEqual(result, { passed: true, errors: [] });
+});
+
 nodeTest("accepts source and evidence siblings outside a closed document-set root", (t) => {
   const publication = temporaryDirectory(t, "docai-messaging-publication-");
   const root = createSet(t, { rootDir: path.join(publication, "valid", "full") });
