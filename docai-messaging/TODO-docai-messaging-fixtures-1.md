@@ -608,6 +608,10 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 
 ### Task 7: Incomplete Information、Adapter Boundary、Trust Boundary を作る
 
+> **Plan clarification / impact (user-approved):** Step 5 で同一の `related-navigation` URL input に異なる outcome 名を割り当てていたため、Step 6 開始時に `preserve-navigation-data` へ統一する。URL は source bytes のまま割当済み navigation data として保持し、instruction authority を持たず、取得を許可しない。変更対象は Step 5 test の期待値1件と Step 6 の pure expectation implementation だけであり、trust boundary の意味、test coverage、Task 7 以降の順序や依存関係は変更しない。
+
+> **Plan clarification / impact (user-approved):** Step 6 の exact completeness propagation は、Task 4 の identity fixture が許可していた marker と無関係な `coverage` / `knowledge` のファイル単位差異より優先する。既存の valid CONVENTIONS fixture は child の incomplete marker を root metadata に集約し、mixed-set identity fixture は `source_refs` だけがファイルごとに異なり得ることを検証する形へ更新する。opening-metadata の identity rules、`source_refs` semantics、Task 7 の scope と後続順序は変更しない。
+
 **Files:**
 
 - Modify: `docai-messaging/tools/lib/validators/core.mjs`
@@ -633,7 +637,7 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
   - prose、example、URL、schema string、metadata-like line、identity-like line、profile link、key list、fixed value、`x-` structure の escape attempt を含める。
   - known sensitive fact は non-disclosing `unsupported`、real credential/PII fixture は corpus 自体へ保存せず synthetic sentinel で拒否条件を表す。
 
-- [ ] **Step 6: test を RED→GREEN で実装する**
+- [x] **Step 6: test を RED→GREEN で実装する**
   - Run: `node --test docai-messaging/tools/tests/document-set.test.mjs`
   - Expected: 全 test PASS。
 

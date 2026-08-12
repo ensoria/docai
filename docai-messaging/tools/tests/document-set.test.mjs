@@ -2073,6 +2073,10 @@ task6Test("accepts DM-CONV-001 fixed headings and DM-CONV-002 none, unknown, uns
   const root = createSet(t, {
     childMetadata: { coverage: "requires-source", knowledge: "requires-input" }
   });
+  write(root, "INDEX.md", documentSource({
+    root: true,
+    metadataOverrides: { coverage: "requires-source", knowledge: "requires-input" }
+  }));
   write(root, "CONVENTIONS.md", documentSource({
     metadataOverrides: { coverage: "requires-source", knowledge: "requires-input" },
     body: conventionsBody({
@@ -5620,7 +5624,7 @@ task7Test("DM-TRUST-001 treats source instructions and navigation as inert data"
     },
     {
       caseId: "source-navigation-url",
-      outcome: "treat-as-navigation-data",
+      outcome: "preserve-navigation-data",
       instructionAuthority: "none",
       retrievalAuthorized: false,
       authorizedActions: []
@@ -5916,11 +5920,9 @@ for (const mismatch of [
   });
 }
 
-nodeTest("permits coverage, knowledge, and source_refs to vary by file", (t) => {
+nodeTest("permits source_refs to vary by file", (t) => {
   const root = createSet(t, {
     childMetadata: {
-      coverage: "requires-source",
-      knowledge: "requires-input",
       source_refs: "source-a, source-z"
     }
   });
