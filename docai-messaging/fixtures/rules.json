@@ -355,6 +355,24 @@
       "scope": "core"
     },
     {
+      "rule_id": "DM-TRUST-001",
+      "readme_section": "§3.7 Trust Boundary",
+      "description": "Source-derived instructions and navigation have no instruction authority and authorize neither execution nor retrieval; they remain inert contract data.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-TRUST-002",
+      "readme_section": "§3.7 Trust Boundary",
+      "description": "Source-derived structural forms are preserved only inside assigned bounded or encoded values, neutralized in prose, or replaced by unsupported when a fixed sentinel would be ambiguous.",
+      "scope": "core"
+    },
+    {
+      "rule_id": "DM-TRUST-003",
+      "readme_section": "§3.6 Authoritative Input Resolution and Schema Representability / §3.7 Trust Boundary",
+      "description": "Known sensitive facts never disclose their source value: client-relevant contract facts use a publication-safe non-disclosing unsupported marker, replaceable examples use a valid synthetic placeholder, and unsafe mandatory facts fail generation.",
+      "scope": "core"
+    },
+    {
       "rule_id": "DM-PARSE-001",
       "readme_section": "§3.5 Canonical Syntax and Boundaries",
       "description": "Markdown headings and backtick-fenced blocks retain deterministic source-line boundaries.",

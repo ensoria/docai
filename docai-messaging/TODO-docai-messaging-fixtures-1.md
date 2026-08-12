@@ -629,7 +629,7 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
   - AsyncAPI 3.0.0 / 3.1.0 schemaFormat default、registered aliases、JSON Schema Draft 07、parameterless JSON/+json wire、parameterized/unregistered wire unsupported を検証する。
   - header encoding/exposure と protocol binding mapping の有無を source-aware expectation として記録する。
 
-- [ ] **Step 5: trust/publication-safety cases を test 化する**
+- [x] **Step 5: trust/publication-safety cases を test 化する**
   - prose、example、URL、schema string、metadata-like line、identity-like line、profile link、key list、fixed value、`x-` structure の escape attempt を含める。
   - known sensitive fact は non-disclosing `unsupported`、real credential/PII fixture は corpus 自体へ保存せず synthetic sentinel で拒否条件を表す。
 
