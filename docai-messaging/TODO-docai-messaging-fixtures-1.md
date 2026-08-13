@@ -671,7 +671,7 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
   - source exact SHA-256、perspective、precedence、counterpart mapping、adapter versions、stable-name overrides、publication policy identity を sorted-key JSON と LF で記録する。
   - manifest 自体の canonical serialization rule を fixture README に記載する。
 
-- [ ] **Step 4: minimal-but-representative contract-complete full set を手作業で作る**
+- [x] **Step 4: minimal-but-representative contract-complete full set を手作業で作る**
   - `INDEX.md`、全 convention headings、SEND/RECEIVE/reply/failure operation を作る。
   - source facts を projection し、推測で completeness を上げない。
   - main full set には `unknown` / `unsupported` を含めない。これらは別の focused document-set case に置き、root completeness の positive/negative 判定を独立させる。

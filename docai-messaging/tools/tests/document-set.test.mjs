@@ -23,6 +23,7 @@ const MANIFEST_ID = "b32:a4fmrszmrrfqaux3c2ndbr3aou";
 const restampPath = fileURLToPath(new URL("../restamp-document-set.mjs", import.meta.url));
 const catalogPath = fileURLToPath(new URL("../../fixtures/rules.json", import.meta.url));
 const coreSourcePath = fileURLToPath(new URL("../../fixtures/core/v0.17.1/source/", import.meta.url));
+const coreFullPath = fileURLToPath(new URL("../../fixtures/core/v0.17.1/valid/full/", import.meta.url));
 const task5RuleTestNames = [];
 const task6RuleTestNames = [];
 const task7RuleTestNames = [];
@@ -6667,4 +6668,79 @@ nodeTest("restamp retains and reports a backup when rollback restore fails", (t)
   assert.equal(failure.message.includes(retainedBackup), true);
   assert.equal(fs.existsSync(retainedBackup), true);
   assert.deepEqual(fs.readFileSync(retainedBackup), originals.get(path.basename(restoreTarget)));
+});
+
+nodeTest("validates the Task 8 contract-complete full document set", () => {
+  const documentSet = loadDocumentSet(coreFullPath);
+  const result = validateDocumentSet(documentSet, { wholeSet: false });
+
+  assert.deepEqual(documentSet.files.map((file) => file.path), [
+    "CONVENTIONS.md",
+    "INDEX.md",
+    "channels/orders.md"
+  ]);
+  assert.deepEqual(result.diagnostics, []);
+  assert.deepEqual(result.facts.core.sources.rows.map((row) => row.id), [
+    "storefront-asyncapi-3.1.0",
+    "storefront-behavior"
+  ]);
+  assert.deepEqual(
+    result.facts.core.operations.rows.map(({ action, channel, operation, messages }) => ({
+      action,
+      channel,
+      operation,
+      messages
+    })),
+    [
+      {
+        action: "RECEIVE",
+        channel: "orders.events",
+        operation: "receiveOrderCreated",
+        messages: ["OrderCreated"]
+      },
+      {
+        action: "SEND",
+        channel: "orders.commands",
+        operation: "sendCreateOrder",
+        messages: ["CreateOrder", "reply:OrderAccepted"]
+      }
+    ]
+  );
+  assert.deepEqual(
+    Object.fromEntries(Object.entries(result.facts.core.messageDefinitions.byOperation)
+      .map(([operation, messages]) => [operation, messages.map(({ name, reply }) => ({ name, reply }))])),
+    {
+      receiveOrderCreated: [{ name: "OrderCreated", reply: false }],
+      sendCreateOrder: [
+        { name: "CreateOrder", reply: false },
+        { name: "OrderAccepted", reply: true }
+      ]
+    }
+  );
+  assert.deepEqual(
+    CONVENTION_HEADINGS.map((heading) => [
+      heading,
+      result.facts.core.conventions.sections[heading].state
+    ]),
+    CONVENTION_HEADINGS.map((heading) => [
+      heading,
+      heading === "Rate Limits and Quotas" ? "none" : "expanded"
+    ])
+  );
+  const behavior = JSON.parse(fs.readFileSync(path.join(coreSourcePath, "storefront-behavior.json")));
+  const channel = documentSet.files.find((file) => file.path === "channels/orders.md").content;
+  for (const failures of Object.values(behavior.operationFailures)) {
+    for (const failure of failures) {
+      assert.equal(channel.includes(`| ${[
+        failure.failure,
+        failure.signal,
+        failure.condition,
+        failure.action
+      ].join(" | ")} |`), true);
+    }
+  }
+  for (const file of documentSet.files) {
+    assert.equal(file.content.includes("**unknown**:"), false);
+    assert.equal(file.content.includes("**unsupported**:"), false);
+  }
 });
