@@ -1,0 +1,188 @@
+{
+  "asyncapi": "3.0.0",
+  "id": "urn:example:storefront-message-selection",
+  "info": {
+    "title": "Synthetic Storefront Message Selection Matrix",
+    "version": "1.0.0",
+    "description": "Focused source input for exact-version operation and reply message selection."
+  },
+  "defaultContentType": "application/json",
+  "channels": {
+    "operationSelection": {
+      "address": "selection.operations",
+      "messages": {
+        "commandAlpha": {
+          "name": "CommandAlpha",
+          "payload": {
+            "type": "object",
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "alpha"
+              }
+            }
+          }
+        },
+        "commandBeta": {
+          "name": "CommandBeta",
+          "payload": {
+            "type": "object",
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "beta"
+              }
+            }
+          }
+        }
+      }
+    },
+    "requestSelection": {
+      "address": "selection.requests",
+      "messages": {
+        "request": {
+          "name": "SelectionRequest",
+          "payload": {
+            "type": "object",
+            "required": [
+              "requestId"
+            ],
+            "properties": {
+              "requestId": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "replySelection": {
+      "address": "selection.replies",
+      "messages": {
+        "replyAccepted": {
+          "name": "ReplyAccepted",
+          "payload": {
+            "type": "object",
+            "required": [
+              "status"
+            ],
+            "properties": {
+              "status": {
+                "type": "string",
+                "const": "accepted"
+              }
+            }
+          }
+        },
+        "replyRejected": {
+          "name": "ReplyRejected",
+          "payload": {
+            "type": "object",
+            "required": [
+              "status"
+            ],
+            "properties": {
+              "status": {
+                "type": "string",
+                "const": "rejected"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "operations": {
+    "operationMessagesExplicit": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/operationSelection"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/operationSelection/messages/commandAlpha"
+        }
+      ],
+      "summary": "Select only commandAlpha explicitly."
+    },
+    "operationMessagesOmitted": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/operationSelection"
+      },
+      "summary": "Select every channel message by omitting operation messages."
+    },
+    "operationMessagesEmpty": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/operationSelection"
+      },
+      "messages": [],
+      "summary": "Select a known empty operation message set."
+    },
+    "replyMessagesExplicit": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/requestSelection"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/requestSelection/messages/request"
+        }
+      ],
+      "reply": {
+        "channel": {
+          "$ref": "#/channels/replySelection"
+        },
+        "messages": [
+          {
+            "$ref": "#/channels/replySelection/messages/replyAccepted"
+          }
+        ]
+      },
+      "summary": "Select only replyAccepted explicitly."
+    },
+    "replyMessagesOmitted": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/requestSelection"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/requestSelection/messages/request"
+        }
+      ],
+      "reply": {
+        "channel": {
+          "$ref": "#/channels/replySelection"
+        }
+      },
+      "summary": "Leave the reply message set unknown by omitting reply messages."
+    },
+    "replyMessagesEmpty": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/requestSelection"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/requestSelection/messages/request"
+        }
+      ],
+      "reply": {
+        "channel": {
+          "$ref": "#/channels/replySelection"
+        },
+        "messages": []
+      },
+      "summary": "Select a known empty reply message set."
+    }
+  },
+  "x-docai-source-id": "asyncapi-3.0.0-message-selection"
+}

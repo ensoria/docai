@@ -663,7 +663,7 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
   - main source は representable JSON payload/header schema と必要な behavior facts をすべて持ち、root `coverage: complete` / `knowledge: complete` を成立させる。
   - recursion、missing knowledge、zero-message selection は `source/focused/` の別 input に置き、contract-complete main set の projection manifest には含めない。
 
-- [ ] **Step 2: AsyncAPI 3.0.0 と 3.1.0 selection source を main source から分離する**
+- [x] **Step 2: AsyncAPI 3.0.0 と 3.1.0 selection source を main source から分離する**
   - operation `messages` explicit/omitted/empty と reply `messages` explicit/omitted/empty を source-level fixture に含める。
   - 同じ論理 API を表す場合も source ID、specification version、revision を別々に記録する。
 

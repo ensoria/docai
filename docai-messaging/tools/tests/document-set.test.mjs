@@ -6426,6 +6426,66 @@ nodeTest("fixes the Task 8 contract-complete authoritative source scenario", () 
   assert.deepEqual(zeroMessage.operations.sendNothing.messages, []);
 });
 
+nodeTest("fixes the Task 8 exact-version AsyncAPI message-selection sources", () => {
+  const readSource = (relativePath) => JSON.parse(
+    fs.readFileSync(path.join(coreSourcePath, relativePath), "utf8")
+  );
+  const sources = [
+    readSource("focused/asyncapi-3.0.0-message-selection.json"),
+    readSource("focused/asyncapi-3.1.0-message-selection.json")
+  ];
+
+  assert.deepEqual(sources.map((source) => source.asyncapi), ["3.0.0", "3.1.0"]);
+  assert.deepEqual(sources.map((source) => source["x-docai-source-id"]), [
+    "asyncapi-3.0.0-message-selection",
+    "asyncapi-3.1.0-message-selection"
+  ]);
+  assert.deepEqual(sources.map((source) => source.info.version), ["1.0.0", "1.1.0"]);
+  assert.equal(sources[0].id, "urn:example:storefront-message-selection");
+  assert.equal(sources[1].id, sources[0].id);
+  const logicalContract = (source) => {
+    const contract = structuredClone(source);
+    delete contract.asyncapi;
+    delete contract["x-docai-source-id"];
+    contract.info.version = "<source-revision>";
+    return contract;
+  };
+  assert.deepEqual(logicalContract(sources[1]), logicalContract(sources[0]));
+
+  for (const source of sources) {
+    const operations = source.operations;
+    assert.deepEqual(Object.keys(operations).sort(), [
+      "operationMessagesEmpty",
+      "operationMessagesExplicit",
+      "operationMessagesOmitted",
+      "replyMessagesEmpty",
+      "replyMessagesExplicit",
+      "replyMessagesOmitted"
+    ]);
+
+    assert.deepEqual(operations.operationMessagesExplicit.messages, [
+      { $ref: "#/channels/operationSelection/messages/commandAlpha" }
+    ]);
+    assert.equal(Object.hasOwn(operations.operationMessagesOmitted, "messages"), false);
+    assert.deepEqual(operations.operationMessagesEmpty.messages, []);
+
+    assert.deepEqual(operations.replyMessagesExplicit.reply.messages, [
+      { $ref: "#/channels/replySelection/messages/replyAccepted" }
+    ]);
+    assert.equal(Object.hasOwn(operations.replyMessagesOmitted.reply, "messages"), false);
+    assert.deepEqual(operations.replyMessagesEmpty.reply.messages, []);
+
+    assert.deepEqual(Object.keys(source.channels.operationSelection.messages).sort(), [
+      "commandAlpha",
+      "commandBeta"
+    ]);
+    assert.deepEqual(Object.keys(source.channels.replySelection.messages).sort(), [
+      "replyAccepted",
+      "replyRejected"
+    ]);
+  }
+});
+
 nodeTest("restamp retains and reports a backup when rollback restore fails", (t) => {
   const publication = temporaryDirectory(t, "docai-messaging-restamp-");
   const root = createSet(t, { rootDir: path.join(publication, "valid", "full") });
