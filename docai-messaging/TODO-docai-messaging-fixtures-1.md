@@ -676,7 +676,7 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
   - source facts を projection し、推測で completeness を上げない。
   - main full set には `unknown` / `unsupported` を含めない。これらは別の focused document-set case に置き、root completeness の positive/negative 判定を独立させる。
 
-- [ ] **Step 5: identity を helper で計算して固定する**
+- [x] **Step 5: identity を helper で計算して固定する**
   - Run: `node docai-messaging/tools/restamp-document-set.mjs --write --projection-manifest docai-messaging/fixtures/core/v0.17.1/source/projection-input-manifest.json docai-messaging/fixtures/core/v0.17.1/valid/full`
   - Expected: projection digest、set digest、short IDs を更新する。
   - Run: `node docai-messaging/tools/restamp-document-set.mjs --projection-manifest docai-messaging/fixtures/core/v0.17.1/source/projection-input-manifest.json docai-messaging/fixtures/core/v0.17.1/valid/full`

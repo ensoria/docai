@@ -22,4 +22,4 @@
 
 none
 
-> docai-identity: set_id: b32:qe5xz6fyhcs6horpuskeaw57ay | projection_id: b32:2su6l5snggpayed76bebjwuzuy | set_digest: sha256:813b7cf8b838a5e3ba2fa494405bbf061bd1c6c0f693077d7349fd4c4d45dd2b | projection_digest: sha256:d4a9e5f64d319e0c107ff04814da99a639d407c15f340ed4a69d46f245e4f480
+> docai-identity: set_id: b32:xjxucwnlwen6gkf63dzcijc434 | projection_id: b32:2su6l5snggpayed76bebjwuzuy | set_digest: sha256:ba6f4159abb11be328bed8f224245cdf656893491b4d8d0bdfd29b47b669dcb5 | projection_digest: sha256:d4a9e5f64d319e0c107ff04814da99a639d407c15f340ed4a69d46f245e4f480

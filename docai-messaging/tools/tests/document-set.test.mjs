@@ -6672,7 +6672,7 @@ nodeTest("restamp retains and reports a backup when rollback restore fails", (t)
 
 nodeTest("validates the Task 8 contract-complete full document set", () => {
   const documentSet = loadDocumentSet(coreFullPath);
-  const result = validateDocumentSet(documentSet, { wholeSet: false });
+  const result = validateDocumentSet(documentSet, { wholeSet: true });
 
   assert.deepEqual(documentSet.files.map((file) => file.path), [
     "CONVENTIONS.md",
