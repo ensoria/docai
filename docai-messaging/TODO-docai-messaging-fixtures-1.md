@@ -682,7 +682,7 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
   - Run: `node docai-messaging/tools/restamp-document-set.mjs --projection-manifest docai-messaging/fixtures/core/v0.17.1/source/projection-input-manifest.json docai-messaging/fixtures/core/v0.17.1/valid/full`
   - Expected: `restamp required: no`、exit code 0。
 
-- [ ] **Step 6: source traceability を全 fact domain で記録する**
+- [x] **Step 6: source traceability を全 fact domain で記録する**
   - INDEX row、CONVENTIONS section、operation section、payload representation、marker ごとに source ID/location を対応付ける。
   - checker で自動確認できない semantic mapping を明示する。
 

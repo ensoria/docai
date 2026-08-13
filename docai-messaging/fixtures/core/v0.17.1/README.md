@@ -15,3 +15,19 @@ Serialize the manifest canonically as follows:
 5. Use compact JSON with no insignificant whitespace, then append exactly one LF byte. Do not emit CR, trailing whitespace, or additional lines.
 
 The SHA-256 digest of those exact manifest bytes becomes `projection_digest`; `projection_id` is derived from that digest by the normal DocAI Messaging identity rule. Generation time, run identity, output profile, and focused-source inputs are intentionally absent because they do not belong to this profile-independent projection snapshot.
+
+## Contract-complete full set
+
+`valid/full/` contains the main contract-complete document set for the `storefront-service` perspective. It projects both selected source operations into `INDEX.md` and `channels/orders.md`, including one RECEIVE event, one SEND command, the command's explicit reply, and operation failure handling. `CONVENTIONS.md` records all Compatibility Core convention headings; the authoritative no-rate-limit state uses `none`. The main set contains no `unknown` or `unsupported` marker.
+
+The document set is a closed root. Source inputs and evidence remain outside `valid/full/` and therefore do not participate in its `set_digest`. Use the projection manifest explicitly when checking or refreshing identity:
+
+```sh
+node docai-messaging/tools/restamp-document-set.mjs --projection-manifest docai-messaging/fixtures/core/v0.17.1/source/projection-input-manifest.json docai-messaging/fixtures/core/v0.17.1/valid/full
+```
+
+The command is a non-mutating dry-run unless `--write` is supplied. A current set reports `restamp required: no`.
+
+## Source traceability
+
+`SOURCE-TRACEABILITY.md` maps opening metadata, INDEX rows, every CONVENTIONS section, operation units, message and payload representations, known-absence states, and the absence of incomplete markers to exact source locations or projection-manifest decisions. It also records the checker boundary: source fixtures are versioned evidence, not a public AsyncAPI-to-DocAI converter interface.
