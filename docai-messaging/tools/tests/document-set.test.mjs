@@ -1,5 +1,6 @@
 import nodeTest from "node:test";
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -6483,6 +6484,149 @@ nodeTest("fixes the Task 8 exact-version AsyncAPI message-selection sources", ()
       "replyAccepted",
       "replyRejected"
     ]);
+  }
+});
+
+nodeTest("fixes the Task 8 deterministic projection-input manifest", () => {
+  const manifestPath = path.join(coreSourcePath, "projection-input-manifest.json");
+  const sourceBytes = fs.readFileSync(manifestPath);
+  const source = sourceBytes.toString("utf8");
+  const manifest = JSON.parse(source);
+  const sortKeys = (value) => {
+    if (Array.isArray(value)) return value.map(sortKeys);
+    if (value === null || typeof value !== "object") return value;
+    return Object.fromEntries(
+      Object.keys(value).sort().map((key) => [key, sortKeys(value[key])])
+    );
+  };
+
+  assert.equal(sourceBytes[0] === 0xef && sourceBytes[1] === 0xbb && sourceBytes[2] === 0xbf, false);
+  assert.equal(source.includes("\r"), false);
+  assert.equal(source, `${JSON.stringify(sortKeys(manifest))}\n`);
+  assert.deepEqual(Object.keys(manifest), [
+    "adapters",
+    "counterpartMappings",
+    "docaiMessaging",
+    "generator",
+    "manifestVersion",
+    "perspective",
+    "precedence",
+    "publicationPolicy",
+    "sources",
+    "stableNameOverrides"
+  ]);
+  assert.equal(manifest.manifestVersion, "1.0.0");
+  assert.equal(manifest.docaiMessaging, "0.17.1");
+  assert.deepEqual(manifest.generator, {
+    id: "docai-messaging-core-fixture-projector",
+    version: "1.0.0"
+  });
+  assert.deepEqual(manifest.perspective, {
+    application: "storefront-service",
+    mode: "source-application-carry-through",
+    sourceApplication: "storefront-service"
+  });
+  assert.deepEqual(manifest.counterpartMappings, []);
+  assert.deepEqual(manifest.stableNameOverrides, []);
+  assert.deepEqual(manifest.publicationPolicy, {
+    id: "docai-messaging-core-fixture-publication",
+    version: "1.0.0"
+  });
+  assert.deepEqual(manifest.adapters, [
+    {
+      class: "behavior-source",
+      ruleVersion: "1.0.0",
+      target: "behavior-configuration@fixture-1"
+    },
+    {
+      class: "header-encoding",
+      ruleVersion: "1.0.0",
+      target: "kafka-record-headers;value-encoding=utf-8"
+    },
+    {
+      class: "payload-wire",
+      ruleVersion: "docai-messaging-0.17.1",
+      target: "application/json"
+    },
+    {
+      class: "schema",
+      ruleVersion: "docai-messaging-0.17.1",
+      target: "application/vnd.aai.asyncapi+json;version=3.1.0"
+    },
+    {
+      class: "source",
+      ruleVersion: "1.0.0",
+      target: "AsyncAPI 3.1.0"
+    }
+  ]);
+  assert.deepEqual(manifest.precedence, [
+    {
+      factDomain: "api-identity",
+      sourceOrder: ["storefront-asyncapi-3.1.0", "storefront-behavior"]
+    },
+    {
+      factDomain: "authorization",
+      sourceOrder: ["storefront-asyncapi-3.1.0", "storefront-behavior"]
+    },
+    {
+      factDomain: "behavior-and-failure-handling",
+      sourceOrder: ["storefront-behavior"]
+    },
+    {
+      factDomain: "conventions",
+      sourceOrder: ["storefront-behavior", "storefront-asyncapi-3.1.0"]
+    },
+    {
+      factDomain: "environment-and-protocol",
+      sourceOrder: ["storefront-asyncapi-3.1.0", "storefront-behavior"]
+    },
+    {
+      factDomain: "message-contracts-and-examples",
+      sourceOrder: ["storefront-asyncapi-3.1.0"]
+    },
+    {
+      factDomain: "operation-routing-and-message-selection",
+      sourceOrder: ["storefront-asyncapi-3.1.0"]
+    }
+  ]);
+  assert.deepEqual(manifest.sources.map(({ location, revision, sourceId, specification, type }) => ({
+    location,
+    revision,
+    sourceId,
+    specification,
+    type
+  })), [
+    {
+      location: "storefront.asyncapi.json",
+      revision: "1.0.0",
+      sourceId: "storefront-asyncapi-3.1.0",
+      specification: "AsyncAPI 3.1.0",
+      type: "asyncapi"
+    },
+    {
+      location: "storefront-behavior.json",
+      revision: "fixture-1",
+      sourceId: "storefront-behavior",
+      specification: "none",
+      type: "behavior-configuration"
+    }
+  ]);
+  assert.deepEqual(manifest.sources.map((entry) => entry.location), [
+    "storefront.asyncapi.json",
+    "storefront-behavior.json"
+  ]);
+  for (const entry of manifest.sources) {
+    assert.deepEqual(Object.keys(entry), [
+      "location",
+      "revision",
+      "sha256",
+      "sourceId",
+      "specification",
+      "type"
+    ]);
+    const bytes = fs.readFileSync(path.join(coreSourcePath, entry.location));
+    const digest = createHash("sha256").update(bytes).digest("hex");
+    assert.equal(entry.sha256, `sha256:${digest}`);
   }
 });
 

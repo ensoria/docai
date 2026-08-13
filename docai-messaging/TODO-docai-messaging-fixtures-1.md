@@ -667,7 +667,7 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
   - operation `messages` explicit/omitted/empty と reply `messages` explicit/omitted/empty を source-level fixture に含める。
   - 同じ論理 API を表す場合も source ID、specification version、revision を別々に記録する。
 
-- [ ] **Step 3: deterministic projection-input manifest を作る**
+- [x] **Step 3: deterministic projection-input manifest を作る**
   - source exact SHA-256、perspective、precedence、counterpart mapping、adapter versions、stable-name overrides、publication policy identity を sorted-key JSON と LF で記録する。
   - manifest 自体の canonical serialization rule を fixture README に記載する。
 
