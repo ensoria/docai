@@ -1,0 +1,20 @@
+{
+  "sourceId": "focused-missing-behavior",
+  "kind": "behavior-configuration",
+  "revision": "fixture-1",
+  "perspective": "storefront-service",
+  "delivery": {
+    "guarantee": "at-least-once"
+  },
+  "deduplication": {
+    "key": "header.message-id"
+  },
+  "ordering": {
+    "guarantee": "per payload.orderId"
+  },
+  "missingFacts": [
+    "acknowledgement",
+    "authorization",
+    "failure-recovery"
+  ]
+}

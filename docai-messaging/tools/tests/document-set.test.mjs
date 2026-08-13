@@ -21,6 +21,7 @@ const MANIFEST_DIGEST = "sha256:070ac8cb2c8c4b0052fb169a30c76075402ab4a071052ff7
 const MANIFEST_ID = "b32:a4fmrszmrrfqaux3c2ndbr3aou";
 const restampPath = fileURLToPath(new URL("../restamp-document-set.mjs", import.meta.url));
 const catalogPath = fileURLToPath(new URL("../../fixtures/rules.json", import.meta.url));
+const coreSourcePath = fileURLToPath(new URL("../../fixtures/core/v0.17.1/source/", import.meta.url));
 const task5RuleTestNames = [];
 const task6RuleTestNames = [];
 const task7RuleTestNames = [];
@@ -6265,6 +6266,164 @@ nodeTest("restamp rolls back earlier replacements when a later atomic replacemen
   assert.equal(recovered.changed, true);
   assert.deepEqual(validateDocumentSet(loadDocumentSet(root), { wholeSet: true }).diagnostics, []);
   assert.equal(restampDocumentSet(root, manifestPath).changed, false);
+});
+
+nodeTest("fixes the Task 8 contract-complete authoritative source scenario", () => {
+  const readSource = (relativePath) => JSON.parse(
+    fs.readFileSync(path.join(coreSourcePath, relativePath), "utf8")
+  );
+  const api = readSource("storefront.asyncapi.json");
+  const behavior = readSource("storefront-behavior.json");
+  const recursive = readSource("focused/recursive-payload.asyncapi.json");
+  const missing = readSource("focused/missing-behavior.json");
+  const zeroMessage = readSource("focused/zero-message-selection.asyncapi.json");
+
+  assert.equal(api.asyncapi, "3.1.0");
+  assert.equal(api.id, "urn:example:storefront-order-messaging");
+  assert.equal(api.info.version, "1.0.0");
+  assert.equal(api.defaultContentType, "application/json");
+  assert.deepEqual(Object.keys(api.operations).sort(), ["receiveOrderCreated", "sendCreateOrder"]);
+  assert.deepEqual(api.operations.sendCreateOrder, {
+    action: "send",
+    channel: { $ref: "#/channels/orderCommands" },
+    messages: [{ $ref: "#/channels/orderCommands/messages/createOrder" }],
+    reply: {
+      channel: { $ref: "#/channels/orderReplies" },
+      messages: [{ $ref: "#/channels/orderReplies/messages/orderAccepted" }]
+    },
+    security: [{
+      type: "oauth2",
+      flows: {
+        clientCredentials: {
+          tokenUrl: "https://auth.example.invalid/oauth/token",
+          availableScopes: {
+            "orders:read": "Receive order events.",
+            "orders:write": "Send order commands."
+          }
+        }
+      },
+      scopes: ["orders:write"]
+    }],
+    summary: "Submit an order and receive its acceptance reply."
+  });
+  assert.equal(api.operations.receiveOrderCreated.action, "receive");
+  assert.deepEqual(api.operations.receiveOrderCreated.messages, [
+    { $ref: "#/channels/orderEvents/messages/orderCreated" }
+  ]);
+  assert.deepEqual(api.operations.receiveOrderCreated.security, [
+    {
+      type: "oauth2",
+      flows: {
+        clientCredentials: {
+          tokenUrl: "https://auth.example.invalid/oauth/token",
+          availableScopes: {
+            "orders:read": "Receive order events.",
+            "orders:write": "Send order commands."
+          }
+        }
+      },
+      scopes: ["orders:read"]
+    }
+  ]);
+  assert.deepEqual(
+    Object.keys(api.components.messages).sort(),
+    ["CreateOrder", "OrderAccepted", "OrderCreated"]
+  );
+  for (const message of Object.values(api.components.messages)) {
+    assert.equal(message.contentType, "application/json");
+    assert.equal(message.headers.type, "object");
+    assert.equal(message.payload.type, "object");
+    assert.ok(message.examples.length > 0);
+  }
+  assert.equal(JSON.stringify(api).includes("$recursiveRef"), false);
+  assert.equal(JSON.stringify(api).includes("unknown"), false);
+  assert.equal(JSON.stringify(api).includes("unsupported"), false);
+
+  assert.equal(behavior.perspective, "storefront-service");
+  assert.equal(behavior.delivery.guarantee, "at-least-once");
+  assert.deepEqual(behavior.acknowledgement, {
+    nack: "Negative-acknowledge a delivery after a retryable handler failure.",
+    positive: "Acknowledge only after durable processing commits.",
+    timeout: "Unacknowledged deliveries become eligible for redelivery after 30 seconds."
+  });
+  assert.deepEqual(behavior.deduplication, {
+    key: "header.message-id",
+    retention: "24 hours",
+    scope: "per storefront tenant"
+  });
+  assert.deepEqual(behavior.ordering, {
+    guarantee: "Messages sharing payload.orderId are processed in publish order.",
+    negativeGuarantee: "There is no ordering guarantee across distinct orderId values."
+  });
+  assert.deepEqual(behavior.failureRecovery, {
+    deadLetterChannel: "orders.dead-letter",
+    maxDeliveryAttempts: 5,
+    retryAction: "Negative-acknowledge retryable failures; reject non-retryable failures.",
+    terminalAction: "Publish the failed envelope and diagnostic code to the dead-letter channel."
+  });
+  assert.deepEqual(behavior.authorization, {
+    receiveOrderCreated: ["orders:read"],
+    scheme: "storefrontOAuth",
+    sendCreateOrder: ["orders:write"]
+  });
+  assert.deepEqual(behavior.operationBehavior, {
+    receiveOrderCreated: {
+      authorization: "OAuth2 scope orders:read is required.",
+      delivery: "at-least-once -- Acknowledge after durable processing; negative-acknowledge retryable failures.",
+      idempotency: "Deduplicate redeliveries by header.message-id and preserve the prior durable result.",
+      ordering: "Preserve publish order for messages with the same payload.orderId.",
+      preconditions: "The storefront is subscribed to orders.events.",
+      sideEffects: "Update the storefront order state to created.",
+      noReply: true,
+      purpose: "Update storefront order state from the created event."
+    },
+    sendCreateOrder: {
+      authorization: "OAuth2 scope orders:write is required.",
+      delivery: "at-least-once -- Broker acknowledgement makes publish durable; timeout leaves outcome ambiguous.",
+      idempotency: "Resend with the same header.message-id; consumers deduplicate for 24 hours.",
+      ordering: "Publish commands sharing payload.orderId in order.",
+      preconditions: "The referenced tenant and every SKU already exist.",
+      sideEffects: "Ask the order service to create the submitted order.",
+      purpose: "Submit one order command and await its acceptance reply.",
+      reply: "The orderAccepted reply confirms command acceptance, not final fulfillment."
+    }
+  });
+  assert.deepEqual(behavior.operationFailures, {
+    receiveOrderCreated: [
+      {
+        failure: "retryable handler failure",
+        signal: "handler returns a retryable error",
+        condition: "Durable processing did not commit and another attempt may succeed.",
+        action: "Negative-acknowledge and re-process; after five attempts publish the failed envelope and diagnostic code to orders.dead-letter."
+      },
+      {
+        failure: "non-retryable handler failure",
+        signal: "handler returns a non-retryable error",
+        condition: "The message cannot succeed without a contract or configuration change.",
+        action: "Reject without re-processing and publish the failed envelope and diagnostic code to orders.dead-letter."
+      }
+    ],
+    sendCreateOrder: [
+      {
+        failure: "publish rejected",
+        signal: "broker publish error",
+        condition: "Authorization or channel configuration rejects the publish.",
+        action: "Do not retry with the same configuration; correct authorization or channel configuration before resending."
+      },
+      {
+        failure: "reply timeout",
+        signal: "no correlated reply within 5 seconds",
+        condition: "The command publish may have succeeded but no acceptance reply arrived.",
+        action: "Resend with the same message-id when retrying so consumers deduplicate; escalate after five attempts."
+      }
+    ]
+  });
+
+  assert.equal(recursive.components.messages.RecursiveOrder.payload.properties.parent.$ref, "#/components/schemas/OrderNode");
+  assert.equal(recursive.components.schemas.OrderNode.properties.child.$ref, "#/components/schemas/OrderNode");
+  assert.deepEqual(missing.missingFacts, ["acknowledgement", "authorization", "failure-recovery"]);
+  assert.deepEqual(zeroMessage.channels.empty.messages, {});
+  assert.deepEqual(zeroMessage.operations.sendNothing.messages, []);
 });
 
 nodeTest("restamp retains and reports a backup when rollback restore fails", (t) => {

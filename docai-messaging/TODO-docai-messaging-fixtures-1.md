@@ -657,7 +657,7 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 - Create: channel files under `valid/full/channels/`
 - Create: `README.md` and `SOURCE-TRACEABILITY.md`
 
-- [ ] **Step 1: contract-complete source scenario を固定する**
+- [x] **Step 1: contract-complete source scenario を固定する**
   - storefront service perspective で SEND command、RECEIVE event、explicit reply を含む。
   - at-least-once、deduplication、ordering、ack/nack、failure recovery、authorization を behavior input に明記する。
   - main source は representable JSON payload/header schema と必要な behavior facts をすべて持ち、root `coverage: complete` / `knowledge: complete` を成立させる。

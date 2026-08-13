@@ -1,0 +1,23 @@
+{
+  "asyncapi": "3.1.0",
+  "id": "urn:example:focused-zero-message-selection",
+  "info": {
+    "title": "Focused Zero Message Selection",
+    "version": "1.0.0"
+  },
+  "channels": {
+    "empty": {
+      "address": "focused.empty",
+      "messages": {}
+    }
+  },
+  "operations": {
+    "sendNothing": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/empty"
+      },
+      "messages": []
+    }
+  }
+}

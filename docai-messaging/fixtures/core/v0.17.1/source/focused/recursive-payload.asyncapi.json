@@ -1,0 +1,71 @@
+{
+  "asyncapi": "3.1.0",
+  "id": "urn:example:focused-recursive-order",
+  "info": {
+    "title": "Focused Recursive Payload",
+    "version": "1.0.0"
+  },
+  "defaultContentType": "application/json",
+  "channels": {
+    "recursiveOrders": {
+      "address": "focused.recursive-orders",
+      "messages": {
+        "recursiveOrder": {
+          "$ref": "#/components/messages/RecursiveOrder"
+        }
+      }
+    }
+  },
+  "operations": {
+    "sendRecursiveOrder": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/recursiveOrders"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/recursiveOrders/messages/recursiveOrder"
+        }
+      ]
+    }
+  },
+  "components": {
+    "messages": {
+      "RecursiveOrder": {
+        "contentType": "application/json",
+        "headers": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {}
+        },
+        "payload": {
+          "type": "object",
+          "required": [
+            "parent"
+          ],
+          "properties": {
+            "parent": {
+              "$ref": "#/components/schemas/OrderNode"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "OrderNode": {
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "child": {
+            "$ref": "#/components/schemas/OrderNode"
+          },
+          "id": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
