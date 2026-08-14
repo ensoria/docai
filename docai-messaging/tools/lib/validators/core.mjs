@@ -469,6 +469,77 @@ export function validatePerspectiveSourceExpectations(cases, { file = "source-in
   };
 }
 
+function localReferenceSegments(reference) {
+  if (typeof reference?.$ref !== "string" || !reference.$ref.startsWith("#/")) return [];
+  return reference.$ref.slice(2).split("/").map((segment) => (
+    segment.replaceAll("~1", "/").replaceAll("~0", "~")
+  ));
+}
+
+export function evaluateAsyncApiOperationMessageSelection(source) {
+  const operations = Object.entries(source.operations ?? {})
+    .sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0))
+    .map(([operationId, operation]) => {
+      const channelSegments = localReferenceSegments(operation.channel);
+      const channelId = channelSegments.length === 2 && channelSegments[0] === "channels"
+        ? channelSegments[1]
+        : null;
+      const channelMessages = Object.keys(source.channels?.[channelId]?.messages ?? {}).sort();
+      const explicit = Object.hasOwn(operation, "messages");
+      const primaryMessages = explicit
+        ? (operation.messages ?? []).map((reference) => {
+          const segments = localReferenceSegments(reference);
+          return segments.length === 4
+              && segments[0] === "channels"
+              && segments[1] === channelId
+              && segments[2] === "messages"
+            ? segments[3]
+            : null;
+        })
+        : channelMessages;
+      if (primaryMessages.length === 0) {
+        return {
+          operationId,
+          outcome: "emit-unprojected-unsupported",
+          reason: "zero-message operation",
+          selection: explicit ? "explicit-empty" : "omitted-empty-channel",
+          channelId,
+          primaryMessages
+        };
+      }
+      return {
+        operationId,
+        outcome: "emit-operation",
+        resolution: explicit ? "explicit-non-empty" : "omitted-all-channel-messages",
+        channelId,
+        primaryMessages
+      };
+    });
+  return {
+    sourceSpecification: `AsyncAPI ${source.asyncapi}`,
+    operations
+  };
+}
+
+export function validateAsyncApiOperationMessageSelection(source, { file = "source-input.json" } = {}) {
+  const selection = evaluateAsyncApiOperationMessageSelection(source);
+  const zeroMessageOperations = selection.operations.filter((entry) => (
+    entry.outcome === "emit-unprojected-unsupported"
+  ));
+  const diagnostics = zeroMessageOperations.length === 0
+    ? []
+    : [diagnostic(
+      "DM-IDX-008",
+      file,
+      1,
+      `AsyncAPI source contains ${zeroMessageOperations.length} known zero-message operation(s).`
+    )];
+  return {
+    diagnostics,
+    facts: { asyncApiOperationMessageSelection: selection }
+  };
+}
+
 const DIRECT_SCHEMA_TARGETS = new Map([
   ["application/vnd.aai.asyncapi;version=3.0.0", "direct-asyncapi-schema-object-3.0.0"],
   ["application/vnd.aai.asyncapi+json;version=3.0.0", "direct-asyncapi-schema-object-3.0.0"],

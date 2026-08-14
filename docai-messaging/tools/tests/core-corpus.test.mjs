@@ -112,6 +112,13 @@ const perspectiveCaseIds = [
   "perspective-same-application-valid"
 ];
 
+const operationMessageSelectionCaseIds = [
+  "asyncapi-3.0.0-operation-message-selection-valid",
+  "asyncapi-3.0.0-operation-message-zero-invalid",
+  "asyncapi-3.1.0-operation-message-selection-valid",
+  "asyncapi-3.1.0-operation-message-zero-invalid"
+];
+
 function fixtureSource(fixturePath) {
   const source = fs.readFileSync(fixturePath, "utf8");
   return source.endsWith("\n") ? source.slice(0, -1) : source;
@@ -141,6 +148,13 @@ function validateCase(fixturePath, fixtureCase) {
     const scenario = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
     return coreValidator.validatePerspectiveSourceExpectations(
       scenario.cases,
+      { file: fixtureCase.path }
+    );
+  }
+  if (fixtureCase.kind === "asyncapi-operation-message-selection") {
+    const source = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
+    return coreValidator.validateAsyncApiOperationMessageSelection(
+      source,
       { file: fixtureCase.path }
     );
   }
@@ -576,4 +590,78 @@ test("executes the Task 9 DM-INC-001 DM-INC-006 DM-INC-007 perspective corpus", 
     reason: "authoritative-conflict",
     conflictingSourceIds: ["mapping-a", "mapping-b"]
   }]);
+});
+
+test("executes the Task 9 DM-IDX-008 exact-version operation message-selection corpus", () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
+  const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
+
+  assert.deepEqual(
+    operationMessageSelectionCaseIds.filter((id) => !byId.has(id)),
+    []
+  );
+  assert.equal(typeof coreValidator.validateAsyncApiOperationMessageSelection, "function");
+  for (const id of operationMessageSelectionCaseIds) {
+    const fixtureCase = byId.get(id);
+    assert.equal(
+      fixtureCase.expected === "valid" || fixtureCase.expected_rule_ids.length === 1,
+      true,
+      id
+    );
+  }
+
+  const result = runFixtureCorpus(corpusPath, validateCase);
+  assert.equal(result.failed, 0, result.report);
+
+  for (const version of ["3.0.0", "3.1.0"]) {
+    const validCase = byId.get(`asyncapi-${version}-operation-message-selection-valid`);
+    const valid = validateCase(path.join(corpusPath, validCase.path), validCase);
+    assert.deepEqual(valid.diagnostics, []);
+    assert.deepEqual(valid.facts.asyncApiOperationMessageSelection, {
+      sourceSpecification: `AsyncAPI ${version}`,
+      operations: [
+        {
+          operationId: "operationMessagesExplicit",
+          outcome: "emit-operation",
+          resolution: "explicit-non-empty",
+          channelId: "operationSelection",
+          primaryMessages: ["commandAlpha"]
+        },
+        {
+          operationId: "operationMessagesOmitted",
+          outcome: "emit-operation",
+          resolution: "omitted-all-channel-messages",
+          channelId: "operationSelection",
+          primaryMessages: ["commandAlpha", "commandBeta"]
+        }
+      ]
+    });
+
+    const invalidCase = byId.get(`asyncapi-${version}-operation-message-zero-invalid`);
+    const invalid = validateCase(path.join(corpusPath, invalidCase.path), invalidCase);
+    const errors = invalid.diagnostics.filter((entry) => entry.severity === "error");
+    assert.equal(errors.length, 1);
+    assert.equal(errors[0].ruleId, "DM-IDX-008");
+    assert.deepEqual(invalid.facts.asyncApiOperationMessageSelection, {
+      sourceSpecification: `AsyncAPI ${version}`,
+      operations: [
+        {
+          operationId: "operationMessagesEmpty",
+          outcome: "emit-unprojected-unsupported",
+          reason: "zero-message operation",
+          selection: "explicit-empty",
+          channelId: "operationSelection",
+          primaryMessages: []
+        },
+        {
+          operationId: "operationMessagesOmittedEmptyChannel",
+          outcome: "emit-unprojected-unsupported",
+          reason: "zero-message operation",
+          selection: "omitted-empty-channel",
+          channelId: "emptySelection",
+          primaryMessages: []
+        }
+      ]
+    });
+  }
 });

@@ -1,0 +1,39 @@
+{
+  "asyncapi": "3.0.0",
+  "info": {
+    "title": "Operation Message Selection Valid",
+    "version": "1.0.0"
+  },
+  "channels": {
+    "operationSelection": {
+      "address": "selection.operations",
+      "messages": {
+        "commandAlpha": {
+          "name": "CommandAlpha"
+        },
+        "commandBeta": {
+          "name": "CommandBeta"
+        }
+      }
+    }
+  },
+  "operations": {
+    "operationMessagesExplicit": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/operationSelection"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/operationSelection/messages/commandAlpha"
+        }
+      ]
+    },
+    "operationMessagesOmitted": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/operationSelection"
+      }
+    }
+  }
+}

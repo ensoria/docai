@@ -1,0 +1,36 @@
+{
+  "asyncapi": "3.0.0",
+  "info": {
+    "title": "Operation Message Selection Zero",
+    "version": "1.0.0"
+  },
+  "channels": {
+    "emptySelection": {
+      "address": "selection.empty",
+      "messages": {}
+    },
+    "operationSelection": {
+      "address": "selection.operations",
+      "messages": {
+        "commandAlpha": {
+          "name": "CommandAlpha"
+        }
+      }
+    }
+  },
+  "operations": {
+    "operationMessagesEmpty": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/operationSelection"
+      },
+      "messages": []
+    },
+    "operationMessagesOmittedEmptyChannel": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/emptySelection"
+      }
+    }
+  }
+}
