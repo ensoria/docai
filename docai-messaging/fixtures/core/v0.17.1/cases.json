@@ -276,6 +276,62 @@
       "expected_rule_ids": ["DM-IDX-004"]
     },
     {
+      "id": "contexts-duplicate-path-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/contexts-duplicate-path-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-IDX-005"]
+    },
+    {
+      "id": "contexts-none-path-valid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/valid/contexts-none-path-valid",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
+      "id": "contexts-order-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/contexts-order-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-IDX-005"]
+    },
+    {
+      "id": "contexts-overlap-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/contexts-overlap-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-IDX-005"]
+    },
+    {
+      "id": "contexts-required-reference-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/contexts-required-reference-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-IDX-005"]
+    },
+    {
+      "id": "contexts-required-supplemental-valid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/valid/contexts-required-supplemental-valid",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
+      "id": "contexts-separator-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/contexts-separator-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-IDX-005"]
+    },
+    {
+      "id": "contexts-supplemental-channel-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/contexts-supplemental-channel-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-IDX-005"]
+    },
+    {
       "id": "sentence-adjacent-japanese-valid",
       "kind": "sentence-line",
       "path": "focused/valid/sentence-adjacent-japanese-valid.md",

@@ -82,6 +82,17 @@ const operationCaseIds = [
   "operations-row-action-invalid"
 ];
 
+const contextCaseIds = [
+  "contexts-duplicate-path-invalid",
+  "contexts-none-path-valid",
+  "contexts-order-invalid",
+  "contexts-overlap-invalid",
+  "contexts-required-reference-invalid",
+  "contexts-required-supplemental-valid",
+  "contexts-separator-invalid",
+  "contexts-supplemental-channel-invalid"
+];
+
 function fixtureSource(fixturePath) {
   const source = fs.readFileSync(fixturePath, "utf8");
   return source.endsWith("\n") ? source.slice(0, -1) : source;
@@ -300,4 +311,43 @@ test("executes the Task 9 Operations focused corpus and fixes retrieval facts", 
     invalidCompactPaths.filter((candidate) => !invalidFullPaths.includes(candidate)),
     []
   );
+});
+
+test("executes the Task 9 context focused corpus and fixes selected context paths", () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
+  const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
+
+  assert.deepEqual(
+    contextCaseIds.filter((id) => !byId.has(id)),
+    []
+  );
+  for (const id of contextCaseIds) {
+    const fixtureCase = byId.get(id);
+    assert.equal(
+      fixtureCase.expected === "valid" || fixtureCase.expected_rule_ids.length === 1,
+      true,
+      id
+    );
+  }
+
+  const result = runFixtureCorpus(corpusPath, validateCase);
+  assert.equal(result.failed, 0, result.report);
+
+  const combinedCase = byId.get("contexts-required-supplemental-valid");
+  const combined = validateCase(path.join(corpusPath, combinedCase.path), combinedCase);
+  const combinedTrace = combined.facts.core.operationRetrieval.exact.operation["create-order"];
+  assert.deepEqual(combinedTrace.requiredContextPaths, [
+    "workflows/a-required.md",
+    "workflows/none.md"
+  ]);
+  assert.deepEqual(combinedTrace.supplementalContextPaths, [
+    "references/guide.md",
+    "workflows/z-supplemental.md"
+  ]);
+
+  const nonePathCase = byId.get("contexts-none-path-valid");
+  const nonePath = validateCase(path.join(corpusPath, nonePathCase.path), nonePathCase);
+  const nonePathTrace = nonePath.facts.core.operationRetrieval.exact.operation["create-order"];
+  assert.deepEqual(nonePathTrace.requiredContextPaths, ["workflows/none.md"]);
+  assert.deepEqual(nonePathTrace.supplementalContextPaths, []);
 });

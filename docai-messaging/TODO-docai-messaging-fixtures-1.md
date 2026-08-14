@@ -711,11 +711,13 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 
 > **Implementation note (Operations checkpoint):** full/compact の operation routing parity を focused corpus で直接検証するため、`cases.json` に `operation-profile-pair` kind を追加し、二つの task-scoped document set を同時に検証する。ペア検証は各 profile の既存 Core validation を先に適用し、両方から Operations fact を取得できる場合に routing form と operation shard path の完全一致を `DM-IDX-006` として検証する。影響として、単独 document-set validation の interface と意味は変更せず、profile 間でのみ成立する制約を fixture runner の明示的な case kind に隔離する。
 
+> **Implementation note (Context checkpoint):** context focused corpus は、required workflow、supplemental workflow / Reference Material、exact `, ` separator、ASCII ordering、重複、列間 overlap、forbidden target、および空リスト sentinel `none` と有効な `workflows/none.md` の区別を `DM-IDX-005` で検証する。valid mini set 内の workflow と Reference Material は標準形で収録するが、Core checker assertion は operation retrieval fact の required / supplemental paths に限定する。影響として、workflow / Reference Material の complete-surface 対応を Core に昇格させず、既存 production validator を変更せずに Core の context routing contract を固定する。
+
 - [x] Metadata、extension name/order/escape、unknown non-`x-` key、sentence grammar。
 - [x] Identity trailer、set/projection digest、closed root、mixed set、task-scoped identity check。
 - [x] Direct/sharded Sources、unknown API identity/version、Revision none、overlap、fixed-point、cycle。
 - [x] Flat/hierarchical Operations、bounds、semantic load-all、false positive、path parity。
-- [ ] Required/supplemental context、eligible/forbidden target、separator/order、`none` sentinel collision。
+- [x] Required/supplemental context、eligible/forbidden target、separator/order、`none` sentinel collision。
 - [ ] Direct/sharded Unprojected Operations、multibyte identity、group collision、sensitive withholding。
 - [ ] Same-application action、counterpart mapping complete/missing/conflicting。
 - [ ] AsyncAPI 3.0.0/3.1.0 operation message explicit/omitted/empty selection。
