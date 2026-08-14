@@ -725,6 +725,8 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 
 > **Implementation note (Behavior checkpoint):** task-scoped document set の valid case 一件に四つの operation を lexical order で収録し、六つの canonical Behavior key、`at-most-once` / `at-least-once` / `exactly-once` の三 delivery token、scope と条件を伴う qualified exactly-once、複数の `unknown` fact と六キー後の post-key marker、および `knowledge: requires-input` 集約を統合検証する。invalid case は key order、非canonical delivery token、unqualified exactly-once、unknown marker 欠落を一件ずつ分離し、各 case の単一 primary diagnostic を `DM-OP-003` に固定する。影響として、Task 6 で実装済みの Behavior validator を document-set 境界で実行可能にし、公開 document grammar、production validation semantics、および read-only fact interface は変更しない。
 
+> **Implementation note (Binding-scope checkpoint):** task-scoped document set の valid case 一件で Operation Bindings、primary Channel Bindings、primary Message Bindings、Reply Channel Bindings、reply Message Bindings、および inline failure-shape Bindings の六 scope にそれぞれ独立した `Protocol | Property | Value / Rule` table を置き、expanded Reply の INDEX routing、primary / reply message facts、inline failure-shape fact と併せて統合検証する。invalid case は六 scope の各 table について `Property` を誤った `Name` column に置換した一件だけを持ち、Operation / Channel を `DM-OP-004`、primary / reply Message を `DM-MSG-002`、Reply Channel を `DM-REPLY-002`、failure shape を `DM-FAIL-003` の単一 primary diagnostic に固定する。影響として、Task 6 で実装済みの binding validators を document-set 境界で実行可能にし、公開 document grammar、production validation semantics、および read-only fact interface は変更しない。
+
 - [x] Metadata、extension name/order/escape、unknown non-`x-` key、sentence grammar。
 - [x] Identity trailer、set/projection digest、closed root、mixed set、task-scoped identity check。
 - [x] Direct/sharded Sources、unknown API identity/version、Revision none、overlap、fixed-point、cycle。
@@ -736,7 +738,7 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 - [x] AsyncAPI 3.0.0/3.1.0 reply message explicit/omitted/empty selectionと INDEX omission。
 - [x] CONVENTIONS whole-section states、format semantics catalog、common/replacement failure shapes。
 - [x] Behavior six keys、delivery tokens、exactly-once qualification、unknown facts。
-- [ ] Operation/channel/message/reply/failure binding scopes。
+- [x] Operation/channel/message/reply/failure binding scopes。
 - [ ] SEND Required、RECEIVE Presence optional/condition/unknown、Nullable、nested ancestor semantics。
 - [ ] whole payload unknown、representation-local field collection、partial named siblings、example omission。
 - [ ] `$` root rows、root scalar/array/map/object、object openness、recursive unsupported。

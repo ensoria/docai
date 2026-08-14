@@ -142,6 +142,16 @@ const behaviorCaseIds = [
   "behavior-unknown-marker-missing-invalid"
 ];
 
+const bindingScopeCaseIds = [
+  "binding-channel-table-invalid",
+  "binding-failure-table-invalid",
+  "binding-message-table-invalid",
+  "binding-operation-table-invalid",
+  "binding-reply-channel-table-invalid",
+  "binding-reply-message-table-invalid",
+  "binding-scopes-valid"
+];
+
 function fixtureSource(fixturePath) {
   const source = fs.readFileSync(fixturePath, "utf8");
   return source.endsWith("\n") ? source.slice(0, -1) : source;
@@ -941,5 +951,60 @@ test("executes the Task 9 DM-OP-003 Behavior corpus", () => {
       entry.severity === "error" && !entry.cascade
     ));
     assert.deepEqual(primary.map((entry) => entry.ruleId), ["DM-OP-003"], id);
+  }
+});
+
+test("executes the Task 9 DM-OP-004 DM-MSG-002 DM-REPLY-002 and DM-FAIL-003 binding-scope corpus", () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
+  const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
+
+  assert.deepEqual(
+    bindingScopeCaseIds.filter((id) => !byId.has(id)),
+    []
+  );
+  for (const id of bindingScopeCaseIds) {
+    const fixtureCase = byId.get(id);
+    assert.equal(
+      fixtureCase.expected === "valid" || fixtureCase.expected_rule_ids.length === 1,
+      true,
+      id
+    );
+  }
+
+  const result = runFixtureCorpus(corpusPath, validateCase);
+  assert.equal(result.failed, 0, result.report);
+
+  const validCase = byId.get("binding-scopes-valid");
+  const valid = validateCase(path.join(corpusPath, validCase.path), validCase);
+  assert.deepEqual(valid.diagnostics, []);
+  assert.deepEqual(
+    valid.facts.core.messageDefinitions.byOperation["publish-order"].map((entry) => ({
+      name: entry.name,
+      reply: entry.reply
+    })),
+    [
+      { name: "publish-order", reply: false },
+      { name: "publish-order-reply", reply: true }
+    ]
+  );
+  assert.deepEqual(
+    valid.facts.core.failureShapes.inline.map((shape) => shape.label),
+    ["publish-error"]
+  );
+
+  for (const [id, expectedRuleId] of [
+    ["binding-channel-table-invalid", "DM-OP-004"],
+    ["binding-failure-table-invalid", "DM-FAIL-003"],
+    ["binding-message-table-invalid", "DM-MSG-002"],
+    ["binding-operation-table-invalid", "DM-OP-004"],
+    ["binding-reply-channel-table-invalid", "DM-REPLY-002"],
+    ["binding-reply-message-table-invalid", "DM-MSG-002"]
+  ]) {
+    const fixtureCase = byId.get(id);
+    const invalid = validateCase(path.join(corpusPath, fixtureCase.path), fixtureCase);
+    const primary = invalid.diagnostics.filter((entry) => (
+      entry.severity === "error" && !entry.cascade
+    ));
+    assert.deepEqual(primary.map((entry) => entry.ruleId), [expectedRuleId], id);
   }
 });

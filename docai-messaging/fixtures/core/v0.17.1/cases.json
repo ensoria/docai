@@ -535,6 +535,55 @@
       "expected_rule_ids": ["DM-OP-003"]
     },
     {
+      "id": "binding-channel-table-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/binding-channel-table-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-OP-004"]
+    },
+    {
+      "id": "binding-failure-table-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/binding-failure-table-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-FAIL-003"]
+    },
+    {
+      "id": "binding-message-table-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/binding-message-table-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-MSG-002"]
+    },
+    {
+      "id": "binding-operation-table-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/binding-operation-table-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-OP-004"]
+    },
+    {
+      "id": "binding-reply-channel-table-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/binding-reply-channel-table-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-REPLY-002"]
+    },
+    {
+      "id": "binding-reply-message-table-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/binding-reply-message-table-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-MSG-002"]
+    },
+    {
+      "id": "binding-scopes-valid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/valid/binding-scopes-valid",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
       "id": "sentence-adjacent-japanese-valid",
       "kind": "sentence-line",
       "path": "focused/valid/sentence-adjacent-japanese-valid.md",
