@@ -141,7 +141,7 @@
     {
       "rule_id": "DM-IDX-006",
       "readme_section": "§3.2 INDEX.md(required)",
-      "description": "Operation Shards routes to unique non-empty operation-index files whose structure, Tasks, Actions, and inclusive routing bounds match their actual rows.",
+      "description": "Operation Shards routes to unique non-empty operation-index files whose structure, Tasks, Actions, and inclusive routing bounds match their actual rows; matching full and compact profiles use the same Operations form and shard paths.",
       "scope": "core"
     },
     {

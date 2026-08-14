@@ -227,6 +227,55 @@
       "expected_rule_ids": ["DM-META-001"]
     },
     {
+      "id": "operations-flat-routing-valid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/valid/operations-flat-routing-valid",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
+      "id": "operations-flat-table-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/operations-flat-table-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-IDX-003"]
+    },
+    {
+      "id": "operations-hierarchical-bounds-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/operations-hierarchical-bounds-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-IDX-006"]
+    },
+    {
+      "id": "operations-hierarchical-overlap-valid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/valid/operations-hierarchical-overlap-valid",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
+      "id": "operations-profile-path-parity-invalid",
+      "kind": "operation-profile-pair",
+      "path": "focused/invalid/operations-profile-path-parity-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-IDX-006"]
+    },
+    {
+      "id": "operations-profile-path-parity-valid",
+      "kind": "operation-profile-pair",
+      "path": "focused/valid/operations-profile-path-parity-valid",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
+      "id": "operations-row-action-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/operations-row-action-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-IDX-004"]
+    },
+    {
       "id": "sentence-adjacent-japanese-valid",
       "kind": "sentence-line",
       "path": "focused/valid/sentence-adjacent-japanese-valid.md",

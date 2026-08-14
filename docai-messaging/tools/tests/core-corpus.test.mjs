@@ -3,7 +3,11 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { loadDocumentSet, validateDocumentSet } from "../lib/document-set.mjs";
+import {
+  loadDocumentSet,
+  validateDocumentSet,
+  validateOperationProfilePair
+} from "../lib/document-set.mjs";
 import { runFixtureCorpus } from "../lib/fixture-runner.mjs";
 import { parseOpeningMetadata } from "../lib/metadata.mjs";
 import { validateSentenceLine } from "../lib/sentence.mjs";
@@ -68,6 +72,16 @@ const sourceCaseIds = [
   "sources-unknown-marker-missing-invalid"
 ];
 
+const operationCaseIds = [
+  "operations-flat-routing-valid",
+  "operations-flat-table-invalid",
+  "operations-hierarchical-bounds-invalid",
+  "operations-hierarchical-overlap-valid",
+  "operations-profile-path-parity-invalid",
+  "operations-profile-path-parity-valid",
+  "operations-row-action-invalid"
+];
+
 function fixtureSource(fixturePath) {
   const source = fs.readFileSync(fixturePath, "utf8");
   return source.endsWith("\n") ? source.slice(0, -1) : source;
@@ -79,6 +93,12 @@ function validateCase(fixturePath, fixtureCase) {
   }
   if (fixtureCase.kind === "task-scoped-document-set") {
     return validateDocumentSet(loadDocumentSet(fixturePath), { wholeSet: false });
+  }
+  if (fixtureCase.kind === "operation-profile-pair") {
+    return validateOperationProfilePair(
+      loadDocumentSet(path.join(fixturePath, "full")),
+      loadDocumentSet(path.join(fixturePath, "compact"))
+    );
   }
   if (fixtureCase.kind === "metadata-line") {
     return parseOpeningMetadata({
@@ -189,4 +209,95 @@ test("executes the Task 9 Sources focused corpus and fixes retrieval facts", () 
     resolvedIds: ["a", "b", "c"],
     loadedPaths: ["indexes/sources-a-c.md", "indexes/sources-b.md"]
   });
+});
+
+test("executes the Task 9 Operations focused corpus and fixes retrieval facts", () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
+  const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
+
+  assert.deepEqual(
+    operationCaseIds.filter((id) => !byId.has(id)),
+    []
+  );
+  for (const id of operationCaseIds) {
+    const fixtureCase = byId.get(id);
+    assert.equal(
+      fixtureCase.expected === "valid" || fixtureCase.expected_rule_ids.length === 1,
+      true,
+      id
+    );
+  }
+
+  const result = runFixtureCorpus(corpusPath, validateCase);
+  assert.equal(result.failed, 0, result.report);
+
+  const flatCase = byId.get("operations-flat-routing-valid");
+  const flat = validateCase(path.join(corpusPath, flatCase.path), flatCase);
+  assert.equal(flat.facts.core.operations.form, "flat");
+  assert.deepEqual(flat.facts.core.operationRetrieval.exact.operation["create-order"], {
+    selector: { operation: "create-order" },
+    loadedIndexPaths: ["INDEX.md"],
+    falsePositiveIndexPaths: [],
+    matchedOperationNames: ["create-order"],
+    loadedChannelPaths: ["channels/orders.md"],
+    requiredContextPaths: [],
+    supplementalContextPaths: [],
+    sourceIds: ["source-a"],
+    loadedSourceIndexPaths: ["INDEX.md"]
+  });
+
+  const hierarchicalCase = byId.get("operations-hierarchical-overlap-valid");
+  const hierarchical = validateCase(
+    path.join(corpusPath, hierarchicalCase.path),
+    hierarchicalCase
+  );
+  assert.equal(hierarchical.facts.core.operations.form, "sharded");
+  assert.deepEqual(
+    hierarchical.facts.core.operationRetrieval.exact.operation["m-operation"],
+    {
+      selector: { operation: "m-operation" },
+      loadedIndexPaths: ["indexes/operations-broad.md", "indexes/operations-middle.md"],
+      falsePositiveIndexPaths: ["indexes/operations-broad.md"],
+      matchedOperationNames: ["m-operation"],
+      loadedChannelPaths: ["channels/middle.md"],
+      requiredContextPaths: [],
+      supplementalContextPaths: [],
+      sourceIds: ["source-a"],
+      loadedSourceIndexPaths: ["INDEX.md"]
+    }
+  );
+  assert.deepEqual(
+    hierarchical.facts.core.operationRetrieval.semanticFallback.loadedIndexPaths,
+    ["indexes/operations-broad.md", "indexes/operations-middle.md"]
+  );
+  assert.deepEqual(
+    hierarchical.facts.core.operationRetrieval.semanticFallback.matchedOperationNames,
+    ["a-operation", "m-operation", "z-operation"]
+  );
+
+  const pairCase = byId.get("operations-profile-path-parity-valid");
+  const pair = validateCase(path.join(corpusPath, pairCase.path), pairCase);
+  assert.deepEqual(pair.facts.operationProfilePair, {
+    full: {
+      form: "sharded",
+      shardPaths: ["indexes/operations-broad.md", "indexes/operations-middle.md"]
+    },
+    compact: {
+      form: "sharded",
+      shardPaths: ["indexes/operations-broad.md", "indexes/operations-middle.md"]
+    }
+  });
+
+  const invalidPairCase = byId.get("operations-profile-path-parity-invalid");
+  const invalidPairPath = path.join(corpusPath, invalidPairCase.path);
+  const invalidFullPaths = loadDocumentSet(path.join(invalidPairPath, "full")).paths;
+  const invalidCompactPaths = loadDocumentSet(path.join(invalidPairPath, "compact")).paths;
+  assert.deepEqual(
+    invalidFullPaths.filter((candidate) => !invalidCompactPaths.includes(candidate)),
+    ["indexes/operations-broad.md"]
+  );
+  assert.deepEqual(
+    invalidCompactPaths.filter((candidate) => !invalidFullPaths.includes(candidate)),
+    []
+  );
 });

@@ -283,3 +283,41 @@ export function validateDocumentSet(documentSet, options = {}) {
   }
   return { diagnostics, facts };
 }
+
+function operationProfileFacts(result) {
+  const operations = result.facts.core?.operations;
+  if (operations === null || operations === undefined) return null;
+  return {
+    form: operations.form,
+    shardPaths: operations.shards.map((route) => route.path).sort(asciiCompare)
+  };
+}
+
+export function validateOperationProfilePair(fullDocumentSet, compactDocumentSet) {
+  const fullResult = validateDocumentSet(fullDocumentSet, { wholeSet: false });
+  const compactResult = validateDocumentSet(compactDocumentSet, { wholeSet: false });
+  const full = operationProfileFacts(fullResult);
+  const compact = operationProfileFacts(compactResult);
+  const diagnostics = [...fullResult.diagnostics, ...compactResult.diagnostics];
+
+  if (
+    full !== null
+    && compact !== null
+    && (
+      full.form !== compact.form
+      || JSON.stringify(full.shardPaths) !== JSON.stringify(compact.shardPaths)
+    )
+  ) {
+    diagnostics.push(diagnostic(
+      "DM-IDX-006",
+      "compact/INDEX.md",
+      1,
+      "Matching full and compact profiles must use the same Operations form and operation-shard paths."
+    ));
+  }
+
+  return {
+    diagnostics,
+    facts: { operationProfilePair: { full, compact } }
+  };
+}

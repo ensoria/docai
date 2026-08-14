@@ -709,10 +709,12 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 
 > **Implementation note (Sources checkpoint):** `DM-SRC-003` は direct/sharded Sources 直後の source-qualified unknown marker と `knowledge: requires-input` に加え、同じ marker が `CONVENTIONS.md` の `Schema Evolution` に一度ずつ verbatim で再掲されることも検証する。focused corpus は再掲済みの valid case と再掲欠落の invalid case を分離し、既存の direct/sharded positive checker cases もこの cross-file contract を満たす形へ更新する。
 
+> **Implementation note (Operations checkpoint):** full/compact の operation routing parity を focused corpus で直接検証するため、`cases.json` に `operation-profile-pair` kind を追加し、二つの task-scoped document set を同時に検証する。ペア検証は各 profile の既存 Core validation を先に適用し、両方から Operations fact を取得できる場合に routing form と operation shard path の完全一致を `DM-IDX-006` として検証する。影響として、単独 document-set validation の interface と意味は変更せず、profile 間でのみ成立する制約を fixture runner の明示的な case kind に隔離する。
+
 - [x] Metadata、extension name/order/escape、unknown non-`x-` key、sentence grammar。
 - [x] Identity trailer、set/projection digest、closed root、mixed set、task-scoped identity check。
 - [x] Direct/sharded Sources、unknown API identity/version、Revision none、overlap、fixed-point、cycle。
-- [ ] Flat/hierarchical Operations、bounds、semantic load-all、false positive、path parity。
+- [x] Flat/hierarchical Operations、bounds、semantic load-all、false positive、path parity。
 - [ ] Required/supplemental context、eligible/forbidden target、separator/order、`none` sentinel collision。
 - [ ] Direct/sharded Unprojected Operations、multibyte identity、group collision、sensitive withholding。
 - [ ] Same-application action、counterpart mapping complete/missing/conflicting。
