@@ -36,6 +36,22 @@ const metadataAndSentenceCaseIds = [
   "sentence-unterminated-invalid"
 ];
 
+const identityCaseIds = [
+  "identity-closed-root-extra-file",
+  "identity-format-version-mixed",
+  "identity-perspective-mixed",
+  "identity-profile-mixed",
+  "identity-projection-id-mixed",
+  "identity-projection-short-id-invalid",
+  "identity-set-id-mixed",
+  "identity-set-short-id-invalid",
+  "identity-task-scoped-stale-digest",
+  "identity-task-scoped-stale-digest-whole-set-invalid",
+  "identity-trailer-malformed-projection-digest",
+  "identity-trailer-missing",
+  "identity-whole-set-valid"
+];
+
 function fixtureSource(fixturePath) {
   const source = fs.readFileSync(fixturePath, "utf8");
   return source.endsWith("\n") ? source.slice(0, -1) : source;
@@ -44,6 +60,9 @@ function fixtureSource(fixturePath) {
 function validateCase(fixturePath, fixtureCase) {
   if (fixtureCase.kind === "document-set") {
     return validateDocumentSet(loadDocumentSet(fixturePath), { wholeSet: true });
+  }
+  if (fixtureCase.kind === "task-scoped-document-set") {
+    return validateDocumentSet(loadDocumentSet(fixturePath), { wholeSet: false });
   }
   if (fixtureCase.kind === "metadata-line") {
     return parseOpeningMetadata({
@@ -71,6 +90,27 @@ test("executes the Task 9 metadata and sentence focused corpus", () => {
     []
   );
   for (const id of metadataAndSentenceCaseIds) {
+    const fixtureCase = byId.get(id);
+    assert.equal(
+      fixtureCase.expected === "valid" || fixtureCase.expected_rule_ids.length === 1,
+      true,
+      id
+    );
+  }
+
+  const result = runFixtureCorpus(corpusPath, validateCase);
+  assert.equal(result.failed, 0, result.report);
+});
+
+test("executes the Task 9 identity focused corpus", () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
+  const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
+
+  assert.deepEqual(
+    identityCaseIds.filter((id) => !byId.has(id)),
+    []
+  );
+  for (const id of identityCaseIds) {
     const fixtureCase = byId.get(id);
     assert.equal(
       fixtureCase.expected === "valid" || fixtureCase.expected_rule_ids.length === 1,

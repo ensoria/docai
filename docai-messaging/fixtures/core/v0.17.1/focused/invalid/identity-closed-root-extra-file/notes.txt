@@ -1,0 +1,1 @@
+This unrelated file violates the closed document-set root.

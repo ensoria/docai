@@ -10,6 +10,97 @@
       "expected_rule_ids": []
     },
     {
+      "id": "identity-closed-root-extra-file",
+      "kind": "document-set",
+      "path": "focused/invalid/identity-closed-root-extra-file",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-ID-004"]
+    },
+    {
+      "id": "identity-format-version-mixed",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/identity-format-version-mixed",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-ID-005"]
+    },
+    {
+      "id": "identity-perspective-mixed",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/identity-perspective-mixed",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-ID-007"]
+    },
+    {
+      "id": "identity-profile-mixed",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/identity-profile-mixed",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-ID-006"]
+    },
+    {
+      "id": "identity-projection-id-mixed",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/identity-projection-id-mixed",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-ID-009"]
+    },
+    {
+      "id": "identity-projection-short-id-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/identity-projection-short-id-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-ID-002"]
+    },
+    {
+      "id": "identity-set-id-mixed",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/identity-set-id-mixed",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-ID-008"]
+    },
+    {
+      "id": "identity-set-short-id-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/identity-set-short-id-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-ID-002"]
+    },
+    {
+      "id": "identity-task-scoped-stale-digest",
+      "kind": "task-scoped-document-set",
+      "path": "focused/valid/identity-task-scoped-stale-digest",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
+      "id": "identity-task-scoped-stale-digest-whole-set-invalid",
+      "kind": "document-set",
+      "path": "focused/valid/identity-task-scoped-stale-digest",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-ID-003"]
+    },
+    {
+      "id": "identity-trailer-malformed-projection-digest",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/identity-trailer-malformed-projection-digest",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-ID-001"]
+    },
+    {
+      "id": "identity-trailer-missing",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/identity-trailer-missing",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-ID-001"]
+    },
+    {
+      "id": "identity-whole-set-valid",
+      "kind": "document-set",
+      "path": "focused/valid/identity-whole-set",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
       "id": "metadata-canonical-extensions-and-escapes",
       "kind": "metadata-line",
       "path": "focused/valid/metadata-canonical-extensions-and-escapes.md",
