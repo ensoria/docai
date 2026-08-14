@@ -10,11 +10,165 @@
       "expected_rule_ids": []
     },
     {
+      "id": "metadata-canonical-extensions-and-escapes",
+      "kind": "metadata-line",
+      "path": "focused/valid/metadata-canonical-extensions-and-escapes.md",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
+      "id": "metadata-coverage-invalid",
+      "kind": "metadata-line",
+      "path": "focused/invalid/metadata-coverage-invalid.md",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-META-001"]
+    },
+    {
+      "id": "metadata-duplicate-extension-key",
+      "kind": "metadata-line",
+      "path": "focused/invalid/metadata-duplicate-extension-key.md",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-META-004"]
+    },
+    {
       "id": "metadata-duplicate-standard-key",
-      "kind": "focused-document",
+      "kind": "metadata-line",
       "path": "focused/invalid/metadata-duplicate-standard-key.md",
       "expected": "invalid",
       "expected_rule_ids": ["DM-META-004"]
+    },
+    {
+      "id": "metadata-extension-disallowed-punctuation",
+      "kind": "metadata-line",
+      "path": "focused/invalid/metadata-extension-disallowed-punctuation.md",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-META-001"]
+    },
+    {
+      "id": "metadata-extension-empty-suffix",
+      "kind": "metadata-line",
+      "path": "focused/invalid/metadata-extension-empty-suffix.md",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-META-001"]
+    },
+    {
+      "id": "metadata-extension-uppercase",
+      "kind": "metadata-line",
+      "path": "focused/invalid/metadata-extension-uppercase.md",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-META-001"]
+    },
+    {
+      "id": "metadata-format-version-invalid",
+      "kind": "metadata-line",
+      "path": "focused/invalid/metadata-format-version-invalid.md",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-META-001"]
+    },
+    {
+      "id": "metadata-knowledge-invalid",
+      "kind": "metadata-line",
+      "path": "focused/invalid/metadata-knowledge-invalid.md",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-META-001"]
+    },
+    {
+      "id": "metadata-missing-standard-key",
+      "kind": "metadata-line",
+      "path": "focused/invalid/metadata-missing-standard-key.md",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-META-001"]
+    },
+    {
+      "id": "metadata-perspective-empty",
+      "kind": "metadata-line",
+      "path": "focused/invalid/metadata-perspective-empty.md",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-META-001"]
+    },
+    {
+      "id": "metadata-perspective-leading-space",
+      "kind": "metadata-line",
+      "path": "focused/invalid/metadata-perspective-leading-space.md",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-META-001"]
+    },
+    {
+      "id": "metadata-perspective-trailing-space",
+      "kind": "metadata-line",
+      "path": "focused/invalid/metadata-perspective-trailing-space.md",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-META-001"]
+    },
+    {
+      "id": "metadata-profile-invalid",
+      "kind": "metadata-line",
+      "path": "focused/invalid/metadata-profile-invalid.md",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-META-001"]
+    },
+    {
+      "id": "metadata-standard-key-order-invalid",
+      "kind": "metadata-line",
+      "path": "focused/invalid/metadata-standard-key-order-invalid.md",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-META-001"]
+    },
+    {
+      "id": "metadata-trailing-backslash",
+      "kind": "metadata-line",
+      "path": "focused/invalid/metadata-trailing-backslash.md",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-META-001"]
+    },
+    {
+      "id": "metadata-unknown-escape",
+      "kind": "metadata-line",
+      "path": "focused/invalid/metadata-unknown-escape.md",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-META-001"]
+    },
+    {
+      "id": "metadata-unknown-non-extension-key",
+      "kind": "metadata-line",
+      "path": "focused/invalid/metadata-unknown-non-extension-key.md",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-META-001"]
+    },
+    {
+      "id": "sentence-adjacent-japanese-valid",
+      "kind": "sentence-line",
+      "path": "focused/valid/sentence-adjacent-japanese-valid.md",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
+      "id": "sentence-literal-inline-terminator-valid",
+      "kind": "sentence-line",
+      "path": "focused/valid/sentence-literal-inline-terminator-valid.md",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
+      "id": "sentence-three-terminators-invalid",
+      "kind": "sentence-line",
+      "path": "focused/invalid/sentence-three-terminators-invalid.md",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-PARSE-004"]
+    },
+    {
+      "id": "sentence-two-lines-invalid",
+      "kind": "sentence-line",
+      "path": "focused/invalid/sentence-two-lines-invalid.md",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-PARSE-004"]
+    },
+    {
+      "id": "sentence-unterminated-invalid",
+      "kind": "sentence-line",
+      "path": "focused/invalid/sentence-unterminated-invalid.md",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-PARSE-004"]
     }
   ]
 }

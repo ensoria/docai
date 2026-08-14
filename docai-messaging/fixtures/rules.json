@@ -3,7 +3,7 @@
     {
       "rule_id": "DM-META-001",
       "readme_section": "§3 File Structure",
-      "description": "Opening metadata uses the required standard keys in their defined order.",
+      "description": "Opening metadata uses the required standard keys in their defined order with valid standard values, separators, and value escapes.",
       "scope": "core"
     },
     {

@@ -703,7 +703,9 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 
 各 checkbox は、最低一つの valid case と一つの invalid case、対応する rule ID、checker assertion を含む。
 
-- [ ] Metadata、extension name/order/escape、unknown non-`x-` key、sentence grammar。
+> **Plan change / impact (user-approved):** 先頭の Metadata focused group では `source_refs` の値 grammar を raw metadata parser の `DM-META-001` case として重複検証せず、後続の「Direct/sharded Sources」group で document-set 文脈の `DM-SRC-005` case として扱う。`parseOpeningMetadata()` は format version、profile、perspective、coverage、knowledge の opening-stamp 固有値と key/order/escape を検証し、`source_refs` の catalog resolution、canonical list、重複、ASCII ordering は Sources validator の既存責務に維持する。影響として、今回の Metadata checkpoint は valid な `source_refs: all` を含むが、その invalid fixture と checker assertion は Sources checkpoint まで保留する。
+
+- [x] Metadata、extension name/order/escape、unknown non-`x-` key、sentence grammar。
 - [ ] Identity trailer、set/projection digest、closed root、mixed set、task-scoped identity check。
 - [ ] Direct/sharded Sources、unknown API identity/version、Revision none、overlap、fixed-point、cycle。
 - [ ] Flat/hierarchical Operations、bounds、semantic load-all、false positive、path parity。

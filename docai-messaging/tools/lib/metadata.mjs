@@ -9,6 +9,10 @@ const STANDARD_KEYS = [
   "source_refs"
 ];
 const EXTENSION_KEY = /^x-[a-z0-9][a-z0-9._-]*$/;
+const FORMAT_VERSION = /^(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)$/;
+const PROFILES = new Set(["full", "compact"]);
+const COVERAGE_VALUES = new Set(["complete", "requires-source"]);
+const KNOWLEDGE_VALUES = new Set(["complete", "requires-input"]);
 
 function sourceLine(input) {
   if (typeof input === "string") return { text: input, file: "<input>", line: 1 };
@@ -61,6 +65,28 @@ function decodeValue(value) {
   return { value: decoded };
 }
 
+function validateStandardValues(source, entries) {
+  const values = Object.fromEntries(entries);
+  if (!FORMAT_VERSION.test(values["docai-messaging"])) {
+    return failure(source, "Metadata docai-messaging must use major.minor.patch numeric form.");
+  }
+  if (!PROFILES.has(values.profile)) {
+    return failure(source, "Metadata profile must be 'full' or 'compact'.");
+  }
+  if (values.perspective === ""
+    || values.perspective.startsWith(" ")
+    || values.perspective.endsWith(" ")) {
+    return failure(source, "Metadata perspective must be non-empty without a leading or trailing ASCII space.");
+  }
+  if (!COVERAGE_VALUES.has(values.coverage)) {
+    return failure(source, "Metadata coverage must be 'complete' or 'requires-source'.");
+  }
+  if (!KNOWLEDGE_VALUES.has(values.knowledge)) {
+    return failure(source, "Metadata knowledge must be 'complete' or 'requires-input'.");
+  }
+  return null;
+}
+
 export function parseOpeningMetadata(input) {
   const source = sourceLine(input);
   if (typeof source.text !== "string" || /[\r\n]/.test(source.text)) {
@@ -99,6 +125,8 @@ export function parseOpeningMetadata(input) {
       return failure(source, "Opening metadata standard keys are missing or out of canonical order.");
     }
   }
+  const invalidStandardValue = validateStandardValues(source, entries);
+  if (invalidStandardValue !== null) return invalidStandardValue;
   for (const [key] of entries.slice(STANDARD_KEYS.length)) {
     if (!EXTENSION_KEY.test(key)) {
       return failure(source, `Unknown or invalid metadata key '${key}' is not permitted.`);
