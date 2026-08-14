@@ -1,0 +1,152 @@
+{
+  "source": {
+    "asyncapi": "3.1.0",
+    "info": {
+      "title": "Reply Message Selection Matrix",
+      "version": "1.0.0"
+    },
+    "channels": {
+      "requestSelection": {
+        "address": "selection.requests",
+        "messages": {
+          "request": {
+            "name": "SelectionRequest"
+          }
+        }
+      },
+      "replyEmpty": {
+        "address": "selection.empty-replies",
+        "messages": {}
+      },
+      "replySelection": {
+        "address": "selection.replies",
+        "messages": {
+          "replyAccepted": {
+            "name": "ReplyAccepted"
+          },
+          "replyRejected": {
+            "name": "ReplyRejected"
+          }
+        }
+      },
+      "replySingle": {
+        "address": "selection.single-reply",
+        "messages": {
+          "replyAccepted": {
+            "name": "ReplyAccepted"
+          }
+        }
+      }
+    },
+    "operations": {
+      "replyMessagesEmpty": {
+        "action": "send",
+        "channel": {
+          "$ref": "#/channels/requestSelection"
+        },
+        "messages": [
+          {
+            "$ref": "#/channels/requestSelection/messages/request"
+          }
+        ],
+        "reply": {
+          "channel": {
+            "$ref": "#/channels/replySelection"
+          },
+          "messages": []
+        }
+      },
+      "replyMessagesExplicit": {
+        "action": "send",
+        "channel": {
+          "$ref": "#/channels/requestSelection"
+        },
+        "messages": [
+          {
+            "$ref": "#/channels/requestSelection/messages/request"
+          }
+        ],
+        "reply": {
+          "channel": {
+            "$ref": "#/channels/replySelection"
+          },
+          "messages": [
+            {
+              "$ref": "#/channels/replySelection/messages/replyAccepted"
+            }
+          ]
+        }
+      },
+      "replyMessagesOmitted": {
+        "action": "send",
+        "channel": {
+          "$ref": "#/channels/requestSelection"
+        },
+        "messages": [
+          {
+            "$ref": "#/channels/requestSelection/messages/request"
+          }
+        ],
+        "reply": {
+          "channel": {
+            "$ref": "#/channels/replySelection"
+          }
+        }
+      },
+      "replyMessagesOmittedEmptyChannel": {
+        "action": "send",
+        "channel": {
+          "$ref": "#/channels/requestSelection"
+        },
+        "messages": [
+          {
+            "$ref": "#/channels/requestSelection/messages/request"
+          }
+        ],
+        "reply": {
+          "channel": {
+            "$ref": "#/channels/replyEmpty"
+          }
+        }
+      },
+      "replyMessagesOmittedNoChannel": {
+        "action": "send",
+        "channel": {
+          "$ref": "#/channels/requestSelection"
+        },
+        "messages": [
+          {
+            "$ref": "#/channels/requestSelection/messages/request"
+          }
+        ],
+        "reply": {}
+      },
+      "replyMessagesOmittedSingle": {
+        "action": "send",
+        "channel": {
+          "$ref": "#/channels/requestSelection"
+        },
+        "messages": [
+          {
+            "$ref": "#/channels/requestSelection/messages/request"
+          }
+        ],
+        "reply": {
+          "channel": {
+            "$ref": "#/channels/replySingle"
+          }
+        }
+      }
+    }
+  },
+  "projectedIndexReplyEntries": {
+    "replyMessagesEmpty": [],
+    "replyMessagesExplicit": [
+      "reply:replyAccepted"
+    ],
+    "replyMessagesOmitted": [],
+    "replyMessagesOmittedEmptyChannel": [],
+    "replyMessagesOmittedNoChannel": [],
+    "replyMessagesOmittedSingle": []
+  }
+}

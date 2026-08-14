@@ -119,6 +119,13 @@ const operationMessageSelectionCaseIds = [
   "asyncapi-3.1.0-operation-message-zero-invalid"
 ];
 
+const replyMessageSelectionCaseIds = [
+  "asyncapi-3.0.0-reply-message-selection-valid",
+  "asyncapi-3.0.0-reply-message-index-invalid",
+  "asyncapi-3.1.0-reply-message-selection-valid",
+  "asyncapi-3.1.0-reply-message-index-invalid"
+];
+
 function fixtureSource(fixturePath) {
   const source = fs.readFileSync(fixturePath, "utf8");
   return source.endsWith("\n") ? source.slice(0, -1) : source;
@@ -155,6 +162,13 @@ function validateCase(fixturePath, fixtureCase) {
     const source = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
     return coreValidator.validateAsyncApiOperationMessageSelection(
       source,
+      { file: fixtureCase.path }
+    );
+  }
+  if (fixtureCase.kind === "asyncapi-reply-message-selection") {
+    const scenario = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
+    return coreValidator.validateAsyncApiReplyMessageSelection(
+      scenario,
       { file: fixtureCase.path }
     );
   }
@@ -663,5 +677,146 @@ test("executes the Task 9 DM-IDX-008 exact-version operation message-selection c
         }
       ]
     });
+  }
+});
+
+test("executes the Task 9 DM-REPLY-003 exact-version reply selection and INDEX omission corpus", () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
+  const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
+
+  assert.deepEqual(
+    replyMessageSelectionCaseIds.filter((id) => !byId.has(id)),
+    []
+  );
+  assert.equal(typeof coreValidator.validateAsyncApiReplyMessageSelection, "function");
+  for (const id of replyMessageSelectionCaseIds) {
+    const fixtureCase = byId.get(id);
+    assert.equal(
+      fixtureCase.expected === "valid" || fixtureCase.expected_rule_ids.length === 1,
+      true,
+      id
+    );
+  }
+
+  const result = runFixtureCorpus(corpusPath, validateCase);
+  assert.equal(result.failed, 0, result.report);
+
+  for (const version of ["3.0.0", "3.1.0"]) {
+    const validCase = byId.get(`asyncapi-${version}-reply-message-selection-valid`);
+    const valid = validateCase(path.join(corpusPath, validCase.path), validCase);
+    assert.deepEqual(valid.diagnostics, []);
+    assert.deepEqual(valid.facts.asyncApiReplyMessageSelection, {
+      sourceSpecification: `AsyncAPI ${version}`,
+      operations: [
+        {
+          operationId: "replyMessagesEmpty",
+          outcome: "emit-whole-reply-unsupported",
+          reason: "zero-message reply",
+          selection: "explicit-empty",
+          channelId: "replySelection",
+          replyMessages: [],
+          indexReplyEntries: [],
+          primaryOperationRetained: true
+        },
+        {
+          operationId: "replyMessagesExplicit",
+          outcome: "emit-expanded-reply",
+          resolution: "explicit-non-empty",
+          channelId: "replySelection",
+          replyMessages: ["replyAccepted"],
+          indexReplyEntries: ["reply:replyAccepted"],
+          primaryOperationRetained: true
+        },
+        {
+          operationId: "replyMessagesOmitted",
+          outcome: "emit-whole-reply-unknown",
+          reason: "reply message set",
+          selection: "omitted",
+          channelId: "replySelection",
+          candidateMessages: ["replyAccepted", "replyRejected"],
+          replyMessages: [],
+          indexReplyEntries: [],
+          primaryOperationRetained: true
+        },
+        {
+          operationId: "replyMessagesOmittedEmptyChannel",
+          outcome: "emit-whole-reply-unknown",
+          reason: "reply message set",
+          selection: "omitted",
+          channelId: "replyEmpty",
+          candidateMessages: [],
+          replyMessages: [],
+          indexReplyEntries: [],
+          primaryOperationRetained: true
+        },
+        {
+          operationId: "replyMessagesOmittedNoChannel",
+          outcome: "emit-whole-reply-unknown",
+          reason: "reply message set",
+          selection: "omitted",
+          channelId: null,
+          candidateMessages: [],
+          replyMessages: [],
+          indexReplyEntries: [],
+          primaryOperationRetained: true
+        },
+        {
+          operationId: "replyMessagesOmittedSingle",
+          outcome: "emit-whole-reply-unknown",
+          reason: "reply message set",
+          selection: "omitted",
+          channelId: "replySingle",
+          candidateMessages: ["replyAccepted"],
+          replyMessages: [],
+          indexReplyEntries: [],
+          primaryOperationRetained: true
+        }
+      ],
+      indexRoutingMismatches: []
+    });
+
+    const invalidCase = byId.get(`asyncapi-${version}-reply-message-index-invalid`);
+    const invalid = validateCase(path.join(corpusPath, invalidCase.path), invalidCase);
+    const errors = invalid.diagnostics.filter((entry) => entry.severity === "error");
+    assert.equal(errors.length, 1);
+    assert.equal(errors[0].ruleId, "DM-REPLY-003");
+    assert.deepEqual(invalid.facts.asyncApiReplyMessageSelection.indexRoutingMismatches, [
+      {
+        operationId: "replyMessagesEmpty",
+        expected: [],
+        actual: ["reply:inventedReply"]
+      },
+      {
+        operationId: "replyMessagesExplicit",
+        expected: ["reply:replyAccepted"],
+        actual: []
+      },
+      {
+        operationId: "replyMessagesOmitted",
+        expected: [],
+        actual: ["reply:replyAccepted", "reply:replyRejected"]
+      },
+      {
+        operationId: "replyMessagesOmittedEmptyChannel",
+        expected: [],
+        actual: ["reply:inventedReply"]
+      },
+      {
+        operationId: "replyMessagesOmittedNoChannel",
+        expected: [],
+        actual: ["reply:inventedReply"]
+      },
+      {
+        operationId: "replyMessagesOmittedSingle",
+        expected: [],
+        actual: ["reply:replyAccepted"]
+      }
+    ]);
+    assert.equal(
+      invalid.facts.asyncApiReplyMessageSelection.operations.every((entry) => (
+        entry.primaryOperationRetained === true
+      )),
+      true
+    );
   }
 });

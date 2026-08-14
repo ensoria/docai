@@ -437,6 +437,34 @@
       "expected_rule_ids": ["DM-IDX-008"]
     },
     {
+      "id": "asyncapi-3.0.0-reply-message-index-invalid",
+      "kind": "asyncapi-reply-message-selection",
+      "path": "focused/invalid/asyncapi-3.0.0-reply-message-index-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-REPLY-003"]
+    },
+    {
+      "id": "asyncapi-3.0.0-reply-message-selection-valid",
+      "kind": "asyncapi-reply-message-selection",
+      "path": "focused/valid/asyncapi-3.0.0-reply-message-selection-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
+      "id": "asyncapi-3.1.0-reply-message-index-invalid",
+      "kind": "asyncapi-reply-message-selection",
+      "path": "focused/invalid/asyncapi-3.1.0-reply-message-index-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-REPLY-003"]
+    },
+    {
+      "id": "asyncapi-3.1.0-reply-message-selection-valid",
+      "kind": "asyncapi-reply-message-selection",
+      "path": "focused/valid/asyncapi-3.1.0-reply-message-selection-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
       "id": "sentence-adjacent-japanese-valid",
       "kind": "sentence-line",
       "path": "focused/valid/sentence-adjacent-japanese-valid.md",

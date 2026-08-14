@@ -540,6 +540,105 @@ export function validateAsyncApiOperationMessageSelection(source, { file = "sour
   };
 }
 
+export function evaluateAsyncApiReplyMessageSelection(source) {
+  const operations = Object.entries(source.operations ?? {})
+    .filter(([, operation]) => operation.reply !== undefined)
+    .sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0))
+    .map(([operationId, operation]) => {
+      const channelSegments = localReferenceSegments(operation.reply.channel);
+      const channelId = channelSegments.length === 2 && channelSegments[0] === "channels"
+        ? channelSegments[1]
+        : null;
+      const candidateMessages = Object.keys(source.channels?.[channelId]?.messages ?? {}).sort();
+      const explicit = Object.hasOwn(operation.reply, "messages");
+      if (!explicit) {
+        return {
+          operationId,
+          outcome: "emit-whole-reply-unknown",
+          reason: "reply message set",
+          selection: "omitted",
+          channelId,
+          candidateMessages,
+          replyMessages: [],
+          indexReplyEntries: [],
+          primaryOperationRetained: true
+        };
+      }
+      const replyMessages = (operation.reply.messages ?? []).map((reference) => {
+        const segments = localReferenceSegments(reference);
+        return segments.length === 4
+            && segments[0] === "channels"
+            && segments[1] === channelId
+            && segments[2] === "messages"
+          ? segments[3]
+          : null;
+      });
+      if (replyMessages.length === 0) {
+        return {
+          operationId,
+          outcome: "emit-whole-reply-unsupported",
+          reason: "zero-message reply",
+          selection: "explicit-empty",
+          channelId,
+          replyMessages,
+          indexReplyEntries: [],
+          primaryOperationRetained: true
+        };
+      }
+      return {
+        operationId,
+        outcome: "emit-expanded-reply",
+        resolution: "explicit-non-empty",
+        channelId,
+        replyMessages,
+        indexReplyEntries: replyMessages.map((name) => `reply:${name}`),
+        primaryOperationRetained: true
+      };
+    });
+  return {
+    sourceSpecification: `AsyncAPI ${source.asyncapi}`,
+    operations
+  };
+}
+
+function sameStringArray(left, right) {
+  return Array.isArray(left)
+    && Array.isArray(right)
+    && left.length === right.length
+    && left.every((value, index) => value === right[index]);
+}
+
+export function validateAsyncApiReplyMessageSelection(scenario, { file = "source-input.json" } = {}) {
+  const selection = evaluateAsyncApiReplyMessageSelection(scenario.source);
+  const indexRoutingMismatches = selection.operations.flatMap((entry) => {
+    const actual = scenario.projectedIndexReplyEntries?.[entry.operationId] ?? [];
+    return sameStringArray(actual, entry.indexReplyEntries)
+      ? []
+      : [{
+        operationId: entry.operationId,
+        expected: [...entry.indexReplyEntries],
+        actual: Array.isArray(actual) ? [...actual] : actual
+      }];
+  });
+  const diagnostics = indexRoutingMismatches.length === 0
+    ? []
+    : [diagnostic(
+      "DM-REPLY-003",
+      file,
+      1,
+      `AsyncAPI reply selection has ${indexRoutingMismatches.length} inconsistent INDEX reply routing result(s).`
+    )];
+  return {
+    diagnostics,
+    facts: {
+      asyncApiReplyMessageSelection: {
+        ...selection,
+        indexRoutingMismatches
+      }
+    }
+  };
+}
+
 const DIRECT_SCHEMA_TARGETS = new Map([
   ["application/vnd.aai.asyncapi;version=3.0.0", "direct-asyncapi-schema-object-3.0.0"],
   ["application/vnd.aai.asyncapi+json;version=3.0.0", "direct-asyncapi-schema-object-3.0.0"],

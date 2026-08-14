@@ -719,6 +719,8 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 
 > **Implementation note (Operation message-selection checkpoint):** AsyncAPI 3.0.0 / 3.1.0 の実際の local channel / message `$ref` を持つ focused source を `asyncapi-operation-message-selection` kind で検証する。`evaluateAsyncApiOperationMessageSelection()` は explicit non-empty subset と omission 時の全 channel message を read-only facts に解決し、explicit empty と空 channel に対する omission は通常 operation を発明せず localized unsupported Unprojected outcome にする。`validateAsyncApiOperationMessageSelection()` は既知の zero-message operation を一つの `DM-IDX-008` diagnostic に集約する。影響として、両 exact version の互換的な selection semantics と zero-message fallback を source 構造から固定し、公開 document grammar は変更しない。
 
+> **Implementation note (Reply message-selection checkpoint):** AsyncAPI 3.0.0 / 3.1.0 の Reply Object と投影済み INDEX reply entry を組にした `asyncapi-reply-message-selection` scenario を検証する。`evaluateAsyncApiReplyMessageSelection()` は explicit non-empty を expanded Reply、explicit empty を primary operation を保持する whole-Reply unsupported、別の authoritative selection がない omission を channel 候補数 0 / 1 / 複数および channel 不在のすべてで whole-Reply unknown に解決し、expanded Reply だけに `reply:` entry を要求する。`validateAsyncApiReplyMessageSelection()` は欠落・余分・発明された reply routing を集約 `DM-REPLY-003` diagnostic にする。影響として、Reply fallback が primary operation を削除せず、unknown / unsupported Reply の identity を INDEX に漏らさない境界を source facts から固定し、公開 document grammar は変更しない。
+
 - [x] Metadata、extension name/order/escape、unknown non-`x-` key、sentence grammar。
 - [x] Identity trailer、set/projection digest、closed root、mixed set、task-scoped identity check。
 - [x] Direct/sharded Sources、unknown API identity/version、Revision none、overlap、fixed-point、cycle。
@@ -727,7 +729,7 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 - [x] Direct/sharded Unprojected Operations、multibyte identity、group collision、sensitive withholding。
 - [x] Same-application action、counterpart mapping complete/missing/conflicting。
 - [x] AsyncAPI 3.0.0/3.1.0 operation message explicit/omitted/empty selection。
-- [ ] AsyncAPI 3.0.0/3.1.0 reply message explicit/omitted/empty selectionと INDEX omission。
+- [x] AsyncAPI 3.0.0/3.1.0 reply message explicit/omitted/empty selectionと INDEX omission。
 - [ ] CONVENTIONS whole-section states、format semantics catalog、common/replacement failure shapes。
 - [ ] Behavior six keys、delivery tokens、exactly-once qualification、unknown facts。
 - [ ] Operation/channel/message/reply/failure binding scopes。
