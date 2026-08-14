@@ -134,6 +134,14 @@ const conventionsAndFailureCaseIds = [
   "failure-shape-replacement-mismatch-invalid"
 ];
 
+const behaviorCaseIds = [
+  "behavior-delivery-token-invalid",
+  "behavior-exactly-once-unqualified-invalid",
+  "behavior-key-order-invalid",
+  "behavior-six-keys-delivery-unknown-valid",
+  "behavior-unknown-marker-missing-invalid"
+];
+
 function fixtureSource(fixturePath) {
   const source = fs.readFileSync(fixturePath, "utf8");
   return source.endsWith("\n") ? source.slice(0, -1) : source;
@@ -895,5 +903,43 @@ test("executes the Task 9 DM-CONV-002 DM-CONV-003 DM-CONV-004 and DM-FAIL-003 co
       entry.severity === "error" && !entry.cascade
     ));
     assert.deepEqual(primary.map((entry) => entry.ruleId), [expectedRuleId]);
+  }
+});
+
+test("executes the Task 9 DM-OP-003 Behavior corpus", () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
+  const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
+
+  assert.deepEqual(
+    behaviorCaseIds.filter((id) => !byId.has(id)),
+    []
+  );
+  for (const id of behaviorCaseIds) {
+    const fixtureCase = byId.get(id);
+    assert.equal(
+      fixtureCase.expected === "valid" || fixtureCase.expected_rule_ids.length === 1,
+      true,
+      id
+    );
+  }
+
+  const result = runFixtureCorpus(corpusPath, validateCase);
+  assert.equal(result.failed, 0, result.report);
+
+  const validCase = byId.get("behavior-six-keys-delivery-unknown-valid");
+  const valid = validateCase(path.join(corpusPath, validCase.path), validCase);
+  assert.deepEqual(valid.diagnostics, []);
+  assert.deepEqual(
+    Object.keys(valid.facts.core.operationDefinitions.byName),
+    ["at-least-once", "at-most-once", "exactly-once", "unknown-facts"]
+  );
+
+  for (const id of behaviorCaseIds.filter((caseId) => caseId !== validCase.id)) {
+    const fixtureCase = byId.get(id);
+    const invalid = validateCase(path.join(corpusPath, fixtureCase.path), fixtureCase);
+    const primary = invalid.diagnostics.filter((entry) => (
+      entry.severity === "error" && !entry.cascade
+    ));
+    assert.deepEqual(primary.map((entry) => entry.ruleId), ["DM-OP-003"], id);
   }
 });

@@ -500,6 +500,41 @@
       "expected_rule_ids": ["DM-FAIL-003"]
     },
     {
+      "id": "behavior-delivery-token-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/behavior-delivery-token-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-OP-003"]
+    },
+    {
+      "id": "behavior-exactly-once-unqualified-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/behavior-exactly-once-unqualified-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-OP-003"]
+    },
+    {
+      "id": "behavior-key-order-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/behavior-key-order-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-OP-003"]
+    },
+    {
+      "id": "behavior-six-keys-delivery-unknown-valid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/valid/behavior-six-keys-delivery-unknown-valid",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
+      "id": "behavior-unknown-marker-missing-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/behavior-unknown-marker-missing-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-OP-003"]
+    },
+    {
       "id": "sentence-adjacent-japanese-valid",
       "kind": "sentence-line",
       "path": "focused/valid/sentence-adjacent-japanese-valid.md",

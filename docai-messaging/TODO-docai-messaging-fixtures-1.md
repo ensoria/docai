@@ -723,6 +723,8 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 
 > **Implementation note (CONVENTIONS / format / failure-shape checkpoint):** task-scoped document set の valid case 一件で CONVENTIONS の `none` / `unknown` / replacement / expanded の四状態、UUID constraint format catalog、expanded / replacement common failure shape、common reference、および inline replacement failure shape を統合検証する。invalid case は whole-section state の混在、正規化すると二件目になる format catalog、common replacement の label / replacement-name 不一致、inline replacement の label / replacement-name 不一致を一件ずつ分離し、`DM-CONV-002` / `DM-CONV-003` / `DM-CONV-004` / `DM-FAIL-003` の単一 primary diagnostic を固定する。影響として、Task 6 で実装済みの CONVENTIONS / failure-shape validator と read-only facts を document-set 境界で実行可能にし、公開 document grammar と production validation semantics は変更しない。
 
+> **Implementation note (Behavior checkpoint):** task-scoped document set の valid case 一件に四つの operation を lexical order で収録し、六つの canonical Behavior key、`at-most-once` / `at-least-once` / `exactly-once` の三 delivery token、scope と条件を伴う qualified exactly-once、複数の `unknown` fact と六キー後の post-key marker、および `knowledge: requires-input` 集約を統合検証する。invalid case は key order、非canonical delivery token、unqualified exactly-once、unknown marker 欠落を一件ずつ分離し、各 case の単一 primary diagnostic を `DM-OP-003` に固定する。影響として、Task 6 で実装済みの Behavior validator を document-set 境界で実行可能にし、公開 document grammar、production validation semantics、および read-only fact interface は変更しない。
+
 - [x] Metadata、extension name/order/escape、unknown non-`x-` key、sentence grammar。
 - [x] Identity trailer、set/projection digest、closed root、mixed set、task-scoped identity check。
 - [x] Direct/sharded Sources、unknown API identity/version、Revision none、overlap、fixed-point、cycle。
@@ -733,7 +735,7 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 - [x] AsyncAPI 3.0.0/3.1.0 operation message explicit/omitted/empty selection。
 - [x] AsyncAPI 3.0.0/3.1.0 reply message explicit/omitted/empty selectionと INDEX omission。
 - [x] CONVENTIONS whole-section states、format semantics catalog、common/replacement failure shapes。
-- [ ] Behavior six keys、delivery tokens、exactly-once qualification、unknown facts。
+- [x] Behavior six keys、delivery tokens、exactly-once qualification、unknown facts。
 - [ ] Operation/channel/message/reply/failure binding scopes。
 - [ ] SEND Required、RECEIVE Presence optional/condition/unknown、Nullable、nested ancestor semantics。
 - [ ] whole payload unknown、representation-local field collection、partial named siblings、example omission。
