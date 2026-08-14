@@ -868,6 +868,16 @@ task5Test("accepts DM-SRC-003 source-qualified API unknown markers and root know
     "**unknown**: API contract version for source api-a requires AsyncAPI info.version at api-a.json",
     "**unknown**: API identity for source api-a requires authoritative logical API identity input"
   ];
+  write(root, "CONVENTIONS.md", documentSource({
+    metadataOverrides: { knowledge: "requires-input" },
+    body: conventionsBody({
+      "Schema Evolution": [
+        "The logical API identity and contract version are not established.",
+        "",
+        ...markers
+      ]
+    })
+  }));
   write(root, "INDEX.md", documentSource({
     root: true,
     metadataOverrides: { knowledge: "requires-input" },
@@ -1033,6 +1043,16 @@ task5Test("DM-SRC-007 records every overlapping-range false-positive shard load"
 task5Test("accepts DM-SRC-003 localized unknown state in a source shard", (t) => {
   const root = createSet(t);
   const marker = "**unknown**: API contract version for source api-a requires AsyncAPI info.version at api-a.json";
+  write(root, "CONVENTIONS.md", documentSource({
+    metadataOverrides: { knowledge: "requires-input" },
+    body: conventionsBody({
+      "Schema Evolution": [
+        "The logical API contract version is not established.",
+        "",
+        marker
+      ]
+    })
+  }));
   write(root, "INDEX.md", documentSource({
     root: true,
     metadataOverrides: { knowledge: "requires-input" },

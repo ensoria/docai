@@ -260,6 +260,97 @@
       "path": "focused/invalid/sentence-unterminated-invalid.md",
       "expected": "invalid",
       "expected_rule_ids": ["DM-PARSE-004"]
+    },
+    {
+      "id": "sources-direct-columns-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/sources-direct-columns-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-SRC-001"]
+    },
+    {
+      "id": "sources-direct-duplicate-id-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/sources-direct-duplicate-id-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-SRC-002"]
+    },
+    {
+      "id": "sources-direct-known-revision-none-valid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/valid/sources-direct-known-revision-none-valid",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
+      "id": "sources-direct-unknown-api-valid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/valid/sources-direct-unknown-api-valid",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
+      "id": "sources-revision-sha-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/sources-revision-sha-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-SRC-004"]
+    },
+    {
+      "id": "sources-shard-bounds-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/sources-shard-bounds-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-SRC-006"]
+    },
+    {
+      "id": "sources-sharded-cycle-valid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/valid/sources-sharded-cycle-valid",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
+      "id": "sources-sharded-duplicate-row-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/sources-sharded-duplicate-row-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-SRC-007"]
+    },
+    {
+      "id": "sources-sharded-missing-row-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/sources-sharded-missing-row-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-SRC-007"]
+    },
+    {
+      "id": "sources-sharded-overlap-valid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/valid/sources-sharded-overlap-valid",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
+      "id": "sources-source-refs-missing-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/sources-source-refs-missing-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-SRC-005"]
+    },
+    {
+      "id": "sources-unknown-conventions-repeat-missing-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/sources-unknown-conventions-repeat-missing-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-SRC-003"]
+    },
+    {
+      "id": "sources-unknown-marker-missing-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/sources-unknown-marker-missing-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-SRC-003"]
     }
   ]
 }

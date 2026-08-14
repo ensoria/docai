@@ -707,9 +707,11 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 
 > **Plan change / impact (user-approved):** Identity focused group では、`cases.json` に `task-scoped-document-set` kind を追加し、同じ stale-digest mini set を task-scoped では valid、whole-set では `DM-ID-003` invalid として二つの case から検証する。これにより validator の `wholeSet: false` / `true` 境界を fixture corpus 自体で固定し、mixed-set と short-ID の case は digest 再計算による別 primary error を混在させず `DM-ID-002`、`DM-ID-005`〜`DM-ID-009` を一件ずつ検証できる。影響として、`focused/valid/identity-task-scoped-stale-digest/` は task-scoped validation に対する valid fixture であり、whole-set publication 用の valid set ではないことを case kind と対になる whole-set invalid case で明示する。
 
+> **Implementation note (Sources checkpoint):** `DM-SRC-003` は direct/sharded Sources 直後の source-qualified unknown marker と `knowledge: requires-input` に加え、同じ marker が `CONVENTIONS.md` の `Schema Evolution` に一度ずつ verbatim で再掲されることも検証する。focused corpus は再掲済みの valid case と再掲欠落の invalid case を分離し、既存の direct/sharded positive checker cases もこの cross-file contract を満たす形へ更新する。
+
 - [x] Metadata、extension name/order/escape、unknown non-`x-` key、sentence grammar。
 - [x] Identity trailer、set/projection digest、closed root、mixed set、task-scoped identity check。
-- [ ] Direct/sharded Sources、unknown API identity/version、Revision none、overlap、fixed-point、cycle。
+- [x] Direct/sharded Sources、unknown API identity/version、Revision none、overlap、fixed-point、cycle。
 - [ ] Flat/hierarchical Operations、bounds、semantic load-all、false positive、path parity。
 - [ ] Required/supplemental context、eligible/forbidden target、separator/order、`none` sentinel collision。
 - [ ] Direct/sharded Unprojected Operations、multibyte identity、group collision、sensitive withholding。

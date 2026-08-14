@@ -81,7 +81,7 @@
     {
       "rule_id": "DM-SRC-003",
       "readme_section": "§3.2 INDEX.md(required)",
-      "description": "Unknown API identity or contract version cells have source-qualified localized markers and propagate requires-input knowledge.",
+      "description": "Unknown API identity or contract version cells have source-qualified localized markers, repeat them exactly in CONVENTIONS Schema Evolution, and propagate requires-input knowledge.",
       "scope": "core"
     },
     {

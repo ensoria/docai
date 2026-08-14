@@ -85,7 +85,7 @@ function sourceRows(file, table, markers) {
   if (table.rows.length === 0) {
     diagnostics.push(sourceDiagnostic("DM-SRC-001", file, table.startLine, "Sources must contain at least one row."));
   }
-  if (!headerIsValid) return { diagnostics, rows: [] };
+  if (!headerIsValid) return { diagnostics, rows: [], unknownMarkers: [] };
 
   const rows = table.rows.map((cells, index) => ({
     id: cells[0],
@@ -160,7 +160,41 @@ function sourceRows(file, table, markers) {
       "Unknown API identity and contract version cells require their source-qualified canonical markers and knowledge propagation."
     ));
   }
-  return { diagnostics, rows };
+  return {
+    diagnostics,
+    rows,
+    unknownMarkers: markersMatch ? actualMarkers : []
+  };
+}
+
+function conventionsUnknownMarkerDiagnostics(documentSet, markers) {
+  if (markers.length === 0) return [];
+  const file = documentSet.files.find((entry) => entry.path === "CONVENTIONS.md");
+  if (file === undefined) return [];
+  const scanned = scanMarkdown({ text: file.content, file: file.path });
+  if (scanned.value === null) return [];
+  const heading = scanned.value.headings.find((entry) => (
+    entry.level === 2 && entry.text === "Schema Evolution"
+  ));
+  if (heading === undefined) return [];
+  const nextHeading = scanned.value.headings.find((entry) => (
+    entry.line > heading.line && entry.level <= 2
+  ));
+  const lines = scanned.value.lines.filter((entry) => (
+    entry.line > heading.line
+      && entry.line < (nextHeading?.line ?? Number.MAX_SAFE_INTEGER)
+      && !entry.inFence
+  ));
+  const counts = new Map();
+  for (const line of lines) counts.set(line.text, (counts.get(line.text) ?? 0) + 1);
+  const missing = markers.filter((marker) => counts.get(marker) !== 1);
+  if (missing.length === 0) return [];
+  return [sourceDiagnostic(
+    "DM-SRC-003",
+    file,
+    heading.line,
+    "Schema Evolution must repeat each source-qualified unknown API identity and contract version marker exactly once."
+  )];
 }
 
 function parseSourceRefs(file) {
@@ -355,6 +389,7 @@ function loadSourceShards(documentSet, root, routes) {
   const diagnostics = [];
   const filesByPath = new Map(documentSet.files.map((file) => [file.path, file]));
   const allRows = [];
+  const unknownMarkers = [];
   const ownerById = new Map();
   for (const route of routes) {
     const file = filesByPath.get(route.path);
@@ -376,6 +411,7 @@ function loadSourceShards(documentSet, root, routes) {
     const catalog = sourceRows(file, parsed.table, parsed.markers);
     diagnostics.push(...catalog.diagnostics);
     route.rows = catalog.rows;
+    unknownMarkers.push(...catalog.unknownMarkers);
 
     const refs = parseSourceRefs(file);
     diagnostics.push(...refs.diagnostics);
@@ -433,7 +469,7 @@ function loadSourceShards(documentSet, root, routes) {
     }
   }
   allRows.sort((left, right) => asciiCompare(left.id, right.id));
-  return { diagnostics, rows: allRows };
+  return { diagnostics, rows: allRows, unknownMarkers };
 }
 
 function idInRoute(id, route) {
@@ -521,7 +557,12 @@ function validateShardedSources(documentSet, root, lines) {
     ));
   }
   return {
-    diagnostics: [...routed.diagnostics, ...loaded.diagnostics, ...resolved.diagnostics],
+    diagnostics: [
+      ...routed.diagnostics,
+      ...loaded.diagnostics,
+      ...resolved.diagnostics,
+      ...conventionsUnknownMarkerDiagnostics(documentSet, loaded.unknownMarkers)
+    ],
     facts: {
       sources: { form: "sharded", rows: loaded.rows, shards: routed.routes },
       sourceResolutions: resolved.sourceResolutions
@@ -546,7 +587,12 @@ export function validateCoreSources(documentSet, root, markdown) {
   const catalog = sourceRows(root, parsed.table, parsed.markers);
   const resolved = resolveDirectSources(documentSet, catalog.rows);
   return {
-    diagnostics: [...parsed.diagnostics, ...catalog.diagnostics, ...resolved.diagnostics],
+    diagnostics: [
+      ...parsed.diagnostics,
+      ...catalog.diagnostics,
+      ...resolved.diagnostics,
+      ...conventionsUnknownMarkerDiagnostics(documentSet, catalog.unknownMarkers)
+    ],
     facts: {
       sources: { form: "direct", rows: catalog.rows },
       sourceResolutions: resolved.sourceResolutions

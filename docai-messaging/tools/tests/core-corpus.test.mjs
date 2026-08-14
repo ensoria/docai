@@ -52,6 +52,22 @@ const identityCaseIds = [
   "identity-whole-set-valid"
 ];
 
+const sourceCaseIds = [
+  "sources-direct-columns-invalid",
+  "sources-direct-duplicate-id-invalid",
+  "sources-direct-known-revision-none-valid",
+  "sources-direct-unknown-api-valid",
+  "sources-revision-sha-invalid",
+  "sources-shard-bounds-invalid",
+  "sources-sharded-cycle-valid",
+  "sources-sharded-duplicate-row-invalid",
+  "sources-sharded-missing-row-invalid",
+  "sources-sharded-overlap-valid",
+  "sources-source-refs-missing-invalid",
+  "sources-unknown-conventions-repeat-missing-invalid",
+  "sources-unknown-marker-missing-invalid"
+];
+
 function fixtureSource(fixturePath) {
   const source = fs.readFileSync(fixturePath, "utf8");
   return source.endsWith("\n") ? source.slice(0, -1) : source;
@@ -121,4 +137,56 @@ test("executes the Task 9 identity focused corpus", () => {
 
   const result = runFixtureCorpus(corpusPath, validateCase);
   assert.equal(result.failed, 0, result.report);
+});
+
+test("executes the Task 9 Sources focused corpus and fixes retrieval facts", () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
+  const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
+
+  assert.deepEqual(
+    sourceCaseIds.filter((id) => !byId.has(id)),
+    []
+  );
+  for (const id of sourceCaseIds) {
+    const fixtureCase = byId.get(id);
+    assert.equal(
+      fixtureCase.expected === "valid" || fixtureCase.expected_rule_ids.length === 1,
+      true,
+      id
+    );
+  }
+
+  const result = runFixtureCorpus(corpusPath, validateCase);
+  assert.equal(result.failed, 0, result.report);
+
+  const directCase = byId.get("sources-direct-known-revision-none-valid");
+  const direct = validateCase(path.join(corpusPath, directCase.path), directCase);
+  assert.equal(direct.facts.core.sources.form, "direct");
+  assert.deepEqual(direct.facts.core.sources.rows.map((row) => row.id), ["api-a", "notes-z"]);
+  assert.deepEqual(direct.facts.core.sourceResolutions["CONVENTIONS.md"], {
+    requestedIds: ["api-a"],
+    resolvedIds: ["api-a"],
+    loadedPaths: ["INDEX.md"]
+  });
+
+  const cycleCase = byId.get("sources-sharded-cycle-valid");
+  const cycle = validateCase(path.join(corpusPath, cycleCase.path), cycleCase);
+  assert.equal(cycle.facts.core.sources.form, "sharded");
+  assert.deepEqual(cycle.facts.core.sourceResolutions["CONVENTIONS.md"], {
+    requestedIds: ["a"],
+    resolvedIds: ["a", "z"],
+    loadedPaths: ["indexes/sources-a.md", "indexes/sources-z.md"]
+  });
+  assert.deepEqual(cycle.facts.core.sourceResolutions["INDEX.md"].loadedPaths, [
+    "indexes/sources-a.md",
+    "indexes/sources-z.md"
+  ]);
+
+  const overlapCase = byId.get("sources-sharded-overlap-valid");
+  const overlap = validateCase(path.join(corpusPath, overlapCase.path), overlapCase);
+  assert.deepEqual(overlap.facts.core.sourceResolutions["CONVENTIONS.md"], {
+    requestedIds: ["b"],
+    resolvedIds: ["a", "b", "c"],
+    loadedPaths: ["indexes/sources-a-c.md", "indexes/sources-b.md"]
+  });
 });
