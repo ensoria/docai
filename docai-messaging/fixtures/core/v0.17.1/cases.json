@@ -332,6 +332,48 @@
       "expected_rule_ids": ["DM-IDX-005"]
     },
     {
+      "id": "unprojected-direct-byte-length-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/unprojected-direct-byte-length-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-IDX-008"]
+    },
+    {
+      "id": "unprojected-direct-multibyte-sensitive-valid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/valid/unprojected-direct-multibyte-sensitive-valid",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
+      "id": "unprojected-sharded-group-split-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/unprojected-sharded-group-split-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-IDX-009"]
+    },
+    {
+      "id": "unprojected-sharded-retrieval-valid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/valid/unprojected-sharded-retrieval-valid",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
+      "id": "unprojected-source-collision-invalid",
+      "kind": "unprojected-source-scenario",
+      "path": "focused/invalid/unprojected-source-collision-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-IDX-008"]
+    },
+    {
+      "id": "unprojected-source-sensitive-valid",
+      "kind": "unprojected-source-scenario",
+      "path": "focused/valid/unprojected-source-sensitive-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
       "id": "sentence-adjacent-japanese-valid",
       "kind": "sentence-line",
       "path": "focused/valid/sentence-adjacent-japanese-valid.md",

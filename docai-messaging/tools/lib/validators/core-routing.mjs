@@ -481,6 +481,23 @@ export function evaluateUnprojectedSourceExpectations(cases) {
   });
 }
 
+export function validateUnprojectedSourceExpectations(cases, { file = "source-input.json" } = {}) {
+  const expectations = evaluateUnprojectedSourceExpectations(cases);
+  const failures = expectations.filter((entry) => entry.expectation === "generation-failure");
+  const diagnostics = failures.length === 0
+    ? []
+    : [diagnostic(
+      "DM-IDX-008",
+      file,
+      1,
+      `Unprojected source inputs contain ${failures.length} generation-stopping publication-safety or grouping conflict(s).`
+    )];
+  return {
+    diagnostics,
+    facts: { unprojectedSourceExpectations: expectations }
+  };
+}
+
 function validOperationHeader(header) {
   if (!OPERATION_COLUMNS.every((column, index) => header[index] === column)) return false;
   let cursor = OPERATION_COLUMNS.length;

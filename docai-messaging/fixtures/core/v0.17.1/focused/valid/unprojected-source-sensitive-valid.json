@@ -1,0 +1,13 @@
+{
+  "cases": [
+    {
+      "sourceOperationId": "operation-sensitive",
+      "sourceId": "source-a",
+      "operationIdentity": "safe-operation-sensitive",
+      "publicationSafeLocation": "source.json#/operations/3",
+      "sensitiveFeatureClass": "routing-critical",
+      "sensitiveValue": "tenant-secret-route"
+    }
+  ]
+}
+

@@ -1,0 +1,17 @@
+{
+  "cases": [
+    {
+      "sourceOperationId": "operation-1",
+      "sourceId": "source-a",
+      "operationIdentity": "safe-operation",
+      "publicationSafeLocation": "source.json#/operations/0"
+    },
+    {
+      "sourceOperationId": "operation-2",
+      "sourceId": "source-a",
+      "operationIdentity": "safe-operation",
+      "publicationSafeLocation": "source.json#/operations/1"
+    }
+  ]
+}
+

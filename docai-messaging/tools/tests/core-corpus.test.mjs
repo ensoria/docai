@@ -11,6 +11,7 @@ import {
 import { runFixtureCorpus } from "../lib/fixture-runner.mjs";
 import { parseOpeningMetadata } from "../lib/metadata.mjs";
 import { validateSentenceLine } from "../lib/sentence.mjs";
+import * as coreRouting from "../lib/validators/core-routing.mjs";
 
 const corpusPath = fileURLToPath(new URL("../../fixtures/core/v0.17.1/", import.meta.url));
 
@@ -93,6 +94,15 @@ const contextCaseIds = [
   "contexts-supplemental-channel-invalid"
 ];
 
+const unprojectedCaseIds = [
+  "unprojected-direct-byte-length-invalid",
+  "unprojected-direct-multibyte-sensitive-valid",
+  "unprojected-sharded-group-split-invalid",
+  "unprojected-sharded-retrieval-valid",
+  "unprojected-source-collision-invalid",
+  "unprojected-source-sensitive-valid"
+];
+
 function fixtureSource(fixturePath) {
   const source = fs.readFileSync(fixturePath, "utf8");
   return source.endsWith("\n") ? source.slice(0, -1) : source;
@@ -109,6 +119,13 @@ function validateCase(fixturePath, fixtureCase) {
     return validateOperationProfilePair(
       loadDocumentSet(path.join(fixturePath, "full")),
       loadDocumentSet(path.join(fixturePath, "compact"))
+    );
+  }
+  if (fixtureCase.kind === "unprojected-source-scenario") {
+    const scenario = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
+    return coreRouting.validateUnprojectedSourceExpectations(
+      scenario.cases,
+      { file: fixtureCase.path }
     );
   }
   if (fixtureCase.kind === "metadata-line") {
@@ -350,4 +367,103 @@ test("executes the Task 9 context focused corpus and fixes selected context path
   const nonePathTrace = nonePath.facts.core.operationRetrieval.exact.operation["create-order"];
   assert.deepEqual(nonePathTrace.requiredContextPaths, ["workflows/none.md"]);
   assert.deepEqual(nonePathTrace.supplementalContextPaths, []);
+});
+
+test("executes the Task 9 Unprojected Operations corpus and fixes audit retrieval", () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
+  const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
+
+  assert.deepEqual(
+    unprojectedCaseIds.filter((id) => !byId.has(id)),
+    []
+  );
+  assert.equal(typeof coreRouting.validateUnprojectedSourceExpectations, "function");
+  for (const id of unprojectedCaseIds) {
+    const fixtureCase = byId.get(id);
+    assert.equal(
+      fixtureCase.expected === "valid" || fixtureCase.expected_rule_ids.length === 1,
+      true,
+      id
+    );
+  }
+
+  const result = runFixtureCorpus(corpusPath, validateCase);
+  assert.equal(result.failed, 0, result.report);
+
+  const directCase = byId.get("unprojected-direct-multibyte-sensitive-valid");
+  const direct = validateCase(path.join(corpusPath, directCase.path), directCase);
+  assert.equal(direct.facts.core.unprojectedOperations.form, "direct");
+  assert.deepEqual(
+    direct.facts.core.unprojectedOperations.groups.map((group) => ({
+      sourceId: group.sourceId,
+      identity: group.identity,
+      dimensions: group.dimensions
+    })),
+    [
+      { sourceId: "source-a", identity: "legacy: route", dimensions: ["unsupported", "unknown"] },
+      { sourceId: "source-z", identity: "操作: 二", dimensions: ["unknown"] }
+    ]
+  );
+  const sensitiveMarker = direct.facts.core.unprojectedOperations.groups[0].markers[0];
+  assert.equal(
+    sensitiveMarker.reason,
+    "sensitive routing-critical value withheld at source-a.json#/operations/0"
+  );
+  assert.equal(sensitiveMarker.reason.includes("tenant-secret-route"), false);
+
+  const shardedCase = byId.get("unprojected-sharded-retrieval-valid");
+  const sharded = validateCase(path.join(corpusPath, shardedCase.path), shardedCase);
+  assert.equal(sharded.facts.core.unprojectedOperations.form, "sharded");
+  assert.deepEqual(sharded.facts.core.unprojectedRetrieval.exactBySourceId["source-a"], {
+    selector: { sourceId: "source-a" },
+    loadedIndexPaths: ["indexes/unprojected-a-z.md", "indexes/unprojected-a.md"],
+    matchedGroupingKeys: [
+      "source-a\u0000legacy-a",
+      "source-a\u0000legacy-a-2",
+      "source-z\u0000legacy-z"
+    ]
+  });
+  assert.deepEqual(
+    sharded.facts.core.unprojectedRetrieval.semanticFallback.loadedIndexPaths,
+    ["indexes/unprojected-a-z.md", "indexes/unprojected-a.md"]
+  );
+
+  const sensitiveCase = byId.get("unprojected-source-sensitive-valid");
+  const sensitive = validateCase(path.join(corpusPath, sensitiveCase.path), sensitiveCase);
+  assert.deepEqual(sensitive.facts.unprojectedSourceExpectations, [{
+    sourceOperationId: "operation-sensitive",
+    expectation: "emit-unsupported",
+    reason: "sensitive routing-critical value withheld at source.json#/operations/3",
+    prohibitedValues: ["tenant-secret-route"]
+  }]);
+  assert.equal(
+    sensitive.facts.unprojectedSourceExpectations[0].reason.includes("tenant-secret-route"),
+    false
+  );
+
+  const collisionCase = byId.get("unprojected-source-collision-invalid");
+  const collision = validateCase(path.join(corpusPath, collisionCase.path), collisionCase);
+  const collisionErrors = collision.diagnostics.filter((entry) => entry.severity === "error");
+  assert.equal(collisionErrors.length, 1);
+  assert.equal(collisionErrors[0].ruleId, "DM-IDX-008");
+  assert.equal(collisionErrors[0].message.includes("safe-operation"), false);
+  assert.deepEqual(
+    collision.facts.unprojectedSourceExpectations.map((entry) => ({
+      sourceOperationId: entry.sourceOperationId,
+      expectation: entry.expectation,
+      reason: entry.reason
+    })),
+    [
+      {
+        sourceOperationId: "operation-1",
+        expectation: "generation-failure",
+        reason: "grouping-key-collision"
+      },
+      {
+        sourceOperationId: "operation-2",
+        expectation: "generation-failure",
+        reason: "grouping-key-collision"
+      }
+    ]
+  );
 });
