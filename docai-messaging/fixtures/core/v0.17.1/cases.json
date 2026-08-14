@@ -465,6 +465,41 @@
       "expected_rule_ids": []
     },
     {
+      "id": "conventions-format-catalog-duplicate-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/conventions-format-catalog-duplicate-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-CONV-003"]
+    },
+    {
+      "id": "common-failure-shape-replacement-mismatch-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/common-failure-shape-replacement-mismatch-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-CONV-004"]
+    },
+    {
+      "id": "conventions-state-mixed-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/conventions-state-mixed-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-CONV-002"]
+    },
+    {
+      "id": "conventions-states-format-failures-valid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/valid/conventions-states-format-failures-valid",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
+      "id": "failure-shape-replacement-mismatch-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/failure-shape-replacement-mismatch-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-FAIL-003"]
+    },
+    {
       "id": "sentence-adjacent-japanese-valid",
       "kind": "sentence-line",
       "path": "focused/valid/sentence-adjacent-japanese-valid.md",

@@ -126,6 +126,14 @@ const replyMessageSelectionCaseIds = [
   "asyncapi-3.1.0-reply-message-index-invalid"
 ];
 
+const conventionsAndFailureCaseIds = [
+  "common-failure-shape-replacement-mismatch-invalid",
+  "conventions-format-catalog-duplicate-invalid",
+  "conventions-state-mixed-invalid",
+  "conventions-states-format-failures-valid",
+  "failure-shape-replacement-mismatch-invalid"
+];
+
 function fixtureSource(fixturePath) {
   const source = fs.readFileSync(fixturePath, "utf8");
   return source.endsWith("\n") ? source.slice(0, -1) : source;
@@ -818,5 +826,74 @@ test("executes the Task 9 DM-REPLY-003 exact-version reply selection and INDEX o
       )),
       true
     );
+  }
+});
+
+test("executes the Task 9 DM-CONV-002 DM-CONV-003 DM-CONV-004 and DM-FAIL-003 corpus", () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
+  const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
+
+  assert.deepEqual(
+    conventionsAndFailureCaseIds.filter((id) => !byId.has(id)),
+    []
+  );
+  for (const id of conventionsAndFailureCaseIds) {
+    const fixtureCase = byId.get(id);
+    assert.equal(
+      fixtureCase.expected === "valid" || fixtureCase.expected_rule_ids.length === 1,
+      true,
+      id
+    );
+  }
+
+  const result = runFixtureCorpus(corpusPath, validateCase);
+  assert.equal(result.failed, 0, result.report);
+
+  const validCase = byId.get("conventions-states-format-failures-valid");
+  const valid = validateCase(path.join(corpusPath, validCase.path), validCase);
+  assert.deepEqual(valid.diagnostics, []);
+  assert.equal(valid.facts.core.conventions.sections.Environments.state, "none");
+  assert.equal(valid.facts.core.conventions.sections["Protocols and Bindings"].state, "unknown");
+  assert.equal(valid.facts.core.conventions.sections.Authentication.state, "unsupported");
+  assert.equal(valid.facts.core.conventions.sections["Connection and Session"].state, "expanded");
+  assert.deepEqual(valid.facts.core.formats, [{
+    format: "\"uuid\"",
+    role: "constraint",
+    meaning: "Accept canonical UUID strings and construct and validate them without narrowing."
+  }]);
+  assert.deepEqual(
+    valid.facts.core.failureShapes.common.map((shape) => ({
+      label: shape.label,
+      replacement: shape.replacement
+    })),
+    [
+      { label: "dead-letter", replacement: false },
+      { label: "encoded-common", replacement: true }
+    ]
+  );
+  assert.deepEqual(valid.facts.core.failureShapes.commonReferences, [{
+    label: "dead-letter",
+    operation: "create-order"
+  }]);
+  assert.deepEqual(
+    valid.facts.core.failureShapes.inline.map((shape) => ({
+      label: shape.label,
+      replacement: shape.replacement
+    })),
+    [{ label: "encoded-inline", replacement: true }]
+  );
+
+  for (const [id, expectedRuleId] of [
+    ["common-failure-shape-replacement-mismatch-invalid", "DM-CONV-004"],
+    ["conventions-state-mixed-invalid", "DM-CONV-002"],
+    ["conventions-format-catalog-duplicate-invalid", "DM-CONV-003"],
+    ["failure-shape-replacement-mismatch-invalid", "DM-FAIL-003"]
+  ]) {
+    const fixtureCase = byId.get(id);
+    const invalid = validateCase(path.join(corpusPath, fixtureCase.path), fixtureCase);
+    const primary = invalid.diagnostics.filter((entry) => (
+      entry.severity === "error" && !entry.cascade
+    ));
+    assert.deepEqual(primary.map((entry) => entry.ruleId), [expectedRuleId]);
   }
 });
