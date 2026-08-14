@@ -1,0 +1,19 @@
+{
+  "cases": [
+    {
+      "caseId": "missing-counterpart",
+      "perspective": "storefront",
+      "sourceApplication": "order-service",
+      "sourceOperation": {
+        "id": "accept-order",
+        "action": "receive",
+        "channel": "internal.orders",
+        "primaryMessages": [
+          "internal-order"
+        ]
+      },
+      "counterpartMappings": []
+    }
+  ]
+}
+

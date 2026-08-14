@@ -11,6 +11,7 @@ import {
 import { runFixtureCorpus } from "../lib/fixture-runner.mjs";
 import { parseOpeningMetadata } from "../lib/metadata.mjs";
 import { validateSentenceLine } from "../lib/sentence.mjs";
+import * as coreValidator from "../lib/validators/core.mjs";
 import * as coreRouting from "../lib/validators/core-routing.mjs";
 
 const corpusPath = fileURLToPath(new URL("../../fixtures/core/v0.17.1/", import.meta.url));
@@ -103,6 +104,14 @@ const unprojectedCaseIds = [
   "unprojected-source-sensitive-valid"
 ];
 
+const perspectiveCaseIds = [
+  "perspective-action-only-fallback-valid",
+  "perspective-counterpart-complete-valid",
+  "perspective-counterpart-conflict-invalid",
+  "perspective-counterpart-missing-valid",
+  "perspective-same-application-valid"
+];
+
 function fixtureSource(fixturePath) {
   const source = fs.readFileSync(fixturePath, "utf8");
   return source.endsWith("\n") ? source.slice(0, -1) : source;
@@ -124,6 +133,13 @@ function validateCase(fixturePath, fixtureCase) {
   if (fixtureCase.kind === "unprojected-source-scenario") {
     const scenario = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
     return coreRouting.validateUnprojectedSourceExpectations(
+      scenario.cases,
+      { file: fixtureCase.path }
+    );
+  }
+  if (fixtureCase.kind === "perspective-source-scenario") {
+    const scenario = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
+    return coreValidator.validatePerspectiveSourceExpectations(
       scenario.cases,
       { file: fixtureCase.path }
     );
@@ -466,4 +482,98 @@ test("executes the Task 9 Unprojected Operations corpus and fixes audit retrieva
       }
     ]
   );
+});
+
+test("executes the Task 9 DM-INC-001 DM-INC-006 DM-INC-007 perspective corpus", () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
+  const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
+
+  assert.deepEqual(
+    perspectiveCaseIds.filter((id) => !byId.has(id)),
+    []
+  );
+  assert.equal(typeof coreValidator.validatePerspectiveSourceExpectations, "function");
+  for (const id of perspectiveCaseIds) {
+    const fixtureCase = byId.get(id);
+    assert.equal(
+      fixtureCase.expected === "valid" || fixtureCase.expected_rule_ids.length === 1,
+      true,
+      id
+    );
+  }
+
+  const result = runFixtureCorpus(corpusPath, validateCase);
+  assert.equal(result.failed, 0, result.report);
+
+  const sameCase = byId.get("perspective-same-application-valid");
+  const same = validateCase(path.join(corpusPath, sameCase.path), sameCase);
+  assert.deepEqual(same.facts.perspectiveSourceExpectations, [
+    {
+      caseId: "same-application-send",
+      outcome: "emit-operation",
+      resolution: "source-application-carry-through",
+      action: "SEND",
+      channel: "orders.commands",
+      primaryMessages: ["create-order"]
+    },
+    {
+      caseId: "same-application-receive",
+      outcome: "emit-operation",
+      resolution: "source-application-carry-through",
+      action: "RECEIVE",
+      channel: "orders.events",
+      primaryMessages: ["order-created"]
+    }
+  ]);
+
+  const completeCase = byId.get("perspective-counterpart-complete-valid");
+  const complete = validateCase(path.join(corpusPath, completeCase.path), completeCase);
+  assert.deepEqual(complete.facts.perspectiveSourceExpectations, [{
+    caseId: "complete-counterpart",
+    outcome: "emit-operation",
+    resolution: "authoritative-counterpart",
+    action: "SEND",
+    channel: "storefront.orders",
+    primaryMessages: ["create-order"],
+    replyMessages: ["order-accepted"],
+    contributingSourceIds: ["storefront-mapping"]
+  }]);
+
+  const missingCase = byId.get("perspective-counterpart-missing-valid");
+  const missing = validateCase(path.join(corpusPath, missingCase.path), missingCase);
+  assert.deepEqual(missing.facts.perspectiveSourceExpectations, [{
+    caseId: "missing-counterpart",
+    outcome: "emit-unprojected-unknown",
+    reason: "counterpart mapping",
+    knowledge: "requires-input"
+  }]);
+
+  const actionOnlyCase = byId.get("perspective-action-only-fallback-valid");
+  const actionOnly = validateCase(path.join(corpusPath, actionOnlyCase.path), actionOnlyCase);
+  assert.deepEqual(actionOnly.facts.perspectiveSourceExpectations, [{
+    caseId: "action-only-counterpart",
+    outcome: "emit-unprojected-unknown",
+    reason: "incomplete counterpart mapping",
+    missing: [
+      "channel-address",
+      "server-environment-and-bindings",
+      "authorization",
+      "purpose-and-behavior",
+      "message-applicability"
+    ],
+    knowledge: "requires-input"
+  }]);
+
+  const conflictCase = byId.get("perspective-counterpart-conflict-invalid");
+  const conflict = validateCase(path.join(corpusPath, conflictCase.path), conflictCase);
+  const conflictErrors = conflict.diagnostics.filter((entry) => entry.severity === "error");
+  assert.equal(conflictErrors.length, 1);
+  assert.equal(conflictErrors[0].ruleId, "DM-INC-001");
+  assert.equal(conflictErrors[0].message.includes("mapping-a"), false);
+  assert.deepEqual(conflict.facts.perspectiveSourceExpectations, [{
+    caseId: "conflicting-counterparts",
+    outcome: "generation-failure",
+    reason: "authoritative-conflict",
+    conflictingSourceIds: ["mapping-a", "mapping-b"]
+  }]);
 });

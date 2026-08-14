@@ -1,0 +1,30 @@
+{
+  "cases": [
+    {
+      "caseId": "action-only-counterpart",
+      "perspective": "storefront",
+      "sourceApplication": "order-service",
+      "sourceOperation": {
+        "id": "accept-order",
+        "action": "receive",
+        "channel": "internal.orders",
+        "primaryMessages": [
+          "internal-order"
+        ]
+      },
+      "counterpartMappings": [
+        {
+          "sourceId": "action-only-mapping",
+          "priority": 0,
+          "sourceOperationId": "accept-order",
+          "targetApplication": "storefront",
+          "target": {
+            "action": "SEND"
+          },
+          "coverage": {}
+        }
+      ]
+    }
+  ]
+}
+

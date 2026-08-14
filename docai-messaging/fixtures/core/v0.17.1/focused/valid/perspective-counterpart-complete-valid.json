@@ -1,0 +1,42 @@
+{
+  "cases": [
+    {
+      "caseId": "complete-counterpart",
+      "perspective": "storefront",
+      "sourceApplication": "order-service",
+      "sourceOperation": {
+        "id": "accept-order",
+        "action": "receive",
+        "channel": "internal.orders",
+        "primaryMessages": [
+          "internal-order"
+        ]
+      },
+      "counterpartMappings": [
+        {
+          "sourceId": "storefront-mapping",
+          "priority": 0,
+          "sourceOperationId": "accept-order",
+          "targetApplication": "storefront",
+          "target": {
+            "action": "SEND",
+            "channel": "storefront.orders",
+            "primaryMessages": [
+              "create-order"
+            ],
+            "replyMessages": [
+              "order-accepted"
+            ]
+          },
+          "coverage": {
+            "serverEnvironmentAndBindings": "confirmed-shared",
+            "authorization": "replaced",
+            "purposeAndBehavior": "replaced",
+            "messageApplicability": "replaced"
+          }
+        }
+      ]
+    }
+  ]
+}
+

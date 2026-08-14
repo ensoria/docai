@@ -452,6 +452,23 @@ export function evaluatePerspectiveSourceExpectations(cases) {
   });
 }
 
+export function validatePerspectiveSourceExpectations(cases, { file = "source-input.json" } = {}) {
+  const expectations = evaluatePerspectiveSourceExpectations(cases);
+  const failures = expectations.filter((entry) => entry.outcome === "generation-failure");
+  const diagnostics = failures.length === 0
+    ? []
+    : [diagnostic(
+      "DM-INC-001",
+      file,
+      1,
+      `Perspective source inputs contain ${failures.length} unresolved authoritative conflict(s).`
+    )];
+  return {
+    diagnostics,
+    facts: { perspectiveSourceExpectations: expectations }
+  };
+}
+
 const DIRECT_SCHEMA_TARGETS = new Map([
   ["application/vnd.aai.asyncapi;version=3.0.0", "direct-asyncapi-schema-object-3.0.0"],
   ["application/vnd.aai.asyncapi+json;version=3.0.0", "direct-asyncapi-schema-object-3.0.0"],

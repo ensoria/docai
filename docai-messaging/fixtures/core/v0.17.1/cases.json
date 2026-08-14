@@ -374,6 +374,41 @@
       "expected_rule_ids": []
     },
     {
+      "id": "perspective-action-only-fallback-valid",
+      "kind": "perspective-source-scenario",
+      "path": "focused/valid/perspective-action-only-fallback-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
+      "id": "perspective-counterpart-complete-valid",
+      "kind": "perspective-source-scenario",
+      "path": "focused/valid/perspective-counterpart-complete-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
+      "id": "perspective-counterpart-conflict-invalid",
+      "kind": "perspective-source-scenario",
+      "path": "focused/invalid/perspective-counterpart-conflict-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-INC-001"]
+    },
+    {
+      "id": "perspective-counterpart-missing-valid",
+      "kind": "perspective-source-scenario",
+      "path": "focused/valid/perspective-counterpart-missing-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
+      "id": "perspective-same-application-valid",
+      "kind": "perspective-source-scenario",
+      "path": "focused/valid/perspective-same-application-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
       "id": "sentence-adjacent-japanese-valid",
       "kind": "sentence-line",
       "path": "focused/valid/sentence-adjacent-japanese-valid.md",

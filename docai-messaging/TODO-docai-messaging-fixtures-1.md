@@ -715,13 +715,15 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 
 > **Implementation note (Unprojected Operations checkpoint):** direct / sharded document-set fixtures に加え、投影前の grouping-key collision と sensitive withholding を checker で実行するため、`cases.json` に `unprojected-source-scenario` kind を追加する。既存 `evaluateUnprojectedSourceExpectations()` の結果を `validateUnprojectedSourceExpectations()` が read-only facts と集約 `DM-IDX-008` diagnostic に変換し、generation-failure diagnostic は source operation identity や sensitive value を表示しない。影響として、公開 document grammar と既存 evaluator の結果は変更せず、source-aware generation boundary を focused corpus runner から再利用可能にする。
 
+> **Implementation note (Perspective / counterpart checkpoint):** same-application の SEND / RECEIVE carry-through、complete counterpart、counterpart 不在、action-only の不完全 counterpart、同優先度 authoritative conflict を `perspective-source-scenario` kind で検証する。既存 `evaluatePerspectiveSourceExpectations()` の結果を `validatePerspectiveSourceExpectations()` が read-only facts と集約 `DM-INC-001` diagnostic に変換し、conflict diagnostic には source mapping ID や競合 channel を含めない。影響として、counterpart 不在と action-only は仕様どおり Unprojected unknown へ退避できる valid fixture とし、生成停止となる authoritative conflict だけを invalid fixture にする。公開 document grammar と evaluator の resolution semantics は変更しない。
+
 - [x] Metadata、extension name/order/escape、unknown non-`x-` key、sentence grammar。
 - [x] Identity trailer、set/projection digest、closed root、mixed set、task-scoped identity check。
 - [x] Direct/sharded Sources、unknown API identity/version、Revision none、overlap、fixed-point、cycle。
 - [x] Flat/hierarchical Operations、bounds、semantic load-all、false positive、path parity。
 - [x] Required/supplemental context、eligible/forbidden target、separator/order、`none` sentinel collision。
 - [x] Direct/sharded Unprojected Operations、multibyte identity、group collision、sensitive withholding。
-- [ ] Same-application action、counterpart mapping complete/missing/conflicting。
+- [x] Same-application action、counterpart mapping complete/missing/conflicting。
 - [ ] AsyncAPI 3.0.0/3.1.0 operation message explicit/omitted/empty selection。
 - [ ] AsyncAPI 3.0.0/3.1.0 reply message explicit/omitted/empty selectionと INDEX omission。
 - [ ] CONVENTIONS whole-section states、format semantics catalog、common/replacement failure shapes。

@@ -1,0 +1,33 @@
+{
+  "cases": [
+    {
+      "caseId": "same-application-send",
+      "perspective": "order-service",
+      "sourceApplication": "order-service",
+      "sourceOperation": {
+        "id": "create-order",
+        "action": "send",
+        "channel": "orders.commands",
+        "primaryMessages": [
+          "create-order"
+        ]
+      },
+      "counterpartMappings": []
+    },
+    {
+      "caseId": "same-application-receive",
+      "perspective": "order-service",
+      "sourceApplication": "order-service",
+      "sourceOperation": {
+        "id": "order-created",
+        "action": "receive",
+        "channel": "orders.events",
+        "primaryMessages": [
+          "order-created"
+        ]
+      },
+      "counterpartMappings": []
+    }
+  ]
+}
+

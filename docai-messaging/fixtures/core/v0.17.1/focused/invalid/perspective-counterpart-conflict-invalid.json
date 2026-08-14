@@ -1,0 +1,60 @@
+{
+  "cases": [
+    {
+      "caseId": "conflicting-counterparts",
+      "perspective": "storefront",
+      "sourceApplication": "order-service",
+      "sourceOperation": {
+        "id": "accept-order",
+        "action": "receive",
+        "channel": "internal.orders",
+        "primaryMessages": [
+          "internal-order"
+        ]
+      },
+      "counterpartMappings": [
+        {
+          "sourceId": "mapping-a",
+          "priority": 0,
+          "sourceOperationId": "accept-order",
+          "targetApplication": "storefront",
+          "target": {
+            "action": "SEND",
+            "channel": "storefront.orders-a",
+            "primaryMessages": [
+              "create-order"
+            ],
+            "replyMessages": []
+          },
+          "coverage": {
+            "serverEnvironmentAndBindings": "confirmed-shared",
+            "authorization": "confirmed-shared",
+            "purposeAndBehavior": "confirmed-shared",
+            "messageApplicability": "replaced"
+          }
+        },
+        {
+          "sourceId": "mapping-b",
+          "priority": 0,
+          "sourceOperationId": "accept-order",
+          "targetApplication": "storefront",
+          "target": {
+            "action": "SEND",
+            "channel": "storefront.orders-b",
+            "primaryMessages": [
+              "create-order"
+            ],
+            "replyMessages": []
+          },
+          "coverage": {
+            "serverEnvironmentAndBindings": "confirmed-shared",
+            "authorization": "confirmed-shared",
+            "purposeAndBehavior": "confirmed-shared",
+            "messageApplicability": "replaced"
+          }
+        }
+      ]
+    }
+  ]
+}
+
