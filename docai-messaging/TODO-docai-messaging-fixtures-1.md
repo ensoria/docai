@@ -731,6 +731,8 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 
 > **Implementation note (Payload unknown / partial-collection checkpoint):** task-scoped document set の valid case 一件に四つの operation を収録し、whole-payload representation-set unknown、concrete media type を保持する representation-local field-collection unknown、Headers の no-sibling whole-subsection unknown、Headers / Parameters / non-polymorphic payload の named-sibling partial table、synthetic row を作らない additional-unnamed marker、および payload partial table の canonical example omission を統合検証する。invalid case は generic whole-section unknown を non-empty Payload に使う形、whole-payload unknown と concrete representation の共存、representation-local unknown と field table の共存、partial field table の marker 欠落、partial marker と通常 example の共存を一件ずつ分離し、すべて単一 primary `DM-MSG-004` diagnostic に固定する。focused RED で見つかった境界欠落に対応し、Message Headers subsection-state validator は unknown cell を持たない `additional unnamed header` marker を正規な partial table として受理し、complete structured representation validator は同 marker と example の共存を拒否する。影響として、公開 document grammar と read-only fact interface は変更せず、production validation semantics を README §3.4 の既存規定に一致させる。
 
+> **Implementation note (Root payload shape / recursion checkpoint):** task-scoped document set の valid case 一件に root scalar、root array と `$[]` item container、dynamic-key root map と `$.{key}` value path、local allowed-with-type / forbidden object openness、および recursive schema の representation-local replacement を統合検証する。invalid case は SEND root の `Required=yes`、RECEIVE root の `Presence=always`、`payload_nullable` と root `Nullable` の一致、scalar root `$` row の必須性、object openness、および recursive replacement の排他性を一件ずつ分離し、単一 primary `DM-MSG-001` / `DM-MSG-004` / `DM-MSG-005` diagnostic に固定する。focused RED で見つかった root-map example coverage の境界欠落に対応し、field coverage は `map<string, T>` の実キーを `{key}` path に対応付け、named property と `{key}` が共存する object では明示 row を優先する。影響として、公開 document grammar と read-only fact interface は変更せず、README §4.1 の root map path semantics を production validator で受理・検証できるようにする。
+
 - [x] Metadata、extension name/order/escape、unknown non-`x-` key、sentence grammar。
 - [x] Identity trailer、set/projection digest、closed root、mixed set、task-scoped identity check。
 - [x] Direct/sharded Sources、unknown API identity/version、Revision none、overlap、fixed-point、cycle。
@@ -745,7 +747,7 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 - [x] Operation/channel/message/reply/failure binding scopes。
 - [x] SEND Required、RECEIVE Presence optional/condition/unknown、Nullable、nested ancestor semantics。
 - [x] whole payload unknown、representation-local field collection、partial named siblings、example omission。
-- [ ] `$` root rows、root scalar/array/map/object、object openness、recursive unsupported。
+- [x] `$` root rows、root scalar/array/map/object、object openness、recursive unsupported。
 - [ ] exact JSON constraint/equality、default_annotation/default、recognized/custom format behavior。
 - [ ] parameterless JSON/+json、parameterized/unregistered wire、raw binary boundary、header encoding。
 - [ ] Reply static/dynamic channel、correlation、timeout、whole-Reply fallback、no synthetic operation。

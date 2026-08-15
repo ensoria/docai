@@ -420,12 +420,22 @@ function escapePathSegment(value) {
   return value.replace(/[\\.\[\]{}$]/g, "\\$&");
 }
 
-function examplePaths(value, path = null, paths = new Set()) {
+function examplePaths(value, rowsByPath, path = null, paths = new Set()) {
   if (value instanceof Map) {
+    const containerPath = path ?? "$";
+    const containerType = rowsByPath.get(containerPath)?.row[1];
+    const pureMap = containerType?.startsWith("map<string, ") ?? false;
+    const dynamicPath = path === null
+      ? pureMap ? "$.{key}" : "{key}"
+      : `${path}.{key}`;
     for (const [name, child] of value) {
-      const childPath = path === null ? escapePathSegment(name) : `${path}.${escapePathSegment(name)}`;
+      const literalPath = path === null ? escapePathSegment(name) : `${path}.${escapePathSegment(name)}`;
+      const childPath = pureMap
+        || (!rowsByPath.has(literalPath) && rowsByPath.has(dynamicPath))
+        ? dynamicPath
+        : literalPath;
       paths.add(childPath);
-      examplePaths(child, childPath, paths);
+      examplePaths(child, rowsByPath, childPath, paths);
     }
     return paths;
   }
@@ -434,7 +444,7 @@ function examplePaths(value, path = null, paths = new Set()) {
     const itemPath = path === null ? "$[]" : `${path}[]`;
     for (const child of value) {
       paths.add(itemPath);
-      examplePaths(child, itemPath, paths);
+      examplePaths(child, rowsByPath, itemPath, paths);
     }
     return paths;
   }
@@ -476,7 +486,22 @@ function fieldPathTokens(path) {
   return tokens;
 }
 
-function observeFieldPath(example, path) {
+function explicitSiblingNames(rowsByPath, tokens, dynamicIndex) {
+  const names = new Set();
+  for (const candidatePath of rowsByPath.keys()) {
+    const candidate = fieldPathTokens(candidatePath);
+    if (candidate.length !== dynamicIndex + 1
+      || candidate[dynamicIndex]?.kind !== "property") continue;
+    const sameParent = tokens.slice(0, dynamicIndex).every((token, index) => (
+      token.kind === candidate[index]?.kind
+        && (token.kind !== "property" || token.name === candidate[index].name)
+    ));
+    if (sameParent) names.add(candidate[dynamicIndex].name);
+  }
+  return names;
+}
+
+function observeFieldPath(example, path, rowsByPath) {
   const tokens = fieldPathTokens(path);
   if (tokens.length === 0) return { applicable: 1, present: 1, values: [example] };
   let contexts = [example];
@@ -504,11 +529,15 @@ function observeFieldPath(example, path) {
         next.push(...context);
       }
     } else {
+      const explicitNames = explicitSiblingNames(rowsByPath, tokens, index);
       for (const context of contexts) {
         if (!(context instanceof Map)) continue;
-        applicable += context.size;
-        present += context.size;
-        next.push(...context.values());
+        for (const [name, value] of context) {
+          if (explicitNames.has(name)) continue;
+          applicable += 1;
+          present += 1;
+          next.push(value);
+        }
       }
     }
     contexts = index === tokens.length - 1 ? next : next.filter((value) => value !== null);
@@ -777,9 +806,9 @@ function validateFields(table, example, operation, message, formatUses, objectOp
   }
   if (example === undefined) return true;
   if (example === null && payloadNullable !== "yes") return false;
-  if (![...examplePaths(example)].every((path) => rowsByPath.has(path))) return false;
+  if (![...examplePaths(example, rowsByPath)].every((path) => rowsByPath.has(path))) return false;
   for (const [path, entry] of rowsByPath) {
-    const observed = observeFieldPath(example, path);
+    const observed = observeFieldPath(example, path, rowsByPath);
     const mandatory = entry.row[2] === "yes" || entry.row[2] === "always";
     if (mandatory && observed.present !== observed.applicable) return false;
     for (const value of observed.values) {

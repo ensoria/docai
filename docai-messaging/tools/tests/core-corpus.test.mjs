@@ -171,6 +171,16 @@ const payloadUnknownCaseIds = [
   "payload-whole-unknown-coexists-representation-invalid"
 ];
 
+const payloadRootShapeCaseIds = [
+  "payload-object-openness-missing-invalid",
+  "payload-recursive-replacement-coexists-invalid",
+  "payload-root-nullable-mismatch-invalid",
+  "payload-root-receive-presence-invalid",
+  "payload-root-scalar-row-missing-invalid",
+  "payload-root-send-required-invalid",
+  "payload-root-shapes-and-recursive-unsupported-valid"
+];
+
 function fixtureSource(fixturePath) {
   const source = fs.readFileSync(fixturePath, "utf8");
   return source.endsWith("\n") ? source.slice(0, -1) : source;
@@ -1137,5 +1147,51 @@ test("executes the Task 9 DM-MSG-004 payload unknown and partial-collection corp
       entry.severity === "error" && !entry.cascade
     ));
     assert.deepEqual(primary.map((entry) => entry.ruleId), ["DM-MSG-004"], id);
+  }
+});
+
+test("executes the Task 9 DM-MSG-001 DM-MSG-004 DM-MSG-005 root-shape openness and recursion corpus", () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
+  const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
+
+  assert.deepEqual(
+    payloadRootShapeCaseIds.filter((id) => !byId.has(id)),
+    []
+  );
+  for (const id of payloadRootShapeCaseIds) {
+    const fixtureCase = byId.get(id);
+    assert.equal(
+      fixtureCase.expected === "valid" || fixtureCase.expected_rule_ids.length === 1,
+      true,
+      id
+    );
+  }
+
+  const result = runFixtureCorpus(corpusPath, validateCase);
+  assert.equal(result.failed, 0, result.report);
+
+  const validCase = byId.get("payload-root-shapes-and-recursive-unsupported-valid");
+  const valid = validateCase(path.join(corpusPath, validCase.path), validCase);
+  assert.deepEqual(valid.diagnostics, []);
+  assert.deepEqual(
+    Object.fromEntries(Object.entries(valid.facts.core.messageDefinitions.byOperation).map(
+      ([operation, definitions]) => [operation, definitions.map((entry) => entry.name)]
+    )),
+    {
+      "root-array": ["root-array-message"],
+      "root-map": ["root-map-message"],
+      "root-object": ["root-object-message"],
+      "root-scalar": ["root-scalar-message"],
+      "recursive-payload": ["recursive-payload-message"]
+    }
+  );
+
+  for (const id of payloadRootShapeCaseIds.filter((caseId) => caseId !== validCase.id)) {
+    const fixtureCase = byId.get(id);
+    const invalid = validateCase(path.join(corpusPath, fixtureCase.path), fixtureCase);
+    const primary = invalid.diagnostics.filter((entry) => (
+      entry.severity === "error" && !entry.cascade
+    ));
+    assert.deepEqual(primary.map((entry) => entry.ruleId), fixtureCase.expected_rule_ids, id);
   }
 });
