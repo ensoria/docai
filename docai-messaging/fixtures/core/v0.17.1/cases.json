@@ -731,6 +731,55 @@
       "expected_rule_ids": []
     },
     {
+      "id": "reply-correlation-none-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/reply-correlation-none-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-REPLY-002"]
+    },
+    {
+      "id": "reply-dynamic-channel-parameters-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/reply-dynamic-channel-parameters-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-REPLY-002"]
+    },
+    {
+      "id": "reply-send-timeout-none-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/reply-send-timeout-none-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-REPLY-002"]
+    },
+    {
+      "id": "reply-static-channel-parameters-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/reply-static-channel-parameters-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-REPLY-002"]
+    },
+    {
+      "id": "reply-states-routing-valid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/valid/reply-states-routing-valid",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
+      "id": "reply-whole-fallback-coexists-expanded-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/reply-whole-fallback-coexists-expanded-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-REPLY-001"]
+    },
+    {
+      "id": "reply-whole-fallback-index-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/reply-whole-fallback-index-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-REPLY-003"]
+    },
+    {
       "id": "payload-object-openness-missing-invalid",
       "kind": "task-scoped-document-set",
       "path": "focused/invalid/payload-object-openness-missing-invalid",

@@ -200,6 +200,16 @@ const wireAndHeaderCaseIds = [
   "payload-wire-and-raw-boundaries-valid"
 ];
 
+const replyContractCaseIds = [
+  "reply-correlation-none-invalid",
+  "reply-dynamic-channel-parameters-invalid",
+  "reply-send-timeout-none-invalid",
+  "reply-static-channel-parameters-invalid",
+  "reply-states-routing-valid",
+  "reply-whole-fallback-coexists-expanded-invalid",
+  "reply-whole-fallback-index-invalid"
+];
+
 function fixtureSource(fixturePath) {
   const source = fs.readFileSync(fixturePath, "utf8");
   return source.endsWith("\n") ? source.slice(0, -1) : source;
@@ -1465,5 +1475,87 @@ test("executes the Task 9 DM-ADAPTER-002 DM-ADAPTER-003 DM-MSG-004 wire header a
       entry.severity === "error" && !entry.cascade
     ));
     assert.deepEqual(primary.map((entry) => entry.ruleId), fixtureCase.expected_rule_ids, id);
+  }
+});
+
+test("executes the Task 9 DM-REPLY-001 DM-REPLY-002 DM-REPLY-003 channel state and routing corpus", () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
+  const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
+
+  assert.deepEqual(replyContractCaseIds.filter((id) => !byId.has(id)), []);
+  for (const id of replyContractCaseIds) {
+    const fixtureCase = byId.get(id);
+    assert.equal(
+      fixtureCase.expected === "valid" || fixtureCase.expected_rule_ids.length === 1,
+      true,
+      id
+    );
+  }
+
+  const result = runFixtureCorpus(corpusPath, validateCase);
+  assert.equal(result.failed, 0, result.report);
+
+  const validCase = byId.get("reply-states-routing-valid");
+  const valid = validateCase(path.join(corpusPath, validCase.path), validCase);
+  assert.deepEqual(valid.diagnostics, []);
+  assert.deepEqual(Object.keys(valid.facts.core.operationDefinitions.byName), [
+    "consume-static-reply",
+    "dynamic-request",
+    "no-reply",
+    "receive-request",
+    "static-request",
+    "unknown-reply",
+    "unsupported-reply"
+  ]);
+  assert.deepEqual(
+    Object.fromEntries(Object.entries(valid.facts.core.messageDefinitions.byOperation).map(
+      ([operation, definitions]) => [operation, definitions.map((entry) => ({
+        direction: entry.direction,
+        name: entry.name,
+        reply: entry.reply
+      }))]
+    )),
+    {
+      "consume-static-reply": [
+        { direction: "RECEIVE", name: "static-reply", reply: false }
+      ],
+      "dynamic-request": [
+        { direction: "SEND", name: "dynamic-request-message", reply: false },
+        { direction: "RECEIVE", name: "dynamic-reply", reply: true }
+      ],
+      "no-reply": [
+        { direction: "SEND", name: "no-reply-message", reply: false }
+      ],
+      "receive-request": [
+        { direction: "RECEIVE", name: "receive-request-message", reply: false },
+        { direction: "SEND", name: "receive-reply", reply: true }
+      ],
+      "static-request": [
+        { direction: "SEND", name: "static-request-message", reply: false },
+        { direction: "RECEIVE", name: "static-reply", reply: true }
+      ],
+      "unknown-reply": [
+        { direction: "SEND", name: "unknown-reply-message", reply: false }
+      ],
+      "unsupported-reply": [
+        { direction: "SEND", name: "unsupported-reply-message", reply: false }
+      ]
+    }
+  );
+
+  for (const [id, expectedRuleId] of [
+    ["reply-correlation-none-invalid", "DM-REPLY-002"],
+    ["reply-dynamic-channel-parameters-invalid", "DM-REPLY-002"],
+    ["reply-send-timeout-none-invalid", "DM-REPLY-002"],
+    ["reply-static-channel-parameters-invalid", "DM-REPLY-002"],
+    ["reply-whole-fallback-coexists-expanded-invalid", "DM-REPLY-001"],
+    ["reply-whole-fallback-index-invalid", "DM-REPLY-003"]
+  ]) {
+    const fixtureCase = byId.get(id);
+    const invalid = validateCase(path.join(corpusPath, fixtureCase.path), fixtureCase);
+    const primary = invalid.diagnostics.filter((entry) => (
+      entry.severity === "error" && !entry.cascade
+    ));
+    assert.deepEqual(primary.map((entry) => entry.ruleId), [expectedRuleId], id);
   }
 });

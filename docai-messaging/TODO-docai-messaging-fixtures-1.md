@@ -737,6 +737,8 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 
 > **Implementation note (Wire / raw binary / header-encoding checkpoint):** task-scoped document set の valid case 一件で、parameterless `application/json`、RFC 9110 token を含む parameterless `+json`、known parameterized JSON / unregistered XML の representation replacement、logical Headers table、および content / size / integrity rule を持つ authoritatively opaque raw binary を統合検証する。invalid document case は parameterized JSON と structured XML を raw-binary prose に偽装する形を分離し、各 case の単一 primary diagnostic を `DM-MSG-004` に固定する。source-aware `adapter-source-scenario` は direct JSON wire、unmapped wire replacement、exact publication mapping による parameter preservation、`projection_digest` に含まれる証明済み emitted-media-type normalization、header encoding / exposure と schema target の互換性を比較し、projection mismatch を単一 `DM-ADAPTER-002` / `DM-ADAPTER-003` diagnostic に集約する。影響として、payload-wire evaluator は canonical media-type parser に基づいて任意 top-level type の parameterless `+json` を直接登録し、non-direct target は complete wire semantics を持つ exact mapping のみ受理する。header evaluator は schema target が与えられた場合に mapping の明示的 compatibility も要求する。公開 document grammar と ordinary-reader requirement は変更しない。
 
+> **Implementation note (Reply channel / fallback / operation-identity checkpoint):** task-scoped document set の valid case 一件に、address parameter を厳密に列挙する static Reply channel、request から導出する dynamic Reply channel、SEND の deadline / expiry action、RECEIVE で conventions に従う `timeout: none`、Reply `none`、whole-section `unknown`、whole-section replacement `unsupported`、および embedded Reply と同じ static channel / message を選ぶ独立 operation を統合する。read-only facts は expanded Reply だけを reply message として保持し、unknown / unsupported fallback から reply identity を作らず、embedded Reply から operation を合成せず、独立宣言された operation だけを通常 operation として保持する。invalid case は whole-Reply unknown と expanded key の混在、`correlation: none`、dynamic channel の Parameters、static channel parameter の欠落、SEND の `timeout: none`、whole-Reply unknown から発明した INDEX `reply:` entry を一件ずつ分離し、単一 primary `DM-REPLY-001` / `DM-REPLY-002` / `DM-REPLY-003` diagnostic に固定する。影響として、Task 6 の既存 Reply validator と fact interface を focused document-set 境界で固定し、production validation semantics と公開 document grammar は変更しない。
+
 - [x] Metadata、extension name/order/escape、unknown non-`x-` key、sentence grammar。
 - [x] Identity trailer、set/projection digest、closed root、mixed set、task-scoped identity check。
 - [x] Direct/sharded Sources、unknown API identity/version、Revision none、overlap、fixed-point、cycle。
@@ -754,7 +756,7 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 - [x] `$` root rows、root scalar/array/map/object、object openness、recursive unsupported。
 - [x] exact JSON constraint/equality、default_annotation/default、recognized/custom format behavior。
 - [x] parameterless JSON/+json、parameterized/unregistered wire、raw binary boundary、header encoding。
-- [ ] Reply static/dynamic channel、correlation、timeout、whole-Reply fallback、no synthetic operation。
+- [x] Reply static/dynamic channel、correlation、timeout、whole-Reply fallback、no synthetic operation。
 - [ ] Failure core states、deviations、common/inline shapes、receive malformed/unknown/handler errors。
 - [ ] publication safety、unsafe mandatory value failure、instruction structural escape。
 - [ ] canonical marker order、deviation placement、deprecated marker、single prose language、English structure。
