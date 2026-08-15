@@ -152,6 +152,16 @@ const bindingScopeCaseIds = [
   "binding-scopes-valid"
 ];
 
+const messageDirectionCaseIds = [
+  "message-direction-nullable-invalid",
+  "message-direction-receive-bare-conditional-invalid",
+  "message-direction-receive-required-columns-invalid",
+  "message-direction-send-conditional-meaning-invalid",
+  "message-direction-send-presence-columns-invalid",
+  "message-direction-unknown-marker-missing-invalid",
+  "message-direction-values-and-nested-ancestors-valid"
+];
+
 function fixtureSource(fixturePath) {
   const source = fs.readFileSync(fixturePath, "utf8");
   return source.endsWith("\n") ? source.slice(0, -1) : source;
@@ -1006,5 +1016,72 @@ test("executes the Task 9 DM-OP-004 DM-MSG-002 DM-REPLY-002 and DM-FAIL-003 bind
       entry.severity === "error" && !entry.cascade
     ));
     assert.deepEqual(primary.map((entry) => entry.ruleId), [expectedRuleId], id);
+  }
+});
+
+test("executes the Task 9 DM-MSG-001 direction nullability and nested-ancestor corpus", () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
+  const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
+
+  assert.deepEqual(
+    messageDirectionCaseIds.filter((id) => !byId.has(id)),
+    []
+  );
+  for (const id of messageDirectionCaseIds) {
+    const fixtureCase = byId.get(id);
+    assert.equal(
+      fixtureCase.expected === "valid" || fixtureCase.expected_rule_ids.length === 1,
+      true,
+      id
+    );
+  }
+
+  const result = runFixtureCorpus(corpusPath, validateCase);
+  assert.equal(result.failed, 0, result.report);
+
+  const validCase = byId.get("message-direction-values-and-nested-ancestors-valid");
+  const valid = validateCase(path.join(corpusPath, validCase.path), validCase);
+  assert.deepEqual(valid.diagnostics, []);
+  const validChannel = fs.readFileSync(path.join(
+    corpusPath,
+    validCase.path,
+    "channels/directions.md"
+  ), "utf8");
+  for (const contractLine of [
+    "| x-tenant | string | when the channel is shared by multiple tenants | no | Identifies the tenant on shared channels |",
+    "| x-trace | unknown | unknown | unknown | Trace contract requires the event envelope source |",
+    "| account | object | optional | yes | Additional properties are forbidden |",
+    "| account.id | string | always | no | Account identifier when account is present and non-null |",
+    "| audit.actor | string | always | no | Actor identifier when audit is present and non-null |",
+    "| source.name | string | always | no | Source name when source is present and non-null |",
+    "| x-tenant | string | conditional | no | Required when the command channel is shared by multiple tenants |",
+    "| x-trace | unknown | unknown | unknown | Trace contract requires the command envelope source |",
+    "| customer | object | no | yes | Additional properties are forbidden |",
+    "| customer.id | string | yes | no | Customer identifier when customer is present and non-null |",
+    "| delivery.address | string | yes | no | Address when delivery is present and non-null |",
+    "| metadata.trace | string | yes | no | Trace value when metadata is present and non-null |"
+  ]) {
+    assert.equal(validChannel.includes(contractLine), true, contractLine);
+  }
+  assert.deepEqual(
+    Object.fromEntries(Object.entries(valid.facts.core.messageDefinitions.byOperation).map(
+      ([operation, definitions]) => [operation, definitions.map((entry) => ({
+        direction: entry.direction,
+        name: entry.name
+      }))]
+    )),
+    {
+      "receive-order": [{ direction: "RECEIVE", name: "order-received" }],
+      "send-order": [{ direction: "SEND", name: "order-command" }]
+    }
+  );
+
+  for (const id of messageDirectionCaseIds.filter((caseId) => caseId !== validCase.id)) {
+    const fixtureCase = byId.get(id);
+    const invalid = validateCase(path.join(corpusPath, fixtureCase.path), fixtureCase);
+    const primary = invalid.diagnostics.filter((entry) => (
+      entry.severity === "error" && !entry.cascade
+    ));
+    assert.deepEqual(primary.map((entry) => entry.ruleId), ["DM-MSG-001"], id);
   }
 });

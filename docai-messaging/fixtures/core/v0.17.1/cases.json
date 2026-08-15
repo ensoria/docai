@@ -584,6 +584,55 @@
       "expected_rule_ids": []
     },
     {
+      "id": "message-direction-nullable-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/message-direction-nullable-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-MSG-001"]
+    },
+    {
+      "id": "message-direction-receive-bare-conditional-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/message-direction-receive-bare-conditional-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-MSG-001"]
+    },
+    {
+      "id": "message-direction-receive-required-columns-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/message-direction-receive-required-columns-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-MSG-001"]
+    },
+    {
+      "id": "message-direction-send-conditional-meaning-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/message-direction-send-conditional-meaning-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-MSG-001"]
+    },
+    {
+      "id": "message-direction-send-presence-columns-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/message-direction-send-presence-columns-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-MSG-001"]
+    },
+    {
+      "id": "message-direction-unknown-marker-missing-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/message-direction-unknown-marker-missing-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-MSG-001"]
+    },
+    {
+      "id": "message-direction-values-and-nested-ancestors-valid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/valid/message-direction-values-and-nested-ancestors-valid",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
       "id": "sentence-adjacent-japanese-valid",
       "kind": "sentence-line",
       "path": "focused/valid/sentence-adjacent-japanese-valid.md",
