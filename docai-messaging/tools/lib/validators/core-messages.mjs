@@ -1003,6 +1003,17 @@ function validateExpandedRepresentation(file, markdown, region, direction, opera
   if (region.some((line) => line.line > table.endLine && line.text.startsWith("|"))) {
     diagnostics.push(...payloadDiagnostic("DM-MSG-004", file, table.endLine + 1, "A structured representation contains exactly one field table."));
   }
+  const collectionMarker = postTableMarkers(region, table).find((marker) => (
+    nonEmptyMarker(marker.text, "**unknown**: additional unnamed field requires ")
+  ));
+  if (collectionMarker !== undefined) {
+    diagnostics.push(...payloadDiagnostic(
+      "DM-MSG-004",
+      file,
+      collectionMarker.line,
+      "An additional-unnamed-field marker requires the canonical field table without an example."
+    ));
+  }
   try { example = parseExactJson(fence.content); } catch {
     diagnostics.push(...payloadDiagnostic("DM-MSG-005", file, fence.startLine, "A JSON payload example must parse exactly without duplicate object names or numeric narrowing."));
     return { diagnostics, mediaType };
@@ -1115,7 +1126,11 @@ function validatePayload(file, markdown, message, direction, endLine, reply, ope
   return { diagnostics, formatUses };
 }
 
-function canonicalUnitState(lines, { bindingTable = false, replacementUnit } = {}) {
+function canonicalUnitState(lines, {
+  bindingTable = false,
+  collectionUnknownPrefix = null,
+  replacementUnit
+} = {}) {
   let index = 0;
   while (lines[index]?.text.startsWith("**deviation**: ")) index += 1;
   const core = lines.slice(index);
@@ -1134,13 +1149,21 @@ function canonicalUnitState(lines, { bindingTable = false, replacementUnit } = {
   if (table === null || table.rows.length === 0) return null;
   const markers = postTableMarkers(core, table);
   const consumedLine = markers.at(-1)?.line ?? table.endLine;
+  const unknownMarkers = markers.filter((marker) => marker.kind.type === "unknown");
+  const hasUnknownCell = table.rows.some((row) => row.includes("unknown"));
+  const collectionOnlyUnknowns = collectionUnknownPrefix !== null
+    && unknownMarkers.every((marker) => (
+      marker.text.startsWith(collectionUnknownPrefix)
+        && marker.text.length > collectionUnknownPrefix.length
+    ));
   if (core.some((line) => line.line > consumedLine)
     || table.rows.some((row) => row.some((cell, index) => (
       cell === "" && (bindingTable || index !== 4)
     )))
     || !validMarkerOrder(markers)
-    || table.rows.some((row) => row.includes("unknown"))
-      !== markers.some((marker) => marker.kind.type === "unknown")) return null;
+    || (hasUnknownCell
+      ? unknownMarkers.length === 0
+      : unknownMarkers.length > 0 && !collectionOnlyUnknowns)) return null;
   if (bindingTable
     && !validHeader(table.header, ["Protocol", "Property", "Value / Rule"])) return null;
   return "expanded";
@@ -1207,6 +1230,9 @@ function validateMessageStructure(file, markdown, message, endLine, reply) {
     }
     const state = canonicalUnitState(content, {
       bindingTable: entry.name === "Bindings",
+      collectionUnknownPrefix: entry.name === "Headers"
+        ? "**unknown**: additional unnamed header requires "
+        : null,
       replacementUnit: `${reply ? "reply message" : "message"} ${entry.name} ${messageName(message)}`
     });
     if (state === null) {

@@ -162,6 +162,15 @@ const messageDirectionCaseIds = [
   "message-direction-values-and-nested-ancestors-valid"
 ];
 
+const payloadUnknownCaseIds = [
+  "payload-field-collection-coexists-table-invalid",
+  "payload-generic-whole-section-unknown-invalid",
+  "payload-partial-example-retained-invalid",
+  "payload-partial-marker-missing-invalid",
+  "payload-unknown-forms-and-partial-collections-valid",
+  "payload-whole-unknown-coexists-representation-invalid"
+];
+
 function fixtureSource(fixturePath) {
   const source = fs.readFileSync(fixturePath, "utf8");
   return source.endsWith("\n") ? source.slice(0, -1) : source;
@@ -1083,5 +1092,50 @@ test("executes the Task 9 DM-MSG-001 direction nullability and nested-ancestor c
       entry.severity === "error" && !entry.cascade
     ));
     assert.deepEqual(primary.map((entry) => entry.ruleId), ["DM-MSG-001"], id);
+  }
+});
+
+test("executes the Task 9 DM-MSG-004 payload unknown and partial-collection corpus", () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
+  const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
+
+  assert.deepEqual(
+    payloadUnknownCaseIds.filter((id) => !byId.has(id)),
+    []
+  );
+  for (const id of payloadUnknownCaseIds) {
+    const fixtureCase = byId.get(id);
+    assert.equal(
+      fixtureCase.expected === "valid" || fixtureCase.expected_rule_ids.length === 1,
+      true,
+      id
+    );
+  }
+
+  const result = runFixtureCorpus(corpusPath, validateCase);
+  assert.equal(result.failed, 0, result.report);
+
+  const validCase = byId.get("payload-unknown-forms-and-partial-collections-valid");
+  const valid = validateCase(path.join(corpusPath, validCase.path), validCase);
+  assert.deepEqual(valid.diagnostics, []);
+  assert.deepEqual(
+    Object.fromEntries(Object.entries(valid.facts.core.messageDefinitions.byOperation).map(
+      ([operation, definitions]) => [operation, definitions.map((entry) => entry.name)]
+    )),
+    {
+      "partial-fields": ["partial-fields-message"],
+      "partial-members": ["partial-members-message"],
+      "unknown-fields": ["unknown-fields-message"],
+      "unknown-representations": ["unknown-representations-message"]
+    }
+  );
+
+  for (const id of payloadUnknownCaseIds.filter((caseId) => caseId !== validCase.id)) {
+    const fixtureCase = byId.get(id);
+    const invalid = validateCase(path.join(corpusPath, fixtureCase.path), fixtureCase);
+    const primary = invalid.diagnostics.filter((entry) => (
+      entry.severity === "error" && !entry.cascade
+    ));
+    assert.deepEqual(primary.map((entry) => entry.ruleId), ["DM-MSG-004"], id);
   }
 });

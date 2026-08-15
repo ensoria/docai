@@ -633,6 +633,48 @@
       "expected_rule_ids": []
     },
     {
+      "id": "payload-field-collection-coexists-table-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/payload-field-collection-coexists-table-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-MSG-004"]
+    },
+    {
+      "id": "payload-generic-whole-section-unknown-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/payload-generic-whole-section-unknown-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-MSG-004"]
+    },
+    {
+      "id": "payload-partial-example-retained-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/payload-partial-example-retained-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-MSG-004"]
+    },
+    {
+      "id": "payload-partial-marker-missing-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/payload-partial-marker-missing-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-MSG-004"]
+    },
+    {
+      "id": "payload-unknown-forms-and-partial-collections-valid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/valid/payload-unknown-forms-and-partial-collections-valid",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
+      "id": "payload-whole-unknown-coexists-representation-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/payload-whole-unknown-coexists-representation-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-MSG-004"]
+    },
+    {
       "id": "sentence-adjacent-japanese-valid",
       "kind": "sentence-line",
       "path": "focused/valid/sentence-adjacent-japanese-valid.md",
