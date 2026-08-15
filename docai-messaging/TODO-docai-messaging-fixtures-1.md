@@ -735,6 +735,8 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 
 > **Implementation note (Exact constraint / default / format checkpoint):** task-scoped document set の valid case 一件で、arbitrary-precision number の数学的 equality、`uniqueItems`、canonical constraint order、SEND / RECEIVE の AsyncAPI effective `default` prose、JSON Schema Draft 07 の非behavioral `default_annotation`（JSON `null` を含む）、constraint / annotation format catalog、および open custom format の fragment omission と table 直後の localized `unsupported` を統合検証する。invalid case は exact-equal duplicate item、SEND default behavior 欠落、annotation default への construction behavior 付与、format role 不一致を一件ずつ分離し、単一 primary `DM-MSG-005` / `DM-CONV-003` diagnostic に固定する。source-aware `schema-field-source-scenario` は exact-version vocabulary から expected fragment / behavior / coverage を導出し、custom format の silent projection を拒否する。影響として、Message field validator は default fragment と direction-specific omission semantics の prose consistency も検証し、source evaluator は exact JSON source spellingを保持したまま recognized / custom format 境界を fixture runner から検証可能にする。公開 document grammar は変更しない。
 
+> **Implementation note (Wire / raw binary / header-encoding checkpoint):** task-scoped document set の valid case 一件で、parameterless `application/json`、RFC 9110 token を含む parameterless `+json`、known parameterized JSON / unregistered XML の representation replacement、logical Headers table、および content / size / integrity rule を持つ authoritatively opaque raw binary を統合検証する。invalid document case は parameterized JSON と structured XML を raw-binary prose に偽装する形を分離し、各 case の単一 primary diagnostic を `DM-MSG-004` に固定する。source-aware `adapter-source-scenario` は direct JSON wire、unmapped wire replacement、exact publication mapping による parameter preservation、`projection_digest` に含まれる証明済み emitted-media-type normalization、header encoding / exposure と schema target の互換性を比較し、projection mismatch を単一 `DM-ADAPTER-002` / `DM-ADAPTER-003` diagnostic に集約する。影響として、payload-wire evaluator は canonical media-type parser に基づいて任意 top-level type の parameterless `+json` を直接登録し、non-direct target は complete wire semantics を持つ exact mapping のみ受理する。header evaluator は schema target が与えられた場合に mapping の明示的 compatibility も要求する。公開 document grammar と ordinary-reader requirement は変更しない。
+
 - [x] Metadata、extension name/order/escape、unknown non-`x-` key、sentence grammar。
 - [x] Identity trailer、set/projection digest、closed root、mixed set、task-scoped identity check。
 - [x] Direct/sharded Sources、unknown API identity/version、Revision none、overlap、fixed-point、cycle。
@@ -751,7 +753,7 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 - [x] whole payload unknown、representation-local field collection、partial named siblings、example omission。
 - [x] `$` root rows、root scalar/array/map/object、object openness、recursive unsupported。
 - [x] exact JSON constraint/equality、default_annotation/default、recognized/custom format behavior。
-- [ ] parameterless JSON/+json、parameterized/unregistered wire、raw binary boundary、header encoding。
+- [x] parameterless JSON/+json、parameterized/unregistered wire、raw binary boundary、header encoding。
 - [ ] Reply static/dynamic channel、correlation、timeout、whole-Reply fallback、no synthetic operation。
 - [ ] Failure core states、deviations、common/inline shapes、receive malformed/unknown/handler errors。
 - [ ] publication safety、unsafe mandatory value failure、instruction structural escape。

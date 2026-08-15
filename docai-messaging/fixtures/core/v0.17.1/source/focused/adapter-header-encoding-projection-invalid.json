@@ -1,0 +1,41 @@
+{
+  "docaiMessagingVersion": "0.17.1",
+  "cases": [
+    {
+      "caseId": "header-rule-without-exposure",
+      "adapterClass": "header-encoding",
+      "target": {
+        "protocol": "kafka",
+        "encoding": "record-headers",
+        "specificationVersion": "asyncapi-kafka-binding-0.5.0"
+      },
+      "schemaTarget": "application/vnd.aai.asyncapi+json;version=3.1.0",
+      "publicationMappings": [
+        {
+          "sourceId": "adapter-catalog",
+          "docaiMessagingVersion": "0.17.1",
+          "adapterClass": "header-encoding",
+          "target": {
+            "protocol": "kafka",
+            "encoding": "record-headers",
+            "specificationVersion": "asyncapi-kafka-binding-0.5.0"
+          },
+          "ruleId": "incomplete-kafka-header-map",
+          "ruleVersion": "1.0.0",
+          "defines": ["encoding"],
+          "compatibleSchemaTargets": ["application/vnd.aai.asyncapi+json;version=3.1.0"]
+        }
+      ],
+      "projected": {
+        "caseId": "header-rule-without-exposure",
+        "outcome": "supported",
+        "resolution": "publication-mapping",
+        "ruleId": "incomplete-kafka-header-map",
+        "ruleVersion": "1.0.0",
+        "mappingSourceIds": ["adapter-catalog"],
+        "projection": "emit-header-map",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    }
+  ]
+}

@@ -710,6 +710,27 @@
       "expected_rule_ids": ["DM-CONV-003"]
     },
     {
+      "id": "payload-parameterized-json-as-raw-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/payload-parameterized-json-as-raw-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-MSG-004"]
+    },
+    {
+      "id": "payload-structured-xml-as-raw-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/payload-structured-xml-as-raw-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-MSG-004"]
+    },
+    {
+      "id": "payload-wire-and-raw-boundaries-valid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/valid/payload-wire-and-raw-boundaries-valid",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
       "id": "payload-object-openness-missing-invalid",
       "kind": "task-scoped-document-set",
       "path": "focused/invalid/payload-object-openness-missing-invalid",
@@ -799,6 +820,27 @@
       "path": "source/focused/schema-custom-format-projection-invalid.json",
       "expected": "invalid",
       "expected_rule_ids": ["DM-MSG-005"]
+    },
+    {
+      "id": "adapter-header-encoding-projection-invalid",
+      "kind": "adapter-source-scenario",
+      "path": "source/focused/adapter-header-encoding-projection-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-ADAPTER-003"]
+    },
+    {
+      "id": "adapter-parameterized-wire-projection-invalid",
+      "kind": "adapter-source-scenario",
+      "path": "source/focused/adapter-parameterized-wire-projection-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-ADAPTER-002"]
+    },
+    {
+      "id": "adapter-wire-header-projection-valid",
+      "kind": "adapter-source-scenario",
+      "path": "source/focused/adapter-wire-header-projection-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": []
     },
     {
       "id": "schema-format-default-projection-valid",

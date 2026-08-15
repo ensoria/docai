@@ -1,0 +1,52 @@
+{
+  "docaiMessagingVersion": "0.17.1",
+  "cases": [
+    {
+      "caseId": "parameterized-json-without-mapping",
+      "adapterClass": "payload-wire",
+      "mediaType": "application/json;charset=utf-8",
+      "publicationMappings": [],
+      "projected": {
+        "caseId": "parameterized-json-without-mapping",
+        "outcome": "supported",
+        "resolution": "direct",
+        "effectiveTarget": "application/json;charset=utf-8",
+        "ruleId": "direct-json-wire",
+        "ruleVersion": "0.17.1",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    },
+    {
+      "caseId": "parameterized-json-unproven-normalization",
+      "adapterClass": "payload-wire",
+      "mediaType": "application/json;charset=utf-8",
+      "publicationMappings": [
+        {
+          "sourceId": "adapter-catalog",
+          "docaiMessagingVersion": "0.17.1",
+          "adapterClass": "payload-wire",
+          "target": "application/json;charset=utf-8",
+          "ruleId": "unproven-json-normalization",
+          "ruleVersion": "1.0.0",
+          "defines": ["byte-encoding", "canonical-comparison", "character-encoding", "compact-example", "decoded-value-model", "full-example", "parameter-semantics", "schema-composition"],
+          "emittedMediaType": "application/json",
+          "parameterHandling": "normalize-proven",
+          "projectionDigestCovered": false
+        }
+      ],
+      "projected": {
+        "caseId": "parameterized-json-unproven-normalization",
+        "outcome": "supported",
+        "resolution": "publication-mapping",
+        "effectiveTarget": "application/json;charset=utf-8",
+        "emittedMediaType": "application/json",
+        "mediaTypeResolution": "adapter-normalized",
+        "ruleId": "unproven-json-normalization",
+        "ruleVersion": "1.0.0",
+        "mappingSourceIds": ["adapter-catalog"],
+        "projection": "emit-payload-representation",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    }
+  ]
+}

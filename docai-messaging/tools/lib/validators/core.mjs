@@ -1,6 +1,7 @@
 import { diagnostic } from "../diagnostics.mjs";
 import { parseExactJson } from "../json-value.mjs";
 import { scanMarkdown } from "../markdown.mjs";
+import { canonicalizeMediaType } from "../media-type.mjs";
 import { parseDocsPath } from "../paths.mjs";
 import { validateCoreConventions, validateCoreFormatCatalog } from "./core-conventions.mjs";
 import { validateCoreMessages } from "./core-messages.mjs";
@@ -819,6 +820,47 @@ function supportedAdapter(entry, mapping, projection) {
   };
 }
 
+const PAYLOAD_WIRE_MAPPING_DEFINES = [
+  "byte-encoding",
+  "character-encoding",
+  "parameter-semantics",
+  "decoded-value-model",
+  "full-example",
+  "compact-example",
+  "canonical-comparison",
+  "schema-composition"
+];
+
+function canonicalMediaTypeSource(value) {
+  if (typeof value !== "string") return false;
+  try { return canonicalizeMediaType(value) === value; } catch { return false; }
+}
+
+function directJsonWireTarget(value) {
+  if (!canonicalMediaTypeSource(value) || value.includes(";")) return false;
+  const slash = value.indexOf("/");
+  return value === "application/json"
+    || (slash !== -1 && value.slice(slash + 1).endsWith("+json"));
+}
+
+function payloadWireMapping(entry, version) {
+  return publicationMapping(
+    { ...entry, target: entry.mediaType },
+    version,
+    (candidate) => {
+      const complete = PAYLOAD_WIRE_MAPPING_DEFINES.every((name) => (
+        candidate.defines?.includes(name)
+      ));
+      const emitted = candidate.emittedMediaType;
+      const preserves = emitted === entry.mediaType && candidate.parameterHandling === "preserve";
+      const normalizes = emitted !== entry.mediaType
+        && candidate.parameterHandling === "normalize-proven"
+        && candidate.projectionDigestCovered === true;
+      return complete && canonicalMediaTypeSource(emitted) && (preserves || normalizes);
+    }
+  );
+}
+
 export function evaluateAdapterSourceExpectations({ docaiMessagingVersion, cases }) {
   return cases.map((entry) => {
     if (entry.adapterClass === "schema") {
@@ -852,8 +894,7 @@ export function evaluateAdapterSourceExpectations({ docaiMessagingVersion, cases
     }
 
     if (entry.adapterClass === "payload-wire") {
-      const direct = entry.mediaType === "application/json"
-        || /^application\/[a-z0-9!#$&^_.+-]+\+json$/.test(entry.mediaType);
+      const direct = directJsonWireTarget(entry.mediaType);
       if (direct) {
         return {
           caseId: entry.caseId,
@@ -862,6 +903,24 @@ export function evaluateAdapterSourceExpectations({ docaiMessagingVersion, cases
           effectiveTarget: entry.mediaType,
           ruleId: "direct-json-wire",
           ruleVersion: docaiMessagingVersion,
+          ordinaryReaderRequirement: "normalized-contract-only"
+        };
+      }
+      const mapping = payloadWireMapping(entry, docaiMessagingVersion);
+      if (mapping !== undefined) {
+        return {
+          caseId: entry.caseId,
+          outcome: "supported",
+          resolution: "publication-mapping",
+          effectiveTarget: entry.mediaType,
+          emittedMediaType: mapping.emittedMediaType,
+          mediaTypeResolution: mapping.emittedMediaType === entry.mediaType
+            ? "preserved"
+            : "adapter-normalized",
+          ruleId: mapping.ruleId,
+          ruleVersion: mapping.ruleVersion,
+          mappingSourceIds: [mapping.sourceId],
+          projection: "emit-payload-representation",
           ordinaryReaderRequirement: "normalized-contract-only"
         };
       }
@@ -877,7 +936,10 @@ export function evaluateAdapterSourceExpectations({ docaiMessagingVersion, cases
 
     if (entry.adapterClass === "header-encoding") {
       const mapping = publicationMapping(entry, docaiMessagingVersion, (candidate) => (
-        candidate.defines?.includes("encoding") && candidate.defines?.includes("exposure")
+        candidate.defines?.includes("encoding")
+          && candidate.defines?.includes("exposure")
+          && (entry.schemaTarget === undefined
+            || candidate.compatibleSchemaTargets?.includes(entry.schemaTarget))
       ));
       return mapping === undefined
         ? {
@@ -901,6 +963,28 @@ export function evaluateAdapterSourceExpectations({ docaiMessagingVersion, cases
       }
       : supportedAdapter(entry, mapping, "emit-channel-binding");
   });
+}
+
+export function validateAdapterSourceExpectations(scenario, { file = "source-input.json" } = {}) {
+  const expectations = evaluateAdapterSourceExpectations(scenario);
+  const sources = new Map((scenario.cases ?? []).map((entry) => [entry.caseId, entry]));
+  const mismatches = expectations.flatMap((expected) => {
+    const source = sources.get(expected.caseId);
+    if (exactTarget(expected, source?.projected)) return [];
+    return [{
+      ruleId: source?.adapterClass === "header-encoding" ? "DM-ADAPTER-003" : "DM-ADAPTER-002"
+    }];
+  });
+  const rules = [...new Set(mismatches.map((entry) => entry.ruleId))];
+  return {
+    diagnostics: rules.map((ruleId) => diagnostic(
+      ruleId,
+      file,
+      1,
+      `Adapter projection disagrees with ${mismatches.filter((entry) => entry.ruleId === ruleId).length} exact source expectation(s).`
+    )),
+    facts: { adapterSourceExpectations: expectations }
+  };
 }
 
 function trustResult(entry, outcome, details = {}) {

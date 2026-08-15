@@ -1,0 +1,210 @@
+{
+  "docaiMessagingVersion": "0.17.1",
+  "cases": [
+    {
+      "caseId": "application-json",
+      "adapterClass": "payload-wire",
+      "mediaType": "application/json",
+      "publicationMappings": [],
+      "projected": {
+        "caseId": "application-json",
+        "outcome": "supported",
+        "resolution": "direct",
+        "effectiveTarget": "application/json",
+        "ruleId": "direct-json-wire",
+        "ruleVersion": "0.17.1",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    },
+    {
+      "caseId": "vendor-json",
+      "adapterClass": "payload-wire",
+      "mediaType": "text/vnd.example+json",
+      "publicationMappings": [],
+      "projected": {
+        "caseId": "vendor-json",
+        "outcome": "supported",
+        "resolution": "direct",
+        "effectiveTarget": "text/vnd.example+json",
+        "ruleId": "direct-json-wire",
+        "ruleVersion": "0.17.1",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    },
+    {
+      "caseId": "token-rich-vendor-json",
+      "adapterClass": "payload-wire",
+      "mediaType": "application/vnd.example%2btag+json",
+      "publicationMappings": [],
+      "projected": {
+        "caseId": "token-rich-vendor-json",
+        "outcome": "supported",
+        "resolution": "direct",
+        "effectiveTarget": "application/vnd.example%2btag+json",
+        "ruleId": "direct-json-wire",
+        "ruleVersion": "0.17.1",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    },
+    {
+      "caseId": "parameterized-json-unmapped",
+      "adapterClass": "payload-wire",
+      "mediaType": "application/json;charset=utf-8",
+      "publicationMappings": [],
+      "projected": {
+        "caseId": "parameterized-json-unmapped",
+        "outcome": "emit-unsupported",
+        "resolution": "no-exact-mapping",
+        "effectiveTarget": "application/json;charset=utf-8",
+        "projection": "replace-payload-representation",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    },
+    {
+      "caseId": "xml-unmapped",
+      "adapterClass": "payload-wire",
+      "mediaType": "application/xml",
+      "publicationMappings": [],
+      "projected": {
+        "caseId": "xml-unmapped",
+        "outcome": "emit-unsupported",
+        "resolution": "no-exact-mapping",
+        "effectiveTarget": "application/xml",
+        "projection": "replace-payload-representation",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    },
+    {
+      "caseId": "parameterized-json-preserved",
+      "adapterClass": "payload-wire",
+      "mediaType": "application/json;charset=utf-8",
+      "publicationMappings": [
+        {
+          "sourceId": "adapter-catalog",
+          "docaiMessagingVersion": "0.17.1",
+          "adapterClass": "payload-wire",
+          "target": "application/json;charset=utf-8",
+          "ruleId": "json-charset-preserving-wire",
+          "ruleVersion": "1.0.0",
+          "defines": ["byte-encoding", "canonical-comparison", "character-encoding", "compact-example", "decoded-value-model", "full-example", "parameter-semantics", "schema-composition"],
+          "emittedMediaType": "application/json;charset=utf-8",
+          "parameterHandling": "preserve"
+        }
+      ],
+      "projected": {
+        "caseId": "parameterized-json-preserved",
+        "outcome": "supported",
+        "resolution": "publication-mapping",
+        "effectiveTarget": "application/json;charset=utf-8",
+        "emittedMediaType": "application/json;charset=utf-8",
+        "mediaTypeResolution": "preserved",
+        "ruleId": "json-charset-preserving-wire",
+        "ruleVersion": "1.0.0",
+        "mappingSourceIds": ["adapter-catalog"],
+        "projection": "emit-payload-representation",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    },
+    {
+      "caseId": "parameterized-json-normalized",
+      "adapterClass": "payload-wire",
+      "mediaType": "application/json;charset=utf-8",
+      "publicationMappings": [
+        {
+          "sourceId": "adapter-catalog",
+          "docaiMessagingVersion": "0.17.1",
+          "adapterClass": "payload-wire",
+          "target": "application/json;charset=utf-8",
+          "ruleId": "json-charset-normalizing-wire",
+          "ruleVersion": "1.1.0",
+          "defines": ["byte-encoding", "canonical-comparison", "character-encoding", "compact-example", "decoded-value-model", "full-example", "parameter-semantics", "schema-composition"],
+          "emittedMediaType": "application/json",
+          "parameterHandling": "normalize-proven",
+          "projectionDigestCovered": true
+        }
+      ],
+      "projected": {
+        "caseId": "parameterized-json-normalized",
+        "outcome": "supported",
+        "resolution": "publication-mapping",
+        "effectiveTarget": "application/json;charset=utf-8",
+        "emittedMediaType": "application/json",
+        "mediaTypeResolution": "adapter-normalized",
+        "ruleId": "json-charset-normalizing-wire",
+        "ruleVersion": "1.1.0",
+        "mappingSourceIds": ["adapter-catalog"],
+        "projection": "emit-payload-representation",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    },
+    {
+      "caseId": "mapped-kafka-headers",
+      "adapterClass": "header-encoding",
+      "target": {
+        "protocol": "kafka",
+        "encoding": "record-headers",
+        "specificationVersion": "asyncapi-kafka-binding-0.5.0"
+      },
+      "schemaTarget": "application/vnd.aai.asyncapi+json;version=3.1.0",
+      "publicationMappings": [
+        {
+          "sourceId": "adapter-catalog",
+          "docaiMessagingVersion": "0.17.1",
+          "adapterClass": "header-encoding",
+          "target": {
+            "protocol": "kafka",
+            "encoding": "record-headers",
+            "specificationVersion": "asyncapi-kafka-binding-0.5.0"
+          },
+          "ruleId": "kafka-header-map",
+          "ruleVersion": "1.0.0",
+          "defines": ["encoding", "exposure"],
+          "compatibleSchemaTargets": ["application/vnd.aai.asyncapi+json;version=3.1.0"]
+        }
+      ],
+      "projected": {
+        "caseId": "mapped-kafka-headers",
+        "outcome": "supported",
+        "resolution": "publication-mapping",
+        "ruleId": "kafka-header-map",
+        "ruleVersion": "1.0.0",
+        "mappingSourceIds": ["adapter-catalog"],
+        "projection": "emit-header-map",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    },
+    {
+      "caseId": "incompatible-kafka-headers",
+      "adapterClass": "header-encoding",
+      "target": {
+        "protocol": "kafka",
+        "encoding": "record-headers",
+        "specificationVersion": "asyncapi-kafka-binding-0.5.0"
+      },
+      "schemaTarget": "application/vnd.aai.asyncapi+json;version=3.1.0",
+      "publicationMappings": [
+        {
+          "sourceId": "adapter-catalog",
+          "docaiMessagingVersion": "0.17.1",
+          "adapterClass": "header-encoding",
+          "target": {
+            "protocol": "kafka",
+            "encoding": "record-headers",
+            "specificationVersion": "asyncapi-kafka-binding-0.5.0"
+          },
+          "ruleId": "kafka-header-map",
+          "ruleVersion": "1.0.0",
+          "defines": ["encoding", "exposure"],
+          "compatibleSchemaTargets": ["application/schema+json;version=draft-07"]
+        }
+      ],
+      "projected": {
+        "caseId": "incompatible-kafka-headers",
+        "outcome": "emit-unsupported",
+        "resolution": "no-exact-mapping",
+        "projection": "replace-header-representation",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    }
+  ]
+}

@@ -191,6 +191,15 @@ const payloadConstraintAndFormatCaseIds = [
   "schema-custom-format-projection-invalid"
 ];
 
+const wireAndHeaderCaseIds = [
+  "adapter-header-encoding-projection-invalid",
+  "adapter-parameterized-wire-projection-invalid",
+  "adapter-wire-header-projection-valid",
+  "payload-parameterized-json-as-raw-invalid",
+  "payload-structured-xml-as-raw-invalid",
+  "payload-wire-and-raw-boundaries-valid"
+];
+
 function fixtureSource(fixturePath) {
   const source = fs.readFileSync(fixturePath, "utf8");
   return source.endsWith("\n") ? source.slice(0, -1) : source;
@@ -240,6 +249,13 @@ function validateCase(fixturePath, fixtureCase) {
   if (fixtureCase.kind === "schema-field-source-scenario") {
     const scenario = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
     return coreValidator.validateSchemaFieldSourceExpectations(
+      scenario,
+      { file: fixtureCase.path }
+    );
+  }
+  if (fixtureCase.kind === "adapter-source-scenario") {
+    const scenario = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
+    return coreValidator.validateAdapterSourceExpectations(
       scenario,
       { file: fixtureCase.path }
     );
@@ -1305,6 +1321,143 @@ test("executes the Task 9 DM-MSG-005 DM-CONV-003 exact-constraint default and fo
 
   for (const id of payloadConstraintAndFormatCaseIds.filter((caseId) => (
     ![validCase.id, sourceCase.id].includes(caseId)
+  ))) {
+    const fixtureCase = byId.get(id);
+    const invalid = validateCase(path.join(corpusPath, fixtureCase.path), fixtureCase);
+    const primary = invalid.diagnostics.filter((entry) => (
+      entry.severity === "error" && !entry.cascade
+    ));
+    assert.deepEqual(primary.map((entry) => entry.ruleId), fixtureCase.expected_rule_ids, id);
+  }
+});
+
+test("executes the Task 9 DM-ADAPTER-002 DM-ADAPTER-003 DM-MSG-004 wire header and raw corpus", () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
+  const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
+
+  assert.deepEqual(wireAndHeaderCaseIds.filter((id) => !byId.has(id)), []);
+  for (const id of wireAndHeaderCaseIds) {
+    const fixtureCase = byId.get(id);
+    assert.equal(
+      fixtureCase.expected === "valid" || fixtureCase.expected_rule_ids.length === 1,
+      true,
+      id
+    );
+  }
+
+  const result = runFixtureCorpus(corpusPath, validateCase);
+  assert.equal(result.failed, 0, result.report);
+
+  const documentCase = byId.get("payload-wire-and-raw-boundaries-valid");
+  const document = validateCase(path.join(corpusPath, documentCase.path), documentCase);
+  assert.deepEqual(document.diagnostics, []);
+  assert.deepEqual(
+    Object.fromEntries(Object.entries(document.facts.core.messageDefinitions.byOperation).map(
+      ([operation, definitions]) => [operation, definitions.map((entry) => entry.name)]
+    )),
+    {
+      "direct-json": ["direct-json-message"],
+      "direct-vendor-json": ["direct-vendor-json-message"],
+      "opaque-binary": ["opaque-binary-message"],
+      "parameterized-json": ["parameterized-json-message"],
+      "unregistered-xml": ["unregistered-xml-message"]
+    }
+  );
+
+  const sourceCase = byId.get("adapter-wire-header-projection-valid");
+  const source = validateCase(path.join(corpusPath, sourceCase.path), sourceCase);
+  assert.deepEqual(source.diagnostics, []);
+  assert.deepEqual(source.facts.adapterSourceExpectations, [
+    {
+      caseId: "application-json",
+      outcome: "supported",
+      resolution: "direct",
+      effectiveTarget: "application/json",
+      ruleId: "direct-json-wire",
+      ruleVersion: "0.17.1",
+      ordinaryReaderRequirement: "normalized-contract-only"
+    },
+    {
+      caseId: "vendor-json",
+      outcome: "supported",
+      resolution: "direct",
+      effectiveTarget: "text/vnd.example+json",
+      ruleId: "direct-json-wire",
+      ruleVersion: "0.17.1",
+      ordinaryReaderRequirement: "normalized-contract-only"
+    },
+    {
+      caseId: "token-rich-vendor-json",
+      outcome: "supported",
+      resolution: "direct",
+      effectiveTarget: "application/vnd.example%2btag+json",
+      ruleId: "direct-json-wire",
+      ruleVersion: "0.17.1",
+      ordinaryReaderRequirement: "normalized-contract-only"
+    },
+    {
+      caseId: "parameterized-json-unmapped",
+      outcome: "emit-unsupported",
+      resolution: "no-exact-mapping",
+      effectiveTarget: "application/json;charset=utf-8",
+      projection: "replace-payload-representation",
+      ordinaryReaderRequirement: "normalized-contract-only"
+    },
+    {
+      caseId: "xml-unmapped",
+      outcome: "emit-unsupported",
+      resolution: "no-exact-mapping",
+      effectiveTarget: "application/xml",
+      projection: "replace-payload-representation",
+      ordinaryReaderRequirement: "normalized-contract-only"
+    },
+    {
+      caseId: "parameterized-json-preserved",
+      outcome: "supported",
+      resolution: "publication-mapping",
+      effectiveTarget: "application/json;charset=utf-8",
+      emittedMediaType: "application/json;charset=utf-8",
+      mediaTypeResolution: "preserved",
+      ruleId: "json-charset-preserving-wire",
+      ruleVersion: "1.0.0",
+      mappingSourceIds: ["adapter-catalog"],
+      projection: "emit-payload-representation",
+      ordinaryReaderRequirement: "normalized-contract-only"
+    },
+    {
+      caseId: "parameterized-json-normalized",
+      outcome: "supported",
+      resolution: "publication-mapping",
+      effectiveTarget: "application/json;charset=utf-8",
+      emittedMediaType: "application/json",
+      mediaTypeResolution: "adapter-normalized",
+      ruleId: "json-charset-normalizing-wire",
+      ruleVersion: "1.1.0",
+      mappingSourceIds: ["adapter-catalog"],
+      projection: "emit-payload-representation",
+      ordinaryReaderRequirement: "normalized-contract-only"
+    },
+    {
+      caseId: "mapped-kafka-headers",
+      outcome: "supported",
+      resolution: "publication-mapping",
+      ruleId: "kafka-header-map",
+      ruleVersion: "1.0.0",
+      mappingSourceIds: ["adapter-catalog"],
+      projection: "emit-header-map",
+      ordinaryReaderRequirement: "normalized-contract-only"
+    },
+    {
+      caseId: "incompatible-kafka-headers",
+      outcome: "emit-unsupported",
+      resolution: "no-exact-mapping",
+      projection: "replace-header-representation",
+      ordinaryReaderRequirement: "normalized-contract-only"
+    }
+  ]);
+
+  for (const id of wireAndHeaderCaseIds.filter((caseId) => (
+    ![documentCase.id, sourceCase.id].includes(caseId)
   ))) {
     const fixtureCase = byId.get(id);
     const invalid = validateCase(path.join(corpusPath, fixtureCase.path), fixtureCase);
