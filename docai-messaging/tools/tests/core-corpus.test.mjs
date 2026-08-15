@@ -210,6 +210,18 @@ const replyContractCaseIds = [
   "reply-whole-fallback-index-invalid"
 ];
 
+const failureContractCaseIds = [
+  "common-failure-shape-replacement-mismatch-invalid",
+  "failure-action-recovery-invalid",
+  "failure-actions-and-shapes-valid",
+  "failure-deviation-order-invalid",
+  "failure-inline-order-invalid",
+  "failure-inline-replacement-content-invalid",
+  "failure-reference-embedded-invalid",
+  "failure-shape-replacement-mismatch-invalid",
+  "failure-state-mixed-invalid"
+];
+
 function fixtureSource(fixturePath) {
   const source = fs.readFileSync(fixturePath, "utf8");
   return source.endsWith("\n") ? source.slice(0, -1) : source;
@@ -1550,6 +1562,100 @@ test("executes the Task 9 DM-REPLY-001 DM-REPLY-002 DM-REPLY-003 channel state a
     ["reply-static-channel-parameters-invalid", "DM-REPLY-002"],
     ["reply-whole-fallback-coexists-expanded-invalid", "DM-REPLY-001"],
     ["reply-whole-fallback-index-invalid", "DM-REPLY-003"]
+  ]) {
+    const fixtureCase = byId.get(id);
+    const invalid = validateCase(path.join(corpusPath, fixtureCase.path), fixtureCase);
+    const primary = invalid.diagnostics.filter((entry) => (
+      entry.severity === "error" && !entry.cascade
+    ));
+    assert.deepEqual(primary.map((entry) => entry.ruleId), [expectedRuleId], id);
+  }
+});
+
+test("executes the Task 9 DM-FAIL-001 DM-FAIL-002 DM-FAIL-003 DM-CONV-004 states actions and shapes corpus", () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
+  const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
+
+  assert.deepEqual(failureContractCaseIds.filter((id) => !byId.has(id)), []);
+  for (const id of failureContractCaseIds) {
+    const fixtureCase = byId.get(id);
+    assert.equal(
+      fixtureCase.expected === "valid" || fixtureCase.expected_rule_ids.length === 1,
+      true,
+      id
+    );
+  }
+
+  const result = runFixtureCorpus(corpusPath, validateCase);
+  assert.equal(result.failed, 0, result.report);
+
+  const validCase = byId.get("failure-actions-and-shapes-valid");
+  const valid = validateCase(path.join(corpusPath, validCase.path), validCase);
+  assert.deepEqual(valid.diagnostics, []);
+  const validChannel = fs.readFileSync(
+    path.join(corpusPath, validCase.path, "channels/failures.md"),
+    "utf8"
+  );
+  for (const expectedFragment of [
+    "### Failure Handling\n\nnone",
+    "### Failure Handling\n\nunknown\n**unknown**:",
+    "### Failure Handling\n\n**unsupported**: replaces Failure Handling:",
+    "### Failure Handling\n\n**deviation**: alpha inherited retry rule is replaced by immediate escalation\n**deviation**: zeta inherited dead-letter rule is replaced by quarantine routing\n| Failure | Signal | Condition | Action |",
+    "### Failure Handling\n\n**deviation**: inherited poison-message retry rule is suppressed because this operation has no poison-message state\nnone",
+    "### Failure Handling\n\n**deviation**: inherited retry rule is replaced by escalation before unresolved behavior is consulted\nunknown\n**unknown**:",
+    "### Failure Handling\n\n**deviation**: inherited retry rule is replaced by escalation before encoded failure rules are consulted\n**unsupported**: replaces Failure Handling:",
+    "| malformed-payload | inline:malformed-payload |",
+    "| unknown-variant | inline:unknown-variant |",
+    "| handler-error | common:handler-error |"
+  ]) {
+    assert.equal(validChannel.includes(expectedFragment), true, expectedFragment);
+  }
+  assert.deepEqual(
+    valid.facts.core.failureShapes.common.map((shape) => ({
+      label: shape.label,
+      replacement: shape.replacement
+    })),
+    [
+      { label: "handler-error", replacement: false },
+      { label: "legacy-error", replacement: true }
+    ]
+  );
+  assert.deepEqual(valid.facts.core.failureShapes.commonReferences, [
+    { label: "handler-error", operation: "expanded-receive" },
+    { label: "legacy-error", operation: "expanded-receive" }
+  ]);
+  assert.deepEqual(
+    valid.facts.core.failureShapes.inline.map((shape) => ({
+      label: shape.label,
+      operation: shape.operation,
+      replacement: shape.replacement
+    })),
+    [
+      { label: "malformed-payload", operation: "expanded-receive", replacement: false },
+      { label: "unknown-variant", operation: "expanded-receive", replacement: false },
+      { label: "encoded-signal", operation: "expanded-receive", replacement: true }
+    ]
+  );
+  assert.deepEqual(Object.keys(valid.facts.core.operationDefinitions.byName), [
+    "expanded-receive",
+    "expanded-with-deviation",
+    "none",
+    "none-with-deviation",
+    "unknown",
+    "unknown-with-deviation",
+    "unsupported",
+    "unsupported-with-deviation"
+  ]);
+
+  for (const [id, expectedRuleId] of [
+    ["common-failure-shape-replacement-mismatch-invalid", "DM-CONV-004"],
+    ["failure-action-recovery-invalid", "DM-FAIL-002"],
+    ["failure-deviation-order-invalid", "DM-FAIL-001"],
+    ["failure-inline-order-invalid", "DM-FAIL-002"],
+    ["failure-inline-replacement-content-invalid", "DM-FAIL-003"],
+    ["failure-reference-embedded-invalid", "DM-FAIL-002"],
+    ["failure-shape-replacement-mismatch-invalid", "DM-FAIL-003"],
+    ["failure-state-mixed-invalid", "DM-FAIL-001"]
   ]) {
     const fixtureCase = byId.get(id);
     const invalid = validateCase(path.join(corpusPath, fixtureCase.path), fixtureCase);

@@ -780,6 +780,55 @@
       "expected_rule_ids": ["DM-REPLY-003"]
     },
     {
+      "id": "failure-action-recovery-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/failure-action-recovery-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-FAIL-002"]
+    },
+    {
+      "id": "failure-actions-and-shapes-valid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/valid/failure-actions-and-shapes-valid",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
+      "id": "failure-deviation-order-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/failure-deviation-order-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-FAIL-001"]
+    },
+    {
+      "id": "failure-inline-order-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/failure-inline-order-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-FAIL-002"]
+    },
+    {
+      "id": "failure-inline-replacement-content-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/failure-inline-replacement-content-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-FAIL-003"]
+    },
+    {
+      "id": "failure-reference-embedded-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/failure-reference-embedded-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-FAIL-002"]
+    },
+    {
+      "id": "failure-state-mixed-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/failure-state-mixed-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-FAIL-001"]
+    },
+    {
       "id": "payload-object-openness-missing-invalid",
       "kind": "task-scoped-document-set",
       "path": "focused/invalid/payload-object-openness-missing-invalid",

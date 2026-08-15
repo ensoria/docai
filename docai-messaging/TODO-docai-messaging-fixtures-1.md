@@ -739,6 +739,8 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 
 > **Implementation note (Reply channel / fallback / operation-identity checkpoint):** task-scoped document set の valid case 一件に、address parameter を厳密に列挙する static Reply channel、request から導出する dynamic Reply channel、SEND の deadline / expiry action、RECEIVE で conventions に従う `timeout: none`、Reply `none`、whole-section `unknown`、whole-section replacement `unsupported`、および embedded Reply と同じ static channel / message を選ぶ独立 operation を統合する。read-only facts は expanded Reply だけを reply message として保持し、unknown / unsupported fallback から reply identity を作らず、embedded Reply から operation を合成せず、独立宣言された operation だけを通常 operation として保持する。invalid case は whole-Reply unknown と expanded key の混在、`correlation: none`、dynamic channel の Parameters、static channel parameter の欠落、SEND の `timeout: none`、whole-Reply unknown から発明した INDEX `reply:` entry を一件ずつ分離し、単一 primary `DM-REPLY-001` / `DM-REPLY-002` / `DM-REPLY-003` diagnostic に固定する。影響として、Task 6 の既存 Reply validator と fact interface を focused document-set 境界で固定し、production validation semantics と公開 document grammar は変更しない。
 
+> **Implementation note (Failure states / actions / shapes checkpoint):** task-scoped document set の valid case 一件に、deviation なしの `none` / whole-section `unknown` / whole-section replacement / expanded table、各 incomplete state に先行する deviation、sorted multiple deviations を伴う expanded table、および suppression-only deviation-plus-`none` を統合する。expanded RECEIVE operation は malformed payload、unknown variant、handler error を exact `inline:<label>` / `common:<label>` Signal で表し、expanded / replacement の common shape と expanded / replacement の inline shape を一度ずつ解決する。invalid case は core state の混在、deviation order、recovery state を欠く Action、Signal prose に埋め込んだ shape reference、inline shape の first-use order、replacement shape 後の normal subsection を一件ずつ分離し、既存の label mismatch cases と合わせて単一 primary `DM-FAIL-001` / `DM-FAIL-002` / `DM-FAIL-003` / `DM-CONV-004` diagnostic に固定する。影響として、Task 6 の既存 Failure validator と read-only failure-shape facts を focused document-set 境界で固定し、production validation semantics、fact interface、および公開 document grammar は変更しない。
+
 - [x] Metadata、extension name/order/escape、unknown non-`x-` key、sentence grammar。
 - [x] Identity trailer、set/projection digest、closed root、mixed set、task-scoped identity check。
 - [x] Direct/sharded Sources、unknown API identity/version、Revision none、overlap、fixed-point、cycle。
@@ -757,7 +759,7 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 - [x] exact JSON constraint/equality、default_annotation/default、recognized/custom format behavior。
 - [x] parameterless JSON/+json、parameterized/unregistered wire、raw binary boundary、header encoding。
 - [x] Reply static/dynamic channel、correlation、timeout、whole-Reply fallback、no synthetic operation。
-- [ ] Failure core states、deviations、common/inline shapes、receive malformed/unknown/handler errors。
+- [x] Failure core states、deviations、common/inline shapes、receive malformed/unknown/handler errors。
 - [ ] publication safety、unsafe mandatory value failure、instruction structural escape。
 - [ ] canonical marker order、deviation placement、deprecated marker、single prose language、English structure。
 - [ ] implementation readiness cases: same contract under different reader/runtime/adapter capabilities。
