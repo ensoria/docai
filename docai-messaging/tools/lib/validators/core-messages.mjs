@@ -740,6 +740,29 @@ function constraintsSatisfiable(fragments, nullable) {
   return true;
 }
 
+function defaultSemanticsCompatible(table, row, fragments) {
+  const keywords = new Set(fragments.map((fragment) => fragment.keyword));
+  if (!keywords.has("default") && !keywords.has("default_annotation")) return true;
+
+  const meaning = row[4].toLowerCase();
+  const sendBehavior = meaning.includes(
+    "uses the default as the effective value when constructing an omitted field"
+  );
+  const receiveBehavior = meaning.includes(
+    "treats the absent field as having that effective value"
+  );
+  if (keywords.has("default_annotation")) return !sendBehavior && !receiveBehavior;
+
+  const direction = table.header[2] === "Required" ? "SEND" : "RECEIVE";
+  const omissionAllowed = direction === "SEND"
+    ? ["no", "conditional"].includes(row[2])
+    : row[2] !== "always" && row[2] !== "unknown";
+  if (!omissionAllowed) return !sendBehavior && !receiveBehavior;
+  return direction === "SEND"
+    ? sendBehavior && !receiveBehavior
+    : receiveBehavior && !sendBehavior;
+}
+
 function exampleFence(markdown, startLine, endLine) {
   const fences = markdown.fences.filter((fence) => fence.startLine > startLine && fence.endLine < endLine);
   if (fences.length !== 1) return null;
@@ -777,7 +800,8 @@ function validateFields(table, example, operation, message, formatUses, objectOp
     const constraints = parseConstraints(row[4]);
     if (!constraints.valid
       || !constraintsCompatibleWithType(row[1], row[3], constraints.fragments)
-      || !constraintsSatisfiable(constraints.fragments, row[3])) return false;
+      || !constraintsSatisfiable(constraints.fragments, row[3])
+      || !defaultSemanticsCompatible(table, row, constraints.fragments)) return false;
     for (const fragment of constraints.fragments) {
       if (["format", "format_annotation"].includes(fragment.keyword)) {
         if (typeof fragment.value !== "string") return false;

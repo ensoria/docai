@@ -1,0 +1,16 @@
+{
+  "docai_messaging": "0.17.1",
+  "cases": [
+    {
+      "caseId": "asyncapi-open-uuid",
+      "sourceSpecification": "AsyncAPI 3.1.0",
+      "keyword": "format",
+      "valueSource": "\"uuid\"",
+      "projected": {
+        "fragment": "`format=\"uuid\"`",
+        "requiredBehavior": "constraint-catalog",
+        "localizedUnsupported": false
+      }
+    }
+  ]
+}

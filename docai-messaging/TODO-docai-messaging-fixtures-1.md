@@ -733,6 +733,8 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 
 > **Implementation note (Root payload shape / recursion checkpoint):** task-scoped document set の valid case 一件に root scalar、root array と `$[]` item container、dynamic-key root map と `$.{key}` value path、local allowed-with-type / forbidden object openness、および recursive schema の representation-local replacement を統合検証する。invalid case は SEND root の `Required=yes`、RECEIVE root の `Presence=always`、`payload_nullable` と root `Nullable` の一致、scalar root `$` row の必須性、object openness、および recursive replacement の排他性を一件ずつ分離し、単一 primary `DM-MSG-001` / `DM-MSG-004` / `DM-MSG-005` diagnostic に固定する。focused RED で見つかった root-map example coverage の境界欠落に対応し、field coverage は `map<string, T>` の実キーを `{key}` path に対応付け、named property と `{key}` が共存する object では明示 row を優先する。影響として、公開 document grammar と read-only fact interface は変更せず、README §4.1 の root map path semantics を production validator で受理・検証できるようにする。
 
+> **Implementation note (Exact constraint / default / format checkpoint):** task-scoped document set の valid case 一件で、arbitrary-precision number の数学的 equality、`uniqueItems`、canonical constraint order、SEND / RECEIVE の AsyncAPI effective `default` prose、JSON Schema Draft 07 の非behavioral `default_annotation`（JSON `null` を含む）、constraint / annotation format catalog、および open custom format の fragment omission と table 直後の localized `unsupported` を統合検証する。invalid case は exact-equal duplicate item、SEND default behavior 欠落、annotation default への construction behavior 付与、format role 不一致を一件ずつ分離し、単一 primary `DM-MSG-005` / `DM-CONV-003` diagnostic に固定する。source-aware `schema-field-source-scenario` は exact-version vocabulary から expected fragment / behavior / coverage を導出し、custom format の silent projection を拒否する。影響として、Message field validator は default fragment と direction-specific omission semantics の prose consistency も検証し、source evaluator は exact JSON source spellingを保持したまま recognized / custom format 境界を fixture runner から検証可能にする。公開 document grammar は変更しない。
+
 - [x] Metadata、extension name/order/escape、unknown non-`x-` key、sentence grammar。
 - [x] Identity trailer、set/projection digest、closed root、mixed set、task-scoped identity check。
 - [x] Direct/sharded Sources、unknown API identity/version、Revision none、overlap、fixed-point、cycle。
@@ -748,7 +750,7 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 - [x] SEND Required、RECEIVE Presence optional/condition/unknown、Nullable、nested ancestor semantics。
 - [x] whole payload unknown、representation-local field collection、partial named siblings、example omission。
 - [x] `$` root rows、root scalar/array/map/object、object openness、recursive unsupported。
-- [ ] exact JSON constraint/equality、default_annotation/default、recognized/custom format behavior。
+- [x] exact JSON constraint/equality、default_annotation/default、recognized/custom format behavior。
 - [ ] parameterless JSON/+json、parameterized/unregistered wire、raw binary boundary、header encoding。
 - [ ] Reply static/dynamic channel、correlation、timeout、whole-Reply fallback、no synthetic operation。
 - [ ] Failure core states、deviations、common/inline shapes、receive malformed/unknown/handler errors。

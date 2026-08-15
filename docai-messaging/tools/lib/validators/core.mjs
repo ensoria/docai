@@ -1,4 +1,5 @@
 import { diagnostic } from "../diagnostics.mjs";
+import { parseExactJson } from "../json-value.mjs";
 import { scanMarkdown } from "../markdown.mjs";
 import { parseDocsPath } from "../paths.mjs";
 import { validateCoreConventions, validateCoreFormatCatalog } from "./core-conventions.mjs";
@@ -326,6 +327,140 @@ export function evaluatePartialCollectionSourceExpectations(cases) {
     }
     return result;
   });
+}
+
+const JSON_SCHEMA_DRAFT_07_FORMATS = new Set([
+  "date-time", "date", "time", "email", "idn-email", "hostname", "idn-hostname",
+  "ipv4", "ipv6", "uri", "uri-reference", "iri", "iri-reference", "uri-template",
+  "json-pointer", "relative-json-pointer", "regex"
+]);
+
+const ASYNCAPI_DEFINED_FORMAT_ROLES = new Map([
+  ...["AsyncAPI 3.0.0", "AsyncAPI 3.1.0"].map((version) => [version, new Map([
+    ...["int32", "int64", "float", "double", "byte", "binary", "date", "date-time"]
+      .map((format) => [format, "constraint"]),
+    ["password", "annotation"]
+  ])])
+]);
+
+function compactExactJsonSource(source) {
+  if (typeof source !== "string" || source === "") return { valid: false, value: null };
+  let value;
+  try { value = parseExactJson(source); } catch { return { valid: false, value: null }; }
+  let inString = false;
+  let escaped = false;
+  for (const character of source) {
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (character === "\\") escaped = true;
+      else if (character === '"') inString = false;
+    } else if (character === '"') {
+      inString = true;
+    } else if (/\s/u.test(character)) {
+      return { valid: false, value: null };
+    }
+  }
+  return { valid: true, value };
+}
+
+function constraintFragment(keyword, valueSource) {
+  const longest = [...valueSource.matchAll(/`+/g)]
+    .reduce((maximum, match) => Math.max(maximum, match[0].length), 0);
+  const delimiter = "`".repeat(longest + 1);
+  return `${delimiter}${keyword}=${valueSource}${delimiter}`;
+}
+
+function schemaFieldSourceExpectation(entry) {
+  const parsed = compactExactJsonSource(entry.valueSource);
+  if (!parsed.valid) {
+    return {
+      caseId: entry.caseId,
+      coverage: "complete",
+      fragment: null,
+      requiredBehavior: "generation-failure"
+    };
+  }
+  const { value } = parsed;
+
+  if (entry.keyword === "default") {
+    const draft07 = entry.sourceSpecification === "JSON Schema Draft 07";
+    const asyncApi = ["AsyncAPI 3.0.0", "AsyncAPI 3.1.0"].includes(entry.sourceSpecification);
+    if (!draft07 && !asyncApi) {
+      return {
+        caseId: entry.caseId,
+        coverage: "requires-source",
+        fragment: null,
+        requiredBehavior: "localized-unsupported"
+      };
+    }
+    const keyword = draft07 ? "default_annotation" : "default";
+    let requiredBehavior = "annotation-only";
+    if (asyncApi && entry.omissionAllowed === true) {
+      requiredBehavior = entry.direction === "RECEIVE"
+        ? "receive-effective-value-when-absent"
+        : "send-effective-value-when-omitted";
+    } else if (asyncApi) {
+      requiredBehavior = "requiredness-unchanged";
+    }
+    return {
+      caseId: entry.caseId,
+      coverage: "complete",
+      fragment: constraintFragment(keyword, entry.valueSource),
+      requiredBehavior
+    };
+  }
+
+  if (entry.keyword === "format" && typeof value === "string") {
+    const draft07 = entry.sourceSpecification === "JSON Schema Draft 07";
+    const asyncApiRoles = ASYNCAPI_DEFINED_FORMAT_ROLES.get(entry.sourceSpecification);
+    const role = draft07 && JSON_SCHEMA_DRAFT_07_FORMATS.has(value)
+      ? "annotation"
+      : asyncApiRoles?.get(value)
+        ?? (asyncApiRoles !== undefined && JSON_SCHEMA_DRAFT_07_FORMATS.has(value) ? "annotation" : null);
+    if (role !== null) {
+      return {
+        caseId: entry.caseId,
+        coverage: "complete",
+        fragment: constraintFragment(role === "constraint" ? "format" : "format_annotation", entry.valueSource),
+        requiredBehavior: `${role}-catalog`
+      };
+    }
+  }
+
+  return {
+    caseId: entry.caseId,
+    coverage: "requires-source",
+    fragment: null,
+    requiredBehavior: "localized-unsupported"
+  };
+}
+
+export function evaluateSchemaFieldSourceExpectations(scenario) {
+  return (scenario.cases ?? [])
+    .map(schemaFieldSourceExpectation)
+    .sort((left, right) => left.caseId < right.caseId ? -1 : left.caseId > right.caseId ? 1 : 0);
+}
+
+export function validateSchemaFieldSourceExpectations(scenario, { file = "source-input.json" } = {}) {
+  const expectations = evaluateSchemaFieldSourceExpectations(scenario);
+  const byCaseId = new Map((scenario.cases ?? []).map((entry) => [entry.caseId, entry]));
+  const mismatches = expectations.filter((expected) => {
+    const projected = byCaseId.get(expected.caseId)?.projected;
+    return projected?.fragment !== expected.fragment
+      || projected?.requiredBehavior !== expected.requiredBehavior
+      || projected?.localizedUnsupported !== (expected.coverage === "requires-source");
+  });
+  return {
+    diagnostics: mismatches.length === 0
+      ? []
+      : [diagnostic(
+        "DM-MSG-005",
+        file,
+        1,
+        `Schema field projection disagrees with ${mismatches.length} exact default or format expectation(s).`
+      )],
+    facts: { schemaFieldSourceExpectations: expectations }
+  };
 }
 
 export function evaluateSelectedOperationReadiness(documentSet, coreFacts, selection) {

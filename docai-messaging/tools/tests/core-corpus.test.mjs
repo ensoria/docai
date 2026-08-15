@@ -181,6 +181,16 @@ const payloadRootShapeCaseIds = [
   "payload-root-shapes-and-recursive-unsupported-valid"
 ];
 
+const payloadConstraintAndFormatCaseIds = [
+  "payload-default-annotation-effective-behavior-invalid",
+  "payload-default-send-behavior-missing-invalid",
+  "payload-exact-constraints-defaults-formats-valid",
+  "payload-exact-unique-items-invalid",
+  "payload-format-catalog-role-invalid",
+  "schema-format-default-projection-valid",
+  "schema-custom-format-projection-invalid"
+];
+
 function fixtureSource(fixturePath) {
   const source = fs.readFileSync(fixturePath, "utf8");
   return source.endsWith("\n") ? source.slice(0, -1) : source;
@@ -223,6 +233,13 @@ function validateCase(fixturePath, fixtureCase) {
   if (fixtureCase.kind === "asyncapi-reply-message-selection") {
     const scenario = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
     return coreValidator.validateAsyncApiReplyMessageSelection(
+      scenario,
+      { file: fixtureCase.path }
+    );
+  }
+  if (fixtureCase.kind === "schema-field-source-scenario") {
+    const scenario = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
+    return coreValidator.validateSchemaFieldSourceExpectations(
       scenario,
       { file: fixtureCase.path }
     );
@@ -1187,6 +1204,108 @@ test("executes the Task 9 DM-MSG-001 DM-MSG-004 DM-MSG-005 root-shape openness a
   );
 
   for (const id of payloadRootShapeCaseIds.filter((caseId) => caseId !== validCase.id)) {
+    const fixtureCase = byId.get(id);
+    const invalid = validateCase(path.join(corpusPath, fixtureCase.path), fixtureCase);
+    const primary = invalid.diagnostics.filter((entry) => (
+      entry.severity === "error" && !entry.cascade
+    ));
+    assert.deepEqual(primary.map((entry) => entry.ruleId), fixtureCase.expected_rule_ids, id);
+  }
+});
+
+test("executes the Task 9 DM-MSG-005 DM-CONV-003 exact-constraint default and format corpus", () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
+  const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
+
+  assert.deepEqual(
+    payloadConstraintAndFormatCaseIds.filter((id) => !byId.has(id)),
+    []
+  );
+  for (const id of payloadConstraintAndFormatCaseIds) {
+    const fixtureCase = byId.get(id);
+    assert.equal(
+      fixtureCase.expected === "valid" || fixtureCase.expected_rule_ids.length === 1,
+      true,
+      id
+    );
+  }
+
+  const result = runFixtureCorpus(corpusPath, validateCase);
+  assert.equal(result.failed, 0, result.report);
+
+  const validCase = byId.get("payload-exact-constraints-defaults-formats-valid");
+  const valid = validateCase(path.join(corpusPath, validCase.path), validCase);
+  assert.deepEqual(valid.diagnostics, []);
+  assert.deepEqual(valid.facts.core.formats, [
+    {
+      format: '"date-time"',
+      meaning: "Preserve RFC 3339 date-time representation intent without adding validation or construction behavior.",
+      role: "annotation"
+    },
+    {
+      format: '"int32"',
+      meaning: "Accept signed 32-bit integers and construct and validate them without narrowing.",
+      role: "constraint"
+    }
+  ]);
+
+  const sourceCase = byId.get("schema-format-default-projection-valid");
+  const source = validateCase(path.join(corpusPath, sourceCase.path), sourceCase);
+  assert.deepEqual(source.diagnostics, []);
+  assert.deepEqual(source.facts.schemaFieldSourceExpectations, [
+    {
+      caseId: "asyncapi-default",
+      coverage: "complete",
+      fragment: '`default="safe"`',
+      requiredBehavior: "send-effective-value-when-omitted"
+    },
+    {
+      caseId: "asyncapi-default-receive",
+      coverage: "complete",
+      fragment: '`default="safe"`',
+      requiredBehavior: "receive-effective-value-when-absent"
+    },
+    {
+      caseId: "asyncapi-int32",
+      coverage: "complete",
+      fragment: '`format="int32"`',
+      requiredBehavior: "constraint-catalog"
+    },
+    {
+      caseId: "asyncapi-open-uuid",
+      coverage: "requires-source",
+      fragment: null,
+      requiredBehavior: "localized-unsupported"
+    },
+    {
+      caseId: "draft07-date-time",
+      coverage: "complete",
+      fragment: '`format_annotation="date-time"`',
+      requiredBehavior: "annotation-catalog"
+    },
+    {
+      caseId: "draft07-default",
+      coverage: "complete",
+      fragment: '`default_annotation="draft"`',
+      requiredBehavior: "annotation-only"
+    },
+    {
+      caseId: "draft07-default-null",
+      coverage: "complete",
+      fragment: "`default_annotation=null`",
+      requiredBehavior: "annotation-only"
+    },
+    {
+      caseId: "draft07-open-custom-format",
+      coverage: "requires-source",
+      fragment: null,
+      requiredBehavior: "localized-unsupported"
+    }
+  ]);
+
+  for (const id of payloadConstraintAndFormatCaseIds.filter((caseId) => (
+    ![validCase.id, sourceCase.id].includes(caseId)
+  ))) {
     const fixtureCase = byId.get(id);
     const invalid = validateCase(path.join(corpusPath, fixtureCase.path), fixtureCase);
     const primary = invalid.diagnostics.filter((entry) => (

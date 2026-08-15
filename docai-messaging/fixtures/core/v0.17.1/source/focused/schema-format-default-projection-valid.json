@@ -1,0 +1,97 @@
+{
+  "docai_messaging": "0.17.1",
+  "cases": [
+    {
+      "caseId": "asyncapi-default",
+      "sourceSpecification": "AsyncAPI 3.1.0",
+      "keyword": "default",
+      "valueSource": "\"safe\"",
+      "direction": "SEND",
+      "omissionAllowed": true,
+      "projected": {
+        "fragment": "`default=\"safe\"`",
+        "requiredBehavior": "send-effective-value-when-omitted",
+        "localizedUnsupported": false
+      }
+    },
+    {
+      "caseId": "asyncapi-default-receive",
+      "sourceSpecification": "AsyncAPI 3.1.0",
+      "keyword": "default",
+      "valueSource": "\"safe\"",
+      "direction": "RECEIVE",
+      "omissionAllowed": true,
+      "projected": {
+        "fragment": "`default=\"safe\"`",
+        "requiredBehavior": "receive-effective-value-when-absent",
+        "localizedUnsupported": false
+      }
+    },
+    {
+      "caseId": "asyncapi-int32",
+      "sourceSpecification": "AsyncAPI 3.1.0",
+      "keyword": "format",
+      "valueSource": "\"int32\"",
+      "projected": {
+        "fragment": "`format=\"int32\"`",
+        "requiredBehavior": "constraint-catalog",
+        "localizedUnsupported": false
+      }
+    },
+    {
+      "caseId": "asyncapi-open-uuid",
+      "sourceSpecification": "AsyncAPI 3.1.0",
+      "keyword": "format",
+      "valueSource": "\"uuid\"",
+      "projected": {
+        "fragment": null,
+        "requiredBehavior": "localized-unsupported",
+        "localizedUnsupported": true
+      }
+    },
+    {
+      "caseId": "draft07-date-time",
+      "sourceSpecification": "JSON Schema Draft 07",
+      "keyword": "format",
+      "valueSource": "\"date-time\"",
+      "projected": {
+        "fragment": "`format_annotation=\"date-time\"`",
+        "requiredBehavior": "annotation-catalog",
+        "localizedUnsupported": false
+      }
+    },
+    {
+      "caseId": "draft07-default",
+      "sourceSpecification": "JSON Schema Draft 07",
+      "keyword": "default",
+      "valueSource": "\"draft\"",
+      "projected": {
+        "fragment": "`default_annotation=\"draft\"`",
+        "requiredBehavior": "annotation-only",
+        "localizedUnsupported": false
+      }
+    },
+    {
+      "caseId": "draft07-default-null",
+      "sourceSpecification": "JSON Schema Draft 07",
+      "keyword": "default",
+      "valueSource": "null",
+      "projected": {
+        "fragment": "`default_annotation=null`",
+        "requiredBehavior": "annotation-only",
+        "localizedUnsupported": false
+      }
+    },
+    {
+      "caseId": "draft07-open-custom-format",
+      "sourceSpecification": "JSON Schema Draft 07",
+      "keyword": "format",
+      "valueSource": "\"currency-code\"",
+      "projected": {
+        "fragment": null,
+        "requiredBehavior": "localized-unsupported",
+        "localizedUnsupported": true
+      }
+    }
+  ]
+}

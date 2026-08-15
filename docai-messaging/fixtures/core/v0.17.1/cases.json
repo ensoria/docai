@@ -675,6 +675,41 @@
       "expected_rule_ids": ["DM-MSG-004"]
     },
     {
+      "id": "payload-default-annotation-effective-behavior-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/payload-default-annotation-effective-behavior-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-MSG-005"]
+    },
+    {
+      "id": "payload-default-send-behavior-missing-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/payload-default-send-behavior-missing-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-MSG-005"]
+    },
+    {
+      "id": "payload-exact-constraints-defaults-formats-valid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/valid/payload-exact-constraints-defaults-formats-valid",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
+      "id": "payload-exact-unique-items-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/payload-exact-unique-items-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-MSG-005"]
+    },
+    {
+      "id": "payload-format-catalog-role-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/payload-format-catalog-role-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-CONV-003"]
+    },
+    {
       "id": "payload-object-openness-missing-invalid",
       "kind": "task-scoped-document-set",
       "path": "focused/invalid/payload-object-openness-missing-invalid",
@@ -757,6 +792,20 @@
       "path": "focused/invalid/sentence-unterminated-invalid.md",
       "expected": "invalid",
       "expected_rule_ids": ["DM-PARSE-004"]
+    },
+    {
+      "id": "schema-custom-format-projection-invalid",
+      "kind": "schema-field-source-scenario",
+      "path": "source/focused/schema-custom-format-projection-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-MSG-005"]
+    },
+    {
+      "id": "schema-format-default-projection-valid",
+      "kind": "schema-field-source-scenario",
+      "path": "source/focused/schema-format-default-projection-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": []
     },
     {
       "id": "sources-direct-columns-invalid",
