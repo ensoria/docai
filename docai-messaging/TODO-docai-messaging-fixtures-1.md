@@ -747,6 +747,8 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 
 > **Implementation note (Implementation readiness capability checkpoint):** 既存の contract-complete `valid/full` set、`sendCreateOrder` operation、trusted task `submit an order` を共有する `implementation-readiness-source-scenario` を追加する。同一契約に対し、ordinary reader の DocAI Messaging version / profile / publication scope / required structure、target runtime capability、source-aware reader の exact source-adapter support を個別に変え、期待する readiness と blocker を `DM-INC-003` で検証する。task-scoped requirement のみを評価するため、未選択の Avro representation / codec は JSON task を阻害せず、ordinary reader は source adapter を持たなくても ready になり、source-aware validation だけが applicable exact adapter set を要求する。invalid case は必須 runtime capability 欠落を ready とした projection mismatch 一件に限定する。影響として、既存 marker-based selected retrieval scope evaluator を保持したまま、その結果と reader / task / runtime / adapter capability を合成する read-only evaluator と focused corpus facts を追加し、公開 document grammar と document-set compliance semantics は変更しない。作業順序の変更はない。
 
+> **Implementation note (One-invalidity audit checkpoint):** Core manifest 174 cases のうち invalid 131 cases を全件監査し、各 `expected_rule_ids` がちょうど一つの primary concern を宣言し、validator の実 primary diagnostics も cascade を除いて同じ一つの rule concern に収束することを確認する。manifest cases と corpus results を入力とする read-only `auditFixtureOneInvalidity` helper を fixture runner に追加し、expected concern が zero / multiple、actual concern が zero / multiple、expected / actual mismatch を個別に報告する unit tests と、全 Core invalid fixture を監査する integration test を追加する。監査結果は 131 / 131 cases が適合し、fixture の分割や規則変更は不要だった。影響として、通常の corpus pass/fail semantics は変更せず、Task 9 の one-invalidity property を継続的に検証する regression gate のみを追加する。作業順序の変更はない。
+
 - [x] Metadata、extension name/order/escape、unknown non-`x-` key、sentence grammar。
 - [x] Identity trailer、set/projection digest、closed root、mixed set、task-scoped identity check。
 - [x] Direct/sharded Sources、unknown API identity/version、Revision none、overlap、fixed-point、cycle。
@@ -770,7 +772,7 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 - [x] canonical marker order、deviation placement、deprecated marker、single prose language、English structure。
 - [x] implementation readiness cases: same contract under different reader/runtime/adapter capabilities。
 
-- [ ] **Step: one-invalidity audit を行う**
+- [x] **Step: one-invalidity audit を行う**
   - 各 invalid fixture に `expected_rule_ids` が一つの primary concern を示すことを確認する。
   - 複数の独立違反がある fixture は分割する。
 

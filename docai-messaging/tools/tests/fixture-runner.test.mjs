@@ -4,6 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import {
+  auditFixtureOneInvalidity,
   auditRuleTestCorrespondence,
   runFixtureCorpus
 } from "../lib/fixture-runner.mjs";
@@ -134,6 +135,78 @@ test("returns a failing exit code and summary when a case fails", (t) => {
   const result = runFixtureCorpus(corpus, () => ({ diagnostics: [] }));
   assert.equal(result.exitCode, 1);
   assert.match(result.report, /0 passed, 1 failed$/);
+});
+
+test("one-invalidity audit accepts one expected and actual primary concern", () => {
+  const result = auditFixtureOneInvalidity({
+    manifestCases: [
+      {
+        id: "metadata-duplicate-standard-key",
+        expected: "invalid",
+        expected_rule_ids: ["DM-META-004"]
+      },
+      {
+        id: "metadata-canonical-valid",
+        expected: "valid",
+        expected_rule_ids: []
+      }
+    ],
+    corpusCases: [
+      {
+        id: "metadata-duplicate-standard-key",
+        diagnostics: [
+          { ruleId: "DM-META-004", severity: "error", cascade: false },
+          { ruleId: "DM-ID-001", severity: "error", cascade: true }
+        ]
+      }
+    ]
+  });
+
+  assert.deepEqual(result, { passed: true, audited: 1, errors: [] });
+});
+
+test("one-invalidity audit reports multiple missing and mismatched primary concerns", () => {
+  const result = auditFixtureOneInvalidity({
+    manifestCases: [
+      {
+        id: "multiple-expected",
+        expected: "invalid",
+        expected_rule_ids: ["DM-ID-001", "DM-META-004"]
+      },
+      { id: "missing-actual", expected: "invalid", expected_rule_ids: ["DM-META-004"] },
+      { id: "multiple-actual", expected: "invalid", expected_rule_ids: ["DM-META-004"] },
+      { id: "mismatched", expected: "invalid", expected_rule_ids: ["DM-META-004"] }
+    ],
+    corpusCases: [
+      {
+        id: "multiple-expected",
+        diagnostics: [{ ruleId: "DM-ID-001", severity: "error", cascade: false }]
+      },
+      { id: "missing-actual", diagnostics: [] },
+      {
+        id: "multiple-actual",
+        diagnostics: [
+          { ruleId: "DM-ID-001", severity: "error", cascade: false },
+          { ruleId: "DM-META-004", severity: "error", cascade: false }
+        ]
+      },
+      {
+        id: "mismatched",
+        diagnostics: [{ ruleId: "DM-ID-001", severity: "error", cascade: false }]
+      }
+    ]
+  });
+
+  assert.deepEqual(result, {
+    passed: false,
+    audited: 4,
+    errors: [
+      "expected-primary-concern-count:multiple-expected:2:DM-ID-001,DM-META-004",
+      "primary-concern-count:missing-actual:0:none",
+      "primary-concern-count:multiple-actual:2:DM-ID-001,DM-META-004",
+      "primary-concern-mismatch:mismatched:expected=DM-META-004:actual=DM-ID-001"
+    ]
+  });
 });
 
 test("rule correspondence audit accepts cataloged, used rule IDs in every scoped test name", () => {

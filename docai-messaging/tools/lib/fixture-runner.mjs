@@ -74,6 +74,41 @@ export function auditRuleTestCorrespondence({ catalogRuleIds, testNames, rulePre
   return { passed: errors.length === 0, errors };
 }
 
+export function auditFixtureOneInvalidity({ manifestCases, corpusCases }) {
+  const invalidCases = manifestCases.filter((entry) => entry.expected === "invalid");
+  const resultsById = new Map(corpusCases.map((entry) => [entry.id, entry]));
+  const errors = [];
+
+  for (const testCase of invalidCases) {
+    const expectedRuleIds = Array.isArray(testCase.expected_rule_ids)
+      ? testCase.expected_rule_ids
+      : [];
+    if (expectedRuleIds.length !== 1) {
+      errors.push(
+        `expected-primary-concern-count:${testCase.id}:${expectedRuleIds.length}:${expectedRuleIds.join(",") || "none"}`
+      );
+      continue;
+    }
+
+    const result = resultsById.get(testCase.id);
+    const primaryRuleIds = [...new Set(primaryErrorDiagnostics(result?.diagnostics ?? [])
+      .map((entry) => entry.ruleId))].sort();
+    if (primaryRuleIds.length !== 1) {
+      errors.push(
+        `primary-concern-count:${testCase.id}:${primaryRuleIds.length}:${primaryRuleIds.join(",") || "none"}`
+      );
+      continue;
+    }
+    if (primaryRuleIds[0] !== expectedRuleIds[0]) {
+      errors.push(
+        `primary-concern-mismatch:${testCase.id}:expected=${expectedRuleIds[0]}:actual=${primaryRuleIds[0]}`
+      );
+    }
+  }
+
+  return { passed: errors.length === 0, audited: invalidCases.length, errors };
+}
+
 function caseResult(testCase, diagnostics, catalog) {
   const errors = errorDiagnostics(diagnostics);
   const primaryErrors = primaryErrorDiagnostics(diagnostics);

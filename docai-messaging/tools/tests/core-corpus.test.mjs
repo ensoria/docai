@@ -8,7 +8,10 @@ import {
   validateDocumentSet,
   validateOperationProfilePair
 } from "../lib/document-set.mjs";
-import { runFixtureCorpus } from "../lib/fixture-runner.mjs";
+import {
+  auditFixtureOneInvalidity,
+  runFixtureCorpus
+} from "../lib/fixture-runner.mjs";
 import { parseOpeningMetadata } from "../lib/metadata.mjs";
 import { validateSentenceLine } from "../lib/sentence.mjs";
 import * as coreValidator from "../lib/validators/core.mjs";
@@ -2143,4 +2146,16 @@ test("executes the Task 9 DM-INC-003 implementation-readiness capability matrix"
       }
     ]
   );
+});
+
+test("audits every Task 9 invalid fixture as one primary concern", () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
+  const result = runFixtureCorpus(corpusPath, validateCase);
+  assert.equal(result.failed, 0, result.report);
+  const audit = auditFixtureOneInvalidity({
+    manifestCases: manifest.cases,
+    corpusCases: result.cases
+  });
+
+  assert.deepEqual(audit, { passed: true, audited: 131, errors: [] });
 });
