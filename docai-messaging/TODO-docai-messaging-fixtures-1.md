@@ -749,6 +749,8 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 
 > **Implementation note (One-invalidity audit checkpoint):** Core manifest 174 cases のうち invalid 131 cases を全件監査し、各 `expected_rule_ids` がちょうど一つの primary concern を宣言し、validator の実 primary diagnostics も cascade を除いて同じ一つの rule concern に収束することを確認する。manifest cases と corpus results を入力とする read-only `auditFixtureOneInvalidity` helper を fixture runner に追加し、expected concern が zero / multiple、actual concern が zero / multiple、expected / actual mismatch を個別に報告する unit tests と、全 Core invalid fixture を監査する integration test を追加する。監査結果は 131 / 131 cases が適合し、fixture の分割や規則変更は不要だった。影響として、通常の corpus pass/fail semantics は変更せず、Task 9 の one-invalidity property を継続的に検証する regression gate のみを追加する。作業順序の変更はない。
 
+> **Implementation note (Core coverage matrix foundation checkpoint):** `fixtures/core/v0.17.1/COVERAGE.md` を作成し、README §8 の Core corpus clause を stable `R8-CORE-*` ID、authoritative source または normative derivation、`cases.json` case ID、primary rule ID、checker test、coverage status に一対一対応させる matrix contract を固定する。最初の `R8-CORE-001`–`R8-CORE-004` は Core publication prerequisite、opening metadata / identity trailer、metadata extension / escape / unknown key、set digest / closed root / path-content binding / short ID / mixed set / task-scoped identity を扱う。29 case IDs、11 rule IDs、4 source/evidence paths と checker test names の存在を read-only audit で確認した。全 Core clause の対応が終わるまで overarching `R8-CORE-001` は `partial` のままとし、Task 9 の coverage-matrix Step も未完了として保持する。影響として、人手 release review 用の traceability artifact を追加するだけで、fixture、rule、checker semantics は変更しない。作業順序の変更はない。
+
 - [x] Metadata、extension name/order/escape、unknown non-`x-` key、sentence grammar。
 - [x] Identity trailer、set/projection digest、closed root、mixed set、task-scoped identity check。
 - [x] Direct/sharded Sources、unknown API identity/version、Revision none、overlap、fixed-point、cycle。
@@ -778,6 +780,8 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 
 - [ ] **Step: Core coverage matrix を完成させる**
   - README §8 の Core corpus 要件を一行ずつ `COVERAGE.md` に写し、source、valid fixture、invalid fixture、rule ID、checker test を対応付ける。
+  - [x] Matrix contract と `R8-CORE-001`–`R8-CORE-004`（publication prerequisite、metadata、identity）を対応付ける。
+  - [ ] 残る Core corpus clause を `R8-CORE-*` row に分解して対応付け、`R8-CORE-001` を `covered` にする。
 
 **Review gate:** `docai-messaging/README.md` §8 の Core corpus 要件（現在の 1031–1043 行）に uncovered 行がないことを確認する。
 
