@@ -751,6 +751,8 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 
 > **Implementation note (Core coverage matrix foundation checkpoint):** `fixtures/core/v0.17.1/COVERAGE.md` を作成し、README §8 の Core corpus clause を stable `R8-CORE-*` ID、authoritative source または normative derivation、`cases.json` case ID、primary rule ID、checker test、coverage status に一対一対応させる matrix contract を固定する。最初の `R8-CORE-001`–`R8-CORE-004` は Core publication prerequisite、opening metadata / identity trailer、metadata extension / escape / unknown key、set digest / closed root / path-content binding / short ID / mixed set / task-scoped identity を扱う。29 case IDs、11 rule IDs、4 source/evidence paths と checker test names の存在を read-only audit で確認した。全 Core clause の対応が終わるまで overarching `R8-CORE-001` は `partial` のままとし、Task 9 の coverage-matrix Step も未完了として保持する。影響として、人手 release review 用の traceability artifact を追加するだけで、fixture、rule、checker semantics は変更しない。作業順序の変更はない。
 
+> **Implementation note (Core coverage matrix Sources / routing checkpoint):** `R8-CORE-005`–`R8-CORE-010` として direct / sharded Sources、reader/runtime/adapter-relative implementation readiness、flat Operations、required / supplemental context、hierarchical Operation Shards、exact `none` sentinel と `workflows/none.md` の区別を matrix に追加する。既存の focused cases、rules、source evidence、retrieval-fact tests によって Sources、flat / hierarchical routing、context grammar、sentinel distinction は `covered` と確認した。一方、README §8 が要求する required workflow を必要とする contract-complete set の Core-reader not-ready 判定は、既存 `contexts-required-supplemental-valid` が retrieval facts だけを検証しており capability readiness へ接続されていないため、`R8-CORE-006` と `R8-CORE-008` を `partial` とする。影響として、coverage artifact が既存 gap を release-ready と誤表示せず可視化する。fixture、rule、checker semantics と作業順序はこの checkpoint では変更しない。
+
 - [x] Metadata、extension name/order/escape、unknown non-`x-` key、sentence grammar。
 - [x] Identity trailer、set/projection digest、closed root、mixed set、task-scoped identity check。
 - [x] Direct/sharded Sources、unknown API identity/version、Revision none、overlap、fixed-point、cycle。
@@ -781,6 +783,8 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 - [ ] **Step: Core coverage matrix を完成させる**
   - README §8 の Core corpus 要件を一行ずつ `COVERAGE.md` に写し、source、valid fixture、invalid fixture、rule ID、checker test を対応付ける。
   - [x] Matrix contract と `R8-CORE-001`–`R8-CORE-004`（publication prerequisite、metadata、identity）を対応付ける。
+  - [x] `R8-CORE-005`–`R8-CORE-010`（Sources、readiness、Operations、context、sentinel）を対応付ける。
+  - [ ] `R8-CORE-006` / `R8-CORE-008` の required-workflow Core-reader readiness gap を解消する。
   - [ ] 残る Core corpus clause を `R8-CORE-*` row に分解して対応付け、`R8-CORE-001` を `covered` にする。
 
 **Review gate:** `docai-messaging/README.md` §8 の Core corpus 要件（現在の 1031–1043 行）に uncovered 行がないことを確認する。
