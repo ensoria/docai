@@ -303,7 +303,7 @@
     {
       "rule_id": "DM-INC-003",
       "readme_section": "§3 Contract Completeness and Implementation Readiness / §6.1 Recommended Retrieval Recipe",
-      "description": "Selected-operation readiness is blocked only by unknown or unsupported facts in the selected operation's required retrieval scope, not by markers confined to unrelated units.",
+      "description": "Selected-operation readiness is relative to the reader, trusted task, and target runtime: selected required markers, unsupported version/profile/publication scope/structures, and missing task-relevant runtime capabilities block readiness; unrelated units, unused alternatives, and source-adapter identities do not block an ordinary reader, while source-aware validation requires its applicable exact adapters.",
       "scope": "core"
     },
     {

@@ -1,0 +1,159 @@
+{
+  "documentSet": "../../valid/full",
+  "selection": {
+    "operation": "sendCreateOrder",
+    "trustedTask": "submit an order"
+  },
+  "contract": {
+    "docaiMessagingVersion": "0.17.1",
+    "profile": "full",
+    "publicationScope": "core/v0.17.1",
+    "requiredStructures": [
+      { "id": "operation", "tasks": ["submit an order"] },
+      { "id": "payload.application/json", "tasks": ["submit an order"] },
+      { "id": "payload.application/avro", "tasks": ["submit an order using avro"] }
+    ],
+    "requiredRuntimeCapabilities": [
+      { "id": "json-utf8", "tasks": ["submit an order"] },
+      { "id": "kafka-producer", "tasks": ["submit an order"] },
+      { "id": "avro-codec", "tasks": ["submit an order using avro"] }
+    ],
+    "requiredSourceAdapters": [
+      { "id": "schema:asyncapi@3.1.0", "tasks": ["submit an order"] },
+      { "id": "payload-wire:application/json", "tasks": ["submit an order"] },
+      { "id": "header-encoding:kafka@0.5.0", "tasks": ["submit an order"] }
+    ]
+  },
+  "cases": [
+    {
+      "caseId": "ordinary-ready-without-source-adapters-or-unused-avro",
+      "reader": {
+        "mode": "ordinary",
+        "docaiMessagingVersions": ["0.17.1"],
+        "profiles": ["full"],
+        "publicationScopes": ["core/v0.17.1"],
+        "structures": ["operation", "payload.application/json"]
+      },
+      "targetRuntimeCapabilities": ["json-utf8", "kafka-producer"],
+      "sourceAdapters": [],
+      "projected": { "ready": true, "blockers": [] }
+    },
+    {
+      "caseId": "ordinary-missing-required-runtime",
+      "reader": {
+        "mode": "ordinary",
+        "docaiMessagingVersions": ["0.17.1"],
+        "profiles": ["full"],
+        "publicationScopes": ["core/v0.17.1"],
+        "structures": ["operation", "payload.application/json"]
+      },
+      "targetRuntimeCapabilities": ["json-utf8"],
+      "sourceAdapters": [],
+      "projected": {
+        "ready": false,
+        "blockers": ["runtime-capability:kafka-producer"]
+      }
+    },
+    {
+      "caseId": "ordinary-missing-required-structure",
+      "reader": {
+        "mode": "ordinary",
+        "docaiMessagingVersions": ["0.17.1"],
+        "profiles": ["full"],
+        "publicationScopes": ["core/v0.17.1"],
+        "structures": ["operation"]
+      },
+      "targetRuntimeCapabilities": ["json-utf8", "kafka-producer"],
+      "sourceAdapters": [],
+      "projected": {
+        "ready": false,
+        "blockers": ["structure:payload.application/json"]
+      }
+    },
+    {
+      "caseId": "ordinary-unsupported-docai-version",
+      "reader": {
+        "mode": "ordinary",
+        "docaiMessagingVersions": ["0.16.0"],
+        "profiles": ["full"],
+        "publicationScopes": ["core/v0.17.1"],
+        "structures": ["operation", "payload.application/json"]
+      },
+      "targetRuntimeCapabilities": ["json-utf8", "kafka-producer"],
+      "sourceAdapters": [],
+      "projected": {
+        "ready": false,
+        "blockers": ["docai-messaging-version:0.17.1"]
+      }
+    },
+    {
+      "caseId": "ordinary-unsupported-profile",
+      "reader": {
+        "mode": "ordinary",
+        "docaiMessagingVersions": ["0.17.1"],
+        "profiles": ["compact"],
+        "publicationScopes": ["core/v0.17.1"],
+        "structures": ["operation", "payload.application/json"]
+      },
+      "targetRuntimeCapabilities": ["json-utf8", "kafka-producer"],
+      "sourceAdapters": [],
+      "projected": {
+        "ready": false,
+        "blockers": ["profile:full"]
+      }
+    },
+    {
+      "caseId": "ordinary-unsupported-publication-scope",
+      "reader": {
+        "mode": "ordinary",
+        "docaiMessagingVersions": ["0.17.1"],
+        "profiles": ["full"],
+        "publicationScopes": ["private/example-v1"],
+        "structures": ["operation", "payload.application/json"]
+      },
+      "targetRuntimeCapabilities": ["json-utf8", "kafka-producer"],
+      "sourceAdapters": [],
+      "projected": {
+        "ready": false,
+        "blockers": ["publication-scope:core/v0.17.1"]
+      }
+    },
+    {
+      "caseId": "source-aware-exact-adapters",
+      "reader": {
+        "mode": "source-aware",
+        "docaiMessagingVersions": ["0.17.1"],
+        "profiles": ["full"],
+        "publicationScopes": ["core/v0.17.1"],
+        "structures": ["operation", "payload.application/json"]
+      },
+      "targetRuntimeCapabilities": ["json-utf8", "kafka-producer"],
+      "sourceAdapters": [
+        "schema:asyncapi@3.1.0",
+        "payload-wire:application/json",
+        "header-encoding:kafka@0.5.0"
+      ],
+      "projected": { "ready": true, "blockers": [] }
+    },
+    {
+      "caseId": "source-aware-missing-exact-adapter",
+      "reader": {
+        "mode": "source-aware",
+        "docaiMessagingVersions": ["0.17.1"],
+        "profiles": ["full"],
+        "publicationScopes": ["core/v0.17.1"],
+        "structures": ["operation", "payload.application/json"]
+      },
+      "targetRuntimeCapabilities": ["json-utf8", "kafka-producer"],
+      "sourceAdapters": [
+        "schema:asyncapi@3.0.0",
+        "payload-wire:application/json",
+        "header-encoding:kafka@0.5.0"
+      ],
+      "projected": {
+        "ready": false,
+        "blockers": ["source-adapter:schema:asyncapi@3.1.0"]
+      }
+    }
+  ]
+}

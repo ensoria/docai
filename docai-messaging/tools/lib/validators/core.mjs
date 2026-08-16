@@ -496,6 +496,132 @@ export function evaluateSelectedOperationReadiness(documentSet, coreFacts, selec
   };
 }
 
+function capabilitySet(values) {
+  return new Set(Array.isArray(values) ? values.filter((value) => typeof value === "string") : []);
+}
+
+function requirementsForTask(requirements, trustedTask) {
+  return (Array.isArray(requirements) ? requirements : []).filter((requirement) => (
+    typeof requirement?.id === "string"
+      && (requirement.tasks === undefined
+        || (Array.isArray(requirement.tasks) && requirement.tasks.includes(trustedTask)))
+  ));
+}
+
+function addMissingCapabilityBlockers(blockers, prefix, requirements, supported) {
+  for (const requirement of requirements) {
+    if (!supported.has(requirement.id)) blockers.push(`${prefix}:${requirement.id}`);
+  }
+}
+
+export function evaluateImplementationReadinessExpectations(
+  documentSet,
+  coreFacts,
+  scenario
+) {
+  const selection = scenario.selection ?? {};
+  const contract = scenario.contract ?? {};
+  const root = documentSet.files.find((entry) => entry.path === "INDEX.md");
+  const rootVersion = root?.metadata?.["docai-messaging"] ?? contract.docaiMessagingVersion;
+  const rootProfile = root?.metadata?.profile ?? contract.profile;
+  const selected = evaluateSelectedOperationReadiness(documentSet, coreFacts, {
+    operation: selection.operation
+  });
+  const operationRow = coreFacts.operations?.rows?.find(
+    (entry) => entry.operation === selection.operation
+  );
+  const trustedTask = selection.trustedTask;
+  const requiredStructures = requirementsForTask(contract.requiredStructures, trustedTask);
+  const requiredRuntimeCapabilities = requirementsForTask(
+    contract.requiredRuntimeCapabilities,
+    trustedTask
+  );
+  const requiredSourceAdapters = requirementsForTask(
+    contract.requiredSourceAdapters,
+    trustedTask
+  );
+
+  return (Array.isArray(scenario.cases) ? scenario.cases : [])
+    .map((entry) => {
+      const reader = entry.reader ?? {};
+      const readerMode = reader.mode === "source-aware" ? "source-aware" : "ordinary";
+      const blockers = selected.blockingMarkers.map(
+        (marker) => `marker:${marker.kind}:${marker.path}`
+      );
+      if (operationRow === undefined) blockers.push(`operation:${selection.operation}`);
+      if (!operationRow?.tasks?.includes(trustedTask)) blockers.push(`trusted-task:${trustedTask}`);
+      if (!capabilitySet(reader.docaiMessagingVersions).has(rootVersion)) {
+        blockers.push(`docai-messaging-version:${rootVersion}`);
+      }
+      if (!capabilitySet(reader.profiles).has(rootProfile)) {
+        blockers.push(`profile:${rootProfile}`);
+      }
+      if (!capabilitySet(reader.publicationScopes).has(contract.publicationScope)) {
+        blockers.push(`publication-scope:${contract.publicationScope}`);
+      }
+      addMissingCapabilityBlockers(
+        blockers,
+        "structure",
+        requiredStructures,
+        capabilitySet(reader.structures)
+      );
+      addMissingCapabilityBlockers(
+        blockers,
+        "runtime-capability",
+        requiredRuntimeCapabilities,
+        capabilitySet(entry.targetRuntimeCapabilities)
+      );
+      if (readerMode === "source-aware") {
+        addMissingCapabilityBlockers(
+          blockers,
+          "source-adapter",
+          requiredSourceAdapters,
+          capabilitySet(entry.sourceAdapters)
+        );
+      }
+      blockers.sort();
+      return {
+        caseId: entry.caseId,
+        readerMode,
+        operation: selection.operation,
+        trustedTask,
+        ready: blockers.length === 0,
+        blockers
+      };
+    })
+    .sort((left, right) => left.caseId < right.caseId ? -1 : left.caseId > right.caseId ? 1 : 0);
+}
+
+export function validateImplementationReadinessExpectations(
+  documentSet,
+  coreFacts,
+  scenario,
+  { file = "source-input.json" } = {}
+) {
+  const expectations = evaluateImplementationReadinessExpectations(
+    documentSet,
+    coreFacts,
+    scenario
+  );
+  const cases = new Map((scenario.cases ?? []).map((entry) => [entry.caseId, entry]));
+  const mismatches = expectations.filter((expected) => {
+    const projected = cases.get(expected.caseId)?.projected;
+    return projected?.ready !== expected.ready
+      || !sameStringArray(projected?.blockers, expected.blockers);
+  });
+  return {
+    diagnostics: mismatches.length === 0
+      ? []
+      : [diagnostic(
+        "DM-INC-003",
+        file,
+        1,
+        `Projected readiness disagrees with ${mismatches.length} reader, task, runtime, or adapter capability expectation(s).`
+      )],
+    facts: { implementationReadinessExpectations: expectations }
+  };
+}
+
 const COUNTERPART_COVERAGE = [
   ["serverEnvironmentAndBindings", "server-environment-and-bindings"],
   ["authorization", "authorization"],

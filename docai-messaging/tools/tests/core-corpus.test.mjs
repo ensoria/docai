@@ -252,6 +252,11 @@ const canonicalStructureCaseIds = [
   "language-structure-source-valid"
 ];
 
+const implementationReadinessCaseIds = [
+  "implementation-readiness-capability-matrix-valid",
+  "implementation-readiness-projection-invalid"
+];
+
 const publicationFailureCases = [
   ["publication-safety-mandatory-invalid", "unsafe-mandatory-structural-value"],
   ["publication-safety-mandatory-catalog-invalid", "unsafe-mandatory-catalog-cell"],
@@ -354,6 +359,21 @@ function validateCase(fixturePath, fixtureCase) {
   if (fixtureCase.kind === "language-structure-source-scenario") {
     const scenario = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
     return coreValidator.validateLanguageStructureSourceExpectations(
+      scenario,
+      { file: fixtureCase.path }
+    );
+  }
+  if (fixtureCase.kind === "implementation-readiness-source-scenario") {
+    const scenario = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
+    const documentSet = loadDocumentSet(path.resolve(
+      path.dirname(fixturePath),
+      scenario.documentSet
+    ));
+    const validation = validateDocumentSet(documentSet, { wholeSet: false });
+    assert.deepEqual(validation.diagnostics, [], `${fixtureCase.id} base document set`);
+    return coreValidator.validateImplementationReadinessExpectations(
+      documentSet,
+      validation.facts.core,
       scenario,
       { file: fixtureCase.path }
     );
@@ -2051,4 +2071,76 @@ test("executes the Task 9 DM-LANG-001 canonical marker deviation deprecation lan
     ));
     assert.deepEqual(primary.map((entry) => entry.ruleId), [expectedRuleId], id);
   }
+});
+
+test("executes the Task 9 DM-INC-003 implementation-readiness capability matrix", () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
+  const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
+
+  assert.deepEqual(implementationReadinessCaseIds.filter((id) => !byId.has(id)), []);
+  assert.equal(typeof coreValidator.validateImplementationReadinessExpectations, "function");
+  for (const id of implementationReadinessCaseIds) {
+    const fixtureCase = byId.get(id);
+    assert.equal(
+      fixtureCase.expected === "valid" || fixtureCase.expected_rule_ids.length === 1,
+      true,
+      id
+    );
+  }
+
+  const result = runFixtureCorpus(corpusPath, validateCase);
+  assert.equal(result.failed, 0, result.report);
+
+  const validCase = byId.get("implementation-readiness-capability-matrix-valid");
+  const valid = validateCase(path.join(corpusPath, validCase.path), validCase);
+  assert.deepEqual(valid.diagnostics, []);
+  assert.deepEqual(
+    valid.facts.implementationReadinessExpectations.map((entry) => ({
+      caseId: entry.caseId,
+      ready: entry.ready,
+      blockers: entry.blockers
+    })),
+    [
+      {
+        caseId: "ordinary-missing-required-runtime",
+        ready: false,
+        blockers: ["runtime-capability:kafka-producer"]
+      },
+      {
+        caseId: "ordinary-missing-required-structure",
+        ready: false,
+        blockers: ["structure:payload.application/json"]
+      },
+      {
+        caseId: "ordinary-ready-without-source-adapters-or-unused-avro",
+        ready: true,
+        blockers: []
+      },
+      {
+        caseId: "ordinary-unsupported-docai-version",
+        ready: false,
+        blockers: ["docai-messaging-version:0.17.1"]
+      },
+      {
+        caseId: "ordinary-unsupported-profile",
+        ready: false,
+        blockers: ["profile:full"]
+      },
+      {
+        caseId: "ordinary-unsupported-publication-scope",
+        ready: false,
+        blockers: ["publication-scope:core/v0.17.1"]
+      },
+      {
+        caseId: "source-aware-exact-adapters",
+        ready: true,
+        blockers: []
+      },
+      {
+        caseId: "source-aware-missing-exact-adapter",
+        ready: false,
+        blockers: ["source-adapter:schema:asyncapi@3.1.0"]
+      }
+    ]
+  );
 });

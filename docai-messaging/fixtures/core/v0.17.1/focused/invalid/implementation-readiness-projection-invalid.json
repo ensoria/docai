@@ -1,0 +1,34 @@
+{
+  "documentSet": "../../valid/full",
+  "selection": {
+    "operation": "sendCreateOrder",
+    "trustedTask": "submit an order"
+  },
+  "contract": {
+    "docaiMessagingVersion": "0.17.1",
+    "profile": "full",
+    "publicationScope": "core/v0.17.1",
+    "requiredStructures": [
+      { "id": "operation", "tasks": ["submit an order"] }
+    ],
+    "requiredRuntimeCapabilities": [
+      { "id": "kafka-producer", "tasks": ["submit an order"] }
+    ],
+    "requiredSourceAdapters": []
+  },
+  "cases": [
+    {
+      "caseId": "missing-runtime-incorrectly-declared-ready",
+      "reader": {
+        "mode": "ordinary",
+        "docaiMessagingVersions": ["0.17.1"],
+        "profiles": ["full"],
+        "publicationScopes": ["core/v0.17.1"],
+        "structures": ["operation"]
+      },
+      "targetRuntimeCapabilities": [],
+      "sourceAdapters": [],
+      "projected": { "ready": true, "blockers": [] }
+    }
+  ]
+}

@@ -1205,6 +1205,20 @@
       "path": "focused/valid/language-structure-source-valid.json",
       "expected": "valid",
       "expected_rule_ids": []
+    },
+    {
+      "id": "implementation-readiness-capability-matrix-valid",
+      "kind": "implementation-readiness-source-scenario",
+      "path": "focused/valid/implementation-readiness-capability-matrix-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
+      "id": "implementation-readiness-projection-invalid",
+      "kind": "implementation-readiness-source-scenario",
+      "path": "focused/invalid/implementation-readiness-projection-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-INC-003"]
     }
   ]
 }

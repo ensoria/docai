@@ -745,6 +745,8 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 
 > **Implementation note (Canonical structure / language checkpoint):** deprecated operation、Behavior / Operation Bindings / primary Channel Parameters・Bindings / primary Message Headers・Bindings・Payload / Reply / reply Channel Parameters・Bindings / reply Message Headers・Bindings・Payload / Failure Handling の全許可位置に canonical leading deviation を持つ task-scoped valid set を追加する。invalid document cases はこの valid set に対する exact one-replacement mutation として保存し、置換元が一度だけ存在することを runner で検証したうえで、Behavior post-key marker group の連続性と order、leading deviation order、Related・Message heading・failure shape の禁止位置、payload marker の immediate sequence 分断、および deprecation marker と INDEX summary prefix の不一致をそれぞれ単一 primary diagnostic に固定する。`language-structure-source-scenario` と `DM-LANG-001` は projection configuration が宣言する一つの prose language、重複翻訳なし、および validator-owned structural kind mapping から導出した canonical English token の exact emission を source-aware facts として検証し、自然言語の文字種推測や fixture-supplied canonical token への信頼は行わない。focused RED で既存 Behavior valid fixture の post-key marker が Unicode scalar-value 順でなかったことを検出したため canonical order に修正する。影響として、Operation validator は Behavior marker と各 operation-level leading deviation の厳密昇順、Behavior marker group の source-line adjacency、および Related の deviation 禁止を検証する。公開 document grammar は変更せず、production validation semantics と source projection expectations を README §3.4 / §4.1 / §6 の既存規定に一致させる。
 
+> **Implementation note (Implementation readiness capability checkpoint):** 既存の contract-complete `valid/full` set、`sendCreateOrder` operation、trusted task `submit an order` を共有する `implementation-readiness-source-scenario` を追加する。同一契約に対し、ordinary reader の DocAI Messaging version / profile / publication scope / required structure、target runtime capability、source-aware reader の exact source-adapter support を個別に変え、期待する readiness と blocker を `DM-INC-003` で検証する。task-scoped requirement のみを評価するため、未選択の Avro representation / codec は JSON task を阻害せず、ordinary reader は source adapter を持たなくても ready になり、source-aware validation だけが applicable exact adapter set を要求する。invalid case は必須 runtime capability 欠落を ready とした projection mismatch 一件に限定する。影響として、既存 marker-based selected retrieval scope evaluator を保持したまま、その結果と reader / task / runtime / adapter capability を合成する read-only evaluator と focused corpus facts を追加し、公開 document grammar と document-set compliance semantics は変更しない。作業順序の変更はない。
+
 - [x] Metadata、extension name/order/escape、unknown non-`x-` key、sentence grammar。
 - [x] Identity trailer、set/projection digest、closed root、mixed set、task-scoped identity check。
 - [x] Direct/sharded Sources、unknown API identity/version、Revision none、overlap、fixed-point、cycle。
@@ -766,7 +768,7 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 - [x] Failure core states、deviations、common/inline shapes、receive malformed/unknown/handler errors。
 - [x] publication safety、unsafe mandatory value failure、instruction structural escape。
 - [x] canonical marker order、deviation placement、deprecated marker、single prose language、English structure。
-- [ ] implementation readiness cases: same contract under different reader/runtime/adapter capabilities。
+- [x] implementation readiness cases: same contract under different reader/runtime/adapter capabilities。
 
 - [ ] **Step: one-invalidity audit を行う**
   - 各 invalid fixture に `expected_rule_ids` が一つの primary concern を示すことを確認する。
