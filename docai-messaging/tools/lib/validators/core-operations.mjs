@@ -58,6 +58,14 @@ function validateBehavior(file, markdown, heading, nextHeading) {
   const lines = contentLines(file, markdown, heading, nextHeading);
   let index = 0;
   while (lines[index]?.text.startsWith("**deviation**: ")) index += 1;
+  if (!validLeadingDeviations(lines.slice(0, index))) {
+    return [operationDiagnostic(
+      "DM-OP-003",
+      file,
+      lines[0]?.line ?? heading.line,
+      "Behavior deviations must be non-empty and ordered by complete source line before the six canonical keys."
+    )];
+  }
 
   const values = [];
   for (const key of BEHAVIOR_KEYS) {
@@ -79,8 +87,17 @@ function validateBehavior(file, markdown, heading, nextHeading) {
     line.text.startsWith("**unknown**: ")
       && line.text.length > "**unknown**: ".length
   ));
+  const markersOrdered = markers.every((line, markerIndex) => (
+    markerIndex === 0
+      || unicodeScalarCompare(markers[markerIndex - 1].text, line.text) < 0
+  ));
+  const markersContiguous = markers.every((line, markerIndex) => (
+    line.line === (markerIndex === 0 ? lines[index - 1].line : markers[markerIndex - 1].line) + 1
+  ));
   const hasUnknown = values.includes("unknown");
   if (!validMarkers
+    || !markersOrdered
+    || !markersContiguous
     || hasUnknown !== (markers.length > 0)
     || !validDelivery(values[4])) {
     return [operationDiagnostic(
@@ -101,6 +118,16 @@ function unicodeScalarCompare(left, right) {
     if (leftScalars[index] !== rightScalars[index]) return leftScalars[index] - rightScalars[index];
   }
   return leftScalars.length - rightScalars.length;
+}
+
+function validLeadingDeviations(lines) {
+  if (lines.some((line) => (
+    !line.text.startsWith("**deviation**: ")
+      || line.text.length <= "**deviation**: ".length
+  ))) return false;
+  return lines.every((line, index) => (
+    index === 0 || unicodeScalarCompare(lines[index - 1].text, line.text) < 0
+  ));
 }
 
 function markerKind(text, parameterTable) {
@@ -161,6 +188,7 @@ function tableState(lines, expectedHeader) {
 function coreUnitState(lines, { replacementUnit, tableHeader }) {
   let index = 0;
   while (lines[index]?.text.startsWith("**deviation**: ")) index += 1;
+  if (!validLeadingDeviations(lines.slice(0, index))) return null;
   const core = lines.slice(index);
   if (core.length === 1 && core[0].text === "none") {
     return { state: "none", table: null };
@@ -230,6 +258,7 @@ function validateChannel(file, markdown, heading, nextHeading, address) {
   const lines = contentLines(file, markdown, heading, nextHeading);
   let index = 0;
   while (lines[index]?.text.startsWith("**deviation**: ")) index += 1;
+  if (!validLeadingDeviations(lines.slice(0, index))) return null;
   const core = lines.slice(index);
   index = 0;
 
@@ -329,6 +358,19 @@ function validateHeadingAndPurpose(file, markdown, heading, nextLine, routedRow)
   return { diagnostics, deprecated: marker !== null };
 }
 
+function validateRelated(file, markdown, heading, nextHeading) {
+  const lines = contentLines(file, markdown, heading, nextHeading);
+  const misplaced = lines.find((line) => line.text.startsWith("**deviation**:"));
+  return misplaced === undefined
+    ? []
+    : [operationDiagnostic(
+      "DM-OP-001",
+      file,
+      misplaced.line,
+      "Related is navigation-only and does not permit deviation markers."
+    )];
+}
+
 function parseOperationFile(file, routedRows) {
   const scanned = scanMarkdown({ text: file.content, file: file.path });
   if (scanned.value === null) return { diagnostics: scanned.diagnostics, definitions: [] };
@@ -412,6 +454,15 @@ function parseOperationFile(file, routedRows) {
           "Channel requires Parameters then Bindings with canonical states, leading-empty collapse, and exactly one row per address parameter."
         ));
       }
+    }
+    const relatedIndex = sections.findIndex((entry) => entry.text === "Related");
+    if (relatedIndex !== -1) {
+      diagnostics.push(...validateRelated(
+        file,
+        markdown,
+        sections[relatedIndex],
+        { line: nextLine }
+      ));
     }
     if (name !== null) {
       const headingMatch = heading.text.match(/^([^ ]+) (.+) \(([^()]+)\)$/);

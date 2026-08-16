@@ -1,0 +1,9 @@
+{
+  "id": "deviation-message-heading-invalid",
+  "base": "../valid/canonical-deviations-deprecation-valid",
+  "path": "channels/deviations.md",
+  "replace": {
+    "from": "### Message publish-order\n\n#### Headers",
+    "to": "### Message publish-order\n\n**deviation**: the inherited message contract is replaced locally\n#### Headers"
+  }
+}

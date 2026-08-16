@@ -156,9 +156,9 @@ Requests a command whose complete behavior inputs are unavailable.
 - authorization: none
 - delivery: unknown
 - ordering: none
-**unknown**: side_effects requires the handler specification
-**unknown**: preconditions requires the command lifecycle specification
 **unknown**: delivery requires the broker acknowledgement policy
+**unknown**: preconditions requires the command lifecycle specification
+**unknown**: side_effects requires the handler specification
 
 ### Operation Bindings
 

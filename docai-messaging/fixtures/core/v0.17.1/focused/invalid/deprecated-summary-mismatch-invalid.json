@@ -1,0 +1,9 @@
+{
+  "id": "deprecated-summary-mismatch-invalid",
+  "base": "../valid/canonical-deviations-deprecation-valid",
+  "path": "INDEX.md",
+  "replace": {
+    "from": "(deprecated) Publishes an order with explicit convention deviations and correlated reply handling",
+    "to": "Publishes an order with explicit convention deviations and correlated reply handling"
+  }
+}

@@ -2391,8 +2391,8 @@ task6Test("accepts DM-OP-003 unknown Behavior values with post-key markers", (t)
         "- authorization: none",
         "- delivery: unknown",
         "- ordering: none",
-        "**unknown**: side_effects requires the handler specification",
-        "**unknown**: delivery requires the broker acknowledgement policy"
+        "**unknown**: delivery requires the broker acknowledgement policy",
+        "**unknown**: side_effects requires the handler specification"
       ]
     })
   });

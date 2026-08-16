@@ -1,0 +1,29 @@
+{
+  "documentLanguage": "ja",
+  "segments": [
+    {
+      "caseId": "operation-purpose",
+      "role": "prose",
+      "projectedLanguage": "ja",
+      "translationCount": 1
+    },
+    {
+      "caseId": "summary",
+      "role": "prose",
+      "projectedLanguage": "ja",
+      "translationCount": 1
+    },
+    {
+      "caseId": "behavior-heading",
+      "role": "structure",
+      "structuralKind": "behavior-heading",
+      "projectedValue": "Behavior"
+    },
+    {
+      "caseId": "payload-heading",
+      "role": "structure",
+      "structuralKind": "payload-heading",
+      "projectedValue": "Payload"
+    }
+  ]
+}

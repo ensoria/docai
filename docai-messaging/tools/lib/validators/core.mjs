@@ -1179,3 +1179,59 @@ export function validatePublicationSafetySourceExpectations(
     facts: { publicationSafetySourceExpectations: expectations }
   };
 }
+
+const CANONICAL_STRUCTURAL_VALUES = new Map([
+  ["behavior-heading", "Behavior"],
+  ["payload-heading", "Payload"]
+]);
+
+export function evaluateLanguageStructureSourceExpectations(scenario) {
+  const documentLanguage = typeof scenario.documentLanguage === "string"
+    && scenario.documentLanguage.length > 0
+    ? scenario.documentLanguage
+    : null;
+  const segments = Array.isArray(scenario.segments) ? scenario.segments : [];
+  return segments
+    .map((entry) => ({
+      caseId: entry.caseId,
+      expectedLanguage: entry.role === "structure" ? "en" : documentLanguage,
+      expectedValue: entry.role === "structure"
+        ? CANONICAL_STRUCTURAL_VALUES.get(entry.structuralKind) ?? null
+        : null,
+      role: entry.role
+    }))
+    .sort((left, right) => left.caseId < right.caseId ? -1 : left.caseId > right.caseId ? 1 : 0);
+}
+
+export function validateLanguageStructureSourceExpectations(
+  scenario,
+  { file = "source-input.json" } = {}
+) {
+  const expectations = evaluateLanguageStructureSourceExpectations(scenario);
+  const segments = Array.isArray(scenario.segments) ? scenario.segments : [];
+  const byCaseId = new Map(segments.map((entry) => [entry.caseId, entry]));
+  const uniqueCaseIds = byCaseId.size === segments.length;
+  const mismatches = expectations.filter((expected) => {
+    const projected = byCaseId.get(expected.caseId);
+    if (expected.role === "prose") {
+      return expected.expectedLanguage === null
+        || projected?.projectedLanguage !== expected.expectedLanguage
+        || projected?.translationCount !== 1;
+    }
+    return expected.role !== "structure"
+      || typeof expected.expectedValue !== "string"
+      || expected.expectedValue.length === 0
+      || projected?.projectedValue !== expected.expectedValue;
+  });
+  return {
+    diagnostics: mismatches.length === 0 && uniqueCaseIds
+      ? []
+      : [diagnostic(
+        "DM-LANG-001",
+        file,
+        1,
+        `Projected content disagrees with ${mismatches.length + (uniqueCaseIds ? 0 : 1)} document-language or canonical-English structural expectation(s).`
+      )],
+    facts: { languageStructureSourceExpectations: expectations }
+  };
+}

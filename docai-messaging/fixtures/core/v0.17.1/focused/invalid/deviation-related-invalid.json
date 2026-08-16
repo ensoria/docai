@@ -1,0 +1,9 @@
+{
+  "id": "deviation-related-invalid",
+  "base": "../valid/canonical-deviations-deprecation-valid",
+  "path": "channels/deviations.md",
+  "replace": {
+    "from": "### Related\n\nnone",
+    "to": "### Related\n\n**deviation**: the inherited navigation is replaced locally\nnone"
+  }
+}

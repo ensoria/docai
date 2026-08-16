@@ -1,0 +1,9 @@
+{
+  "id": "deviation-split-payload-sequence-invalid",
+  "base": "../valid/canonical-deviations-deprecation-valid",
+  "path": "channels/deviations.md",
+  "replace": {
+    "from": "**deviation**: the inherited envelope payload is suppressed for this signal\nnone",
+    "to": "**payload_required**: unknown\n**deviation**: the inherited envelope payload is suppressed for this signal\n**unknown**: payload applicability requires the source schema\nunknown\n**unknown**: payload representation set requires the source wire identity"
+  }
+}

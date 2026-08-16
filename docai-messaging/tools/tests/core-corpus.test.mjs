@@ -237,6 +237,21 @@ const trustAndPublicationCaseIds = [
   "trust-boundary-structure-invalid"
 ];
 
+const canonicalStructureCaseIds = [
+  "behavior-marker-group-split-invalid",
+  "behavior-marker-order-invalid",
+  "canonical-deviations-deprecation-valid",
+  "deprecated-summary-mismatch-invalid",
+  "deviation-failure-shape-invalid",
+  "deviation-message-heading-invalid",
+  "deviation-order-invalid",
+  "deviation-related-invalid",
+  "deviation-split-payload-sequence-invalid",
+  "language-localized-structure-invalid",
+  "language-mixed-prose-invalid",
+  "language-structure-source-valid"
+];
+
 const publicationFailureCases = [
   ["publication-safety-mandatory-invalid", "unsafe-mandatory-structural-value"],
   ["publication-safety-mandatory-catalog-invalid", "unsafe-mandatory-catalog-cell"],
@@ -252,12 +267,27 @@ function fixtureSource(fixturePath) {
   return source.endsWith("\n") ? source.slice(0, -1) : source;
 }
 
+function validateDocumentSetMutation(fixturePath) {
+  const scenario = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
+  const basePath = path.resolve(path.dirname(fixturePath), scenario.base);
+  const documentSet = loadDocumentSet(basePath);
+  const file = documentSet.files.find((entry) => entry.path === scenario.path);
+  assert.notEqual(file, undefined, `${scenario.path} must exist in ${scenario.base}`);
+  const occurrences = file.content.split(scenario.replace.from).length - 1;
+  assert.equal(occurrences, 1, `${scenario.id} replacement source must occur exactly once`);
+  file.content = file.content.replace(scenario.replace.from, scenario.replace.to);
+  return validateDocumentSet(documentSet, { wholeSet: false });
+}
+
 function validateCase(fixturePath, fixtureCase) {
   if (fixtureCase.kind === "document-set") {
     return validateDocumentSet(loadDocumentSet(fixturePath), { wholeSet: true });
   }
   if (fixtureCase.kind === "task-scoped-document-set") {
     return validateDocumentSet(loadDocumentSet(fixturePath), { wholeSet: false });
+  }
+  if (fixtureCase.kind === "task-scoped-document-set-mutation") {
+    return validateDocumentSetMutation(fixturePath);
   }
   if (fixtureCase.kind === "operation-profile-pair") {
     return validateOperationProfilePair(
@@ -317,6 +347,13 @@ function validateCase(fixturePath, fixtureCase) {
   if (fixtureCase.kind === "publication-safety-source-scenario") {
     const scenario = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
     return coreValidator.validatePublicationSafetySourceExpectations(
+      scenario,
+      { file: fixtureCase.path }
+    );
+  }
+  if (fixtureCase.kind === "language-structure-source-scenario") {
+    const scenario = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
+    return coreValidator.validateLanguageStructureSourceExpectations(
       scenario,
       { file: fixtureCase.path }
     );
@@ -1912,6 +1949,100 @@ test("executes the Task 9 DM-TRUST-001 DM-TRUST-002 DM-TRUST-003 publication and
     ["trust-boundary-authority-invalid", "DM-TRUST-001"],
     ["trust-boundary-navigation-denial-missing-invalid", "DM-TRUST-001"],
     ["trust-boundary-structure-invalid", "DM-TRUST-002"]
+  ]) {
+    const fixtureCase = byId.get(id);
+    const invalid = validateCase(path.join(corpusPath, fixtureCase.path), fixtureCase);
+    const primary = invalid.diagnostics.filter((entry) => (
+      entry.severity === "error" && !entry.cascade
+    ));
+    assert.deepEqual(primary.map((entry) => entry.ruleId), [expectedRuleId], id);
+  }
+});
+
+test("executes the Task 9 DM-LANG-001 canonical marker deviation deprecation language and English-structure corpus", () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
+  const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
+
+  assert.deepEqual(canonicalStructureCaseIds.filter((id) => !byId.has(id)), []);
+  assert.equal(typeof coreValidator.validateLanguageStructureSourceExpectations, "function");
+  for (const id of canonicalStructureCaseIds) {
+    const fixtureCase = byId.get(id);
+    assert.equal(
+      fixtureCase.expected === "valid" || fixtureCase.expected_rule_ids.length === 1,
+      true,
+      id
+    );
+  }
+
+  const result = runFixtureCorpus(corpusPath, validateCase);
+  assert.equal(result.failed, 0, result.report);
+
+  const validCase = byId.get("canonical-deviations-deprecation-valid");
+  const valid = validateCase(path.join(corpusPath, validCase.path), validCase);
+  assert.deepEqual(valid.diagnostics, []);
+  assert.equal(valid.facts.core.operationDefinitions.byName["publish-order"].deprecated, true);
+  const validChannel = fs.readFileSync(
+    path.join(corpusPath, validCase.path, "channels/deviations.md"),
+    "utf8"
+  );
+  for (const fragment of [
+    "**deprecated**: use publish-order-v2 and migrate producers before retirement",
+    "### Behavior\n\n**deviation**:",
+    "### Operation Bindings\n\n**deviation**:",
+    "### Channel\n\n**deviation**:",
+    "#### Parameters\n\n**deviation**:",
+    "#### Bindings\n\n**deviation**:",
+    "#### Headers\n\n**deviation**:",
+    "#### Payload\n\n**deviation**:",
+    "### Reply\n\n**deviation**:",
+    "##### Parameters\n\n**deviation**:",
+    "##### Payload\n\n**deviation**:",
+    "### Failure Handling\n\n**deviation**:"
+  ]) {
+    assert.equal(validChannel.includes(fragment), true, fragment);
+  }
+
+  const languageCase = byId.get("language-structure-source-valid");
+  const language = validateCase(path.join(corpusPath, languageCase.path), languageCase);
+  assert.deepEqual(language.diagnostics, []);
+  assert.deepEqual(language.facts.languageStructureSourceExpectations, [
+    {
+      caseId: "behavior-heading",
+      expectedLanguage: "en",
+      expectedValue: "Behavior",
+      role: "structure"
+    },
+    {
+      caseId: "operation-purpose",
+      expectedLanguage: "ja",
+      expectedValue: null,
+      role: "prose"
+    },
+    {
+      caseId: "payload-heading",
+      expectedLanguage: "en",
+      expectedValue: "Payload",
+      role: "structure"
+    },
+    {
+      caseId: "summary",
+      expectedLanguage: "ja",
+      expectedValue: null,
+      role: "prose"
+    }
+  ]);
+
+  for (const [id, expectedRuleId] of [
+    ["behavior-marker-order-invalid", "DM-OP-003"],
+    ["behavior-marker-group-split-invalid", "DM-OP-003"],
+    ["deprecated-summary-mismatch-invalid", "DM-OP-002"],
+    ["deviation-failure-shape-invalid", "DM-FAIL-003"],
+    ["deviation-message-heading-invalid", "DM-MSG-003"],
+    ["deviation-order-invalid", "DM-OP-003"],
+    ["deviation-related-invalid", "DM-OP-001"],
+    ["deviation-split-payload-sequence-invalid", "DM-MSG-004"],
+    ["language-localized-structure-invalid", "DM-LANG-001"],
+    ["language-mixed-prose-invalid", "DM-LANG-001"]
   ]) {
     const fixtureCase = byId.get(id);
     const invalid = validateCase(path.join(corpusPath, fixtureCase.path), fixtureCase);

@@ -1,0 +1,11 @@
+{
+  "documentLanguage": "ja",
+  "segments": [
+    {
+      "caseId": "behavior-heading",
+      "role": "structure",
+      "structuralKind": "behavior-heading",
+      "projectedValue": "動作"
+    }
+  ]
+}

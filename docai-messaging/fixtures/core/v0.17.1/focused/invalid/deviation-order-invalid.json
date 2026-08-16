@@ -1,0 +1,9 @@
+{
+  "id": "deviation-order-invalid",
+  "base": "../valid/canonical-deviations-deprecation-valid",
+  "path": "channels/deviations.md",
+  "replace": {
+    "from": "**deviation**: alpha inherited authorization rule is replaced by operation credentials\n**deviation**: zeta inherited delivery rule is replaced by broker persistence",
+    "to": "**deviation**: zeta inherited delivery rule is replaced by broker persistence\n**deviation**: alpha inherited authorization rule is replaced by operation credentials"
+  }
+}

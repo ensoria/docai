@@ -1,0 +1,17 @@
+{
+  "documentLanguage": "ja",
+  "segments": [
+    {
+      "caseId": "operation-purpose",
+      "role": "prose",
+      "projectedLanguage": "ja",
+      "translationCount": 1
+    },
+    {
+      "caseId": "summary",
+      "role": "prose",
+      "projectedLanguage": "en",
+      "translationCount": 1
+    }
+  ]
+}

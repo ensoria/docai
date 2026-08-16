@@ -1121,6 +1121,90 @@
       "path": "focused/invalid/sources-unknown-marker-missing-invalid",
       "expected": "invalid",
       "expected_rule_ids": ["DM-SRC-003"]
+    },
+    {
+      "id": "behavior-marker-group-split-invalid",
+      "kind": "task-scoped-document-set-mutation",
+      "path": "focused/invalid/behavior-marker-group-split-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-OP-003"]
+    },
+    {
+      "id": "behavior-marker-order-invalid",
+      "kind": "task-scoped-document-set-mutation",
+      "path": "focused/invalid/behavior-marker-order-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-OP-003"]
+    },
+    {
+      "id": "canonical-deviations-deprecation-valid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/valid/canonical-deviations-deprecation-valid",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
+      "id": "deprecated-summary-mismatch-invalid",
+      "kind": "task-scoped-document-set-mutation",
+      "path": "focused/invalid/deprecated-summary-mismatch-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-OP-002"]
+    },
+    {
+      "id": "deviation-failure-shape-invalid",
+      "kind": "task-scoped-document-set-mutation",
+      "path": "focused/invalid/deviation-failure-shape-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-FAIL-003"]
+    },
+    {
+      "id": "deviation-message-heading-invalid",
+      "kind": "task-scoped-document-set-mutation",
+      "path": "focused/invalid/deviation-message-heading-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-MSG-003"]
+    },
+    {
+      "id": "deviation-order-invalid",
+      "kind": "task-scoped-document-set-mutation",
+      "path": "focused/invalid/deviation-order-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-OP-003"]
+    },
+    {
+      "id": "deviation-related-invalid",
+      "kind": "task-scoped-document-set-mutation",
+      "path": "focused/invalid/deviation-related-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-OP-001"]
+    },
+    {
+      "id": "deviation-split-payload-sequence-invalid",
+      "kind": "task-scoped-document-set-mutation",
+      "path": "focused/invalid/deviation-split-payload-sequence-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-MSG-004"]
+    },
+    {
+      "id": "language-localized-structure-invalid",
+      "kind": "language-structure-source-scenario",
+      "path": "focused/invalid/language-localized-structure-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-LANG-001"]
+    },
+    {
+      "id": "language-mixed-prose-invalid",
+      "kind": "language-structure-source-scenario",
+      "path": "focused/invalid/language-mixed-prose-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-LANG-001"]
+    },
+    {
+      "id": "language-structure-source-valid",
+      "kind": "language-structure-source-scenario",
+      "path": "focused/valid/language-structure-source-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": []
     }
   ]
 }

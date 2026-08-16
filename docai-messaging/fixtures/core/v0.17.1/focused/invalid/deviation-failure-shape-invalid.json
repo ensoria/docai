@@ -1,0 +1,9 @@
+{
+  "id": "deviation-failure-shape-invalid",
+  "base": "../valid/canonical-deviations-deprecation-valid",
+  "path": "channels/deviations.md",
+  "replace": {
+    "from": "**message_shape**: publish-error\n\n- Headers: none",
+    "to": "**message_shape**: publish-error\n\n**deviation**: the inherited error envelope is replaced locally\n- Headers: none"
+  }
+}

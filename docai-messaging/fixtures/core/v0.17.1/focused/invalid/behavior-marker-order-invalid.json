@@ -1,0 +1,9 @@
+{
+  "id": "behavior-marker-order-invalid",
+  "base": "../valid/canonical-deviations-deprecation-valid",
+  "path": "channels/deviations.md",
+  "replace": {
+    "from": "**unknown**: authorization requires the deployment role mapping\n**unknown**: preconditions require the producer workflow",
+    "to": "**unknown**: preconditions require the producer workflow\n**unknown**: authorization requires the deployment role mapping"
+  }
+}

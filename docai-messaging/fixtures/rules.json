@@ -373,6 +373,12 @@
       "scope": "core"
     },
     {
+      "rule_id": "DM-LANG-001",
+      "readme_section": "§4.1 Section Rules — Behavior / §6 Cross-Cutting Requirements and Writing Style",
+      "description": "A generated set uses exactly one declared prose language without repeated translations, while every fixed structural token remains canonical English.",
+      "scope": "core"
+    },
+    {
       "rule_id": "DM-PARSE-001",
       "readme_section": "§3.5 Canonical Syntax and Boundaries",
       "description": "Markdown headings and backtick-fenced blocks retain deterministic source-line boundaries.",
