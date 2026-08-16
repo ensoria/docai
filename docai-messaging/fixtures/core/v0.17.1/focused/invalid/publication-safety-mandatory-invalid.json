@@ -1,0 +1,12 @@
+{
+  "cases": [
+    {
+      "caseId": "unsafe-mandatory-structural-value",
+      "factRole": "mandatory-structural-value",
+      "featureClass": "operation name",
+      "sourceValue": "SYNTHETIC_SENSITIVE_OPERATION_SENTINEL",
+      "publicationSafeLocation": null,
+      "contractEquivalentSafeOverride": null
+    }
+  ]
+}

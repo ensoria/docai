@@ -1,0 +1,14 @@
+{
+  "cases": [
+    {
+      "caseId": "unsafe-identical-override",
+      "factRole": "mandatory-catalog-cell",
+      "featureClass": "source location",
+      "sourceValue": "SYNTHETIC_SENSITIVE_LOCATION_SENTINEL",
+      "publicationSafeLocation": null,
+      "contractEquivalentSafeOverride": "SYNTHETIC_SENSITIVE_LOCATION_SENTINEL",
+      "safeOverrideAuthorizedBySource": true,
+      "distributionPolicyAuthorized": true
+    }
+  ]
+}

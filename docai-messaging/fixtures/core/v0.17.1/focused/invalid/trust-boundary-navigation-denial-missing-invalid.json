@@ -1,0 +1,15 @@
+{
+  "cases": [
+    {
+      "caseId": "navigation-omits-denial",
+      "sourceBytes": "https://example.invalid/do-not-fetch",
+      "assignedLocation": "related-navigation",
+      "projected": {
+        "caseId": "navigation-omits-denial",
+        "outcome": "preserve-navigation-data",
+        "instructionAuthority": "none",
+        "authorizedActions": []
+      }
+    }
+  ]
+}

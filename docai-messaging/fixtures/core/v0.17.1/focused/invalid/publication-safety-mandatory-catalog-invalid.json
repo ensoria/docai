@@ -1,0 +1,12 @@
+{
+  "cases": [
+    {
+      "caseId": "unsafe-mandatory-catalog-cell",
+      "factRole": "mandatory-catalog-cell",
+      "featureClass": "source location",
+      "sourceValue": "SYNTHETIC_SENSITIVE_LOCATION_SENTINEL",
+      "publicationSafeLocation": null,
+      "contractEquivalentSafeOverride": null
+    }
+  ]
+}

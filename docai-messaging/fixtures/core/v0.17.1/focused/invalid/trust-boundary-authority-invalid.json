@@ -1,0 +1,16 @@
+{
+  "cases": [
+    {
+      "caseId": "navigation-authorizes-fetch",
+      "sourceBytes": "https://example.invalid/do-not-fetch",
+      "assignedLocation": "related-navigation",
+      "projected": {
+        "caseId": "navigation-authorizes-fetch",
+        "outcome": "preserve-navigation-data",
+        "retrievalAuthorized": true,
+        "instructionAuthority": "source",
+        "authorizedActions": ["fetch"]
+      }
+    }
+  ]
+}

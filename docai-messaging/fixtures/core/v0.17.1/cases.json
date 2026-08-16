@@ -829,6 +829,90 @@
       "expected_rule_ids": ["DM-FAIL-001"]
     },
     {
+      "id": "publication-safety-feature-class-disclosure-invalid",
+      "kind": "publication-safety-source-scenario",
+      "path": "focused/invalid/publication-safety-feature-class-disclosure-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-TRUST-003"]
+    },
+    {
+      "id": "publication-safety-identical-override-invalid",
+      "kind": "publication-safety-source-scenario",
+      "path": "focused/invalid/publication-safety-identical-override-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-TRUST-003"]
+    },
+    {
+      "id": "publication-safety-location-disclosure-invalid",
+      "kind": "publication-safety-source-scenario",
+      "path": "focused/invalid/publication-safety-location-disclosure-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-TRUST-003"]
+    },
+    {
+      "id": "publication-safety-mandatory-catalog-invalid",
+      "kind": "publication-safety-source-scenario",
+      "path": "focused/invalid/publication-safety-mandatory-catalog-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-TRUST-003"]
+    },
+    {
+      "id": "publication-safety-mandatory-invalid",
+      "kind": "publication-safety-source-scenario",
+      "path": "focused/invalid/publication-safety-mandatory-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-TRUST-003"]
+    },
+    {
+      "id": "publication-safety-mandatory-location-invalid",
+      "kind": "publication-safety-source-scenario",
+      "path": "focused/invalid/publication-safety-mandatory-location-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-TRUST-003"]
+    },
+    {
+      "id": "publication-safety-override-disclosure-invalid",
+      "kind": "publication-safety-source-scenario",
+      "path": "focused/invalid/publication-safety-override-disclosure-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-TRUST-003"]
+    },
+    {
+      "id": "publication-safety-source-valid",
+      "kind": "publication-safety-source-scenario",
+      "path": "focused/valid/publication-safety-source-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
+      "id": "trust-boundary-authority-invalid",
+      "kind": "trust-boundary-source-scenario",
+      "path": "focused/invalid/trust-boundary-authority-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-TRUST-001"]
+    },
+    {
+      "id": "trust-boundary-navigation-denial-missing-invalid",
+      "kind": "trust-boundary-source-scenario",
+      "path": "focused/invalid/trust-boundary-navigation-denial-missing-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-TRUST-001"]
+    },
+    {
+      "id": "trust-boundary-source-valid",
+      "kind": "trust-boundary-source-scenario",
+      "path": "focused/valid/trust-boundary-source-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
+      "id": "trust-boundary-structure-invalid",
+      "kind": "trust-boundary-source-scenario",
+      "path": "focused/invalid/trust-boundary-structure-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-TRUST-002"]
+    },
+    {
       "id": "payload-object-openness-missing-invalid",
       "kind": "task-scoped-document-set",
       "path": "focused/invalid/payload-object-openness-missing-invalid",

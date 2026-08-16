@@ -1,0 +1,54 @@
+{
+  "cases": [
+    {
+      "caseId": "authorized-broker-host",
+      "factRole": "client-relevant-contract",
+      "featureClass": "broker host",
+      "sourceValue": "broker.public.example",
+      "valueClassification": "non-secret",
+      "distributionPolicyAuthorized": true
+    },
+    {
+      "caseId": "authorized-class-overlap",
+      "factRole": "client-relevant-contract",
+      "featureClass": "broker host",
+      "sourceValue": "host",
+      "valueClassification": "non-secret",
+      "distributionPolicyAuthorized": true
+    },
+    {
+      "caseId": "sensitive-credential-contract",
+      "factRole": "client-relevant-contract",
+      "featureClass": "credential",
+      "sourceValue": "SYNTHETIC_SECRET_SENTINEL",
+      "publicationSafeLocation": "source.json#/security/0"
+    },
+    {
+      "caseId": "sensitive-client-override-not-sanitized",
+      "factRole": "client-relevant-contract",
+      "featureClass": "credential",
+      "sourceValue": "SYNTHETIC_SECOND_SECRET_SENTINEL",
+      "publicationSafeLocation": "source.json#/security/2",
+      "contractEquivalentSafeOverride": "synthetic-public-value",
+      "safeOverrideAuthorizedBySource": true,
+      "distributionPolicyAuthorized": true
+    },
+    {
+      "caseId": "regulated-data-example",
+      "factRole": "example",
+      "featureClass": "personal data",
+      "sourceValue": "SYNTHETIC_PII_SENTINEL",
+      "schemaAllowsSyntheticPlaceholder": true
+    },
+    {
+      "caseId": "authorized-safe-override",
+      "factRole": "mandatory-catalog-cell",
+      "featureClass": "broker host",
+      "sourceValue": "SYNTHETIC_INTERNAL_HOST_SENTINEL",
+      "publicationSafeLocation": null,
+      "contractEquivalentSafeOverride": "broker.public.example",
+      "safeOverrideAuthorizedBySource": true,
+      "distributionPolicyAuthorized": true
+    }
+  ]
+}

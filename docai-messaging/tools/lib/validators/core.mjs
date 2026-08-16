@@ -1002,7 +1002,11 @@ function proseStructure(value) {
   if (/^> docai-identity:/.test(value)) return "identity-trailer";
   if (/^(?:Full|Compact) set: /.test(value)) return "profile-link";
   if (/^- [a-z][a-z0-9_-]*:/.test(value)) return "fixed-key-list";
+  if (/^\*\*(?:deprecated|deviation|payload_required|payload_presence|payload_nullable|media_type|variant|message_shape|field_defaults|same_as|instruction_authority|unknown|unsupported)\*\*:/.test(value)) {
+    return "standard-marker";
+  }
   if (/^\*\*x-[^*]+\*\*:/.test(value)) return "extension-structure";
+  if (["none", "unknown"].includes(value)) return "fixed-value";
   if (/^#{1,6} /.test(value)) return "heading";
   return null;
 }
@@ -1037,9 +1041,68 @@ export function evaluateTrustBoundarySourceExpectations({ cases }) {
   });
 }
 
+function trustMismatchRule(expected, projected) {
+  const authorityMismatch = projected?.instructionAuthority !== expected.instructionAuthority
+    || !sameStringArray(projected?.authorizedActions, expected.authorizedActions)
+    || (expected.retrievalAuthorized !== undefined
+      && projected?.retrievalAuthorized !== expected.retrievalAuthorized)
+    || projected?.retrievalAuthorized === true;
+  return authorityMismatch ? "DM-TRUST-001" : "DM-TRUST-002";
+}
+
+export function validateTrustBoundarySourceExpectations(
+  scenario,
+  { file = "source-input.json" } = {}
+) {
+  const expectations = evaluateTrustBoundarySourceExpectations(scenario);
+  const sources = new Map((scenario.cases ?? []).map((entry) => [entry.caseId, entry]));
+  const mismatches = expectations.flatMap((expected) => {
+    const projected = sources.get(expected.caseId)?.projected;
+    if (projected === undefined || exactTarget(expected, projected)) return [];
+    return [{ ruleId: trustMismatchRule(expected, projected) }];
+  });
+  const rules = [...new Set(mismatches.map((entry) => entry.ruleId))];
+  return {
+    diagnostics: rules.map((ruleId) => diagnostic(
+      ruleId,
+      file,
+      1,
+      `Trust-boundary projection disagrees with ${mismatches.filter((entry) => entry.ruleId === ruleId).length} source expectation(s).`
+    )),
+    facts: { trustBoundarySourceExpectations: expectations }
+  };
+}
+
 export function evaluatePublicationSafetySourceExpectations({ cases }) {
   return cases.map((entry) => {
     const prohibitedOutputValues = [entry.sourceValue];
+    if (entry.valueClassification === "non-secret"
+      && entry.distributionPolicyAuthorized === true) {
+      return {
+        caseId: entry.caseId,
+        outcome: "emit-exact",
+        emittedValue: entry.sourceValue,
+        coverage: "complete",
+        knowledge: "complete",
+        prohibitedOutputValues: []
+      };
+    }
+    const sensitiveValue = typeof entry.sourceValue === "string" && entry.sourceValue !== ""
+      ? entry.sourceValue
+      : null;
+    const unsafeDisclosure = sensitiveValue !== null && [
+      entry.featureClass,
+      entry.publicationSafeLocation,
+      entry.contractEquivalentSafeOverride
+    ].some((value) => typeof value === "string" && value.includes(sensitiveValue));
+    if (unsafeDisclosure) {
+      return {
+        caseId: entry.caseId,
+        outcome: "generation-failure",
+        reason: "publication-safe-value-unavailable",
+        prohibitedOutputValues
+      };
+    }
     if (entry.factRole === "example" && entry.schemaAllowsSyntheticPlaceholder === true) {
       return {
         caseId: entry.caseId,
@@ -1049,9 +1112,22 @@ export function evaluatePublicationSafetySourceExpectations({ cases }) {
         prohibitedOutputValues
       };
     }
-    if (entry.factRole === "mandatory-catalog-cell"
-      && entry.publicationSafeLocation === null
-      && entry.contractEquivalentSafeOverride === null) {
+    if (["mandatory-catalog-cell", "mandatory-structural-value"].includes(entry.factRole)
+      && typeof entry.contractEquivalentSafeOverride === "string"
+      && entry.contractEquivalentSafeOverride !== ""
+      && entry.contractEquivalentSafeOverride !== entry.sourceValue
+      && entry.safeOverrideAuthorizedBySource === true
+      && entry.distributionPolicyAuthorized === true) {
+      return {
+        caseId: entry.caseId,
+        outcome: "emit-safe-override",
+        emittedValue: entry.contractEquivalentSafeOverride,
+        coverage: "complete",
+        knowledge: "complete",
+        prohibitedOutputValues
+      };
+    }
+    if (["mandatory-catalog-cell", "mandatory-structural-value"].includes(entry.factRole)) {
       return {
         caseId: entry.caseId,
         outcome: "generation-failure",
@@ -1077,4 +1153,29 @@ export function evaluatePublicationSafetySourceExpectations({ cases }) {
       prohibitedOutputValues
     };
   });
+}
+
+export function validatePublicationSafetySourceExpectations(
+  scenario,
+  { file = "source-input.json" } = {}
+) {
+  const expectations = evaluatePublicationSafetySourceExpectations(scenario);
+  const sources = new Map((scenario.cases ?? []).map((entry) => [entry.caseId, entry]));
+  const failures = expectations.filter((entry) => entry.outcome === "generation-failure");
+  const mismatches = expectations.filter((expected) => {
+    const projected = sources.get(expected.caseId)?.projected;
+    return projected !== undefined && !exactTarget(expected, projected);
+  });
+  const invalidCount = failures.length + mismatches.length;
+  return {
+    diagnostics: invalidCount === 0
+      ? []
+      : [diagnostic(
+        "DM-TRUST-003",
+        file,
+        1,
+        `Publication-safety projection has ${invalidCount} unsafe mandatory value or source-expectation failure(s).`
+      )],
+    facts: { publicationSafetySourceExpectations: expectations }
+  };
 }

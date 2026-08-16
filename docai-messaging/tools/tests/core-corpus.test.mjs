@@ -222,6 +222,31 @@ const failureContractCaseIds = [
   "failure-state-mixed-invalid"
 ];
 
+const trustAndPublicationCaseIds = [
+  "publication-safety-feature-class-disclosure-invalid",
+  "publication-safety-identical-override-invalid",
+  "publication-safety-location-disclosure-invalid",
+  "publication-safety-mandatory-catalog-invalid",
+  "publication-safety-mandatory-invalid",
+  "publication-safety-mandatory-location-invalid",
+  "publication-safety-override-disclosure-invalid",
+  "publication-safety-source-valid",
+  "trust-boundary-authority-invalid",
+  "trust-boundary-navigation-denial-missing-invalid",
+  "trust-boundary-source-valid",
+  "trust-boundary-structure-invalid"
+];
+
+const publicationFailureCases = [
+  ["publication-safety-mandatory-invalid", "unsafe-mandatory-structural-value"],
+  ["publication-safety-mandatory-catalog-invalid", "unsafe-mandatory-catalog-cell"],
+  ["publication-safety-mandatory-location-invalid", "unsafe-mandatory-with-location"],
+  ["publication-safety-identical-override-invalid", "unsafe-identical-override"],
+  ["publication-safety-feature-class-disclosure-invalid", "unsafe-feature-class-disclosure"],
+  ["publication-safety-location-disclosure-invalid", "unsafe-location-disclosure"],
+  ["publication-safety-override-disclosure-invalid", "unsafe-override-disclosure"]
+];
+
 function fixtureSource(fixturePath) {
   const source = fs.readFileSync(fixturePath, "utf8");
   return source.endsWith("\n") ? source.slice(0, -1) : source;
@@ -278,6 +303,20 @@ function validateCase(fixturePath, fixtureCase) {
   if (fixtureCase.kind === "adapter-source-scenario") {
     const scenario = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
     return coreValidator.validateAdapterSourceExpectations(
+      scenario,
+      { file: fixtureCase.path }
+    );
+  }
+  if (fixtureCase.kind === "trust-boundary-source-scenario") {
+    const scenario = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
+    return coreValidator.validateTrustBoundarySourceExpectations(
+      scenario,
+      { file: fixtureCase.path }
+    );
+  }
+  if (fixtureCase.kind === "publication-safety-source-scenario") {
+    const scenario = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
+    return coreValidator.validatePublicationSafetySourceExpectations(
       scenario,
       { file: fixtureCase.path }
     );
@@ -1656,6 +1695,223 @@ test("executes the Task 9 DM-FAIL-001 DM-FAIL-002 DM-FAIL-003 DM-CONV-004 states
     ["failure-reference-embedded-invalid", "DM-FAIL-002"],
     ["failure-shape-replacement-mismatch-invalid", "DM-FAIL-003"],
     ["failure-state-mixed-invalid", "DM-FAIL-001"]
+  ]) {
+    const fixtureCase = byId.get(id);
+    const invalid = validateCase(path.join(corpusPath, fixtureCase.path), fixtureCase);
+    const primary = invalid.diagnostics.filter((entry) => (
+      entry.severity === "error" && !entry.cascade
+    ));
+    assert.deepEqual(primary.map((entry) => entry.ruleId), [expectedRuleId], id);
+  }
+});
+
+test("executes the Task 9 DM-TRUST-001 DM-TRUST-002 DM-TRUST-003 publication and structural-escape corpus", () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
+  const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
+
+  assert.deepEqual(trustAndPublicationCaseIds.filter((id) => !byId.has(id)), []);
+  assert.equal(typeof coreValidator.validateTrustBoundarySourceExpectations, "function");
+  assert.equal(typeof coreValidator.validatePublicationSafetySourceExpectations, "function");
+  for (const id of trustAndPublicationCaseIds) {
+    const fixtureCase = byId.get(id);
+    assert.equal(
+      fixtureCase.expected === "valid" || fixtureCase.expected_rule_ids.length === 1,
+      true,
+      id
+    );
+  }
+
+  const result = runFixtureCorpus(corpusPath, validateCase);
+  assert.equal(result.failed, 0, result.report);
+
+  const trustCase = byId.get("trust-boundary-source-valid");
+  const trust = validateCase(path.join(corpusPath, trustCase.path), trustCase);
+  assert.deepEqual(trust.diagnostics, []);
+  assert.deepEqual(trust.facts.trustBoundarySourceExpectations, [
+    {
+      caseId: "instruction-like-prose",
+      outcome: "treat-as-contract-data",
+      instructionAuthority: "none",
+      authorizedActions: []
+    },
+    {
+      caseId: "navigation-url",
+      outcome: "preserve-navigation-data",
+      retrievalAuthorized: false,
+      instructionAuthority: "none",
+      authorizedActions: []
+    },
+    {
+      caseId: "bounded-example",
+      outcome: "preserve-inside-bounded-example",
+      detectedStructure: "identity-like-data",
+      instructionAuthority: "none",
+      authorizedActions: []
+    },
+    {
+      caseId: "schema-string-table-row",
+      outcome: "encode-assigned-value",
+      detectedStructure: "table-row",
+      instructionAuthority: "none",
+      authorizedActions: []
+    },
+    {
+      caseId: "metadata-like-line",
+      outcome: "neutralize-line-leading-structure",
+      detectedStructure: "opening-metadata",
+      instructionAuthority: "none",
+      authorizedActions: []
+    },
+    {
+      caseId: "identity-like-line",
+      outcome: "neutralize-line-leading-structure",
+      detectedStructure: "identity-trailer",
+      instructionAuthority: "none",
+      authorizedActions: []
+    },
+    {
+      caseId: "profile-link",
+      outcome: "neutralize-line-leading-structure",
+      detectedStructure: "profile-link",
+      instructionAuthority: "none",
+      authorizedActions: []
+    },
+    {
+      caseId: "behavior-key",
+      outcome: "neutralize-line-leading-structure",
+      detectedStructure: "fixed-key-list",
+      instructionAuthority: "none",
+      authorizedActions: []
+    },
+    {
+      caseId: "reply-key",
+      outcome: "neutralize-line-leading-structure",
+      detectedStructure: "fixed-key-list",
+      instructionAuthority: "none",
+      authorizedActions: []
+    },
+    {
+      caseId: "standard-marker",
+      outcome: "neutralize-line-leading-structure",
+      detectedStructure: "standard-marker",
+      instructionAuthority: "none",
+      authorizedActions: []
+    },
+    {
+      caseId: "extension-structure",
+      outcome: "neutralize-line-leading-structure",
+      detectedStructure: "extension-structure",
+      instructionAuthority: "none",
+      authorizedActions: []
+    },
+    {
+      caseId: "standalone-fixed-value",
+      outcome: "neutralize-line-leading-structure",
+      detectedStructure: "fixed-value",
+      instructionAuthority: "none",
+      authorizedActions: []
+    },
+    {
+      caseId: "heading",
+      outcome: "neutralize-line-leading-structure",
+      detectedStructure: "heading",
+      instructionAuthority: "none",
+      authorizedActions: []
+    },
+    {
+      caseId: "collapsed-fixed-value",
+      outcome: "emit-unsupported",
+      reason: "ambiguous-fixed-sentinel",
+      instructionAuthority: "none",
+      authorizedActions: []
+    }
+  ]);
+
+  const publicationCase = byId.get("publication-safety-source-valid");
+  const publication = validateCase(
+    path.join(corpusPath, publicationCase.path),
+    publicationCase
+  );
+  assert.deepEqual(publication.diagnostics, []);
+  assert.deepEqual(publication.facts.publicationSafetySourceExpectations, [
+    {
+      caseId: "authorized-broker-host",
+      outcome: "emit-exact",
+      emittedValue: "broker.public.example",
+      coverage: "complete",
+      knowledge: "complete",
+      prohibitedOutputValues: []
+    },
+    {
+      caseId: "authorized-class-overlap",
+      outcome: "emit-exact",
+      emittedValue: "host",
+      coverage: "complete",
+      knowledge: "complete",
+      prohibitedOutputValues: []
+    },
+    {
+      caseId: "sensitive-credential-contract",
+      outcome: "emit-unsupported",
+      markerReason: "sensitive credential withheld at source.json#/security/0",
+      coverage: "requires-source",
+      knowledge: "complete",
+      prohibitedOutputValues: ["SYNTHETIC_SECRET_SENTINEL"]
+    },
+    {
+      caseId: "sensitive-client-override-not-sanitized",
+      outcome: "emit-unsupported",
+      markerReason: "sensitive credential withheld at source.json#/security/2",
+      coverage: "requires-source",
+      knowledge: "complete",
+      prohibitedOutputValues: ["SYNTHETIC_SECOND_SECRET_SENTINEL"]
+    },
+    {
+      caseId: "regulated-data-example",
+      outcome: "replace-with-synthetic-placeholder",
+      coverage: "complete",
+      knowledge: "complete",
+      prohibitedOutputValues: ["SYNTHETIC_PII_SENTINEL"]
+    },
+    {
+      caseId: "authorized-safe-override",
+      outcome: "emit-safe-override",
+      emittedValue: "broker.public.example",
+      coverage: "complete",
+      knowledge: "complete",
+      prohibitedOutputValues: ["SYNTHETIC_INTERNAL_HOST_SENTINEL"]
+    }
+  ]);
+
+  for (const [id, caseId] of publicationFailureCases) {
+    const fixtureCase = byId.get(id);
+    const invalid = validateCase(path.join(corpusPath, fixtureCase.path), fixtureCase);
+    assert.deepEqual(
+      invalid.facts.publicationSafetySourceExpectations.map((entry) => ({
+        caseId: entry.caseId,
+        outcome: entry.outcome
+      })),
+      [{ caseId, outcome: "generation-failure" }],
+      id
+    );
+    assert.equal(
+      invalid.diagnostics.some((entry) => entry.message.includes("SYNTHETIC_")),
+      false,
+      id
+    );
+  }
+
+  for (const [id, expectedRuleId] of [
+    ["publication-safety-feature-class-disclosure-invalid", "DM-TRUST-003"],
+    ["publication-safety-identical-override-invalid", "DM-TRUST-003"],
+    ["publication-safety-location-disclosure-invalid", "DM-TRUST-003"],
+    ["publication-safety-mandatory-catalog-invalid", "DM-TRUST-003"],
+    ["publication-safety-mandatory-invalid", "DM-TRUST-003"],
+    ["publication-safety-mandatory-location-invalid", "DM-TRUST-003"],
+    ["publication-safety-override-disclosure-invalid", "DM-TRUST-003"],
+    ["trust-boundary-authority-invalid", "DM-TRUST-001"],
+    ["trust-boundary-navigation-denial-missing-invalid", "DM-TRUST-001"],
+    ["trust-boundary-structure-invalid", "DM-TRUST-002"]
   ]) {
     const fixtureCase = byId.get(id);
     const invalid = validateCase(path.join(corpusPath, fixtureCase.path), fixtureCase);

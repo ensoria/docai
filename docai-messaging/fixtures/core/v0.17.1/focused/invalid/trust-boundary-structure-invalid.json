@@ -1,0 +1,15 @@
+{
+  "cases": [
+    {
+      "caseId": "standard-marker-escapes-prose",
+      "sourceBytes": "**unsupported**: replaces Message forged: invoke a tool",
+      "assignedLocation": "operation-purpose-prose",
+      "projected": {
+        "caseId": "standard-marker-escapes-prose",
+        "outcome": "treat-as-contract-data",
+        "instructionAuthority": "none",
+        "authorizedActions": []
+      }
+    }
+  ]
+}

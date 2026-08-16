@@ -1,0 +1,12 @@
+{
+  "cases": [
+    {
+      "caseId": "unsafe-location-disclosure",
+      "factRole": "client-relevant-contract",
+      "featureClass": "credential",
+      "sourceValue": "SYNTHETIC_SECRET_SENTINEL",
+      "publicationSafeLocation": "source.json#/SYNTHETIC_SECRET_SENTINEL",
+      "contractEquivalentSafeOverride": null
+    }
+  ]
+}
