@@ -257,7 +257,9 @@ const canonicalStructureCaseIds = [
 
 const implementationReadinessCaseIds = [
   "implementation-readiness-capability-matrix-valid",
-  "implementation-readiness-projection-invalid"
+  "implementation-readiness-projection-invalid",
+  "implementation-readiness-required-workflow-projection-invalid",
+  "implementation-readiness-required-workflow-valid"
 ];
 
 const publicationFailureCases = [
@@ -2146,6 +2148,35 @@ test("executes the Task 9 DM-INC-003 implementation-readiness capability matrix"
       }
     ]
   );
+
+  const requiredWorkflowCase = byId.get("implementation-readiness-required-workflow-valid");
+  const requiredWorkflow = validateCase(
+    path.join(corpusPath, requiredWorkflowCase.path),
+    requiredWorkflowCase
+  );
+  assert.deepEqual(requiredWorkflow.diagnostics, []);
+  assert.deepEqual(
+    requiredWorkflow.facts.implementationReadinessExpectations.map((entry) => ({
+      caseId: entry.caseId,
+      ready: entry.ready,
+      blockers: entry.blockers
+    })),
+    [
+      {
+        caseId: "core-required-workflow-not-ready",
+        ready: false,
+        blockers: [
+          "structure:workflow:workflows/a-required.md",
+          "structure:workflow:workflows/none.md"
+        ]
+      },
+      {
+        caseId: "workflow-capable-reader-ready",
+        ready: true,
+        blockers: []
+      }
+    ]
+  );
 });
 
 test("audits every Task 9 invalid fixture as one primary concern", () => {
@@ -2157,5 +2188,5 @@ test("audits every Task 9 invalid fixture as one primary concern", () => {
     corpusCases: result.cases
   });
 
-  assert.deepEqual(audit, { passed: true, audited: 131, errors: [] });
+  assert.deepEqual(audit, { passed: true, audited: 132, errors: [] });
 });

@@ -514,6 +514,13 @@ function addMissingCapabilityBlockers(blockers, prefix, requirements, supported)
   }
 }
 
+function addMissingRequiredContextStructureBlockers(blockers, operationRow, supported) {
+  if (supported.has("workflow")) return;
+  for (const contextPath of operationRow?.requiredContexts ?? []) {
+    blockers.push(`structure:workflow:${contextPath}`);
+  }
+}
+
 export function evaluateImplementationReadinessExpectations(
   documentSet,
   coreFacts,
@@ -545,6 +552,7 @@ export function evaluateImplementationReadinessExpectations(
     .map((entry) => {
       const reader = entry.reader ?? {};
       const readerMode = reader.mode === "source-aware" ? "source-aware" : "ordinary";
+      const readerStructures = capabilitySet(reader.structures);
       const blockers = selected.blockingMarkers.map(
         (marker) => `marker:${marker.kind}:${marker.path}`
       );
@@ -563,7 +571,12 @@ export function evaluateImplementationReadinessExpectations(
         blockers,
         "structure",
         requiredStructures,
-        capabilitySet(reader.structures)
+        readerStructures
+      );
+      addMissingRequiredContextStructureBlockers(
+        blockers,
+        operationRow,
+        readerStructures
       );
       addMissingCapabilityBlockers(
         blockers,

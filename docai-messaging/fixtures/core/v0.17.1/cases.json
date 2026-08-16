@@ -1214,9 +1214,23 @@
       "expected_rule_ids": []
     },
     {
+      "id": "implementation-readiness-required-workflow-valid",
+      "kind": "implementation-readiness-source-scenario",
+      "path": "focused/valid/implementation-readiness-required-workflow-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
       "id": "implementation-readiness-projection-invalid",
       "kind": "implementation-readiness-source-scenario",
       "path": "focused/invalid/implementation-readiness-projection-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-INC-003"]
+    },
+    {
+      "id": "implementation-readiness-required-workflow-projection-invalid",
+      "kind": "implementation-readiness-source-scenario",
+      "path": "focused/invalid/implementation-readiness-required-workflow-projection-invalid.json",
       "expected": "invalid",
       "expected_rule_ids": ["DM-INC-003"]
     }

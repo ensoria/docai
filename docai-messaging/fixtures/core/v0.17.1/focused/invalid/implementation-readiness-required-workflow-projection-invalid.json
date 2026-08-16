@@ -1,0 +1,32 @@
+{
+  "documentSet": "../valid/contexts-required-supplemental-valid",
+  "selection": {
+    "operation": "create-order",
+    "trustedTask": "create order"
+  },
+  "contract": {
+    "docaiMessagingVersion": "0.17.1",
+    "profile": "full",
+    "publicationScope": "core/v0.17.1",
+    "requiredStructures": [
+      { "id": "operation", "tasks": ["create order"] }
+    ],
+    "requiredRuntimeCapabilities": [],
+    "requiredSourceAdapters": []
+  },
+  "cases": [
+    {
+      "caseId": "required-workflow-incorrectly-declared-ready",
+      "reader": {
+        "mode": "ordinary",
+        "docaiMessagingVersions": ["0.17.1"],
+        "profiles": ["full"],
+        "publicationScopes": ["core/v0.17.1"],
+        "structures": ["operation"]
+      },
+      "targetRuntimeCapabilities": [],
+      "sourceAdapters": [],
+      "projected": { "ready": true, "blockers": [] }
+    }
+  ]
+}
