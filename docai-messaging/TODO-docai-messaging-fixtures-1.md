@@ -757,6 +757,8 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 
 > **Implementation note (required-workflow Core-reader readiness checkpoint):** 承認設計どおり、選択 operation row の `requiredContexts` を readiness evaluator に接続し、reader が `workflow` structure を持たない場合は各 required path に `structure:workflow:<path>` blocker を生成する。既存 `contexts-required-supplemental-valid` を再利用する valid source scenario は `workflows/a-required.md` と `workflows/none.md` だけを blockers とし、supplemental `workflows/z-supplemental.md` を除外する一方、workflow-capable reader は同じ contract で ready になる。対応する invalid scenario は required workflow を誤って ready とする projection mismatch を単一 `DM-INC-003` concern として固定する。影響として、contract-complete root と reader capability を分離する README §3 / §6.1 / §8 の既存 semantics を checker で実行可能にし、公開 document grammar、marker/runtime/adapter readiness、および ordinary-reader の source-adapter requirement は変更しない。`R8-CORE-006` / `R8-CORE-008` は `covered` になり、coverage matrix の残行展開へ戻れる。
 
+> **Implementation note (Core coverage matrix sentinel / Unprojected checkpoint):** `R8-CORE-011` / `R8-CORE-012` として sentinel-like source literal の structural containment / ambiguity fallback / mandatory-cell generation failure、および direct / sharded Unprojected Operations の aggregate state、opaque identity、non-disclosing sensitive withholding、generation failure、selected-readiness isolation を matrix に追加する。sentinel clause は既存 trust / publication-safety source scenarios により `covered` と確認した。Unprojected clause は direct / sharded grammar、UTF-8 length-prefix、grouping、retrieval、sensitive withholding が covered だが、safe identity または safe location 不在を manifest 登録した focused invalid cases がなく、direct Unprojected marker を持つ root `INDEX.md` を selected-operation readiness が常に blocking とするため `partial` とする。影響として、二つの既存 release gap を明示し、未検証挙動を release-ready と誤表示しない。fixture、rule、checker semantics と作業順序はこの checkpoint では変更しない。
+
 - [x] Metadata、extension name/order/escape、unknown non-`x-` key、sentence grammar。
 - [x] Identity trailer、set/projection digest、closed root、mixed set、task-scoped identity check。
 - [x] Direct/sharded Sources、unknown API identity/version、Revision none、overlap、fixed-point、cycle。
@@ -794,6 +796,8 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
     - [x] GREEN: `tools/lib/validators/core.mjs` で選択 operation row の `requiredContexts` から version-defined workflow structure requirements を導出し、reader の `structures` に `workflow` がなければ `structure:workflow:<path>` blockers を返す。既存 marker / declared structure / runtime / adapter blockers は維持する。
     - [x] VERIFY: focused readiness test、全 `tools/tests/*.test.mjs`、one-invalidity audit、reference audit、`git diff --check` を通す。
     - [x] DOCS: `COVERAGE.md` の両 row を `covered` にし、この TODO に実装結果と影響を記録する。
+  - [x] `R8-CORE-011`–`R8-CORE-012`（sentinel-like source literals、Unprojected Operations）を対応付ける。
+  - [ ] `R8-CORE-012` の missing-safe-identity/location focused cases と unrelated direct-marker non-blocking gap を解消する。
   - [ ] 残る Core corpus clause を `R8-CORE-*` row に分解して対応付け、`R8-CORE-001` を `covered` にする。
 
 **Review gate:** `docai-messaging/README.md` §8 の Core corpus 要件（現在の 1031–1043 行）に uncovered 行がないことを確認する。
