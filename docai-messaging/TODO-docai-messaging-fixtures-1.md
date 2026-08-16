@@ -759,6 +759,8 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 
 > **Implementation note (Core coverage matrix sentinel / Unprojected checkpoint):** `R8-CORE-011` / `R8-CORE-012` として sentinel-like source literal の structural containment / ambiguity fallback / mandatory-cell generation failure、および direct / sharded Unprojected Operations の aggregate state、opaque identity、non-disclosing sensitive withholding、generation failure、selected-readiness isolation を matrix に追加する。sentinel clause は既存 trust / publication-safety source scenarios により `covered` と確認した。Unprojected clause は direct / sharded grammar、UTF-8 length-prefix、grouping、retrieval、sensitive withholding が covered だが、safe identity または safe location 不在を manifest 登録した focused invalid cases がなく、direct Unprojected marker を持つ root `INDEX.md` を selected-operation readiness が常に blocking とするため `partial` とする。影響として、二つの既存 release gap を明示し、未検証挙動を release-ready と誤表示しない。fixture、rule、checker semantics と作業順序はこの checkpoint では変更しない。
 
+> **Approved design (Unprojected selected-readiness isolation checkpoint):** coverage matrix の残行を展開する前に `R8-CORE-012` の二つの gap を解消する。selected-operation readiness は、検証済み `coreFacts.unprojectedOperations.groups[].markers` の `indexPath` / `line` から exclusion set を作り、projected operation を評価するときだけ、その marker 行を同じ file の incomplete-marker scan から除外する。他の root-level marker は引き続き blocking とし、Unprojected facts が得られない場合は何も除外しない conservative fallback を使う。実 document-set fixture には正常な projected operation と unrelated direct Unprojected marker を同居させ、root の aggregate `coverage: requires-source` を保持したまま selected operation が ready になることを検証する。source-aware invalid scenario は publication-safe operation identity 不在と publication-safe source location 不在を一件ずつ分離し、各 facts の exact generation-failure reason と単一 `DM-IDX-008` concern を固定する。既存 direct/sharded grammar、whole-set completeness、Unprojected audit retrieval、公開 document grammar、および projected operation が見つからない場合の not-ready behavior は変更しない。完了後に `R8-CORE-012` を `covered` にする。
+
 - [x] Metadata、extension name/order/escape、unknown non-`x-` key、sentence grammar。
 - [x] Identity trailer、set/projection digest、closed root、mixed set、task-scoped identity check。
 - [x] Direct/sharded Sources、unknown API identity/version、Revision none、overlap、fixed-point、cycle。
@@ -798,6 +800,7 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
     - [x] DOCS: `COVERAGE.md` の両 row を `covered` にし、この TODO に実装結果と影響を記録する。
   - [x] `R8-CORE-011`–`R8-CORE-012`（sentinel-like source literals、Unprojected Operations）を対応付ける。
   - [ ] `R8-CORE-012` の missing-safe-identity/location focused cases と unrelated direct-marker non-blocking gap を解消する。
+    - [x] facts-driven marker-line exclusion と focused fixture 分割の設計を承認する。
   - [ ] 残る Core corpus clause を `R8-CORE-*` row に分解して対応付け、`R8-CORE-001` を `covered` にする。
 
 **Review gate:** `docai-messaging/README.md` §8 の Core corpus 要件（現在の 1031–1043 行）に uncovered 行がないことを確認する。
