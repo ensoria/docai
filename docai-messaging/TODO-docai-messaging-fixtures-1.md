@@ -803,6 +803,158 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
     - [x] facts-driven marker-line exclusion と focused fixture 分割の設計を承認する。
   - [ ] 残る Core corpus clause を `R8-CORE-*` row に分解して対応付け、`R8-CORE-001` を `covered` にする。
 
+#### Unprojected Selected-Readiness Isolation Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:executing-plans` to implement this plan step-by-step in the current workspace. Subagent execution is not part of this checkpoint.
+
+**Goal:** 検証済み direct Unprojected marker が unrelated projected operation の selected-readiness を妨げないようにし、publication-safe identity / location 不在の generation failure を versioned Core corpus で固定する。
+
+**Architecture:** `coreFacts.unprojectedOperations.groups[].markers` だけを信頼境界とし、marker の `indexPath` と `line` を file-scoped exclusion set に変換する。projected operation row が見つかった後の marker scan にだけ exclusion set を渡し、root aggregate completeness と一般の incomplete-marker 判定には適用しない。
+
+**Tech Stack:** Node.js ESM、`node:test`、versioned Markdown / JSON fixture corpus、既存 DocAI Messaging validator helpers。
+
+##### Global Constraints
+
+- `README.md` §3.2 / §3.6 / §6.1 と承認済み設計の normative semantics を変更しない。
+- 検証済み facts がない場合は marker を一行も除外しない。
+- 同じ file の facts-identified line だけを除外し、他の `unknown` / `unsupported` marker は blocking のままにする。
+- projected operation が見つからない場合の `ready: false`、direct / sharded grammar、whole-set completeness、audit retrieval は変更しない。
+- Git は read-only inspection に限定し、コミットはユーザーが行う。
+
+##### Task 1: `R8-CORE-012` の fixture、evaluator、coverage を一つの TDD checkpoint で完成させる
+
+**Files:**
+
+- Create: `docai-messaging/fixtures/core/v0.17.1/focused/valid/unprojected-unrelated-marker-readiness-valid/INDEX.md`
+- Create: `docai-messaging/fixtures/core/v0.17.1/focused/valid/unprojected-unrelated-marker-readiness-valid/CONVENTIONS.md`
+- Create: `docai-messaging/fixtures/core/v0.17.1/focused/valid/unprojected-unrelated-marker-readiness-valid/channels/orders.md`
+- Create: `docai-messaging/fixtures/core/v0.17.1/focused/invalid/unprojected-source-missing-identity-invalid.json`
+- Create: `docai-messaging/fixtures/core/v0.17.1/focused/invalid/unprojected-source-missing-location-invalid.json`
+- Modify: `docai-messaging/fixtures/core/v0.17.1/cases.json`
+- Modify: `docai-messaging/tools/tests/core-corpus.test.mjs`
+- Modify: `docai-messaging/tools/lib/validators/core.mjs`
+- Modify: `docai-messaging/fixtures/core/v0.17.1/COVERAGE.md`
+- Modify: `docai-messaging/TODO-docai-messaging-fixtures-1.md`
+
+**Interfaces:**
+
+- Consumes: `coreFacts.unprojectedOperations.groups[].markers[]` の `{ indexPath: string, line: number }`、既存 `evaluateSelectedOperationReadiness(documentSet, coreFacts, { operation })`。
+- Produces: `unprojectedMarkerLinesByPath(coreFacts): Map<string, Set<number>>` と、optional `excludedLines` を受ける `incompleteMarkers(file, { excludedLines })`。公開される readiness 戻り値の shape は変更しない。
+
+- [ ] **Step 1: RED fixture と exact corpus assertions を追加する**
+
+  - valid document set は既存 canonical flat-operation fixture と同じ `create-order` operation を持たせ、root metadata を `coverage: requires-source | knowledge: complete` とする。root に次の direct marker を追加し、通常 validation は valid、root aggregate state は `requires-source` のままにする。
+
+    ```markdown
+    ## Unprojected Operations
+
+    **unsupported**: localized: source operation source-a 12:legacy-order: source operation cannot be projected from source.json#/operations/1
+    ```
+
+  - source-aware invalid fixtures は一件一違反とし、次の入力をそれぞれ登録する。
+
+    ```json
+    {"cases":[{"sourceOperationId":"operation-missing-identity","sourceId":"source-a","operationIdentity":null,"publicationSafeLocation":"source.json#/operations/2"}]}
+    ```
+
+    ```json
+    {"cases":[{"sourceOperationId":"operation-missing-location","sourceId":"source-a","operationIdentity":"safe-operation","publicationSafeLocation":null}]}
+    ```
+
+  - `cases.json` と `unprojectedCaseIds` に三件を追加する。`executes the Task 9 Unprojected Operations corpus and fixes audit retrieval` で、valid fixture の `create-order` readiness と invalid facts / diagnostic を exact match する。
+
+    ```js
+    assert.deepEqual(coreValidator.evaluateSelectedOperationReadiness(
+      readinessDocumentSet,
+      readinessValidation.facts.core,
+      { operation: "create-order" }
+    ), {
+      operation: "create-order",
+      ready: true,
+      selectedPaths: ["CONVENTIONS.md", "INDEX.md", "channels/orders.md"],
+      blockingMarkers: []
+    });
+    assert.deepEqual(missingIdentity.facts.unprojectedSourceExpectations, [{
+      sourceOperationId: "operation-missing-identity",
+      expectation: "generation-failure",
+      reason: "publication-safe-operation-identity-unavailable"
+    }]);
+    assert.deepEqual(missingLocation.facts.unprojectedSourceExpectations, [{
+      sourceOperationId: "operation-missing-location",
+      expectation: "generation-failure",
+      reason: "publication-safe-source-location-unavailable"
+    }]);
+    for (const result of [missingIdentity, missingLocation]) {
+      assert.deepEqual(result.diagnostics.map(({ ruleId, severity }) => ({ ruleId, severity })), [
+        { ruleId: "DM-IDX-008", severity: "error" }
+      ]);
+    }
+    ```
+
+  - 同じ test で trust boundary も固定する。fixture の root に facts 未登録の `**unknown**:` 行だけを追加した scan は `[{ kind: "unknown", path: "INDEX.md" }]` で blocking になり、同じ fixture を `unprojectedOperations: null` facts で評価した scan は `[{ kind: "unsupported", path: "INDEX.md" }]` で blocking になることを exact match する。
+
+- [ ] **Step 2: focused test を実行して現行 evaluator の失敗を確認する**
+
+  - Run: `node --test --test-name-pattern="Task 9 Unprojected Operations" docai-messaging/tools/tests/core-corpus.test.mjs`
+  - Expected: corpus validation 自体は通るが、`create-order` の readiness が root の unrelated `unsupported` marker により `false` となり、`ready: true` assertion が FAIL する。
+
+- [ ] **Step 3: facts-driven line exclusion を最小実装する**
+
+  - `core.mjs` に次の boundary を実装する。`incompleteMarkers` の既存 caller は default の空 set を使うため、aggregate metadata semantics は変わらない。
+
+    ```js
+    function incompleteMarkers(file, { excludedLines = new Set() } = {}) {
+      const scanned = scanMarkdown({ text: file.content, file: file.path });
+      if (scanned.value === null) return { unknown: false, unsupported: false };
+      const eligible = (line) => !line.inFence && !excludedLines.has(line.line);
+      return {
+        unknown: scanned.value.lines.some((line) => (
+          eligible(line) && line.text.startsWith("**unknown**: ")
+        )),
+        unsupported: scanned.value.lines.some((line) => (
+          eligible(line) && line.text.startsWith("**unsupported**: ")
+        ))
+      };
+    }
+
+    function unprojectedMarkerLinesByPath(coreFacts) {
+      const linesByPath = new Map();
+      for (const group of coreFacts?.unprojectedOperations?.groups ?? []) {
+        for (const marker of group.markers ?? []) {
+          if (typeof marker.indexPath !== "string" || !Number.isInteger(marker.line)) continue;
+          if (!linesByPath.has(marker.indexPath)) linesByPath.set(marker.indexPath, new Set());
+          linesByPath.get(marker.indexPath).add(marker.line);
+        }
+      }
+      return linesByPath;
+    }
+    ```
+
+  - operation row が存在する branch で map を一度作り、各 `selectedPath` の scan に `excludedLines: linesByPath.get(selectedPath) ?? new Set()` を渡す。row 不在 branch は変更しない。
+
+- [ ] **Step 4: focused regression、trust-boundary regression、既存 unrelated-marker regression を通す**
+
+  - Run: `node --test --test-name-pattern="Task 9 Unprojected Operations|unrelated marker" docai-messaging/tools/tests/core-corpus.test.mjs docai-messaging/tools/tests/document-set.test.mjs`
+  - Expected: 新しい direct-root fixture、facts 未登録 marker の blocking、facts 不在時の conservative fallback、既存 unrelated-channel test がすべて PASS。root metadata は `requires-source` のままで、validated Unprojected marker だけが selected scan から除外される。
+
+- [ ] **Step 5: corpus one-invalidity expectation と coverage docs を更新する**
+
+  - invalid manifest が 132 件から 134 件になるため `audits every Task 9 invalid fixture as one primary concern` の expected `audited` を `134` に更新する。
+  - `COVERAGE.md` の `R8-CORE-012` に新しい valid case と二つの invalid caseを追加し、checker evidence に exact source facts / selected-readiness assertion を明記して status を `covered` にする。
+  - この TODO の task checkbox を完了し、facts-driven exclusion、三 fixture、one-invalidity 134/134、既存 semantics 非変更を implementation note に記録する。
+
+- [ ] **Step 6: checkpoint 全体を検証する**
+
+  - Run: `node --test docai-messaging/tools/tests/*.test.mjs`
+  - Expected: 全 test PASS、Core corpus failures 0、one-invalidity audit 134/134。
+  - Run: `git diff --check`
+  - Expected: 出力なし。
+  - Read-only review: `git status --short` と `git diff --stat` で上記 Files 以外の変更がないことを確認する。
+
+- [ ] **Step 7: ユーザーの commit checkpoint で停止する**
+
+  - Suggested commit message: `fix(messaging): isolate unprojected readiness markers`
+
 **Review gate:** `docai-messaging/README.md` §8 の Core corpus 要件（現在の 1031–1043 行）に uncovered 行がないことを確認する。
 
 **Suggested commit message:** `test(messaging): complete core conformance fixtures`
