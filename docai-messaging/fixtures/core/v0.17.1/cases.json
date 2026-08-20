@@ -367,9 +367,30 @@
       "expected_rule_ids": ["DM-IDX-008"]
     },
     {
+      "id": "unprojected-source-missing-identity-invalid",
+      "kind": "unprojected-source-scenario",
+      "path": "focused/invalid/unprojected-source-missing-identity-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-IDX-008"]
+    },
+    {
+      "id": "unprojected-source-missing-location-invalid",
+      "kind": "unprojected-source-scenario",
+      "path": "focused/invalid/unprojected-source-missing-location-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-IDX-008"]
+    },
+    {
       "id": "unprojected-source-sensitive-valid",
       "kind": "unprojected-source-scenario",
       "path": "focused/valid/unprojected-source-sensitive-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
+      "id": "unprojected-unrelated-marker-readiness-valid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/valid/unprojected-unrelated-marker-readiness-valid",
       "expected": "valid",
       "expected_rule_ids": []
     },

@@ -121,17 +121,30 @@ function validateRootStructure(root, markdown) {
   };
 }
 
-function incompleteMarkers(file) {
+function incompleteMarkers(file, { excludedLines = new Set() } = {}) {
   const scanned = scanMarkdown({ text: file.content, file: file.path });
   if (scanned.value === null) return { unknown: false, unsupported: false };
+  const eligible = (line) => !line.inFence && !excludedLines.has(line.line);
   return {
     unknown: scanned.value.lines.some((line) => (
-      !line.inFence && line.text.startsWith("**unknown**: ")
+      eligible(line) && line.text.startsWith("**unknown**: ")
     )),
     unsupported: scanned.value.lines.some((line) => (
-      !line.inFence && line.text.startsWith("**unsupported**: ")
+      eligible(line) && line.text.startsWith("**unsupported**: ")
     ))
   };
+}
+
+function unprojectedMarkerLinesByPath(coreFacts) {
+  const linesByPath = new Map();
+  for (const group of coreFacts?.unprojectedOperations?.groups ?? []) {
+    for (const marker of group.markers ?? []) {
+      if (typeof marker.indexPath !== "string" || !Number.isInteger(marker.line)) continue;
+      if (!linesByPath.has(marker.indexPath)) linesByPath.set(marker.indexPath, new Set());
+      linesByPath.get(marker.indexPath).add(marker.line);
+    }
+  }
+  return linesByPath;
 }
 
 function validateIncompleteMetadata(documentSet, root) {
@@ -480,11 +493,14 @@ export function evaluateSelectedOperationReadiness(documentSet, coreFacts, selec
     row.channelPath,
     ...(row.requiredContexts ?? [])
   ])].sort();
+  const unprojectedMarkerLines = unprojectedMarkerLinesByPath(coreFacts);
   const blockingMarkers = [];
   for (const selectedPath of selectedPaths) {
     const file = documentSet.files.find((entry) => entry.path === selectedPath);
     if (file === undefined) continue;
-    const markers = incompleteMarkers(file);
+    const markers = incompleteMarkers(file, {
+      excludedLines: unprojectedMarkerLines.get(selectedPath) ?? new Set()
+    });
     if (markers.unknown) blockingMarkers.push({ kind: "unknown", path: selectedPath });
     if (markers.unsupported) blockingMarkers.push({ kind: "unsupported", path: selectedPath });
   }

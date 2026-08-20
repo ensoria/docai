@@ -104,7 +104,10 @@ const unprojectedCaseIds = [
   "unprojected-sharded-group-split-invalid",
   "unprojected-sharded-retrieval-valid",
   "unprojected-source-collision-invalid",
-  "unprojected-source-sensitive-valid"
+  "unprojected-source-missing-identity-invalid",
+  "unprojected-source-missing-location-invalid",
+  "unprojected-source-sensitive-valid",
+  "unprojected-unrelated-marker-readiness-valid"
 ];
 
 const perspectiveCaseIds = [
@@ -695,6 +698,76 @@ test("executes the Task 9 Unprojected Operations corpus and fixes audit retrieva
     sensitive.facts.unprojectedSourceExpectations[0].reason.includes("tenant-secret-route"),
     false
   );
+
+  const readinessCase = byId.get("unprojected-unrelated-marker-readiness-valid");
+  const readinessDocumentSet = loadDocumentSet(path.join(corpusPath, readinessCase.path));
+  const readinessValidation = validateDocumentSet(readinessDocumentSet, { wholeSet: false });
+  assert.deepEqual(readinessValidation.diagnostics, []);
+  assert.equal(
+    readinessDocumentSet.files.find((file) => file.path === "INDEX.md").metadata.coverage,
+    "requires-source"
+  );
+  assert.deepEqual(coreValidator.evaluateSelectedOperationReadiness(
+    readinessDocumentSet,
+    readinessValidation.facts.core,
+    { operation: "create-order" }
+  ), {
+    operation: "create-order",
+    ready: true,
+    selectedPaths: ["CONVENTIONS.md", "INDEX.md", "channels/orders.md"],
+    blockingMarkers: []
+  });
+
+  const extraRootMarkerSet = {
+    ...readinessDocumentSet,
+    files: readinessDocumentSet.files.map((file) => file.path === "INDEX.md"
+      ? {
+          ...file,
+          content: file.content.replace(
+            "\n\n> docai-identity:",
+            "\n**unknown**: an independent root input remains unresolved\n\n> docai-identity:"
+          )
+        }
+      : file)
+  };
+  assert.deepEqual(coreValidator.evaluateSelectedOperationReadiness(
+    extraRootMarkerSet,
+    readinessValidation.facts.core,
+    { operation: "create-order" }
+  ).blockingMarkers, [{ kind: "unknown", path: "INDEX.md" }]);
+  assert.deepEqual(coreValidator.evaluateSelectedOperationReadiness(
+    readinessDocumentSet,
+    { ...readinessValidation.facts.core, unprojectedOperations: null },
+    { operation: "create-order" }
+  ).blockingMarkers, [{ kind: "unsupported", path: "INDEX.md" }]);
+
+  const missingIdentityCase = byId.get("unprojected-source-missing-identity-invalid");
+  const missingIdentity = validateCase(
+    path.join(corpusPath, missingIdentityCase.path),
+    missingIdentityCase
+  );
+  assert.deepEqual(missingIdentity.facts.unprojectedSourceExpectations, [{
+    sourceOperationId: "operation-missing-identity",
+    expectation: "generation-failure",
+    reason: "publication-safe-operation-identity-unavailable"
+  }]);
+
+  const missingLocationCase = byId.get("unprojected-source-missing-location-invalid");
+  const missingLocation = validateCase(
+    path.join(corpusPath, missingLocationCase.path),
+    missingLocationCase
+  );
+  assert.deepEqual(missingLocation.facts.unprojectedSourceExpectations, [{
+    sourceOperationId: "operation-missing-location",
+    expectation: "generation-failure",
+    reason: "publication-safe-source-location-unavailable"
+  }]);
+  for (const sourceFailure of [missingIdentity, missingLocation]) {
+    assert.deepEqual(
+      sourceFailure.diagnostics.map(({ ruleId, severity }) => ({ ruleId, severity })),
+      [{ ruleId: "DM-IDX-008", severity: "error" }]
+    );
+  }
 
   const collisionCase = byId.get("unprojected-source-collision-invalid");
   const collision = validateCase(path.join(corpusPath, collisionCase.path), collisionCase);
@@ -2188,5 +2261,5 @@ test("audits every Task 9 invalid fixture as one primary concern", () => {
     corpusCases: result.cases
   });
 
-  assert.deepEqual(audit, { passed: true, audited: 132, errors: [] });
+  assert.deepEqual(audit, { passed: true, audited: 134, errors: [] });
 });

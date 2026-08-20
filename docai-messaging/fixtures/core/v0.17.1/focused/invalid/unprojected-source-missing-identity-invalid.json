@@ -1,0 +1,10 @@
+{
+  "cases": [
+    {
+      "sourceOperationId": "operation-missing-identity",
+      "sourceId": "source-a",
+      "operationIdentity": null,
+      "publicationSafeLocation": "source.json#/operations/2"
+    }
+  ]
+}

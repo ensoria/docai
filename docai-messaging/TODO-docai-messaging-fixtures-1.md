@@ -761,6 +761,8 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 
 > **Approved design (Unprojected selected-readiness isolation checkpoint):** coverage matrix の残行を展開する前に `R8-CORE-012` の二つの gap を解消する。selected-operation readiness は、検証済み `coreFacts.unprojectedOperations.groups[].markers` の `indexPath` / `line` から exclusion set を作り、projected operation を評価するときだけ、その marker 行を同じ file の incomplete-marker scan から除外する。他の root-level marker は引き続き blocking とし、Unprojected facts が得られない場合は何も除外しない conservative fallback を使う。実 document-set fixture には正常な projected operation と unrelated direct Unprojected marker を同居させ、root の aggregate `coverage: requires-source` を保持したまま selected operation が ready になることを検証する。source-aware invalid scenario は publication-safe operation identity 不在と publication-safe source location 不在を一件ずつ分離し、各 facts の exact generation-failure reason と単一 `DM-IDX-008` concern を固定する。既存 direct/sharded grammar、whole-set completeness、Unprojected audit retrieval、公開 document grammar、および projected operation が見つからない場合の not-ready behavior は変更しない。完了後に `R8-CORE-012` を `covered` にする。
 
+> **Implementation note (Unprojected selected-readiness isolation checkpoint):** `core.mjs` は検証済み Unprojected facts の `indexPath` / `line` を file-scoped exclusion set に変換し、projected operation の selected-readiness scan だけから該当 marker 行を除外するようになった。facts 未登録 marker は引き続き blocking となり、facts 不在時は一行も除外しない。正常な projected operation と unrelated direct marker を持つ実 document set、および publication-safe identity / location 不在を分離した二つの source-aware invalid fixture を追加し、各 exact generation-failure reason と単一 `DM-IDX-008` concern を固定した。Core manifest は 179 cases / 134 invalid cases となり、one-invalidity audit は 134/134、全 596 tests は PASS した。影響として root aggregate `coverage: requires-source`、一般の incomplete-marker metadata propagation、direct / sharded grammar、Unprojected retrieval、row 不在時の not-ready behavior は変えず、`R8-CORE-012` だけを `covered` に更新した。
+
 - [x] Metadata、extension name/order/escape、unknown non-`x-` key、sentence grammar。
 - [x] Identity trailer、set/projection digest、closed root、mixed set、task-scoped identity check。
 - [x] Direct/sharded Sources、unknown API identity/version、Revision none、overlap、fixed-point、cycle。
@@ -799,7 +801,7 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
     - [x] VERIFY: focused readiness test、全 `tools/tests/*.test.mjs`、one-invalidity audit、reference audit、`git diff --check` を通す。
     - [x] DOCS: `COVERAGE.md` の両 row を `covered` にし、この TODO に実装結果と影響を記録する。
   - [x] `R8-CORE-011`–`R8-CORE-012`（sentinel-like source literals、Unprojected Operations）を対応付ける。
-  - [ ] `R8-CORE-012` の missing-safe-identity/location focused cases と unrelated direct-marker non-blocking gap を解消する。
+  - [x] `R8-CORE-012` の missing-safe-identity/location focused cases と unrelated direct-marker non-blocking gap を解消する。
     - [x] facts-driven marker-line exclusion と focused fixture 分割の設計を承認する。
   - [ ] 残る Core corpus clause を `R8-CORE-*` row に分解して対応付け、`R8-CORE-001` を `covered` にする。
 
@@ -841,7 +843,7 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 - Consumes: `coreFacts.unprojectedOperations.groups[].markers[]` の `{ indexPath: string, line: number }`、既存 `evaluateSelectedOperationReadiness(documentSet, coreFacts, { operation })`。
 - Produces: `unprojectedMarkerLinesByPath(coreFacts): Map<string, Set<number>>` と、optional `excludedLines` を受ける `incompleteMarkers(file, { excludedLines })`。公開される readiness 戻り値の shape は変更しない。
 
-- [ ] **Step 1: RED fixture と exact corpus assertions を追加する**
+- [x] **Step 1: RED fixture と exact corpus assertions を追加する**
 
   - valid document set は既存 canonical flat-operation fixture と同じ `create-order` operation を持たせ、root metadata を `coverage: requires-source | knowledge: complete` とする。root に次の direct marker を追加し、通常 validation は valid、root aggregate state は `requires-source` のままにする。
 
@@ -893,12 +895,12 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 
   - 同じ test で trust boundary も固定する。fixture の root に facts 未登録の `**unknown**:` 行だけを追加した scan は `[{ kind: "unknown", path: "INDEX.md" }]` で blocking になり、同じ fixture を `unprojectedOperations: null` facts で評価した scan は `[{ kind: "unsupported", path: "INDEX.md" }]` で blocking になることを exact match する。
 
-- [ ] **Step 2: focused test を実行して現行 evaluator の失敗を確認する**
+- [x] **Step 2: focused test を実行して現行 evaluator の失敗を確認する**
 
   - Run: `node --test --test-name-pattern="Task 9 Unprojected Operations" docai-messaging/tools/tests/core-corpus.test.mjs`
   - Expected: corpus validation 自体は通るが、`create-order` の readiness が root の unrelated `unsupported` marker により `false` となり、`ready: true` assertion が FAIL する。
 
-- [ ] **Step 3: facts-driven line exclusion を最小実装する**
+- [x] **Step 3: facts-driven line exclusion を最小実装する**
 
   - `core.mjs` に次の boundary を実装する。`incompleteMarkers` の既存 caller は default の空 set を使うため、aggregate metadata semantics は変わらない。
 
@@ -932,18 +934,18 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 
   - operation row が存在する branch で map を一度作り、各 `selectedPath` の scan に `excludedLines: linesByPath.get(selectedPath) ?? new Set()` を渡す。row 不在 branch は変更しない。
 
-- [ ] **Step 4: focused regression、trust-boundary regression、既存 unrelated-marker regression を通す**
+- [x] **Step 4: focused regression、trust-boundary regression、既存 unrelated-marker regression を通す**
 
   - Run: `node --test --test-name-pattern="Task 9 Unprojected Operations|unrelated marker" docai-messaging/tools/tests/core-corpus.test.mjs docai-messaging/tools/tests/document-set.test.mjs`
   - Expected: 新しい direct-root fixture、facts 未登録 marker の blocking、facts 不在時の conservative fallback、既存 unrelated-channel test がすべて PASS。root metadata は `requires-source` のままで、validated Unprojected marker だけが selected scan から除外される。
 
-- [ ] **Step 5: corpus one-invalidity expectation と coverage docs を更新する**
+- [x] **Step 5: corpus one-invalidity expectation と coverage docs を更新する**
 
   - invalid manifest が 132 件から 134 件になるため `audits every Task 9 invalid fixture as one primary concern` の expected `audited` を `134` に更新する。
   - `COVERAGE.md` の `R8-CORE-012` に新しい valid case と二つの invalid caseを追加し、checker evidence に exact source facts / selected-readiness assertion を明記して status を `covered` にする。
   - この TODO の task checkbox を完了し、facts-driven exclusion、三 fixture、one-invalidity 134/134、既存 semantics 非変更を implementation note に記録する。
 
-- [ ] **Step 6: checkpoint 全体を検証する**
+- [x] **Step 6: checkpoint 全体を検証する**
 
   - Run: `node --test docai-messaging/tools/tests/*.test.mjs`
   - Expected: 全 test PASS、Core corpus failures 0、one-invalidity audit 134/134。
@@ -951,7 +953,7 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
   - Expected: 出力なし。
   - Read-only review: `git status --short` と `git diff --stat` で上記 Files 以外の変更がないことを確認する。
 
-- [ ] **Step 7: ユーザーの commit checkpoint で停止する**
+- [x] **Step 7: ユーザーの commit checkpoint で停止する**
 
   - Suggested commit message: `fix(messaging): isolate unprojected readiness markers`
 
