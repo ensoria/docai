@@ -763,6 +763,8 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 
 > **Implementation note (Unprojected selected-readiness isolation checkpoint):** `core.mjs` は検証済み Unprojected facts の `indexPath` / `line` を file-scoped exclusion set に変換し、projected operation の selected-readiness scan だけから該当 marker 行を除外するようになった。facts 未登録 marker は引き続き blocking となり、facts 不在時は一行も除外しない。正常な projected operation と unrelated direct marker を持つ実 document set、および publication-safe identity / location 不在を分離した二つの source-aware invalid fixture を追加し、各 exact generation-failure reason と単一 `DM-IDX-008` concern を固定した。Core manifest は 179 cases / 134 invalid cases となり、one-invalidity audit は 134/134、全 596 tests は PASS した。影響として root aggregate `coverage: requires-source`、一般の incomplete-marker metadata propagation、direct / sharded grammar、Unprojected retrieval、row 不在時の not-ready behavior は変えず、`R8-CORE-012` だけを `covered` に更新した。
 
+> **Implementation note (Core coverage matrix perspective / operation-selection checkpoint):** `R8-CORE-013`–`R8-CORE-015` として same-application action carry-through、complete / missing / action-only / conflicting counterpart mapping、generic unprojected reason、AsyncAPI 3.0.0 / 3.1.0 operation message selection、および decoded `perspective` metadata grammar を matrix に追加する。source perspective と operation selection は versioned manifest cases、exact facts assertions、単一-concern invalid cases により `covered` と確認した。decoded `perspective` は Unicode / internal ASCII space の valid fixture、empty / leading / trailing space rejection、case-only set mismatch が covered だが、Unicode normalization だけが異なる focused exact-comparison case と canonical fixture の exact decoded-value assertion がないため `R8-CORE-015` を `partial` とする。影響として二つの既存 clause を release evidence に昇格し、一つの未検証境界を明示する。fixture、rule、checker semantics と作業順序はこの checkpoint では変更しない。
+
 - [x] Metadata、extension name/order/escape、unknown non-`x-` key、sentence grammar。
 - [x] Identity trailer、set/projection digest、closed root、mixed set、task-scoped identity check。
 - [x] Direct/sharded Sources、unknown API identity/version、Revision none、overlap、fixed-point、cycle。
@@ -803,6 +805,8 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
   - [x] `R8-CORE-011`–`R8-CORE-012`（sentinel-like source literals、Unprojected Operations）を対応付ける。
   - [x] `R8-CORE-012` の missing-safe-identity/location focused cases と unrelated direct-marker non-blocking gap を解消する。
     - [x] facts-driven marker-line exclusion と focused fixture 分割の設計を承認する。
+  - [x] `R8-CORE-013`–`R8-CORE-015`（perspective projection、operation message selection、decoded perspective）を対応付ける。
+  - [ ] `R8-CORE-015` の exact decoded-value assertion と Unicode-normalization-only mismatch fixture gap を解消する。
   - [ ] 残る Core corpus clause を `R8-CORE-*` row に分解して対応付け、`R8-CORE-001` を `covered` にする。
 
 #### Unprojected Selected-Readiness Isolation Implementation Plan
