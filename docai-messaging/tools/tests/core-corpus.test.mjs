@@ -232,6 +232,8 @@ const failureContractCaseIds = [
   "failure-inline-replacement-content-invalid",
   "failure-reference-embedded-invalid",
   "failure-shape-replacement-mismatch-invalid",
+  "failure-signal-root-presence-invalid",
+  "failure-signal-root-row-valid",
   "failure-state-mixed-invalid"
 ];
 
@@ -1970,6 +1972,51 @@ test("executes the Task 9 DM-FAIL-001 DM-FAIL-002 DM-FAIL-003 DM-CONV-004 states
   }
 });
 
+test("executes the failure-signal root-row corpus", () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
+  const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
+
+  assert.deepEqual(failureContractCaseIds.filter((id) => !byId.has(id)), []);
+
+  const validCase = byId.get("failure-signal-root-row-valid");
+  const valid = validateCase(path.join(corpusPath, validCase.path), validCase);
+  assert.deepEqual(valid.diagnostics, []);
+  const validChannel = fs.readFileSync(
+    path.join(corpusPath, validCase.path, "channels/failure-root.md"),
+    "utf8"
+  );
+  assert.equal(validChannel.includes(`**message_shape**: failure-code
+
+- Headers: none
+- Bindings: none
+#### Payload
+
+**payload_presence**: always
+**media_type**: application/json
+**payload_nullable**: no
+\`\`\`json
+"rejected"
+\`\`\`
+| Field | Type | Presence | Nullable | Meaning |
+|---|---|---|---|---|
+| $ | string | always | no | Stable failure code |`), true);
+  assert.deepEqual(
+    valid.facts.core.failureShapes.inline.map((shape) => ({
+      label: shape.label,
+      operation: shape.operation,
+      replacement: shape.replacement
+    })),
+    [{ label: "failure-code", operation: "publish-with-failure-root", replacement: false }]
+  );
+
+  const invalidCase = byId.get("failure-signal-root-presence-invalid");
+  const invalid = validateCase(path.join(corpusPath, invalidCase.path), invalidCase);
+  const primary = invalid.diagnostics.filter((entry) => (
+    entry.severity === "error" && !entry.cascade
+  ));
+  assert.deepEqual(primary.map((entry) => entry.ruleId), ["DM-FAIL-003"]);
+});
+
 test("executes the Task 9 DM-TRUST-001 DM-TRUST-002 DM-TRUST-003 publication and structural-escape corpus", () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
   const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
@@ -2391,5 +2438,5 @@ test("audits every Task 9 invalid fixture as one primary concern", () => {
     corpusCases: result.cases
   });
 
-  assert.deepEqual(audit, { passed: true, audited: 137, errors: [] });
+  assert.deepEqual(audit, { passed: true, audited: 138, errors: [] });
 });

@@ -850,6 +850,20 @@
       "expected_rule_ids": ["DM-FAIL-002"]
     },
     {
+      "id": "failure-signal-root-presence-invalid",
+      "kind": "task-scoped-document-set-mutation",
+      "path": "focused/invalid/failure-signal-root-presence-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-FAIL-003"]
+    },
+    {
+      "id": "failure-signal-root-row-valid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/valid/failure-signal-root-row-valid",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
       "id": "failure-state-mixed-invalid",
       "kind": "task-scoped-document-set",
       "path": "focused/invalid/failure-state-mixed-invalid",

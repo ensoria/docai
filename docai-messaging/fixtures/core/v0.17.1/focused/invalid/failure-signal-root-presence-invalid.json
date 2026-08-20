@@ -1,0 +1,9 @@
+{
+  "id": "failure-signal-root-presence-invalid",
+  "base": "../valid/failure-signal-root-row-valid",
+  "path": "channels/failure-root.md",
+  "replace": {
+    "from": "| $ | string | always | no | Stable failure code |",
+    "to": "| $ | string | optional | no | Stable failure code |"
+  }
+}
