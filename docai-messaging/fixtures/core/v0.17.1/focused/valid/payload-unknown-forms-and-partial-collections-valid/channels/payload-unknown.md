@@ -206,4 +206,52 @@ none
 
 none
 
+## SEND orders.e.{tenant}.unknown-parameters (unknown-parameters)
+
+Sends an order while preserving that the channel parameter collection is not established.
+
+### Behavior
+
+- side_effects: dispatches the parameter-unknown order command
+- idempotency: reuse the order identifier when resending
+- preconditions: the order is ready to dispatch
+- authorization: producer credentials permit command publishing
+- delivery: at-least-once -- retry ambiguous publishes with the same order identifier
+- ordering: preserve order per order identifier
+
+### Operation Bindings
+
+none
+
+### Channel
+
+#### Parameters
+
+unknown
+**unknown**: channel parameter collection requires the complete channel declaration at source-a
+
+#### Bindings
+
+none
+
+### Message unknown-parameters-message
+
+- Headers: none
+- Bindings: none
+#### Payload
+
+none
+
+### Reply
+
+none
+
+### Failure Handling
+
+none
+
+### Related
+
+none
+
 > docai-identity: set_id: b32:r6s2abwqhnffhouzsfivx7uv6u | projection_id: b32:2su6l5snggpayed76bebjwuzuy

@@ -1398,6 +1398,20 @@ test("executes the Task 9 DM-MSG-004 payload unknown and partial-collection corp
   const validCase = byId.get("payload-unknown-forms-and-partial-collections-valid");
   const valid = validateCase(path.join(corpusPath, validCase.path), validCase);
   assert.deepEqual(valid.diagnostics, []);
+  const validChannel = fs.readFileSync(path.join(
+    corpusPath,
+    validCase.path,
+    "channels/payload-unknown.md"
+  ), "utf8");
+  assert.equal(
+    validChannel.includes(`#### Parameters
+
+unknown
+**unknown**: channel parameter collection requires the complete channel declaration at source-a
+
+#### Bindings`),
+    true
+  );
   assert.deepEqual(
     Object.fromEntries(Object.entries(valid.facts.core.messageDefinitions.byOperation).map(
       ([operation, definitions]) => [operation, definitions.map((entry) => entry.name)]
@@ -1406,7 +1420,8 @@ test("executes the Task 9 DM-MSG-004 payload unknown and partial-collection corp
       "partial-fields": ["partial-fields-message"],
       "partial-members": ["partial-members-message"],
       "unknown-fields": ["unknown-fields-message"],
-      "unknown-representations": ["unknown-representations-message"]
+      "unknown-representations": ["unknown-representations-message"],
+      "unknown-parameters": ["unknown-parameters-message"]
     }
   );
 

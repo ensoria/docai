@@ -18,6 +18,7 @@
 | SEND | orders.b.{tenant}.partial-members | partial-members | partial-members-message | send partial members | Retains named channel parameters and message headers | none | none |
 | SEND | orders.c.unknown-fields | unknown-fields | unknown-fields-message | send unknown fields | Preserves known representation identity without field names | none | none |
 | SEND | orders.d.unknown-representations | unknown-representations | unknown-representations-message | send unknown representations | Preserves whole-payload state without inventing wire identity | none | none |
+| SEND | orders.e.{tenant}.unknown-parameters | unknown-parameters | unknown-parameters-message | send with unknown parameters | Preserves a whole unknown channel parameter collection | none | none |
 
 ## Workflows
 
