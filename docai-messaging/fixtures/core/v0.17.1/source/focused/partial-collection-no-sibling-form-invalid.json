@@ -1,0 +1,16 @@
+{
+  "cases": [
+    {
+      "collectionId": "reply-parameters",
+      "memberKind": "parameter",
+      "namedMembers": [],
+      "unnamedMembers": 1,
+      "projected": {
+        "collectionId": "reply-parameters",
+        "form": "partial-table",
+        "retainedNames": ["generated"],
+        "marker": "additional unnamed parameter"
+      }
+    }
+  ]
+}

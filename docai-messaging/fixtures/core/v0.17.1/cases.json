@@ -1032,6 +1032,27 @@
       "expected_rule_ids": ["DM-MSG-005"]
     },
     {
+      "id": "partial-collection-no-sibling-form-invalid",
+      "kind": "partial-collection-source-scenario",
+      "path": "source/focused/partial-collection-no-sibling-form-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-INC-005"]
+    },
+    {
+      "id": "partial-collection-source-valid",
+      "kind": "partial-collection-source-scenario",
+      "path": "source/focused/partial-collection-source-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
+      "id": "partial-collection-synthetic-member-invalid",
+      "kind": "partial-collection-source-scenario",
+      "path": "source/focused/partial-collection-synthetic-member-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-INC-004"]
+    },
+    {
       "id": "adapter-header-encoding-projection-invalid",
       "kind": "adapter-source-scenario",
       "path": "source/focused/adapter-header-encoding-projection-invalid.json",

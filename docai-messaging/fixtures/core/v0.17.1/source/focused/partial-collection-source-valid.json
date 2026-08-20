@@ -1,0 +1,109 @@
+{
+  "cases": [
+    {
+      "collectionId": "request-headers",
+      "memberKind": "header",
+      "namedMembers": ["correlation-id"],
+      "unnamedMembers": 1,
+      "projected": {
+        "collectionId": "request-headers",
+        "form": "partial-table",
+        "retainedNames": ["correlation-id"],
+        "marker": "additional unnamed header"
+      }
+    },
+    {
+      "collectionId": "channel-parameters",
+      "memberKind": "parameter",
+      "namedMembers": ["tenant"],
+      "unnamedMembers": 1,
+      "projected": {
+        "collectionId": "channel-parameters",
+        "form": "partial-table",
+        "retainedNames": ["tenant"],
+        "marker": "additional unnamed parameter"
+      }
+    },
+    {
+      "collectionId": "request-fields",
+      "memberKind": "field",
+      "namedMembers": ["id"],
+      "unnamedMembers": 1,
+      "polymorphic": false,
+      "exampleFaithful": false,
+      "representation": {
+        "mediaType": "application/json",
+        "nullable": "no"
+      },
+      "projected": {
+        "collectionId": "request-fields",
+        "form": "partial-table",
+        "retainedNames": ["id"],
+        "marker": "additional unnamed field",
+        "canonicalExample": "omit",
+        "representation": {
+          "mediaType": "application/json",
+          "nullable": "no"
+        }
+      }
+    },
+    {
+      "collectionId": "response-headers",
+      "memberKind": "header",
+      "namedMembers": [],
+      "unnamedMembers": 1,
+      "projected": {
+        "collectionId": "response-headers",
+        "form": "whole-section-unknown"
+      }
+    },
+    {
+      "collectionId": "reply-parameters",
+      "memberKind": "parameter",
+      "namedMembers": [],
+      "unnamedMembers": 2,
+      "projected": {
+        "collectionId": "reply-parameters",
+        "form": "whole-section-unknown"
+      }
+    },
+    {
+      "collectionId": "response-fields",
+      "memberKind": "field",
+      "namedMembers": [],
+      "unnamedMembers": 1,
+      "polymorphic": false,
+      "representation": {
+        "mediaType": "application/json",
+        "nullable": "yes"
+      },
+      "projected": {
+        "collectionId": "response-fields",
+        "form": "representation-local-unknown",
+        "representation": {
+          "mediaType": "application/json",
+          "nullable": "yes"
+        }
+      }
+    },
+    {
+      "collectionId": "event-variants",
+      "memberKind": "field",
+      "namedMembers": ["eventType"],
+      "unnamedMembers": 1,
+      "polymorphic": true,
+      "representation": {
+        "mediaType": "application/json",
+        "nullable": "no"
+      },
+      "projected": {
+        "collectionId": "event-variants",
+        "form": "representation-local-unknown",
+        "representation": {
+          "mediaType": "application/json",
+          "nullable": "no"
+        }
+      }
+    }
+  ]
+}

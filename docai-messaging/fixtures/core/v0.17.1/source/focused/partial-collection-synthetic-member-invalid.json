@@ -1,0 +1,16 @@
+{
+  "cases": [
+    {
+      "collectionId": "request-headers",
+      "memberKind": "header",
+      "namedMembers": ["correlation-id"],
+      "unnamedMembers": 1,
+      "projected": {
+        "collectionId": "request-headers",
+        "form": "partial-table",
+        "retainedNames": ["correlation-id", "x-generated"],
+        "marker": "additional unnamed header"
+      }
+    }
+  ]
+}

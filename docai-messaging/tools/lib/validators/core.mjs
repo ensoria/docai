@@ -1,4 +1,5 @@
 import { diagnostic } from "../diagnostics.mjs";
+import { isDeepStrictEqual } from "node:util";
 import { parseExactJson } from "../json-value.mjs";
 import { scanMarkdown } from "../markdown.mjs";
 import { canonicalizeMediaType } from "../media-type.mjs";
@@ -341,6 +342,30 @@ export function evaluatePartialCollectionSourceExpectations(cases) {
     }
     return result;
   });
+}
+
+export function validatePartialCollectionSourceExpectations(
+  scenario,
+  { file = "source-input.json" } = {}
+) {
+  const expectations = evaluatePartialCollectionSourceExpectations(scenario.cases ?? []);
+  const sources = new Map((scenario.cases ?? []).map((entry) => [entry.collectionId, entry]));
+  const mismatches = expectations.flatMap((expected) => {
+    if (isDeepStrictEqual(expected, sources.get(expected.collectionId)?.projected)) return [];
+    return [{
+      ruleId: expected.form === "partial-table" ? "DM-INC-004" : "DM-INC-005"
+    }];
+  });
+  const ruleIds = [...new Set(mismatches.map((entry) => entry.ruleId))];
+  return {
+    diagnostics: ruleIds.map((ruleId) => diagnostic(
+      ruleId,
+      file,
+      1,
+      `Partial collection projection disagrees with ${mismatches.filter((entry) => entry.ruleId === ruleId).length} exact source expectation(s).`
+    )),
+    facts: { partialCollectionSourceExpectations: expectations }
+  };
 }
 
 const JSON_SCHEMA_DRAFT_07_FORMATS = new Set([

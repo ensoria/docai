@@ -198,6 +198,12 @@ const payloadConstraintAndFormatCaseIds = [
   "schema-custom-format-projection-invalid"
 ];
 
+const partialCollectionSourceCaseIds = [
+  "partial-collection-no-sibling-form-invalid",
+  "partial-collection-source-valid",
+  "partial-collection-synthetic-member-invalid"
+];
+
 const wireAndHeaderCaseIds = [
   "adapter-header-encoding-projection-invalid",
   "adapter-parameterized-wire-projection-invalid",
@@ -340,6 +346,13 @@ function validateCase(fixturePath, fixtureCase) {
   if (fixtureCase.kind === "schema-field-source-scenario") {
     const scenario = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
     return coreValidator.validateSchemaFieldSourceExpectations(
+      scenario,
+      { file: fixtureCase.path }
+    );
+  }
+  if (fixtureCase.kind === "partial-collection-source-scenario") {
+    const scenario = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
+    return coreValidator.validatePartialCollectionSourceExpectations(
       scenario,
       { file: fixtureCase.path }
     );
@@ -1555,6 +1568,80 @@ test("executes the Task 9 DM-MSG-005 DM-CONV-003 exact-constraint default and fo
   }
 });
 
+test("executes partial-collection source scenarios", () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
+  const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
+
+  assert.deepEqual(
+    partialCollectionSourceCaseIds.filter((id) => !byId.has(id)),
+    []
+  );
+  for (const id of partialCollectionSourceCaseIds) {
+    const fixtureCase = byId.get(id);
+    assert.equal(
+      fixtureCase.expected === "valid" || fixtureCase.expected_rule_ids.length === 1,
+      true,
+      id
+    );
+  }
+
+  const result = runFixtureCorpus(corpusPath, validateCase);
+  assert.equal(result.failed, 0, result.report);
+
+  const validCase = byId.get("partial-collection-source-valid");
+  const valid = validateCase(path.join(corpusPath, validCase.path), validCase);
+  assert.deepEqual(valid.diagnostics, []);
+  assert.deepEqual(valid.facts.partialCollectionSourceExpectations, [
+    {
+      collectionId: "request-headers",
+      form: "partial-table",
+      retainedNames: ["correlation-id"],
+      marker: "additional unnamed header"
+    },
+    {
+      collectionId: "channel-parameters",
+      form: "partial-table",
+      retainedNames: ["tenant"],
+      marker: "additional unnamed parameter"
+    },
+    {
+      collectionId: "request-fields",
+      form: "partial-table",
+      retainedNames: ["id"],
+      marker: "additional unnamed field",
+      canonicalExample: "omit",
+      representation: { mediaType: "application/json", nullable: "no" }
+    },
+    {
+      collectionId: "response-headers",
+      form: "whole-section-unknown"
+    },
+    {
+      collectionId: "reply-parameters",
+      form: "whole-section-unknown"
+    },
+    {
+      collectionId: "response-fields",
+      form: "representation-local-unknown",
+      representation: { mediaType: "application/json", nullable: "yes" }
+    },
+    {
+      collectionId: "event-variants",
+      form: "representation-local-unknown",
+      representation: { mediaType: "application/json", nullable: "no" }
+    }
+  ]);
+
+  for (const id of partialCollectionSourceCaseIds.filter((caseId) => caseId !== validCase.id)) {
+    const fixtureCase = byId.get(id);
+    const invalid = validateCase(path.join(corpusPath, fixtureCase.path), fixtureCase);
+    const primary = invalid.diagnostics.filter((entry) => (
+      entry.severity === "error" && !entry.cascade
+    ));
+    assert.deepEqual(primary.map((entry) => entry.ruleId), fixtureCase.expected_rule_ids, id);
+  }
+});
+
 test("executes the Task 9 DM-ADAPTER-002 DM-ADAPTER-003 DM-MSG-004 wire header and raw corpus", () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
   const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
@@ -2289,5 +2376,5 @@ test("audits every Task 9 invalid fixture as one primary concern", () => {
     corpusCases: result.cases
   });
 
-  assert.deepEqual(audit, { passed: true, audited: 135, errors: [] });
+  assert.deepEqual(audit, { passed: true, audited: 137, errors: [] });
 });
