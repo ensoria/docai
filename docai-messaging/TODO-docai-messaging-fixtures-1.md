@@ -765,6 +765,8 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 
 > **Implementation note (Core coverage matrix perspective / operation-selection checkpoint):** `R8-CORE-013`–`R8-CORE-015` として same-application action carry-through、complete / missing / action-only / conflicting counterpart mapping、generic unprojected reason、AsyncAPI 3.0.0 / 3.1.0 operation message selection、および decoded `perspective` metadata grammar を matrix に追加する。source perspective と operation selection は versioned manifest cases、exact facts assertions、単一-concern invalid cases により `covered` と確認した。decoded `perspective` は Unicode / internal ASCII space の valid fixture、empty / leading / trailing space rejection、case-only set mismatch が covered だが、Unicode normalization だけが異なる focused exact-comparison case と canonical fixture の exact decoded-value assertion がないため `R8-CORE-015` を `partial` とする。影響として二つの既存 clause を release evidence に昇格し、一つの未検証境界を明示する。fixture、rule、checker semantics と作業順序はこの checkpoint では変更しない。
 
+> **Approved design (decoded perspective exactness checkpoint):** coverage matrix の残行を展開する前に `R8-CORE-015` の gap を解消する順序変更を承認する。独立した task-scoped invalid document set `identity-perspective-normalization-mixed` を追加し、root `INDEX.md` の decoded `perspective` は NFC `café`（code points `[99, 97, 102, 233]`）、`CONVENTIONS.md` は表示上同じ NFD `café`（code points `[99, 97, 102, 101, 769]`）とする。他の metadata、document structure、identity handles は一致させ、唯一の primary concern を `DM-ID-007` に固定する。case を `cases.json` / `identityCaseIds` に登録し、identity corpus test は両 code-point sequence、raw inequality、NFC-normalized equality、単一 `DM-ID-007` error を literal assertions で検証する。metadata corpus test は既存 `metadata-canonical-extensions-and-escapes` の parsed `perspective` が exact decoded value `店舗 service|west\edge` であることを固定する。production parser と set-wide strict comparison は変更せず、manifest は 180 cases / 135 invalid cases、one-invalidity audit は 135/135 に更新する。完了後に `R8-CORE-015` を `covered` とし、既存 case-only mismatch、empty / leading / trailing-space rejection、metadata escape semantics、他の identity rules を維持する。
+
 - [x] Metadata、extension name/order/escape、unknown non-`x-` key、sentence grammar。
 - [x] Identity trailer、set/projection digest、closed root、mixed set、task-scoped identity check。
 - [x] Direct/sharded Sources、unknown API identity/version、Revision none、overlap、fixed-point、cycle。
@@ -807,6 +809,7 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
     - [x] facts-driven marker-line exclusion と focused fixture 分割の設計を承認する。
   - [x] `R8-CORE-013`–`R8-CORE-015`（perspective projection、operation message selection、decoded perspective）を対応付ける。
   - [ ] `R8-CORE-015` の exact decoded-value assertion と Unicode-normalization-only mismatch fixture gap を解消する。
+    - [x] 独立 document set、literal code-point assertions、production semantics 非変更の設計と順序変更を承認する。
   - [ ] 残る Core corpus clause を `R8-CORE-*` row に分解して対応付け、`R8-CORE-001` を `covered` にする。
 
 #### Unprojected Selected-Readiness Isolation Implementation Plan
