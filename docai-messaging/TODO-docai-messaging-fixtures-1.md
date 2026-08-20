@@ -823,11 +823,327 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
   - [x] `R8-CORE-016`–`R8-CORE-020`（payload knowledge forms、partial collections、root rows、direction / ancestor semantics）を対応付ける。
   - [ ] `R8-CORE-017`–`R8-CORE-019` の source-aware no-synthetic-member、whole-section unknown Parameters、failure-signal `$` root-row gap を解消する。
     - [x] rule ごとの source scenario 分離、既存 Parameters fixture 拡張、独立 failure root-row valid / mutation invalid の設計を承認する。
+    - [x] source projection、Parameters document evidence、failure `$` document evidence、coverage / regression の四 checkpoint に分けた実装計画を作成する。
     - [ ] RED: `partial-collection-source-scenario` runner boundary、source valid / `DM-INC-004` invalid / `DM-INC-005` invalid、whole-section unknown Parameters、failure `$` root-row valid / `DM-FAIL-003` mutation invalid の focused tests を追加し、未実装 boundary だけが失敗することを確認する。
     - [ ] GREEN: exact projected-object comparison と rule-specific aggregate diagnostic を追加し、生成文書 fixture は既存 production validators で受理・拒否させる。
     - [ ] VERIFY: focused tests、全 `tools/tests/*.test.mjs`、Core corpus 185/185、one-invalidity audit 138/138、reference audit、`git diff --check` を通す。
     - [ ] DOCS: `COVERAGE.md` の三 row を `covered` にし、この TODO に実装結果と影響を追記する。
   - [ ] 残る Core corpus clause を `R8-CORE-*` row に分解して対応付け、`R8-CORE-001` を `covered` にする。
+
+#### Partial Collection / Parameters Unknown / Failure Root-Row Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking. Git state は agent が変更せず、各 task 完了後にユーザーの commit のため停止する。
+
+**Goal:** `R8-CORE-017`–`R8-CORE-019` の source-aware partial/no-sibling projection、whole-section unknown Parameters、failure-signal `$` root-row を versioned Core corpus の exact positive / one-invalidity negative evidence で固定する。
+
+**Architecture:** 既存 pure evaluator に read-only scenario validator を重ね、source expectation と projected object の structural exactness を document validator から分離する。Parameters と failure shape は task-scoped Markdown set で既存 production validator を実行し、source projection の diagnostic と生成文書の diagnostic を混ぜない。
+
+**Tech Stack:** Node.js ESM、`node:test`、`node:assert/strict`、`node:util` の `isDeepStrictEqual`、versioned JSON / Markdown fixtures、既存 corpus runner / document-set validator。
+
+##### Global Constraints
+
+- README §3.4 / §4.1、`DM-INC-004`、`DM-INC-005`、`DM-FAIL-003` の normative semantics は変更しない。
+- `evaluatePartialCollectionSourceExpectations(cases)` の入力・出力・順序は変更ず、scenario validator だけを追加する。
+- source validator は object key order に依存しない structural exact comparison を行い、欠落・余分・値違いのすべてを mismatch にする。
+- invalid fixture は一件一 primary concern とし、source 値や synthetic member 名を diagnostic message に表示しない。
+- fixture / manifest / checker ID list は既存の ASCII lexical order を保つ。
+- task-scoped document set は digest restamp を必要とせず、opening metadata / identity handles / standard section order の既存 grammar を保つ。
+- 各 task の targeted test と `git diff --check` が成功した時点で停止し、次 task への未完了変更を混ぜない。
+
+---
+
+##### Task 1: Versioned partial-collection source scenarios
+
+**Files:**
+
+- Create: `docai-messaging/fixtures/core/v0.17.1/source/focused/partial-collection-source-valid.json`
+- Create: `docai-messaging/fixtures/core/v0.17.1/source/focused/partial-collection-synthetic-member-invalid.json`
+- Create: `docai-messaging/fixtures/core/v0.17.1/source/focused/partial-collection-no-sibling-form-invalid.json`
+- Modify: `docai-messaging/tools/lib/validators/core.mjs`
+- Modify: `docai-messaging/tools/tests/core-corpus.test.mjs`
+- Modify: `docai-messaging/fixtures/core/v0.17.1/cases.json`
+
+**Interfaces:**
+
+- Consumes: `evaluatePartialCollectionSourceExpectations(cases: Array<object>): Array<object>`
+- Produces: `validatePartialCollectionSourceExpectations(scenario: {cases: Array<object>}, options?: {file?: string}): {diagnostics: Array<object>, facts: {partialCollectionSourceExpectations: Array<object>}}`
+- Produces: corpus kind `partial-collection-source-scenario`。
+
+- [ ] **Step 1: source fixtures と failing corpus test を追加する**
+
+  valid scenario は次の exact expectation を入力順で持つ。
+
+  ```text
+  request-headers:    partial-table, retainedNames=[correlation-id], marker=additional unnamed header
+  channel-parameters: partial-table, retainedNames=[tenant], marker=additional unnamed parameter
+  request-fields:     partial-table, retainedNames=[id], marker=additional unnamed field,
+                      canonicalExample=omit, representation={mediaType:application/json, nullable:no}
+  response-headers:   whole-section-unknown
+  reply-parameters:   whole-section-unknown
+  response-fields:    representation-local-unknown,
+                      representation={mediaType:application/json, nullable:yes}
+  event-variants:     representation-local-unknown,
+                      representation={mediaType:application/json, nullable:no}
+  ```
+
+  `partial-collection-synthetic-member-invalid` は `request-headers` の projected `retainedNames` だけを `["correlation-id", "x-generated"]` にし、`partial-collection-no-sibling-form-invalid` は named member のない `reply-parameters` を `partial-table` / `["generated"]` / `additional unnamed parameter` として宣言する。`cases.json` に valid 一件と単一-rule invalid 二件を登録し、test は valid facts の七 object を literal deep equality で検証する。
+
+  この checkpoint で invalid case は 135 から 137 に増えるため、one-invalidity integration assertion も `{ passed: true, audited: 137, errors: [] }` に更新する。
+
+- [ ] **Step 2: targeted test を実行し RED を確認する**
+
+  Run: `node --test --test-name-pattern='partial-collection source scenarios' docai-messaging/tools/tests/core-corpus.test.mjs`
+
+  Expected: `validatePartialCollectionSourceExpectations is not a function` または未対応 kind で FAIL。
+
+- [ ] **Step 3: exact scenario validator と runner branch を最小実装する**
+
+  `core.mjs` に次の classification を実装する。
+
+  ```js
+  export function validatePartialCollectionSourceExpectations(
+    scenario,
+    { file = "source-input.json" } = {}
+  ) {
+    const expectations = evaluatePartialCollectionSourceExpectations(scenario.cases ?? []);
+    const sources = new Map((scenario.cases ?? []).map((entry) => [entry.collectionId, entry]));
+    const mismatches = expectations.flatMap((expected) => {
+      if (isDeepStrictEqual(expected, sources.get(expected.collectionId)?.projected)) return [];
+      return [{
+        ruleId: expected.form === "partial-table" ? "DM-INC-004" : "DM-INC-005"
+      }];
+    });
+    const ruleIds = [...new Set(mismatches.map((entry) => entry.ruleId))];
+    return {
+      diagnostics: ruleIds.map((ruleId) => diagnostic(
+        ruleId,
+        file,
+        1,
+        `Partial collection projection disagrees with ${mismatches.filter((entry) => entry.ruleId === ruleId).length} exact source expectation(s).`
+      )),
+      facts: { partialCollectionSourceExpectations: expectations }
+    };
+  }
+  ```
+
+  `core.mjs` の import に `import { isDeepStrictEqual } from "node:util";` を追加し、`validateCase()` は JSON を parse してこの function を呼ぶ。
+
+- [ ] **Step 4: targeted GREEN と one-invalidity を確認する**
+
+  Run: `node --test --test-name-pattern='partial-collection source scenarios|audits every Task 9 invalid fixture' docai-messaging/tools/tests/core-corpus.test.mjs`
+
+  Expected: source valid は diagnostics `[]`、二つの invalid はそれぞれ `DM-INC-004` / `DM-INC-005` 一件、audit は `137/137`。
+
+- [ ] **Step 5: diff を確認しユーザーの commit のため停止する**
+
+  Run: `git diff --check`
+
+  Expected: output なし。
+
+  Suggested commit message: `test(messaging): validate partial collection source projections`
+
+##### Task 2: Whole-section unknown Parameters document evidence
+
+**Files:**
+
+- Modify: `docai-messaging/fixtures/core/v0.17.1/focused/valid/payload-unknown-forms-and-partial-collections-valid/INDEX.md`
+- Modify: `docai-messaging/fixtures/core/v0.17.1/focused/valid/payload-unknown-forms-and-partial-collections-valid/channels/payload-unknown.md`
+- Modify: `docai-messaging/tools/tests/core-corpus.test.mjs`
+
+**Interfaces:**
+
+- Consumes: existing task-scoped document-set validator and `messageDefinitions.byOperation` facts.
+- Produces: operation `unknown-parameters` at Channel `orders.e.{tenant}.unknown-parameters` with primary Message `unknown-parameters-message`.
+
+- [ ] **Step 1: exact expected operation を test に先行追加する**
+
+  `payloadUnknownCaseIds` の valid assertion に次を追加し、channel source が canonical sequence を持つことを検証する。
+
+  ```js
+  "unknown-parameters": ["unknown-parameters-message"]
+  ```
+
+  ```text
+  #### Parameters
+
+  unknown
+  **unknown**: channel parameter collection requires the complete channel declaration at source-a
+
+  #### Bindings
+  ```
+
+- [ ] **Step 2: targeted test で RED を確認する**
+
+  Run: `node --test --test-name-pattern='payload unknown and partial-collection corpus' docai-messaging/tools/tests/core-corpus.test.mjs`
+
+  Expected: `unknown-parameters` operation が現行 facts にないため FAIL。
+
+- [ ] **Step 3: INDEX row と operation document を追加する**
+
+  INDEX の最後に次の lexical-following row を追加する。
+
+  ```markdown
+  | SEND | orders.e.{tenant}.unknown-parameters | unknown-parameters | unknown-parameters-message | send with unknown parameters | Preserves a whole unknown channel parameter collection | none | none |
+  ```
+
+  channel file の最後に canonical Behavior / Operation Bindings / Channel / Message / Reply / Failure Handling / Related 順の SEND operation を追加する。Channel は Step 1 の exact Parameters sequence、Message は `- Headers: none`、`- Bindings: none`、headed Payload `none` を持つ。opening metadata の `knowledge: requires-input` は維持する。
+
+- [ ] **Step 4: targeted GREEN と diff を確認する**
+
+  Run: `node --test --test-name-pattern='payload unknown and partial-collection corpus' docai-messaging/tools/tests/core-corpus.test.mjs`
+
+  Expected: PASS、valid diagnostics `[]`、operation facts は五 operations。
+
+  Run: `git diff --check`
+
+  Expected: output なし。
+
+- [ ] **Step 5: ユーザーの commit のため停止する**
+
+  Suggested commit message: `test(messaging): cover whole-section unknown parameters`
+
+##### Task 3: Failure-signal `$` root-row document evidence
+
+**Files:**
+
+- Create: `docai-messaging/fixtures/core/v0.17.1/focused/valid/failure-signal-root-row-valid/CONVENTIONS.md`
+- Create: `docai-messaging/fixtures/core/v0.17.1/focused/valid/failure-signal-root-row-valid/INDEX.md`
+- Create: `docai-messaging/fixtures/core/v0.17.1/focused/valid/failure-signal-root-row-valid/channels/failure-root.md`
+- Create: `docai-messaging/fixtures/core/v0.17.1/focused/invalid/failure-signal-root-presence-invalid.json`
+- Modify: `docai-messaging/fixtures/core/v0.17.1/cases.json`
+- Modify: `docai-messaging/tools/tests/core-corpus.test.mjs`
+
+**Interfaces:**
+
+- Consumes: `task-scoped-document-set`, `task-scoped-document-set-mutation`, inline failure-shape parsing, RECEIVE Payload validation, diagnostic remapping.
+- Produces: valid operation `publish-with-failure-root`, inline shape `failure-code`, and one-invalidity mutation `failure-signal-root-presence-invalid`.
+
+- [ ] **Step 1: valid / invalid manifest expectations と failing test を追加する**
+
+  `failureContractCaseIds` に二 case ID を追加し、valid channel source が次の exact failure Payload を持つことと inline fact を検証する。
+
+  ````markdown
+  **message_shape**: failure-code
+
+  - Headers: none
+  - Bindings: none
+  #### Payload
+
+  **payload_presence**: always
+  **media_type**: application/json
+  **payload_nullable**: no
+  ```json
+  "rejected"
+  ```
+  | Field | Type | Presence | Nullable | Meaning |
+  |---|---|---|---|---|
+  | $ | string | always | no | Stable failure code |
+  ````
+
+- [ ] **Step 2: targeted test で RED を確認する**
+
+  Run: `node --test --test-name-pattern='failure-signal root-row corpus' docai-messaging/tools/tests/core-corpus.test.mjs`
+
+  Expected: manifest case または fixture が未登録のため FAIL。
+
+- [ ] **Step 3: minimal valid document set を作成する**
+
+  `CONVENTIONS.md` は全 canonical section が `none` の task-scoped full profile とする。`INDEX.md` は source-a 一件、SEND `failures.root` / `publish-with-failure-root` / `publish-message` 一行、Workflows `none` とする。channel operation は canonical seven operation subsections を持ち、primary Message Payload は `none`、Failure Handling は次の一行と Step 1 の inline shape を持つ。
+
+  ```markdown
+  | Failure | Signal | Condition | Action |
+  |---|---|---|---|
+  | rejected | inline:failure-code | The broker rejects the published message | Record the stable failure code and do not retry the message |
+  ```
+
+- [ ] **Step 4: exact one-replacement mutation を作成する**
+
+  ```json
+  {
+    "id": "failure-signal-root-presence-invalid",
+    "base": "../valid/failure-signal-root-row-valid",
+    "path": "channels/failure-root.md",
+    "replace": {
+      "from": "| $ | string | always | no | Stable failure code |",
+      "to": "| $ | string | optional | no | Stable failure code |"
+    }
+  }
+  ```
+
+  manifest で valid は `task-scoped-document-set` / expected valid、mutation は `task-scoped-document-set-mutation` / expected `DM-FAIL-003` とする。
+
+  この checkpoint で invalid case は 137 から 138 に増えるため、one-invalidity integration assertion も `{ passed: true, audited: 138, errors: [] }` に更新する。
+
+- [ ] **Step 5: targeted GREEN と one-invalidity を確認する**
+
+  Run: `node --test --test-name-pattern='failure-signal root-row corpus|audits every Task 9 invalid fixture' docai-messaging/tools/tests/core-corpus.test.mjs`
+
+  Expected: valid diagnostics `[]`、inline shape fact `failure-code`、mutation primary diagnostic `DM-FAIL-003` 一件、audit `138/138`。
+
+- [ ] **Step 6: diff を確認しユーザーの commit のため停止する**
+
+  Run: `git diff --check`
+
+  Expected: output なし。
+
+  Suggested commit message: `test(messaging): cover failure signal root rows`
+
+##### Task 4: Coverage closure and full regression
+
+**Files:**
+
+- Modify: `docai-messaging/fixtures/core/v0.17.1/COVERAGE.md`
+- Modify: `docai-messaging/TODO-docai-messaging-fixtures-1.md`
+- Modify: `docai-messaging/tools/tests/core-corpus.test.mjs`
+
+**Interfaces:**
+
+- Consumes: 185-case manifest、138 invalid-case results、Task 1–3 の exact facts / document assertions.
+- Produces: `R8-CORE-017`–`R8-CORE-019` status `covered` と 138-case one-invalidity regression gate.
+
+- [ ] **Step 1: final manifest / audit counts を固定する**
+
+  ```js
+  assert.equal(manifest.cases.length, 185);
+  assert.deepEqual(audit, { passed: true, audited: 138, errors: [] });
+  ```
+
+- [ ] **Step 2: coverage matrix の三 row を exact evidence で更新する**
+
+  - `R8-CORE-017`: source valid / synthetic-member invalid / `DM-INC-004` / source-scenario test を追加し `covered`。
+  - `R8-CORE-018`: no-sibling source valid / form invalid / unknown-parameters document evidence / `DM-INC-005` を追加し `covered`。
+  - `R8-CORE-019`: failure-signal-root-row valid / Presence mutation invalid / `DM-FAIL-003` / failure source assertion を追加し `covered`。
+  - Remaining Inventory からこの三 gap を削除し、未対応の後続 Core clauses だけを残す。
+
+- [ ] **Step 3: TODO に implementation note と影響を記録する**
+
+  final counts `185 cases / 138 invalid`、one-invalidity `138/138`、実際の full test 数、変更しなかった public grammar / evaluator semantics / document validator semantics、三 row の `covered` 化を記録し、RED / GREEN / VERIFY / DOCS checklist を完了にする。
+
+- [ ] **Step 4: full verification を実行する**
+
+  Run: `node --test docai-messaging/tools/tests/*.test.mjs`
+
+  Expected: 全 test PASS。
+
+  Run: `node --test --test-name-pattern='partial-collection source scenarios|payload unknown and partial-collection corpus|failure-signal root-row corpus|audits every Task 9 invalid fixture' docai-messaging/tools/tests/core-corpus.test.mjs`
+
+  Expected: 全 targeted test PASS、Core corpus 185/185、one-invalidity 138/138。
+
+  Run: `node -e 'const m=require("./docai-messaging/fixtures/core/v0.17.1/cases.json"); if (m.cases.length !== 185 || m.cases.filter((c) => c.expected === "invalid").length !== 138) process.exit(1)'`
+
+  Expected: output なし、exit code 0。
+
+  Run: `node -e 'const m=require("./docai-messaging/fixtures/core/v0.17.1/cases.json"); const ids=new Set(m.cases.map((c)=>c.id)); const required=["partial-collection-source-valid","partial-collection-synthetic-member-invalid","partial-collection-no-sibling-form-invalid","failure-signal-root-row-valid","failure-signal-root-presence-invalid"]; if(required.some((id)=>!ids.has(id))) process.exit(1)'`
+
+  Expected: coverage に追加する五 case ID がすべて manifest に存在し、output なし、exit code 0。
+
+  Run: `git diff --check`
+
+  Expected: output なし。
+
+- [ ] **Step 5: ユーザーの commit のため停止する**
+
+  Suggested commit message: `docs(messaging): close payload collection coverage gaps`
 
 #### Unprojected Selected-Readiness Isolation Implementation Plan
 
