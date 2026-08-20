@@ -769,6 +769,8 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 
 > **Implementation note (decoded perspective exactness checkpoint):** 承認設計どおり `identity-perspective-normalization-mixed` task-scoped document set を追加し、NFC root `[99, 97, 102, 233]` と NFD conventions `[99, 97, 102, 101, 769]` の raw inequality / NFC equality、および単一 primary `DM-ID-007` を literal assertions で固定した。既存 canonical metadata fixture は decoded `perspective` が exact value `店舗 service|west\edge` であることを corpus test から直接検証する。Core manifest は 180 cases / 135 invalid cases、one-invalidity audit は 135/135、全 596 tests は PASS し、`R8-CORE-015` は `covered` になった。影響として Unicode normalization や case folding を行わない set-wide identity semantics と escape decoding の regression evidence を追加し、production parser、validator、diagnostic interface、他の identity / metadata fixtures は変更しない。
 
+> **Implementation note (Core coverage matrix payload-knowledge / direction checkpoint):** `R8-CORE-016`–`R8-CORE-020` として whole-payload representation-set fallback、partial / no-sibling field collections、`$` root-row invariants、nullable ancestor applicability、receive-side Presence semantics を matrix に追加する。既存 versioned fixtures、source-aware adapter facts、単一-concern invalid cases、checker tests により representation-set unknown と known-media adapter unsupported の対比、および root / nested nullability と `always` / `optional` / exact condition / `unknown` は `covered` と確認した。一方、partial header / parameter で synthetic row を生成しない source-aware expectation、whole-section `unknown` Parameters の versioned valid case、failure-signal payload の `$` root-row case がないため `R8-CORE-017`–`R8-CORE-019` を `partial` とする。影響として既存 payload / message clauses を release evidence に対応付け、三つの未検証境界を明示する。fixture、rule、checker semantics と作業順序はこの checkpoint では変更しない。
+
 - [x] Metadata、extension name/order/escape、unknown non-`x-` key、sentence grammar。
 - [x] Identity trailer、set/projection digest、closed root、mixed set、task-scoped identity check。
 - [x] Direct/sharded Sources、unknown API identity/version、Revision none、overlap、fixed-point、cycle。
@@ -812,6 +814,8 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
   - [x] `R8-CORE-013`–`R8-CORE-015`（perspective projection、operation message selection、decoded perspective）を対応付ける。
   - [x] `R8-CORE-015` の exact decoded-value assertion と Unicode-normalization-only mismatch fixture gap を解消する。
     - [x] 独立 document set、literal code-point assertions、production semantics 非変更の設計と順序変更を承認する。
+  - [x] `R8-CORE-016`–`R8-CORE-020`（payload knowledge forms、partial collections、root rows、direction / ancestor semantics）を対応付ける。
+  - [ ] `R8-CORE-017`–`R8-CORE-019` の source-aware no-synthetic-member、whole-section unknown Parameters、failure-signal `$` root-row gap を解消する。
   - [ ] 残る Core corpus clause を `R8-CORE-*` row に分解して対応付け、`R8-CORE-001` を `covered` にする。
 
 #### Unprojected Selected-Readiness Isolation Implementation Plan
