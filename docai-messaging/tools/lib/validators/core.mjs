@@ -348,10 +348,10 @@ export function validatePartialCollectionSourceExpectations(
   scenario,
   { file = "source-input.json" } = {}
 ) {
-  const expectations = evaluatePartialCollectionSourceExpectations(scenario.cases ?? []);
-  const sources = new Map((scenario.cases ?? []).map((entry) => [entry.collectionId, entry]));
-  const mismatches = expectations.flatMap((expected) => {
-    if (isDeepStrictEqual(expected, sources.get(expected.collectionId)?.projected)) return [];
+  const cases = scenario.cases ?? [];
+  const expectations = evaluatePartialCollectionSourceExpectations(cases);
+  const mismatches = expectations.flatMap((expected, index) => {
+    if (isDeepStrictEqual(expected, cases[index]?.projected)) return [];
     return [{
       ruleId: expected.form === "partial-table" ? "DM-INC-004" : "DM-INC-005"
     }];

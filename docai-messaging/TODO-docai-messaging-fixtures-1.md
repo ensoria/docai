@@ -777,6 +777,10 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 >
 > manifest は source valid 一件、source invalid 二件、failure valid 一件、failure mutation invalid 一件の合計五件を追加し、180 cases / 135 invalid cases から 185 cases / 138 invalid cases になる見込みとする。whole-section unknown Parameters は既存 valid case の同一契約 family に追加するため manifest case を増やさない。全追加 case は `core-corpus.test.mjs` の対応 ID list、exact facts / document assertions、one-invalidity audit で検証する。全 test、Core corpus、reference audit、`git diff --check` が成功した後に `R8-CORE-017`–`R8-CORE-019` を `covered` にする。公開 document grammar、既存 partial-collection evaluator の projection semantics、Message/Payload/Failure production validation semantics、read-only document facts は変更しない。作業順序は既存の coverage gap 解消順を維持する。
 
+> **Plan change / impact (user-approved final review fix):** final review で、scenario が duplicate `collectionId` を持つ場合に `Map(collectionId)` lookup が後続 case で先行 case を上書きし、入力順の evaluator result と case 固有 `projected` の対応を失う defect が確認された。`validatePartialCollectionSourceExpectations()` は evaluator result と同じ配列 index の source case `projected` を比較する方式へ変更し、`collectionId` の一意性制約は新設しない。duplicate ID でも各 case 固有 projection が exact なら diagnostic は生成しないことを dedicated regression `associates duplicate partial-collection IDs by source-case index` で固定する。manifest 185 cases / 138 invalid cases、diagnostic の分類・message、facts、evaluator semantics / order / interface、public document grammar、Message/Payload/Failure production semantics は不変とする。この承認により Task 4 の三 implementation-file scope は `core.mjs` を含む四 file の final-fix checkpoint へ拡張され、full suite は新規 regression 一件を加えた 599 tests を見込む。
+
+> **Implementation note (partial collection / Parameters unknown / failure root-row closure):** Task 1–3 の versioned evidence を統合し、Core manifest の final count を 185 cases / 138 invalid cases、one-invalidity audit を 138/138 に固定した。`core-corpus.test.mjs` の audit は manifest total 185 も literal assertion し、source valid / synthetic-member invalid (`DM-INC-004`)、no-sibling source valid / form invalid (`DM-INC-005`) と既存 valid document set の whole-section `unknown` Parameters assertion、failure-signal root-row valid / Presence-only mutation invalid (`DM-FAIL-003`) を coverage matrix の `R8-CORE-017`–`R8-CORE-019` へ exact evidence として追加してすべて `covered` にした。final-review fix 後に実測した full suite は 599 tests が PASS した。影響として public grammar、partial-collection evaluator semantics、document validator semantics は変更せず、versioned evidence と regression gate だけを更新した。
+
 - [x] Metadata、extension name/order/escape、unknown non-`x-` key、sentence grammar。
 - [x] Identity trailer、set/projection digest、closed root、mixed set、task-scoped identity check。
 - [x] Direct/sharded Sources、unknown API identity/version、Revision none、overlap、fixed-point、cycle。
@@ -821,13 +825,13 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
   - [x] `R8-CORE-015` の exact decoded-value assertion と Unicode-normalization-only mismatch fixture gap を解消する。
     - [x] 独立 document set、literal code-point assertions、production semantics 非変更の設計と順序変更を承認する。
   - [x] `R8-CORE-016`–`R8-CORE-020`（payload knowledge forms、partial collections、root rows、direction / ancestor semantics）を対応付ける。
-  - [ ] `R8-CORE-017`–`R8-CORE-019` の source-aware no-synthetic-member、whole-section unknown Parameters、failure-signal `$` root-row gap を解消する。
+  - [x] `R8-CORE-017`–`R8-CORE-019` の source-aware no-synthetic-member、whole-section unknown Parameters、failure-signal `$` root-row gap を解消する。
     - [x] rule ごとの source scenario 分離、既存 Parameters fixture 拡張、独立 failure root-row valid / mutation invalid の設計を承認する。
     - [x] source projection、Parameters document evidence、failure `$` document evidence、coverage / regression の四 checkpoint に分けた実装計画を作成する。
-    - [ ] RED: `partial-collection-source-scenario` runner boundary、source valid / `DM-INC-004` invalid / `DM-INC-005` invalid、whole-section unknown Parameters、failure `$` root-row valid / `DM-FAIL-003` mutation invalid の focused tests を追加し、未実装 boundary だけが失敗することを確認する。
-    - [ ] GREEN: exact projected-object comparison と rule-specific aggregate diagnostic を追加し、生成文書 fixture は既存 production validators で受理・拒否させる。
-    - [ ] VERIFY: focused tests、全 `tools/tests/*.test.mjs`、Core corpus 185/185、one-invalidity audit 138/138、reference audit、`git diff --check` を通す。
-    - [ ] DOCS: `COVERAGE.md` の三 row を `covered` にし、この TODO に実装結果と影響を追記する。
+    - [x] RED: `partial-collection-source-scenario` runner boundary、source valid / `DM-INC-004` invalid / `DM-INC-005` invalid、whole-section unknown Parameters、failure `$` root-row valid / `DM-FAIL-003` mutation invalid の focused tests を追加し、未実装 boundary だけが失敗することを確認する。
+    - [x] GREEN: exact projected-object comparison と rule-specific aggregate diagnostic を追加し、生成文書 fixture は既存 production validators で受理・拒否させる。
+    - [x] VERIFY: focused tests、全 `tools/tests/*.test.mjs`、Core corpus 185/185、one-invalidity audit 138/138、reference audit、`git diff --check` を通す。
+    - [x] DOCS: `COVERAGE.md` の三 row を `covered` にし、この TODO に実装結果と影響を追記する。
   - [ ] 残る Core corpus clause を `R8-CORE-*` row に分解して対応付け、`R8-CORE-001` を `covered` にする。
 
 #### Partial Collection / Parameters Unknown / Failure Root-Row Implementation Plan
@@ -1092,9 +1096,12 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 
 **Files:**
 
+- Modify: `docai-messaging/tools/lib/validators/core.mjs`（user-approved final-review fix で追加）
 - Modify: `docai-messaging/fixtures/core/v0.17.1/COVERAGE.md`
 - Modify: `docai-messaging/TODO-docai-messaging-fixtures-1.md`
 - Modify: `docai-messaging/tools/tests/core-corpus.test.mjs`
+
+Final review の Important finding 対応により、この checkpoint は当初の三 file scope から上記四 implementation files へ拡張された。
 
 **Interfaces:**
 
@@ -1125,7 +1132,7 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 
   Expected: 全 test PASS。
 
-  Run: `node --test --test-name-pattern='partial-collection source scenarios|payload unknown and partial-collection corpus|failure-signal root-row corpus|audits every Task 9 invalid fixture' docai-messaging/tools/tests/core-corpus.test.mjs`
+  Run: `node --test --test-name-pattern='partial-collection source scenarios|associates duplicate partial-collection IDs by source-case index|payload unknown and partial-collection corpus|failure-signal root-row corpus|audits every Task 9 invalid fixture' docai-messaging/tools/tests/core-corpus.test.mjs`
 
   Expected: 全 targeted test PASS、Core corpus 185/185、one-invalidity 138/138。
 

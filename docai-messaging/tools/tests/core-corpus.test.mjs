@@ -1659,6 +1659,47 @@ test("executes partial-collection source scenarios", () => {
   }
 });
 
+test("associates duplicate partial-collection IDs by source-case index", () => {
+  const result = coreValidator.validatePartialCollectionSourceExpectations({
+    cases: [
+      {
+        collectionId: "shared-collection",
+        memberKind: "header",
+        namedMembers: ["correlation-id"],
+        projected: {
+          collectionId: "shared-collection",
+          form: "partial-table",
+          retainedNames: ["correlation-id"],
+          marker: "additional unnamed header"
+        }
+      },
+      {
+        collectionId: "shared-collection",
+        memberKind: "parameter",
+        namedMembers: [],
+        projected: {
+          collectionId: "shared-collection",
+          form: "whole-section-unknown"
+        }
+      }
+    ]
+  });
+
+  assert.deepEqual(result.diagnostics, []);
+  assert.deepEqual(result.facts.partialCollectionSourceExpectations, [
+    {
+      collectionId: "shared-collection",
+      form: "partial-table",
+      retainedNames: ["correlation-id"],
+      marker: "additional unnamed header"
+    },
+    {
+      collectionId: "shared-collection",
+      form: "whole-section-unknown"
+    }
+  ]);
+});
+
 test("executes the Task 9 DM-ADAPTER-002 DM-ADAPTER-003 DM-MSG-004 wire header and raw corpus", () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
   const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
@@ -2431,6 +2472,7 @@ test("executes the Task 9 DM-INC-003 implementation-readiness capability matrix"
 
 test("audits every Task 9 invalid fixture as one primary concern", () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
+  assert.equal(manifest.cases.length, 185);
   const result = runFixtureCorpus(corpusPath, validateCase);
   assert.equal(result.failed, 0, result.report);
   const audit = auditFixtureOneInvalidity({
