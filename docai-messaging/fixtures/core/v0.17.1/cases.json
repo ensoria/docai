@@ -31,6 +31,13 @@
       "expected_rule_ids": ["DM-ID-007"]
     },
     {
+      "id": "identity-perspective-normalization-mixed",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/identity-perspective-normalization-mixed",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-ID-007"]
+    },
+    {
       "id": "identity-profile-mixed",
       "kind": "task-scoped-document-set",
       "path": "focused/invalid/identity-profile-mixed",

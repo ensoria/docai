@@ -49,6 +49,7 @@ const identityCaseIds = [
   "identity-closed-root-extra-file",
   "identity-format-version-mixed",
   "identity-perspective-mixed",
+  "identity-perspective-normalization-mixed",
   "identity-profile-mixed",
   "identity-projection-id-mixed",
   "identity-projection-short-id-invalid",
@@ -422,6 +423,13 @@ test("executes the Task 9 metadata and sentence focused corpus", () => {
 
   const result = runFixtureCorpus(corpusPath, validateCase);
   assert.equal(result.failed, 0, result.report);
+
+  const canonicalCase = byId.get("metadata-canonical-extensions-and-escapes");
+  const canonical = validateCase(
+    path.join(corpusPath, canonicalCase.path),
+    canonicalCase
+  );
+  assert.equal(canonical.value.perspective, "店舗 service|west\\edge");
 });
 
 test("executes the Task 9 identity focused corpus", () => {
@@ -443,6 +451,26 @@ test("executes the Task 9 identity focused corpus", () => {
 
   const result = runFixtureCorpus(corpusPath, validateCase);
   assert.equal(result.failed, 0, result.report);
+
+  const normalizationCase = byId.get("identity-perspective-normalization-mixed");
+  const normalizationPath = path.join(corpusPath, normalizationCase.path);
+  const normalizationSet = loadDocumentSet(normalizationPath);
+  const indexPerspective = normalizationSet.files
+    .find((file) => file.path === "INDEX.md").metadata.perspective;
+  const conventionsPerspective = normalizationSet.files
+    .find((file) => file.path === "CONVENTIONS.md").metadata.perspective;
+  const codePoints = (value) => [...value].map((character) => character.codePointAt(0));
+
+  assert.deepEqual(codePoints(indexPerspective), [99, 97, 102, 233]);
+  assert.deepEqual(codePoints(conventionsPerspective), [99, 97, 102, 101, 769]);
+  assert.notEqual(indexPerspective, conventionsPerspective);
+  assert.equal(indexPerspective.normalize("NFC"), conventionsPerspective.normalize("NFC"));
+
+  const normalization = validateCase(normalizationPath, normalizationCase);
+  assert.deepEqual(
+    normalization.diagnostics.map(({ ruleId, severity }) => ({ ruleId, severity })),
+    [{ ruleId: "DM-ID-007", severity: "error" }]
+  );
 });
 
 test("executes the Task 9 Sources focused corpus and fixes retrieval facts", () => {
@@ -2261,5 +2289,5 @@ test("audits every Task 9 invalid fixture as one primary concern", () => {
     corpusCases: result.cases
   });
 
-  assert.deepEqual(audit, { passed: true, audited: 134, errors: [] });
+  assert.deepEqual(audit, { passed: true, audited: 135, errors: [] });
 });

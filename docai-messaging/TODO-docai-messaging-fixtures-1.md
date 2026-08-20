@@ -767,6 +767,8 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 
 > **Approved design (decoded perspective exactness checkpoint):** coverage matrix の残行を展開する前に `R8-CORE-015` の gap を解消する順序変更を承認する。独立した task-scoped invalid document set `identity-perspective-normalization-mixed` を追加し、root `INDEX.md` の decoded `perspective` は NFC `café`（code points `[99, 97, 102, 233]`）、`CONVENTIONS.md` は表示上同じ NFD `café`（code points `[99, 97, 102, 101, 769]`）とする。他の metadata、document structure、identity handles は一致させ、唯一の primary concern を `DM-ID-007` に固定する。case を `cases.json` / `identityCaseIds` に登録し、identity corpus test は両 code-point sequence、raw inequality、NFC-normalized equality、単一 `DM-ID-007` error を literal assertions で検証する。metadata corpus test は既存 `metadata-canonical-extensions-and-escapes` の parsed `perspective` が exact decoded value `店舗 service|west\edge` であることを固定する。production parser と set-wide strict comparison は変更せず、manifest は 180 cases / 135 invalid cases、one-invalidity audit は 135/135 に更新する。完了後に `R8-CORE-015` を `covered` とし、既存 case-only mismatch、empty / leading / trailing-space rejection、metadata escape semantics、他の identity rules を維持する。
 
+> **Implementation note (decoded perspective exactness checkpoint):** 承認設計どおり `identity-perspective-normalization-mixed` task-scoped document set を追加し、NFC root `[99, 97, 102, 233]` と NFD conventions `[99, 97, 102, 101, 769]` の raw inequality / NFC equality、および単一 primary `DM-ID-007` を literal assertions で固定した。既存 canonical metadata fixture は decoded `perspective` が exact value `店舗 service|west\edge` であることを corpus test から直接検証する。Core manifest は 180 cases / 135 invalid cases、one-invalidity audit は 135/135、全 596 tests は PASS し、`R8-CORE-015` は `covered` になった。影響として Unicode normalization や case folding を行わない set-wide identity semantics と escape decoding の regression evidence を追加し、production parser、validator、diagnostic interface、他の identity / metadata fixtures は変更しない。
+
 - [x] Metadata、extension name/order/escape、unknown non-`x-` key、sentence grammar。
 - [x] Identity trailer、set/projection digest、closed root、mixed set、task-scoped identity check。
 - [x] Direct/sharded Sources、unknown API identity/version、Revision none、overlap、fixed-point、cycle。
@@ -808,7 +810,7 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
   - [x] `R8-CORE-012` の missing-safe-identity/location focused cases と unrelated direct-marker non-blocking gap を解消する。
     - [x] facts-driven marker-line exclusion と focused fixture 分割の設計を承認する。
   - [x] `R8-CORE-013`–`R8-CORE-015`（perspective projection、operation message selection、decoded perspective）を対応付ける。
-  - [ ] `R8-CORE-015` の exact decoded-value assertion と Unicode-normalization-only mismatch fixture gap を解消する。
+  - [x] `R8-CORE-015` の exact decoded-value assertion と Unicode-normalization-only mismatch fixture gap を解消する。
     - [x] 独立 document set、literal code-point assertions、production semantics 非変更の設計と順序変更を承認する。
   - [ ] 残る Core corpus clause を `R8-CORE-*` row に分解して対応付け、`R8-CORE-001` を `covered` にする。
 
@@ -1000,7 +1002,7 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 - Consumes: `loadDocumentSet(rootDir).files[].metadata.perspective`、`validateCase(fixturePath, fixtureCase)`、既存 `metadataAndSentenceCaseIds` / `identityCaseIds` corpus grouping。
 - Produces: versioned case `identity-perspective-normalization-mixed` と exact-value regression assertions。production module の export、diagnostic shape、validation semantics は変更しない。
 
-- [ ] **Step 1: manifest と exact corpus assertions を先に追加する**
+- [x] **Step 1: manifest と exact corpus assertions を先に追加する**
 
   - `cases.json` の `identity-perspective-mixed` の直後に次の case を登録し、`identityCaseIds` に同じ ID を ASCII lexical order で追加する。この時点では fixture directory をまだ作らない。
 
@@ -1049,12 +1051,12 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
     );
     ```
 
-- [ ] **Step 2: focused test を実行して fixture evidence が未作成のため失敗することを確認する**
+- [x] **Step 2: focused test を実行して fixture evidence が未作成のため失敗することを確認する**
 
   - Run: `node --test --test-name-pattern="Task 9 metadata|Task 9 identity" docai-messaging/tools/tests/core-corpus.test.mjs`
   - Expected: metadata exact decoded-value assertion は PASS する一方、新規 identity case は fixture directory が存在しないため FAIL し、manifest entry だけでは `R8-CORE-015` evidence が成立しないことを確認できる。
 
-- [ ] **Step 3: normalization-only task-scoped document set を作成する**
+- [x] **Step 3: normalization-only task-scoped document set を作成する**
 
   - `identity-perspective-mixed` の `INDEX.md` / `CONVENTIONS.md` を byte-for-byte の構造 baseline とし、opening metadata の `perspective` だけを次の値へ置換する。他の opening metadata、body、identity trailer は変更しない。
   - `INDEX.md` は NFC の一 scalar `é` を使う。
@@ -1071,19 +1073,19 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 
   - `INDEX.md` の Sources / Operations / Workflows と `CONVENTIONS.md` の全 canonical subsection、および両 identity trailer は baseline から変更せず、task-scoped validation が digest recomputation を要求しない既存 boundary を利用する。
 
-- [ ] **Step 4: focused regression を通して exact comparison を確認する**
+- [x] **Step 4: focused regression を通して exact comparison を確認する**
 
   - Run: `node --test --test-name-pattern="Task 9 metadata|Task 9 identity" docai-messaging/tools/tests/core-corpus.test.mjs`
   - Expected: canonical decoded value、両 code-point arrays、raw inequality、NFC equality、単一 `DM-ID-007` diagnostic、focused corpus failures 0 がすべて PASS する。
 
-- [ ] **Step 5: one-invalidity count、coverage matrix、TODO を更新する**
+- [x] **Step 5: one-invalidity count、coverage matrix、TODO を更新する**
 
   - `audits every Task 9 invalid fixture as one primary concern` の expected `audited` を `134` から `135` に更新する。
   - `COVERAGE.md` の `R8-CORE-015` invalid fixtures に `identity-perspective-normalization-mixed` を追加し、checker evidence に exact decoded-value / code-point assertions を明記して status を `covered` にする。
   - `Remaining Core Inventory` から `R8-CORE-015` の gap 記述を除き、同 row が covered になった事実を記録する。`R8-CORE-001` は残り clause があるため `partial` のままにする。
   - この TODO の `R8-CORE-015` gap checkbox と本 plan の steps を完了し、180 cases / 135 invalid cases、one-invalidity 135/135、production semantics 非変更、検証結果を implementation note に記録する。
 
-- [ ] **Step 6: checkpoint 全体を検証する**
+- [x] **Step 6: checkpoint 全体を検証する**
 
   - Run: `node --test docai-messaging/tools/tests/*.test.mjs`
   - Expected: 全 test PASS、Core corpus failures 0、one-invalidity audit 135/135。
@@ -1091,7 +1093,7 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
   - Expected: 出力なし。
   - Read-only review: `git status --short` と `git diff --stat` で Files に列挙した対象以外の変更がないこと、および production files に差分がないことを確認する。
 
-- [ ] **Step 7: ユーザーの commit checkpoint で停止する**
+- [x] **Step 7: ユーザーの commit checkpoint で停止する**
 
   - Suggested commit message: `test(messaging): cover decoded perspective exactness`
 
