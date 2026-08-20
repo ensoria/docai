@@ -771,6 +771,12 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 
 > **Implementation note (Core coverage matrix payload-knowledge / direction checkpoint):** `R8-CORE-016`–`R8-CORE-020` として whole-payload representation-set fallback、partial / no-sibling field collections、`$` root-row invariants、nullable ancestor applicability、receive-side Presence semantics を matrix に追加する。既存 versioned fixtures、source-aware adapter facts、単一-concern invalid cases、checker tests により representation-set unknown と known-media adapter unsupported の対比、および root / nested nullability と `always` / `optional` / exact condition / `unknown` は `covered` と確認した。一方、partial header / parameter で synthetic row を生成しない source-aware expectation、whole-section `unknown` Parameters の versioned valid case、failure-signal payload の `$` root-row case がないため `R8-CORE-017`–`R8-CORE-019` を `partial` とする。影響として既存 payload / message clauses を release evidence に対応付け、三つの未検証境界を明示する。fixture、rule、checker semantics と作業順序はこの checkpoint では変更しない。
 
+> **Approved design (partial collection / Parameters unknown / failure root-row checkpoint):** `R8-CORE-017`–`R8-CORE-019` の gap は、source projection と生成文書の責務を分離し、rule ごとの正常系・単一違反系で固定する。新しい `partial-collection-source-scenario` は既存 `evaluatePartialCollectionSourceExpectations()` を再利用し、各 projected object の exact match を検証する。valid scenario は named sibling がある header / parameter / field で `retainedNames` が source の既知名だけであること、固定 `additional unnamed <memberKind>` marker、field example が faithful でないときの `canonicalExample: omit` を検証する。また named sibling なしの header / parameter は `whole-section-unknown`、field と polymorphic field は concrete representation を保つ `representation-local-unknown` になることを同じ facts に含める。invalid source scenarios は、synthetic member または誤った retained name を含む一件を `DM-INC-004`、no-sibling で誤った形式を宣言する一件を `DM-INC-005` として分離する。validator は mismatch の分類にだけ normative rule を用い、source 値から新しい document member を発明しない。
+>
+> 生成文書側は、既存 `payload-unknown-forms-and-partial-collections-valid` に placeholder 付き Channel を追加し、`#### Parameters` 全体の `unknown` と直後の canonical marker、set-level `knowledge: requires-input` を固定する。failure signal は独立した task-scoped valid document set に expanded inline failure shape の RECEIVE scalar JSON Payload を置き、`$` row が `Presence=always`、`Nullable=payload_nullable` を満たすことを検証する。その valid set を base に exact one-replacement mutation で `$` の Presence だけを `optional` に変え、failure-shape validator の通常 Message/Payload diagnostic remapping を通じた単一 primary `DM-FAIL-003` を固定する。
+>
+> manifest は source valid 一件、source invalid 二件、failure valid 一件、failure mutation invalid 一件の合計五件を追加し、180 cases / 135 invalid cases から 185 cases / 138 invalid cases になる見込みとする。whole-section unknown Parameters は既存 valid case の同一契約 family に追加するため manifest case を増やさない。全追加 case は `core-corpus.test.mjs` の対応 ID list、exact facts / document assertions、one-invalidity audit で検証する。全 test、Core corpus、reference audit、`git diff --check` が成功した後に `R8-CORE-017`–`R8-CORE-019` を `covered` にする。公開 document grammar、既存 partial-collection evaluator の projection semantics、Message/Payload/Failure production validation semantics、read-only document facts は変更しない。作業順序は既存の coverage gap 解消順を維持する。
+
 - [x] Metadata、extension name/order/escape、unknown non-`x-` key、sentence grammar。
 - [x] Identity trailer、set/projection digest、closed root、mixed set、task-scoped identity check。
 - [x] Direct/sharded Sources、unknown API identity/version、Revision none、overlap、fixed-point、cycle。
@@ -816,6 +822,11 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
     - [x] 独立 document set、literal code-point assertions、production semantics 非変更の設計と順序変更を承認する。
   - [x] `R8-CORE-016`–`R8-CORE-020`（payload knowledge forms、partial collections、root rows、direction / ancestor semantics）を対応付ける。
   - [ ] `R8-CORE-017`–`R8-CORE-019` の source-aware no-synthetic-member、whole-section unknown Parameters、failure-signal `$` root-row gap を解消する。
+    - [x] rule ごとの source scenario 分離、既存 Parameters fixture 拡張、独立 failure root-row valid / mutation invalid の設計を承認する。
+    - [ ] RED: `partial-collection-source-scenario` runner boundary、source valid / `DM-INC-004` invalid / `DM-INC-005` invalid、whole-section unknown Parameters、failure `$` root-row valid / `DM-FAIL-003` mutation invalid の focused tests を追加し、未実装 boundary だけが失敗することを確認する。
+    - [ ] GREEN: exact projected-object comparison と rule-specific aggregate diagnostic を追加し、生成文書 fixture は既存 production validators で受理・拒否させる。
+    - [ ] VERIFY: focused tests、全 `tools/tests/*.test.mjs`、Core corpus 185/185、one-invalidity audit 138/138、reference audit、`git diff --check` を通す。
+    - [ ] DOCS: `COVERAGE.md` の三 row を `covered` にし、この TODO に実装結果と影響を追記する。
   - [ ] 残る Core corpus clause を `R8-CORE-*` row に分解して対応付け、`R8-CORE-001` を `covered` にする。
 
 #### Unprojected Selected-Readiness Isolation Implementation Plan
