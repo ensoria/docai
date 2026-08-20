@@ -964,6 +964,137 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 
   - Suggested commit message: `fix(messaging): isolate unprojected readiness markers`
 
+#### Decoded Perspective Exactness Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:executing-plans` to implement this plan step-by-step in the current workspace. Subagent execution is not part of this checkpoint. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** decoded `perspective` の exact value preservation と Unicode normalization を行わない set-wide strict comparison を versioned Core corpus evidence で固定し、`R8-CORE-015` を `covered` にする。
+
+**Architecture:** production parser と `validateDocumentSet` の strict string comparison は変更せず、既存の task-scoped identity fixture pattern に NFC / NFD だけが異なる独立 document set を追加する。corpus test は表示文字列だけでなく literal code-point sequence、raw inequality、NFC-normalized equality、canonical escaped value の decoded result、単一 primary diagnostic を直接検証する。
+
+**Tech Stack:** Node.js ESM、`node:test` / `node:assert/strict`、versioned Markdown / JSON fixture corpus、既存 `loadDocumentSet` / `validateDocumentSet` / `parseOpeningMetadata` helpers。
+
+##### Global Constraints
+
+- `README.md` §3.1 / §3.2 / §8 と承認済み設計の normative semantics を変更しない。
+- `perspective` の比較前に Unicode normalization、case folding、trim を追加しない。
+- normalization-only fixture は他の metadata、document structure、`set_id`、`projection_id` を一致させ、primary concern を `DM-ID-007` 一件に限定する。
+- NFC / NFD の判別は source rendering に依存せず、literal code-point arrays `[99, 97, 102, 233]` と `[99, 97, 102, 101, 769]` で固定する。
+- canonical metadata fixture の expected decoded value は JavaScript string `"店舗 service|west\\edge"` とし、escaped pipe と escaped backslash の両方を検証する。
+- manifest は 180 cases / 135 invalid cases、one-invalidity audit は 135/135 とする。
+- Git は read-only inspection に限定し、コミットはユーザーが行う。
+
+##### Task 1: `R8-CORE-015` の fixture、exact assertions、coverage を一つの TDD checkpoint で完成させる
+
+**Files:**
+
+- Create: `docai-messaging/fixtures/core/v0.17.1/focused/invalid/identity-perspective-normalization-mixed/INDEX.md`
+- Create: `docai-messaging/fixtures/core/v0.17.1/focused/invalid/identity-perspective-normalization-mixed/CONVENTIONS.md`
+- Modify: `docai-messaging/fixtures/core/v0.17.1/cases.json`
+- Modify: `docai-messaging/tools/tests/core-corpus.test.mjs`
+- Modify: `docai-messaging/fixtures/core/v0.17.1/COVERAGE.md`
+- Modify: `docai-messaging/TODO-docai-messaging-fixtures-1.md`
+
+**Interfaces:**
+
+- Consumes: `loadDocumentSet(rootDir).files[].metadata.perspective`、`validateCase(fixturePath, fixtureCase)`、既存 `metadataAndSentenceCaseIds` / `identityCaseIds` corpus grouping。
+- Produces: versioned case `identity-perspective-normalization-mixed` と exact-value regression assertions。production module の export、diagnostic shape、validation semantics は変更しない。
+
+- [ ] **Step 1: manifest と exact corpus assertions を先に追加する**
+
+  - `cases.json` の `identity-perspective-mixed` の直後に次の case を登録し、`identityCaseIds` に同じ ID を ASCII lexical order で追加する。この時点では fixture directory をまだ作らない。
+
+    ```json
+    {
+      "id": "identity-perspective-normalization-mixed",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/identity-perspective-normalization-mixed",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-ID-007"]
+    }
+    ```
+
+  - metadata corpus test で canonical case を直接 parse し、decoded value を exact match する。
+
+    ```js
+    const canonicalCase = byId.get("metadata-canonical-extensions-and-escapes");
+    const canonical = validateCase(
+      path.join(corpusPath, canonicalCase.path),
+      canonicalCase
+    );
+    assert.equal(canonical.value.perspective, "店舗 service|west\\edge");
+    ```
+
+  - identity corpus test で新規 document set を load し、root / conventions の decoded code points と比較 semantics、単一 diagnostic を exact match する。
+
+    ```js
+    const normalizationCase = byId.get("identity-perspective-normalization-mixed");
+    const normalizationPath = path.join(corpusPath, normalizationCase.path);
+    const normalizationSet = loadDocumentSet(normalizationPath);
+    const indexPerspective = normalizationSet.files
+      .find((file) => file.path === "INDEX.md").metadata.perspective;
+    const conventionsPerspective = normalizationSet.files
+      .find((file) => file.path === "CONVENTIONS.md").metadata.perspective;
+    const codePoints = (value) => [...value].map((character) => character.codePointAt(0));
+
+    assert.deepEqual(codePoints(indexPerspective), [99, 97, 102, 233]);
+    assert.deepEqual(codePoints(conventionsPerspective), [99, 97, 102, 101, 769]);
+    assert.notEqual(indexPerspective, conventionsPerspective);
+    assert.equal(indexPerspective.normalize("NFC"), conventionsPerspective.normalize("NFC"));
+
+    const normalization = validateCase(normalizationPath, normalizationCase);
+    assert.deepEqual(
+      normalization.diagnostics.map(({ ruleId, severity }) => ({ ruleId, severity })),
+      [{ ruleId: "DM-ID-007", severity: "error" }]
+    );
+    ```
+
+- [ ] **Step 2: focused test を実行して fixture evidence が未作成のため失敗することを確認する**
+
+  - Run: `node --test --test-name-pattern="Task 9 metadata|Task 9 identity" docai-messaging/tools/tests/core-corpus.test.mjs`
+  - Expected: metadata exact decoded-value assertion は PASS する一方、新規 identity case は fixture directory が存在しないため FAIL し、manifest entry だけでは `R8-CORE-015` evidence が成立しないことを確認できる。
+
+- [ ] **Step 3: normalization-only task-scoped document set を作成する**
+
+  - `identity-perspective-mixed` の `INDEX.md` / `CONVENTIONS.md` を byte-for-byte の構造 baseline とし、opening metadata の `perspective` だけを次の値へ置換する。他の opening metadata、body、identity trailer は変更しない。
+  - `INDEX.md` は NFC の一 scalar `é` を使う。
+
+    ```markdown
+    > docai-messaging: 0.17.1 | profile: full | perspective: café | coverage: complete | knowledge: complete | source_refs: all
+    ```
+
+  - `CONVENTIONS.md` は ASCII `e` と combining acute accent U+0301 を使う。editor normalization を検知する authority は source 表示ではなく Step 1 の code-point assertion とする。
+
+    ```markdown
+    > docai-messaging: 0.17.1 | profile: full | perspective: café | coverage: complete | knowledge: complete | source_refs: all
+    ```
+
+  - `INDEX.md` の Sources / Operations / Workflows と `CONVENTIONS.md` の全 canonical subsection、および両 identity trailer は baseline から変更せず、task-scoped validation が digest recomputation を要求しない既存 boundary を利用する。
+
+- [ ] **Step 4: focused regression を通して exact comparison を確認する**
+
+  - Run: `node --test --test-name-pattern="Task 9 metadata|Task 9 identity" docai-messaging/tools/tests/core-corpus.test.mjs`
+  - Expected: canonical decoded value、両 code-point arrays、raw inequality、NFC equality、単一 `DM-ID-007` diagnostic、focused corpus failures 0 がすべて PASS する。
+
+- [ ] **Step 5: one-invalidity count、coverage matrix、TODO を更新する**
+
+  - `audits every Task 9 invalid fixture as one primary concern` の expected `audited` を `134` から `135` に更新する。
+  - `COVERAGE.md` の `R8-CORE-015` invalid fixtures に `identity-perspective-normalization-mixed` を追加し、checker evidence に exact decoded-value / code-point assertions を明記して status を `covered` にする。
+  - `Remaining Core Inventory` から `R8-CORE-015` の gap 記述を除き、同 row が covered になった事実を記録する。`R8-CORE-001` は残り clause があるため `partial` のままにする。
+  - この TODO の `R8-CORE-015` gap checkbox と本 plan の steps を完了し、180 cases / 135 invalid cases、one-invalidity 135/135、production semantics 非変更、検証結果を implementation note に記録する。
+
+- [ ] **Step 6: checkpoint 全体を検証する**
+
+  - Run: `node --test docai-messaging/tools/tests/*.test.mjs`
+  - Expected: 全 test PASS、Core corpus failures 0、one-invalidity audit 135/135。
+  - Run: `git diff --check`
+  - Expected: 出力なし。
+  - Read-only review: `git status --short` と `git diff --stat` で Files に列挙した対象以外の変更がないこと、および production files に差分がないことを確認する。
+
+- [ ] **Step 7: ユーザーの commit checkpoint で停止する**
+
+  - Suggested commit message: `test(messaging): cover decoded perspective exactness`
+
 **Review gate:** `docai-messaging/README.md` §8 の Core corpus 要件（現在の 1031–1043 行）に uncovered 行がないことを確認する。
 
 **Suggested commit message:** `test(messaging): complete core conformance fixtures`
