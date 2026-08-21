@@ -791,6 +791,10 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 
 > **Final review hardening (`R8-CORE-023`):** initial implementation review で、map-key existence だけでは dangling / cyclic Message Reference Object を actual Message Object と誤認できること、duplicate target が array order による last-wins になること、unmatched / non-Reply target と missing identity が無視または受理されることを確認した。resolver は local channel / components Message reference chain を concrete object まで追跡し、dangling / cycle / non-object を unresolved とする。authoritative inputs は target ごとに grouping し、native `reply.messages` の explicit / omitted 分岐より先に duplicate target を generation failure として拒否する。Reply operation set にない target も aggregate failure に含め、失敗時は Reply INDEX entry を出さない。diagnostic message が source ID、target operation、identity、source reference を含まない assertion を追加した。影響として manifest は当初見込みの 193 / 143 から 196 / 146 に増えたが、単一 authoritative selection は omitted Reply にだけ適用するため native selection precedence は維持され、rule scope、公開 interface、diagnostic rule ID は変更しない。
 
+> **Approved design (`R8-CORE-024`–`R8-CORE-026` defaults / formats / constraint examples):** README §8 の Reply selection に続く順序を維持し、JSON Schema Draft 07 / AsyncAPI default、exact-vocabulary format と catalog closure、unsatisfiable constraint / illustrative-example / generator failure を三つの independently reviewable row に分ける。既存 versioned evidence だけで充足する default row は `covered`、一部が unit-level checker にしかない format と constraint/example row は不足する versioned evidence を列挙して `partial` とする。この checkpoint では fixture や production checker を変更しない。
+
+> **Implementation note (`R8-CORE-024`–`R8-CORE-026` matrix checkpoint):** `R8-CORE-024` は Draft 07 の `default_annotation`（JSON `null` を含む）、AsyncAPI SEND / RECEIVE の effective default、annotation default への behavior 付与拒否、SEND effective behavior 欠落拒否を既存 source scenario / document set で確認して `covered` にした。`R8-CORE-025` は recognized constraint / annotation format、open custom format の localized unsupported、catalog role / duplicate row を対応付けたが、case-mismatched format value、missing catalog row、exact normalized source-independent semantics、required-workflow convention closure の versioned fixture がないため `partial` とした。`R8-CORE-026` は exact constraints と example validation の既存 evidence を対応付けたが、unsatisfiable-constraint replacement、valid-example-values unknown marker、generator-capability failure の versioned fixture がないため `partial` とした。影響として Core manifest は 196 cases / 146 invalid cases のままで、rule、checker semantics、公開 document grammar、作業順序は変更しない。
+
 - [x] Metadata、extension name/order/escape、unknown non-`x-` key、sentence grammar。
 - [x] Identity trailer、set/projection digest、closed root、mixed set、task-scoped identity check。
 - [x] Direct/sharded Sources、unknown API identity/version、Revision none、overlap、fixed-point、cycle。
@@ -845,6 +849,9 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
   - [x] `R8-CORE-021`–`R8-CORE-023`（length-prefixed Unprojected identity、Reply selection / no-synthetic-operation、Reply fallback / INDEX omission）を対応付ける。
   - [x] `R8-CORE-022` の independently declared operation coexistence evidence を解消する。
   - [x] `R8-CORE-023` の authoritative / invalid selection identity evidence を解消する。
+  - [x] `R8-CORE-024`–`R8-CORE-026`（schema defaults、format catalog / closure、constraint / example failure）を対応付ける。
+  - [ ] `R8-CORE-025` の case-mismatched format、missing catalog row、source-independent semantics、required-workflow closure の versioned evidence gap を解消する。
+  - [ ] `R8-CORE-026` の unsatisfiable replacement、valid-example-values unknown、generator-capability failure の versioned evidence gap を解消する。
   - [ ] 残る Core corpus clause を `R8-CORE-*` row に分解して対応付け、`R8-CORE-001` を `covered` にする。
 
 #### Partial Collection / Parameters Unknown / Failure Root-Row Implementation Plan
