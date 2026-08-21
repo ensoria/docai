@@ -577,6 +577,27 @@
       "expected_rule_ids": ["DM-CONV-003"]
     },
     {
+      "id": "conventions-format-catalog-missing-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/conventions-format-catalog-missing-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-CONV-003"]
+    },
+    {
+      "id": "conventions-required-workflow-format-closure-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/conventions-required-workflow-format-closure-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-CONV-003"]
+    },
+    {
+      "id": "conventions-required-workflow-format-closure-valid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/valid/conventions-required-workflow-format-closure-valid",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
       "id": "common-failure-shape-replacement-mismatch-invalid",
       "kind": "task-scoped-document-set",
       "path": "focused/invalid/common-failure-shape-replacement-mismatch-invalid",

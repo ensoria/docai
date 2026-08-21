@@ -203,6 +203,9 @@ const payloadRootShapeCaseIds = [
 ];
 
 const payloadConstraintAndFormatCaseIds = [
+  "conventions-format-catalog-missing-invalid",
+  "conventions-required-workflow-format-closure-invalid",
+  "conventions-required-workflow-format-closure-valid",
   "payload-default-annotation-effective-behavior-invalid",
   "payload-default-send-behavior-missing-invalid",
   "payload-exact-constraints-defaults-formats-valid",
@@ -1736,6 +1739,30 @@ test("executes the Task 9 DM-MSG-005 DM-CONV-003 exact-constraint default and fo
     }
   ]);
 
+  const workflowClosureCase = byId.get("conventions-required-workflow-format-closure-valid");
+  const workflowClosure = validateCase(
+    path.join(corpusPath, workflowClosureCase.path),
+    workflowClosureCase
+  );
+  assert.deepEqual(workflowClosure.diagnostics, []);
+  assert.deepEqual(workflowClosure.facts.core.formats, [{
+    format: '"uuid"',
+    meaning: "Accept canonical UUID strings and construct and validate them without narrowing.",
+    role: "constraint"
+  }]);
+  assert.deepEqual(
+    workflowClosure.facts.core.operations.rows.map((row) => ({
+      operation: row.operation,
+      requiredContexts: row.requiredContexts,
+      conventions: row.conventions
+    })),
+    [{
+      operation: "create-order",
+      requiredContexts: ["workflows/formatted.md"],
+      conventions: ["Data Representation"]
+    }]
+  );
+
   const sourceCase = byId.get("schema-format-default-projection-valid");
   const source = validateCase(path.join(corpusPath, sourceCase.path), sourceCase);
   assert.deepEqual(source.diagnostics, []);
@@ -2701,7 +2728,7 @@ test("executes the Task 9 DM-INC-003 implementation-readiness capability matrix"
 
 test("audits every Task 9 invalid fixture as one primary concern", () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
-  assert.equal(manifest.cases.length, 196);
+  assert.equal(manifest.cases.length, 199);
   const result = runFixtureCorpus(corpusPath, validateCase);
   assert.equal(result.failed, 0, result.report);
   const audit = auditFixtureOneInvalidity({
@@ -2709,5 +2736,5 @@ test("audits every Task 9 invalid fixture as one primary concern", () => {
     corpusCases: result.cases
   });
 
-  assert.deepEqual(audit, { passed: true, audited: 146, errors: [] });
+  assert.deepEqual(audit, { passed: true, audited: 148, errors: [] });
 });
