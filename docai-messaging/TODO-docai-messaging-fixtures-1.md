@@ -781,6 +781,8 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 
 > **Implementation note (partial collection / Parameters unknown / failure root-row closure):** Task 1–3 の versioned evidence を統合し、Core manifest の final count を 185 cases / 138 invalid cases、one-invalidity audit を 138/138 に固定した。`core-corpus.test.mjs` の audit は manifest total 185 も literal assertion し、source valid / synthetic-member invalid (`DM-INC-004`)、no-sibling source valid / form invalid (`DM-INC-005`) と既存 valid document set の whole-section `unknown` Parameters assertion、failure-signal root-row valid / Presence-only mutation invalid (`DM-FAIL-003`) を coverage matrix の `R8-CORE-017`–`R8-CORE-019` へ exact evidence として追加してすべて `covered` にした。final-review fix 後に実測した full suite は 599 tests が PASS した。影響として public grammar、partial-collection evaluator semantics、document validator semantics は変更せず、versioned evidence と regression gate だけを更新した。
 
+> **Implementation note (Core coverage matrix Unprojected identity / Reply selection checkpoint):** `R8-CORE-021`–`R8-CORE-023` として length-prefixed Unprojected Operation identity、explicit non-empty Reply expansion / no synthetic operation、omitted / zero / invalid Reply selection と INDEX omission を matrix に追加する。ASCII / multibyte UTF-8、embedded delimiter、leading zero、byte-length mismatch、source ID と decoded identity の grouping は既存 versioned document sets と exact parser tests により `covered` と確認した。Reply は AsyncAPI 3.0.0 / 3.1.0 の explicit non-empty、omitted zero / one / multiple / no-channel、explicit empty、primary-operation retention、INDEX omission mismatch が covered だが、同じ reply channel / message を選ぶ independently declared operation の共存、authoritative non-empty / empty selection、authoritative selection 付き omission、duplicate / unresolved / ambiguous / out-of-scope selected identity の versioned evidence がないため `R8-CORE-022` / `R8-CORE-023` を `partial` とする。影響として一つの既存 clause を release evidence に昇格し、二つの未検証境界を明示する。fixture、rule、checker semantics と作業順序はこの checkpoint では変更しない。
+
 - [x] Metadata、extension name/order/escape、unknown non-`x-` key、sentence grammar。
 - [x] Identity trailer、set/projection digest、closed root、mixed set、task-scoped identity check。
 - [x] Direct/sharded Sources、unknown API identity/version、Revision none、overlap、fixed-point、cycle。
@@ -832,6 +834,8 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
     - [x] GREEN: exact projected-object comparison と rule-specific aggregate diagnostic を追加し、生成文書 fixture は既存 production validators で受理・拒否させる。
     - [x] VERIFY: focused tests、全 `tools/tests/*.test.mjs`、Core corpus 185/185、one-invalidity audit 138/138、reference audit、`git diff --check` を通す。
     - [x] DOCS: `COVERAGE.md` の三 row を `covered` にし、この TODO に実装結果と影響を追記する。
+  - [x] `R8-CORE-021`–`R8-CORE-023`（length-prefixed Unprojected identity、Reply selection / no-synthetic-operation、Reply fallback / INDEX omission）を対応付ける。
+  - [ ] `R8-CORE-022` の independently declared operation coexistence evidence と `R8-CORE-023` の authoritative / invalid selection identity evidence を解消する。
   - [ ] 残る Core corpus clause を `R8-CORE-*` row に分解して対応付け、`R8-CORE-001` を `covered` にする。
 
 #### Partial Collection / Parameters Unknown / Failure Root-Row Implementation Plan
