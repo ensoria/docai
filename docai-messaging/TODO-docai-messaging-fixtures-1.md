@@ -795,6 +795,10 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 
 > **Implementation note (`R8-CORE-024`–`R8-CORE-026` matrix checkpoint):** `R8-CORE-024` は Draft 07 の `default_annotation`（JSON `null` を含む）、AsyncAPI SEND / RECEIVE の effective default、annotation default への behavior 付与拒否、SEND effective behavior 欠落拒否を既存 source scenario / document set で確認して `covered` にした。`R8-CORE-025` は recognized constraint / annotation format、open custom format の localized unsupported、catalog role / duplicate row を対応付けたが、case-mismatched format value、missing catalog row、exact normalized source-independent semantics、required-workflow convention closure の versioned fixture がないため `partial` とした。`R8-CORE-026` は exact constraints と example validation の既存 evidence を対応付けたが、unsatisfiable-constraint replacement、valid-example-values unknown marker、generator-capability failure の versioned fixture がないため `partial` とした。影響として Core manifest は 196 cases / 146 invalid cases のままで、rule、checker semantics、公開 document grammar、作業順序は変更しない。
 
+> **Approved design (`R8-CORE-025` source-aware exact-format checkpoint):** 既存 `schema-format-default-projection-valid` scenario を拡張し、AsyncAPI 3.0.0 / 3.1.0 の exact `int32` が同じ constraint fragment / catalog role へ正規化されることと、case-mismatched `INT32` が exact vocabulary に一致せず localized unsupported になることを literal facts で固定する。production evaluator は既存 exact comparison semantics を維持し、case-folding mutation で fixture が実際に誤実装を検出することを確認する。missing catalog row と required-workflow closure は後続 checkpoint に分離する。
+
+> **Implementation note (`R8-CORE-025` source-aware exact-format checkpoint):** versioned valid source scenario に `asyncapi-3.0-int32` と `asyncapi-case-mismatched-int32` を追加し、Core corpus checker は AsyncAPI 3.0.0 / 3.1.0 の同一 `format="int32"` / `constraint-catalog` facts と `INT32` の `requires-source` / localized unsupported factsを literal deep equality で検証する。format lookup を一時的に case-insensitive にした mutation と AsyncAPI 3.0.0 vocabulary mapping を除いた mutation はそれぞれ当該 scenario を `DM-MSG-005` で失敗させ、復元後に targeted test が成功した。`R8-CORE-025` の未解消versioned evidence は missing catalog row と required-workflow convention closure の二件だけとなる。影響として production evaluator、公開 interface、document grammar、Core manifest 196 cases / 146 invalid cases は変更しない。
+
 - [x] Metadata、extension name/order/escape、unknown non-`x-` key、sentence grammar。
 - [x] Identity trailer、set/projection digest、closed root、mixed set、task-scoped identity check。
 - [x] Direct/sharded Sources、unknown API identity/version、Revision none、overlap、fixed-point、cycle。
@@ -850,7 +854,9 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
   - [x] `R8-CORE-022` の independently declared operation coexistence evidence を解消する。
   - [x] `R8-CORE-023` の authoritative / invalid selection identity evidence を解消する。
   - [x] `R8-CORE-024`–`R8-CORE-026`（schema defaults、format catalog / closure、constraint / example failure）を対応付ける。
-  - [ ] `R8-CORE-025` の case-mismatched format、missing catalog row、source-independent semantics、required-workflow closure の versioned evidence gap を解消する。
+  - [ ] `R8-CORE-025` の versioned evidence gap を解消する。
+    - [x] case-mismatched format と AsyncAPI 3.0.0 / 3.1.0 source-independent semantics を固定する。
+    - [ ] missing catalog row と required-workflow closure を固定する。
   - [ ] `R8-CORE-026` の unsatisfiable replacement、valid-example-values unknown、generator-capability failure の versioned evidence gap を解消する。
   - [ ] 残る Core corpus clause を `R8-CORE-*` row に分解して対応付け、`R8-CORE-001` を `covered` にする。
 

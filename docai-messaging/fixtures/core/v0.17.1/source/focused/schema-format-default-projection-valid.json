@@ -2,6 +2,28 @@
   "docai_messaging": "0.17.1",
   "cases": [
     {
+      "caseId": "asyncapi-3.0-int32",
+      "sourceSpecification": "AsyncAPI 3.0.0",
+      "keyword": "format",
+      "valueSource": "\"int32\"",
+      "projected": {
+        "fragment": "`format=\"int32\"`",
+        "requiredBehavior": "constraint-catalog",
+        "localizedUnsupported": false
+      }
+    },
+    {
+      "caseId": "asyncapi-case-mismatched-int32",
+      "sourceSpecification": "AsyncAPI 3.1.0",
+      "keyword": "format",
+      "valueSource": "\"INT32\"",
+      "projected": {
+        "fragment": null,
+        "requiredBehavior": "localized-unsupported",
+        "localizedUnsupported": true
+      }
+    },
+    {
       "caseId": "asyncapi-default",
       "sourceSpecification": "AsyncAPI 3.1.0",
       "keyword": "default",

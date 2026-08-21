@@ -1741,6 +1741,18 @@ test("executes the Task 9 DM-MSG-005 DM-CONV-003 exact-constraint default and fo
   assert.deepEqual(source.diagnostics, []);
   assert.deepEqual(source.facts.schemaFieldSourceExpectations, [
     {
+      caseId: "asyncapi-3.0-int32",
+      coverage: "complete",
+      fragment: '`format="int32"`',
+      requiredBehavior: "constraint-catalog"
+    },
+    {
+      caseId: "asyncapi-case-mismatched-int32",
+      coverage: "requires-source",
+      fragment: null,
+      requiredBehavior: "localized-unsupported"
+    },
+    {
       caseId: "asyncapi-default",
       coverage: "complete",
       fragment: '`default="safe"`',
