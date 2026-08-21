@@ -857,6 +857,9 @@ export function validateAsyncApiOperationMessageSelection(source, { file = "sour
 }
 
 export function evaluateAsyncApiReplyMessageSelection(source) {
+  const projectedOperationIds = evaluateAsyncApiOperationMessageSelection(source).operations
+    .filter((entry) => entry.outcome === "emit-operation")
+    .map((entry) => entry.operationId);
   const operations = Object.entries(source.operations ?? {})
     .filter(([, operation]) => operation.reply !== undefined)
     .sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0))
@@ -913,6 +916,7 @@ export function evaluateAsyncApiReplyMessageSelection(source) {
     });
   return {
     sourceSpecification: `AsyncAPI ${source.asyncapi}`,
+    projectedOperationIds,
     operations
   };
 }
@@ -936,20 +940,31 @@ export function validateAsyncApiReplyMessageSelection(scenario, { file = "source
         actual: Array.isArray(actual) ? [...actual] : actual
       }];
   });
-  const diagnostics = indexRoutingMismatches.length === 0
+  const operationProjectionMismatches = Object.hasOwn(scenario, "projectedOperationIds")
+    && !sameStringArray(scenario.projectedOperationIds, selection.projectedOperationIds)
+    ? [{
+      expected: [...selection.projectedOperationIds],
+      actual: Array.isArray(scenario.projectedOperationIds)
+        ? [...scenario.projectedOperationIds]
+        : scenario.projectedOperationIds
+    }]
+    : [];
+  const mismatchCount = indexRoutingMismatches.length + operationProjectionMismatches.length;
+  const diagnostics = mismatchCount === 0
     ? []
     : [diagnostic(
       "DM-REPLY-003",
       file,
       1,
-      `AsyncAPI reply selection has ${indexRoutingMismatches.length} inconsistent INDEX reply routing result(s).`
+      `AsyncAPI reply selection has ${mismatchCount} inconsistent projection result(s).`
     )];
   return {
     diagnostics,
     facts: {
       asyncApiReplyMessageSelection: {
         ...selection,
-        indexRoutingMismatches
+        indexRoutingMismatches,
+        operationProjectionMismatches
       }
     }
   };

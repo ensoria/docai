@@ -1,0 +1,70 @@
+{
+  "source": {
+    "asyncapi": "3.1.0",
+    "info": {
+      "title": "Reply and Independent Operation Coexistence",
+      "version": "1.0.0"
+    },
+    "channels": {
+      "requestSelection": {
+        "address": "selection.requests",
+        "messages": {
+          "request": {
+            "name": "SelectionRequest"
+          }
+        }
+      },
+      "replySelection": {
+        "address": "selection.replies",
+        "messages": {
+          "replyAccepted": {
+            "name": "ReplyAccepted"
+          }
+        }
+      }
+    },
+    "operations": {
+      "independentReplyConsumer": {
+        "action": "receive",
+        "channel": {
+          "$ref": "#/channels/replySelection"
+        },
+        "messages": [
+          {
+            "$ref": "#/channels/replySelection/messages/replyAccepted"
+          }
+        ]
+      },
+      "requestWithReply": {
+        "action": "send",
+        "channel": {
+          "$ref": "#/channels/requestSelection"
+        },
+        "messages": [
+          {
+            "$ref": "#/channels/requestSelection/messages/request"
+          }
+        ],
+        "reply": {
+          "channel": {
+            "$ref": "#/channels/replySelection"
+          },
+          "messages": [
+            {
+              "$ref": "#/channels/replySelection/messages/replyAccepted"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "projectedIndexReplyEntries": {
+    "requestWithReply": [
+      "reply:replyAccepted"
+    ]
+  },
+  "projectedOperationIds": [
+    "independentReplyConsumer",
+    "requestWithReply"
+  ]
+}

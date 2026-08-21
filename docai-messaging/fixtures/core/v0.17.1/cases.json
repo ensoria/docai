@@ -493,6 +493,20 @@
       "expected_rule_ids": []
     },
     {
+      "id": "reply-independent-operation-projection-invalid",
+      "kind": "asyncapi-reply-message-selection",
+      "path": "focused/invalid/reply-independent-operation-projection-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-REPLY-003"]
+    },
+    {
+      "id": "reply-independent-operation-valid",
+      "kind": "asyncapi-reply-message-selection",
+      "path": "focused/valid/reply-independent-operation-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
       "id": "conventions-format-catalog-duplicate-invalid",
       "kind": "task-scoped-document-set",
       "path": "focused/invalid/conventions-format-catalog-duplicate-invalid",

@@ -130,7 +130,9 @@ const replyMessageSelectionCaseIds = [
   "asyncapi-3.0.0-reply-message-selection-valid",
   "asyncapi-3.0.0-reply-message-index-invalid",
   "asyncapi-3.1.0-reply-message-selection-valid",
-  "asyncapi-3.1.0-reply-message-index-invalid"
+  "asyncapi-3.1.0-reply-message-index-invalid",
+  "reply-independent-operation-projection-invalid",
+  "reply-independent-operation-valid"
 ];
 
 const conventionsAndFailureCaseIds = [
@@ -1034,6 +1036,14 @@ test("executes the Task 9 DM-REPLY-003 exact-version reply selection and INDEX o
     assert.deepEqual(valid.diagnostics, []);
     assert.deepEqual(valid.facts.asyncApiReplyMessageSelection, {
       sourceSpecification: `AsyncAPI ${version}`,
+      projectedOperationIds: [
+        "replyMessagesEmpty",
+        "replyMessagesExplicit",
+        "replyMessagesOmitted",
+        "replyMessagesOmittedEmptyChannel",
+        "replyMessagesOmittedNoChannel",
+        "replyMessagesOmittedSingle"
+      ],
       operations: [
         {
           operationId: "replyMessagesEmpty",
@@ -1099,7 +1109,8 @@ test("executes the Task 9 DM-REPLY-003 exact-version reply selection and INDEX o
           primaryOperationRetained: true
         }
       ],
-      indexRoutingMismatches: []
+      indexRoutingMismatches: [],
+      operationProjectionMismatches: []
     });
 
     const invalidCase = byId.get(`asyncapi-${version}-reply-message-index-invalid`);
@@ -1146,6 +1157,41 @@ test("executes the Task 9 DM-REPLY-003 exact-version reply selection and INDEX o
       true
     );
   }
+
+  const coexistenceCase = byId.get("reply-independent-operation-valid");
+  const coexistence = validateCase(path.join(corpusPath, coexistenceCase.path), coexistenceCase);
+  assert.deepEqual(coexistence.diagnostics, []);
+  assert.deepEqual(coexistence.facts.asyncApiReplyMessageSelection.projectedOperationIds, [
+    "independentReplyConsumer",
+    "requestWithReply"
+  ]);
+  assert.deepEqual(coexistence.facts.asyncApiReplyMessageSelection.operations, [{
+    operationId: "requestWithReply",
+    outcome: "emit-expanded-reply",
+    resolution: "explicit-non-empty",
+    channelId: "replySelection",
+    replyMessages: ["replyAccepted"],
+    indexReplyEntries: ["reply:replyAccepted"],
+    primaryOperationRetained: true
+  }]);
+
+  const projectionInvalidCase = byId.get("reply-independent-operation-projection-invalid");
+  const projectionInvalid = validateCase(
+    path.join(corpusPath, projectionInvalidCase.path),
+    projectionInvalidCase
+  );
+  const projectionErrors = projectionInvalid.diagnostics.filter((entry) => (
+    entry.severity === "error"
+  ));
+  assert.equal(projectionErrors.length, 1);
+  assert.equal(projectionErrors[0].ruleId, "DM-REPLY-003");
+  assert.deepEqual(
+    projectionInvalid.facts.asyncApiReplyMessageSelection.operationProjectionMismatches,
+    [{
+      expected: ["independentReplyConsumer", "requestWithReply"],
+      actual: ["independentReplyConsumer", "requestWithReply", "syntheticReplyOperation"]
+    }]
+  );
 });
 
 test("executes the Task 9 DM-CONV-002 DM-CONV-003 DM-CONV-004 and DM-FAIL-003 corpus", () => {
@@ -2472,7 +2518,7 @@ test("executes the Task 9 DM-INC-003 implementation-readiness capability matrix"
 
 test("audits every Task 9 invalid fixture as one primary concern", () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
-  assert.equal(manifest.cases.length, 185);
+  assert.equal(manifest.cases.length, 187);
   const result = runFixtureCorpus(corpusPath, validateCase);
   assert.equal(result.failed, 0, result.report);
   const audit = auditFixtureOneInvalidity({
@@ -2480,5 +2526,5 @@ test("audits every Task 9 invalid fixture as one primary concern", () => {
     corpusCases: result.cases
   });
 
-  assert.deepEqual(audit, { passed: true, audited: 138, errors: [] });
+  assert.deepEqual(audit, { passed: true, audited: 139, errors: [] });
 });
