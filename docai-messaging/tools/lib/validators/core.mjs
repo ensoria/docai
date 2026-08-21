@@ -856,12 +856,152 @@ export function validateAsyncApiOperationMessageSelection(source, { file = "sour
   };
 }
 
-export function evaluateAsyncApiReplyMessageSelection(source) {
+function authoritativeReplyMessageEntry(source, reference) {
+  const segments = localReferenceSegments({ $ref: reference });
+  if (segments.length === 4 && segments[0] === "channels" && segments[2] === "messages") {
+    const channelId = segments[1];
+    const messageId = segments[3];
+    const messages = source.channels?.[channelId]?.messages ?? {};
+    return Object.hasOwn(messages, messageId)
+      ? { channelId, messageId, value: messages[messageId] }
+      : null;
+  }
+  if (segments.length === 3 && segments[0] === "components" && segments[1] === "messages") {
+    const messageId = segments[2];
+    const messages = source.components?.messages ?? {};
+    return Object.hasOwn(messages, messageId)
+      ? { channelId: null, messageId, value: messages[messageId] }
+      : null;
+  }
+  return null;
+}
+
+function resolveAuthoritativeReplyMessage(source, reference, seen = new Set()) {
+  if (typeof reference !== "string" || seen.has(reference)) return null;
+  const entry = authoritativeReplyMessageEntry(source, reference);
+  if (entry === null || entry.value === null || typeof entry.value !== "object"
+    || Array.isArray(entry.value)) {
+    return null;
+  }
+  if (Object.hasOwn(entry.value, "$ref")) {
+    if (typeof entry.value.$ref !== "string") return null;
+    const nextSeen = new Set(seen);
+    nextSeen.add(reference);
+    if (resolveAuthoritativeReplyMessage(source, entry.value.$ref, nextSeen) === null) return null;
+  }
+  return { channelId: entry.channelId, messageId: entry.messageId };
+}
+
+function authoritativeReplySelectionOutcome(source, operationId, channelId, selection) {
+  const selectedIdentities = Array.isArray(selection.selectedIdentities)
+    ? selection.selectedIdentities
+    : [];
+  if (selectedIdentities.length === 0) {
+    return {
+      operationId,
+      outcome: "emit-whole-reply-unsupported",
+      reason: "zero-message reply",
+      selection: "authoritative-empty",
+      selectionSourceId: selection.sourceId,
+      channelId,
+      replyMessages: [],
+      indexReplyEntries: [],
+      primaryOperationRetained: true
+    };
+  }
+
+  const identityNames = selectedIdentities.map((entry) => entry?.identity);
+  let invalidReason = identityNames.every((identity) => (
+    typeof identity === "string" && identity.length > 0
+  ))
+    ? null
+    : "unresolved-selected-identity";
+  if (invalidReason === null && new Set(identityNames).size !== identityNames.length) {
+    invalidReason = "duplicate-selected-identity";
+  }
+  const resolved = [];
+  const selectedReferences = new Set();
+  for (const identity of selectedIdentities) {
+    if (invalidReason !== null) break;
+    const references = Array.isArray(identity.sourceMessageRefs)
+      ? identity.sourceMessageRefs
+      : [];
+    if (references.length === 0) {
+      invalidReason = "unresolved-selected-identity";
+      break;
+    }
+    if (references.length > 1) {
+      invalidReason = "ambiguous-selected-identity";
+      break;
+    }
+    const reference = references[0];
+    const message = resolveAuthoritativeReplyMessage(source, reference);
+    if (message === null) {
+      invalidReason = "unresolved-selected-identity";
+      break;
+    }
+    const inScope = channelId === null
+      ? identity.applicableToReply === true
+      : message.channelId === channelId;
+    if (!inScope) {
+      invalidReason = "out-of-scope-selected-identity";
+      break;
+    }
+    if (selectedReferences.has(reference)) {
+      invalidReason = "duplicate-selected-identity";
+      break;
+    }
+    selectedReferences.add(reference);
+    resolved.push(message.messageId);
+  }
+
+  if (invalidReason !== null) {
+    return {
+      operationId,
+      outcome: "generation-failure",
+      reason: invalidReason,
+      selection: "authoritative-invalid",
+      selectionSourceId: selection.sourceId,
+      channelId,
+      replyMessages: [],
+      indexReplyEntries: []
+    };
+  }
+
+  const replyMessages = resolved.sort();
+  return {
+    operationId,
+    outcome: "emit-expanded-reply",
+    resolution: "authoritative-non-empty",
+    selectionSourceId: selection.sourceId,
+    channelId,
+    replyMessages,
+    indexReplyEntries: replyMessages.map((name) => `reply:${name}`),
+    primaryOperationRetained: true
+  };
+}
+
+export function evaluateAsyncApiReplyMessageSelection(source, authoritativeSelections = []) {
   const projectedOperationIds = evaluateAsyncApiOperationMessageSelection(source).operations
     .filter((entry) => entry.outcome === "emit-operation")
     .map((entry) => entry.operationId);
-  const operations = Object.entries(source.operations ?? {})
-    .filter(([, operation]) => operation.reply !== undefined)
+  const replyOperations = Object.entries(source.operations ?? {})
+    .filter(([, operation]) => operation.reply !== undefined);
+  const replyOperationIds = new Set(replyOperations.map(([operationId]) => operationId));
+  const authoritativeByOperation = new Map();
+  for (const selection of authoritativeSelections) {
+    const selections = authoritativeByOperation.get(selection.targetOperationId) ?? [];
+    selections.push(selection);
+    authoritativeByOperation.set(selection.targetOperationId, selections);
+  }
+  const selectionInputFailures = [...authoritativeByOperation.keys()]
+    .filter((targetOperationId) => !replyOperationIds.has(targetOperationId))
+    .sort()
+    .map((operationId) => ({
+      operationId,
+      reason: "unmatched-authoritative-selection-target"
+    }));
+  const operations = replyOperations
     .sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0))
     .map(([operationId, operation]) => {
       const channelSegments = localReferenceSegments(operation.reply.channel);
@@ -869,8 +1009,28 @@ export function evaluateAsyncApiReplyMessageSelection(source) {
         ? channelSegments[1]
         : null;
       const candidateMessages = Object.keys(source.channels?.[channelId]?.messages ?? {}).sort();
+      const authoritativeForOperation = authoritativeByOperation.get(operationId) ?? [];
+      if (authoritativeForOperation.length > 1) {
+        return {
+          operationId,
+          outcome: "generation-failure",
+          reason: "duplicate-authoritative-selection-target",
+          selection: "authoritative-invalid",
+          channelId,
+          replyMessages: [],
+          indexReplyEntries: []
+        };
+      }
       const explicit = Object.hasOwn(operation.reply, "messages");
       if (!explicit) {
+        if (authoritativeForOperation.length === 1) {
+          return authoritativeReplySelectionOutcome(
+            source,
+            operationId,
+            channelId,
+            authoritativeForOperation[0]
+          );
+        }
         return {
           operationId,
           outcome: "emit-whole-reply-unknown",
@@ -917,7 +1077,8 @@ export function evaluateAsyncApiReplyMessageSelection(source) {
   return {
     sourceSpecification: `AsyncAPI ${source.asyncapi}`,
     projectedOperationIds,
-    operations
+    operations,
+    selectionInputFailures
   };
 }
 
@@ -929,7 +1090,10 @@ function sameStringArray(left, right) {
 }
 
 export function validateAsyncApiReplyMessageSelection(scenario, { file = "source-input.json" } = {}) {
-  const selection = evaluateAsyncApiReplyMessageSelection(scenario.source);
+  const selection = evaluateAsyncApiReplyMessageSelection(
+    scenario.source,
+    scenario.authoritativeReplyMessageSelections
+  );
   const indexRoutingMismatches = selection.operations.flatMap((entry) => {
     const actual = scenario.projectedIndexReplyEntries?.[entry.operationId] ?? [];
     return sameStringArray(actual, entry.indexReplyEntries)
@@ -949,7 +1113,15 @@ export function validateAsyncApiReplyMessageSelection(scenario, { file = "source
         : scenario.projectedOperationIds
     }]
     : [];
-  const mismatchCount = indexRoutingMismatches.length + operationProjectionMismatches.length;
+  const selectionResolutionFailures = [
+    ...selection.selectionInputFailures,
+    ...selection.operations
+    .filter((entry) => entry.outcome === "generation-failure")
+    .map((entry) => ({ operationId: entry.operationId, reason: entry.reason }))
+  ];
+  const mismatchCount = indexRoutingMismatches.length
+    + operationProjectionMismatches.length
+    + selectionResolutionFailures.length;
   const diagnostics = mismatchCount === 0
     ? []
     : [diagnostic(
@@ -962,9 +1134,12 @@ export function validateAsyncApiReplyMessageSelection(scenario, { file = "source
     diagnostics,
     facts: {
       asyncApiReplyMessageSelection: {
-        ...selection,
+        sourceSpecification: selection.sourceSpecification,
+        projectedOperationIds: selection.projectedOperationIds,
+        operations: selection.operations,
         indexRoutingMismatches,
-        operationProjectionMismatches
+        operationProjectionMismatches,
+        selectionResolutionFailures
       }
     }
   };

@@ -135,6 +135,18 @@ const replyMessageSelectionCaseIds = [
   "reply-independent-operation-valid"
 ];
 
+const authoritativeReplySelectionCaseIds = [
+  "asyncapi-3.0.0-reply-authoritative-selection-valid",
+  "asyncapi-3.1.0-reply-authoritative-selection-valid",
+  "reply-selection-ambiguous-identity-invalid",
+  "reply-selection-duplicate-target-invalid",
+  "reply-selection-duplicate-identity-invalid",
+  "reply-selection-missing-identity-invalid",
+  "reply-selection-out-of-scope-identity-invalid",
+  "reply-selection-unmatched-target-invalid",
+  "reply-selection-unresolved-identity-invalid"
+];
+
 const conventionsAndFailureCaseIds = [
   "common-failure-shape-replacement-mismatch-invalid",
   "conventions-format-catalog-duplicate-invalid",
@@ -1110,7 +1122,8 @@ test("executes the Task 9 DM-REPLY-003 exact-version reply selection and INDEX o
         }
       ],
       indexRoutingMismatches: [],
-      operationProjectionMismatches: []
+      operationProjectionMismatches: [],
+      selectionResolutionFailures: []
     });
 
     const invalidCase = byId.get(`asyncapi-${version}-reply-message-index-invalid`);
@@ -1192,6 +1205,164 @@ test("executes the Task 9 DM-REPLY-003 exact-version reply selection and INDEX o
       actual: ["independentReplyConsumer", "requestWithReply", "syntheticReplyOperation"]
     }]
   );
+});
+
+test("executes authoritative Reply selection and rejects invalid selected identities", () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
+  const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
+
+  assert.deepEqual(
+    authoritativeReplySelectionCaseIds.filter((id) => !byId.has(id)),
+    []
+  );
+  const result = runFixtureCorpus(corpusPath, validateCase);
+  assert.equal(result.failed, 0, result.report);
+
+  for (const version of ["3.0.0", "3.1.0"]) {
+    const fixtureCase = byId.get(`asyncapi-${version}-reply-authoritative-selection-valid`);
+    const validation = validateCase(path.join(corpusPath, fixtureCase.path), fixtureCase);
+    assert.deepEqual(validation.diagnostics, []);
+    assert.deepEqual(validation.facts.asyncApiReplyMessageSelection, {
+      sourceSpecification: `AsyncAPI ${version}`,
+      projectedOperationIds: [
+        "replyAuthoritativeEmpty",
+        "replyAuthoritativeMultiple",
+        "replyAuthoritativeNoChannel",
+        "replyAuthoritativeSingle"
+      ],
+      operations: [
+        {
+          operationId: "replyAuthoritativeEmpty",
+          outcome: "emit-whole-reply-unsupported",
+          reason: "zero-message reply",
+          selection: "authoritative-empty",
+          selectionSourceId: "selection-empty",
+          channelId: "replyEmpty",
+          replyMessages: [],
+          indexReplyEntries: [],
+          primaryOperationRetained: true
+        },
+        {
+          operationId: "replyAuthoritativeMultiple",
+          outcome: "emit-expanded-reply",
+          resolution: "authoritative-non-empty",
+          selectionSourceId: "selection-multiple",
+          channelId: "replyMultiple",
+          replyMessages: ["replyAccepted", "replyRejected"],
+          indexReplyEntries: ["reply:replyAccepted", "reply:replyRejected"],
+          primaryOperationRetained: true
+        },
+        {
+          operationId: "replyAuthoritativeNoChannel",
+          outcome: "emit-expanded-reply",
+          resolution: "authoritative-non-empty",
+          selectionSourceId: "selection-no-channel",
+          channelId: null,
+          replyMessages: ["replyDetached"],
+          indexReplyEntries: ["reply:replyDetached"],
+          primaryOperationRetained: true
+        },
+        {
+          operationId: "replyAuthoritativeSingle",
+          outcome: "emit-expanded-reply",
+          resolution: "authoritative-non-empty",
+          selectionSourceId: "selection-single",
+          channelId: "replySingle",
+          replyMessages: ["replyAccepted"],
+          indexReplyEntries: ["reply:replyAccepted"],
+          primaryOperationRetained: true
+        }
+      ],
+      indexRoutingMismatches: [],
+      operationProjectionMismatches: [],
+      selectionResolutionFailures: []
+    });
+  }
+
+  for (const [id, reason] of [
+    ["reply-selection-ambiguous-identity-invalid", "ambiguous-selected-identity"],
+    ["reply-selection-duplicate-identity-invalid", "duplicate-selected-identity"],
+    ["reply-selection-missing-identity-invalid", "unresolved-selected-identity"],
+    ["reply-selection-out-of-scope-identity-invalid", "out-of-scope-selected-identity"],
+    ["reply-selection-unresolved-identity-invalid", "unresolved-selected-identity"]
+  ]) {
+    const fixtureCase = byId.get(id);
+    const validation = validateCase(path.join(corpusPath, fixtureCase.path), fixtureCase);
+    const errors = validation.diagnostics.filter((entry) => entry.severity === "error");
+    assert.equal(errors.length, 1, id);
+    assert.equal(errors[0].ruleId, "DM-REPLY-003", id);
+    assert.deepEqual(validation.facts.asyncApiReplyMessageSelection.operations, [{
+      operationId: "invalidReplySelection",
+      outcome: "generation-failure",
+      reason,
+      selection: "authoritative-invalid",
+      selectionSourceId: "selection-invalid",
+      channelId: "replySelection",
+      replyMessages: [],
+      indexReplyEntries: []
+    }], id);
+    assert.deepEqual(
+      validation.facts.asyncApiReplyMessageSelection.selectionResolutionFailures,
+      [{ operationId: "invalidReplySelection", reason }],
+      id
+    );
+    assert.deepEqual(
+      validation.facts.asyncApiReplyMessageSelection.indexRoutingMismatches,
+      [],
+      id
+    );
+    const scenario = JSON.parse(fs.readFileSync(path.join(corpusPath, fixtureCase.path), "utf8"));
+    const forbiddenDiagnosticValues = scenario.authoritativeReplyMessageSelections.flatMap((entry) => [
+      entry.sourceId,
+      entry.targetOperationId,
+      ...entry.selectedIdentities.flatMap((identity) => [
+        identity.identity,
+        ...identity.sourceMessageRefs
+      ])
+    ]).filter((value) => typeof value === "string" && value.length > 0);
+    for (const forbidden of forbiddenDiagnosticValues) {
+      assert.equal(errors[0].message.includes(forbidden), false, `${id}: ${forbidden}`);
+    }
+  }
+
+  for (const [id, failure] of [
+    ["reply-selection-duplicate-target-invalid", {
+      operationId: "invalidReplySelection",
+      reason: "duplicate-authoritative-selection-target"
+    }],
+    ["reply-selection-unmatched-target-invalid", {
+      operationId: "notAReply",
+      reason: "unmatched-authoritative-selection-target"
+    }]
+  ]) {
+    const fixtureCase = byId.get(id);
+    const validation = validateCase(path.join(corpusPath, fixtureCase.path), fixtureCase);
+    const errors = validation.diagnostics.filter((entry) => entry.severity === "error");
+    assert.equal(errors.length, 1, id);
+    assert.equal(errors[0].ruleId, "DM-REPLY-003", id);
+    assert.deepEqual(
+      validation.facts.asyncApiReplyMessageSelection.selectionResolutionFailures,
+      [failure],
+      id
+    );
+    assert.deepEqual(
+      validation.facts.asyncApiReplyMessageSelection.indexRoutingMismatches,
+      [],
+      id
+    );
+    const scenario = JSON.parse(fs.readFileSync(path.join(corpusPath, fixtureCase.path), "utf8"));
+    const forbiddenDiagnosticValues = scenario.authoritativeReplyMessageSelections.flatMap((entry) => [
+      entry.sourceId,
+      entry.targetOperationId,
+      ...entry.selectedIdentities.flatMap((identity) => [
+        identity.identity,
+        ...identity.sourceMessageRefs
+      ])
+    ]).filter((value) => typeof value === "string" && value.length > 0);
+    for (const forbidden of forbiddenDiagnosticValues) {
+      assert.equal(errors[0].message.includes(forbidden), false, `${id}: ${forbidden}`);
+    }
+  }
 });
 
 test("executes the Task 9 DM-CONV-002 DM-CONV-003 DM-CONV-004 and DM-FAIL-003 corpus", () => {
@@ -2518,7 +2689,7 @@ test("executes the Task 9 DM-INC-003 implementation-readiness capability matrix"
 
 test("audits every Task 9 invalid fixture as one primary concern", () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
-  assert.equal(manifest.cases.length, 187);
+  assert.equal(manifest.cases.length, 196);
   const result = runFixtureCorpus(corpusPath, validateCase);
   assert.equal(result.failed, 0, result.report);
   const audit = auditFixtureOneInvalidity({
@@ -2526,5 +2697,5 @@ test("audits every Task 9 invalid fixture as one primary concern", () => {
     corpusCases: result.cases
   });
 
-  assert.deepEqual(audit, { passed: true, audited: 139, errors: [] });
+  assert.deepEqual(audit, { passed: true, audited: 146, errors: [] });
 });

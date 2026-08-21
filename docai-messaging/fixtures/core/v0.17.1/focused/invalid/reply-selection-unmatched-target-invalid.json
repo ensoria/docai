@@ -1,0 +1,40 @@
+{
+  "source": {
+    "asyncapi": "3.1.0",
+    "info": {
+      "title": "Unmatched Authoritative Reply Target",
+      "version": "1.0.0"
+    },
+    "channels": {
+      "requestSelection": {
+        "address": "selection.requests",
+        "messages": {
+          "request": {
+            "name": "SelectionRequest"
+          }
+        }
+      }
+    },
+    "operations": {
+      "notAReply": {
+        "action": "send",
+        "channel": {
+          "$ref": "#/channels/requestSelection"
+        },
+        "messages": [
+          {
+            "$ref": "#/channels/requestSelection/messages/request"
+          }
+        ]
+      }
+    }
+  },
+  "authoritativeReplyMessageSelections": [
+    {
+      "sourceId": "selection-invalid",
+      "targetOperationId": "notAReply",
+      "selectedIdentities": []
+    }
+  ],
+  "projectedIndexReplyEntries": {}
+}

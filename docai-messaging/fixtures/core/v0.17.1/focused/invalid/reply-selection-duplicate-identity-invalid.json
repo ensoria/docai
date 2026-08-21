@@ -1,0 +1,68 @@
+{
+  "source": {
+    "asyncapi": "3.1.0",
+    "info": {
+      "title": "Duplicate Authoritative Reply Identity",
+      "version": "1.0.0"
+    },
+    "channels": {
+      "requestSelection": {
+        "address": "selection.requests",
+        "messages": {
+          "request": {
+            "name": "SelectionRequest"
+          }
+        }
+      },
+      "replySelection": {
+        "address": "selection.replies",
+        "messages": {
+          "replyAccepted": {
+            "name": "ReplyAccepted"
+          }
+        }
+      }
+    },
+    "operations": {
+      "invalidReplySelection": {
+        "action": "send",
+        "channel": {
+          "$ref": "#/channels/requestSelection"
+        },
+        "messages": [
+          {
+            "$ref": "#/channels/requestSelection/messages/request"
+          }
+        ],
+        "reply": {
+          "channel": {
+            "$ref": "#/channels/replySelection"
+          }
+        }
+      }
+    }
+  },
+  "authoritativeReplyMessageSelections": [
+    {
+      "sourceId": "selection-invalid",
+      "targetOperationId": "invalidReplySelection",
+      "selectedIdentities": [
+        {
+          "identity": "accepted",
+          "sourceMessageRefs": [
+            "#/channels/replySelection/messages/replyAccepted"
+          ]
+        },
+        {
+          "identity": "accepted",
+          "sourceMessageRefs": [
+            "#/channels/replySelection/messages/replyAccepted"
+          ]
+        }
+      ]
+    }
+  ],
+  "projectedIndexReplyEntries": {
+    "invalidReplySelection": []
+  }
+}

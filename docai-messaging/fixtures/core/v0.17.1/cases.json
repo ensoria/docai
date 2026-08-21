@@ -465,6 +465,13 @@
       "expected_rule_ids": ["DM-IDX-008"]
     },
     {
+      "id": "asyncapi-3.0.0-reply-authoritative-selection-valid",
+      "kind": "asyncapi-reply-message-selection",
+      "path": "focused/valid/asyncapi-3.0.0-reply-authoritative-selection-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
       "id": "asyncapi-3.0.0-reply-message-index-invalid",
       "kind": "asyncapi-reply-message-selection",
       "path": "focused/invalid/asyncapi-3.0.0-reply-message-index-invalid.json",
@@ -475,6 +482,13 @@
       "id": "asyncapi-3.0.0-reply-message-selection-valid",
       "kind": "asyncapi-reply-message-selection",
       "path": "focused/valid/asyncapi-3.0.0-reply-message-selection-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
+      "id": "asyncapi-3.1.0-reply-authoritative-selection-valid",
+      "kind": "asyncapi-reply-message-selection",
+      "path": "focused/valid/asyncapi-3.1.0-reply-authoritative-selection-valid.json",
       "expected": "valid",
       "expected_rule_ids": []
     },
@@ -505,6 +519,55 @@
       "path": "focused/valid/reply-independent-operation-valid.json",
       "expected": "valid",
       "expected_rule_ids": []
+    },
+    {
+      "id": "reply-selection-ambiguous-identity-invalid",
+      "kind": "asyncapi-reply-message-selection",
+      "path": "focused/invalid/reply-selection-ambiguous-identity-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-REPLY-003"]
+    },
+    {
+      "id": "reply-selection-duplicate-target-invalid",
+      "kind": "asyncapi-reply-message-selection",
+      "path": "focused/invalid/reply-selection-duplicate-target-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-REPLY-003"]
+    },
+    {
+      "id": "reply-selection-duplicate-identity-invalid",
+      "kind": "asyncapi-reply-message-selection",
+      "path": "focused/invalid/reply-selection-duplicate-identity-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-REPLY-003"]
+    },
+    {
+      "id": "reply-selection-missing-identity-invalid",
+      "kind": "asyncapi-reply-message-selection",
+      "path": "focused/invalid/reply-selection-missing-identity-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-REPLY-003"]
+    },
+    {
+      "id": "reply-selection-out-of-scope-identity-invalid",
+      "kind": "asyncapi-reply-message-selection",
+      "path": "focused/invalid/reply-selection-out-of-scope-identity-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-REPLY-003"]
+    },
+    {
+      "id": "reply-selection-unmatched-target-invalid",
+      "kind": "asyncapi-reply-message-selection",
+      "path": "focused/invalid/reply-selection-unmatched-target-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-REPLY-003"]
+    },
+    {
+      "id": "reply-selection-unresolved-identity-invalid",
+      "kind": "asyncapi-reply-message-selection",
+      "path": "focused/invalid/reply-selection-unresolved-identity-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-REPLY-003"]
     },
     {
       "id": "conventions-format-catalog-duplicate-invalid",
