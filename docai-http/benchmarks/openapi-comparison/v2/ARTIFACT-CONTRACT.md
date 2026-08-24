@@ -12,7 +12,7 @@ contain holdout source facts or expected answers:
 - `README.md`, `PLAN.md`, and `plan.json`;
 - the schedule generator and plan checker;
 - provider-neutral runner and checkpoint schemas;
-- the generic prompt envelope and strict output schemas, provided they contain
+- the generic prompt envelope and locally enforced output contracts, provided they contain
   no task answers;
 - reusable OpenAPI slicing and deterministic context-measurement code; and
 - generic grader code whose comparison values come only from private expected
@@ -43,7 +43,7 @@ listed in `plan.json`:
 | `authoritative-sources` | Three OpenAPI inputs and all behavior inputs used by enriched OpenAPI and DocAI HTTP. |
 | `docai-contexts` | Full and compact Stable `1.0.0` document sets for all APIs. |
 | `tasks-and-expected-outcomes` | Exactly six Live LLM task contracts per API, including expected outcomes and fixture-gap annotations. |
-| `prompt-templates-and-output-schemas` | One condition-neutral task envelope and every strict JSON output schema. |
+| `prompt-templates-and-output-schemas` | One condition-neutral task envelope and every JSON output contract enforced by the local grader. |
 | `graders` | Generic grader implementation plus task-specific grading configuration. |
 | `context-builders` | Raw, reference-closed slice, enriched, and DocAI selected-profile builders. |
 | `model-resolutions` | Official catalog check date, requested model ID, and resolved alias or snapshot for all three targets. |

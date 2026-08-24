@@ -146,6 +146,13 @@ export function collectFreezeArtifacts({
     path.join(benchmarkDir, "MODEL-COST-PREFLIGHT.md"),
     path.join(toolsDir, "build-openapi-comparison-v2-schedule.mjs"),
     path.join(toolsDir, "freeze-openapi-comparison-v2.mjs"),
+    path.join(toolsDir, "openapi-comparison-v2-runner.mjs"),
+    path.join(toolsDir, "openapi-comparison-v2-provider-errors.mjs"),
+    path.join(toolsDir, "openapi-comparison-v2-provider-adapter-utils.mjs"),
+    path.join(toolsDir, "openapi-comparison-v2-openai-adapter.mjs"),
+    path.join(toolsDir, "openapi-comparison-v2-anthropic-adapter.mjs"),
+    path.join(toolsDir, "openapi-comparison-v2-google-adapter.mjs"),
+    path.join(toolsDir, "check-openapi-comparison-v2-runs.mjs"),
   ]);
   addFiles(artifacts, repositoryRoot, "authoritative-sources", [
     path.join(conformanceDir, "source", "complete-input-set.yaml"),

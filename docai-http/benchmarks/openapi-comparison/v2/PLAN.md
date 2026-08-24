@@ -2,7 +2,7 @@
 
 Plan ID: `docai-http-openapi-comparison-v2`
 
-Status: frozen as `2.0.0-frozen.1` on 2026-07-31
+Status: frozen as `2.0.0-frozen.2` on 2026-08-24
 
 Created: 2026-07-21
 
@@ -78,7 +78,7 @@ is performed for every task context and is not counted as a provider request.
 ### Documentation Conditions
 
 Only documentation context may vary within a paired task block. The user task,
-system instructions, required JSON output schema, grader, target, and execution
+system instructions, required JSON output contract, grader, target, and execution
 settings remain identical.
 
 - `openapi-raw`: the authoritative OpenAPI document as authored.
@@ -104,7 +104,10 @@ alias resolution.
 
 ## Prompt And Grading Controls
 
-Every condition uses the same system message and strict JSON output contract.
+Every condition uses the same system message and JSON output contract. The
+contract is supplied in the prompt and enforced by the provider-neutral local
+grader. Provider schema-constrained output is disabled for all targets because
+the contract intentionally permits arbitrary wire keys in selected objects.
 The prompt must say to use only supplied documentation and report uncertainty
 instead of inventing missing facts. Expected outcomes and grader-only evidence
 must never appear in provider prompts.

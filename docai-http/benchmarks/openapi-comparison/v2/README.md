@@ -8,8 +8,8 @@ format or conformance compatibility boundary.
 
 ## Current State
 
-The plan is frozen as `2.0.0-frozen.1`. The two private holdout APIs, task
-contracts, output schemas, graders, prompt templates, context builders, model
+The plan is frozen as `2.0.0-frozen.2`. The two private holdout APIs, task
+contracts, output contracts, graders, prompt templates, context builders, model
 resolutions, schedule, and cost estimate are recorded in the SHA-256 freeze
 manifest. Live execution has not started and still requires separate approval.
 
@@ -101,13 +101,13 @@ matching command-line batch approval and the
 `DOCAI_LIVE_LLM_APPROVED_BATCH` environment variable. Every attempt records the
 runner SHA-256 revision and retains the raw provider response.
 
-Live execution remains blocked pending resolution of one output-mode issue.
-The frozen contracts intentionally contain JSON object slots with arbitrary
-wire keys. A provider schema that closes those objects would incorrectly
-narrow the contract, while at least one target's strict structured-output
-subset requires all object keys to be predefined. Any change to the frozen
-request setting or output contract requires a new plan version and freeze
-before `b01`.
+All targets use prompt-only JSON output. Provider schema constraints and
+provider-specific JSON modes are disabled because the contracts intentionally
+contain objects with arbitrary wire keys. The shared prompt carries the same
+output contract for every target and condition; the provider-neutral local
+grader classifies invalid JSON or contract violations as `malformed`. This
+preserves the natural HTTP result shape and makes malformed-output frequency
+part of the reported benchmark evidence.
 
 ## Private Holdouts
 
@@ -136,6 +136,7 @@ authorize a later batch.
   and conservative standard token prices.
 - `cost-estimate.json` records whole-pilot and per-batch token and cost ceilings.
 - `schedule.jsonl` contains the 648 frozen primary run identities.
-- `freeze-manifest.json` records 81 public/private artifact hashes.
+- `freeze-manifest.json` records 88 public/private artifact hashes, including
+  the provider runner, adapters, and run checker.
 - Ignored `private/runs/<plan-version>/<batch-id>/` directories hold append-only
   attempts and runs plus atomic checkpoints and batch reports during execution.

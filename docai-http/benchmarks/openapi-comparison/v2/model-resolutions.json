@@ -1,9 +1,9 @@
 {
   "resolution_version": "1",
   "benchmark_id": "docai-http-openapi-comparison-v2",
-  "plan_version": "2.0.0-frozen.1",
+  "plan_version": "2.0.0-frozen.2",
   "status": "frozen",
-  "catalog_checked_on": "2026-07-31",
+  "catalog_checked_on": "2026-08-24",
   "pricing_currency": "USD",
   "pricing_unit": "per 1000000 tokens",
   "targets": [
@@ -18,8 +18,9 @@
         "input": 5,
         "output": 30
       },
+      "pricing_note": "Conservative ceiling above the promotional $4/$20 catalog price available at least through 2026-11-21.",
       "request_settings": {
-        "structured_json": true,
+        "json_output_mode": "prompt-only",
         "reasoning_effort": "medium",
         "sampling_parameters": "omitted",
         "max_output_tokens": 4096,
@@ -41,7 +42,7 @@
       },
       "pricing_note": "Conservative standard pricing after the introductory period ending 2026-08-31.",
       "request_settings": {
-        "structured_json": true,
+        "json_output_mode": "prompt-only",
         "thinking": "adaptive",
         "sampling_parameters": "omitted",
         "max_output_tokens": 4096,
@@ -61,8 +62,9 @@
         "input": 1.5,
         "output": 7.5
       },
+      "pricing_note": "Conservative standard pricing after the introductory period ending 2026-12-31.",
       "request_settings": {
-        "structured_json": true,
+        "json_output_mode": "prompt-only",
         "thinking_level": "medium",
         "sampling_parameters": "omitted",
         "max_output_tokens": 4096,

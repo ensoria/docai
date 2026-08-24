@@ -45,7 +45,7 @@ future version before publication.
 - [x] Separate the practical claim, DocAI HTTP versus raw/task-sliced OpenAPI,
   from the representation claim, DocAI HTTP versus OpenAPI enriched with the
   same authoritative behavior facts.
-- [x] Require identical user tasks, system instructions, output schemas, and
+- [x] Require identical user tasks, system instructions, output contracts, and
   grading rules across context conditions; vary only the documentation context.
 - [x] Keep raw OpenAPI size out of direct efficiency headlines when it omits
   facts required by the task.

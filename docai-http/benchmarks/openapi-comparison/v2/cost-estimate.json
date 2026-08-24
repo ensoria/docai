@@ -1,8 +1,8 @@
 {
   "estimate_version": "1",
   "benchmark_id": "docai-http-openapi-comparison-v2",
-  "plan_version": "2.0.0-frozen.1",
-  "estimated_at": "2026-07-31T03:02:09Z",
+  "plan_version": "2.0.0-frozen.2",
+  "estimated_at": "2026-08-24T06:29:55Z",
   "currency": "USD",
   "methodology": {
     "input_tokens_estimate": "Deterministic ceil(characters / 4) for the complete rendered prompt.",
@@ -12,10 +12,10 @@
   },
   "whole_pilot": {
     "requests": 648,
-    "input_tokens_estimate": 2014326,
-    "input_tokens_ceiling": 2216070,
+    "input_tokens_estimate": 2013219,
+    "input_tokens_ceiling": 2214873,
     "output_tokens_ceiling": 2654208,
-    "cost_ceiling_usd": 53.466195,
+    "cost_ceiling_usd": 53.462405,
     "targets": [
       {
         "target_id": "openai-frontier",
@@ -23,14 +23,14 @@
         "requested_model": "gpt-5.6-sol",
         "resolved_model": "gpt-5.6-sol",
         "requests": 216,
-        "input_tokens_estimate": 671442,
-        "input_tokens_ceiling": 738690,
+        "input_tokens_estimate": 671073,
+        "input_tokens_ceiling": 738291,
         "output_tokens_ceiling": 884736,
         "pricing_usd_per_million_tokens": {
           "input": 5,
           "output": 30
         },
-        "cost_ceiling_usd": 30.23553
+        "cost_ceiling_usd": 30.233535
       },
       {
         "target_id": "anthropic-balanced",
@@ -38,14 +38,14 @@
         "requested_model": "claude-sonnet-5",
         "resolved_model": "claude-sonnet-5",
         "requests": 216,
-        "input_tokens_estimate": 671442,
-        "input_tokens_ceiling": 738690,
+        "input_tokens_estimate": 671073,
+        "input_tokens_ceiling": 738291,
         "output_tokens_ceiling": 884736,
         "pricing_usd_per_million_tokens": {
           "input": 3,
           "output": 15
         },
-        "cost_ceiling_usd": 15.48711
+        "cost_ceiling_usd": 15.485913
       },
       {
         "target_id": "google-stable-agentic",
@@ -53,14 +53,14 @@
         "requested_model": "gemini-3.6-flash",
         "resolved_model": "gemini-3.6-flash",
         "requests": 216,
-        "input_tokens_estimate": 671442,
-        "input_tokens_ceiling": 738690,
+        "input_tokens_estimate": 671073,
+        "input_tokens_ceiling": 738291,
         "output_tokens_ceiling": 884736,
         "pricing_usd_per_million_tokens": {
           "input": 1.5,
           "output": 7.5
         },
-        "cost_ceiling_usd": 7.743555
+        "cost_ceiling_usd": 7.742957
       }
     ]
   },
@@ -68,306 +68,306 @@
     {
       "batch_id": "b01",
       "requests": 72,
-      "input_tokens_estimate": 276648,
-      "input_tokens_ceiling": 304353,
+      "input_tokens_estimate": 276531,
+      "input_tokens_ceiling": 304227,
       "output_tokens_ceiling": 294912,
-      "cost_ceiling_usd": 6.124745,
+      "cost_ceiling_usd": 6.124346,
       "targets": [
         {
           "target_id": "openai-frontier",
           "requests": 24,
-          "input_tokens_estimate": 92216,
-          "input_tokens_ceiling": 101451,
+          "input_tokens_estimate": 92177,
+          "input_tokens_ceiling": 101409,
           "output_tokens_ceiling": 98304,
-          "cost_ceiling_usd": 3.456375
+          "cost_ceiling_usd": 3.456165
         },
         {
           "target_id": "anthropic-balanced",
           "requests": 24,
-          "input_tokens_estimate": 92216,
-          "input_tokens_ceiling": 101451,
+          "input_tokens_estimate": 92177,
+          "input_tokens_ceiling": 101409,
           "output_tokens_ceiling": 98304,
-          "cost_ceiling_usd": 1.778913
+          "cost_ceiling_usd": 1.778787
         },
         {
           "target_id": "google-stable-agentic",
           "requests": 24,
-          "input_tokens_estimate": 92216,
-          "input_tokens_ceiling": 101451,
+          "input_tokens_estimate": 92177,
+          "input_tokens_ceiling": 101409,
           "output_tokens_ceiling": 98304,
-          "cost_ceiling_usd": 0.889457
+          "cost_ceiling_usd": 0.889394
         }
       ]
     },
     {
       "batch_id": "b02",
       "requests": 72,
-      "input_tokens_estimate": 208479,
-      "input_tokens_ceiling": 229359,
+      "input_tokens_estimate": 208353,
+      "input_tokens_ceiling": 229221,
       "output_tokens_ceiling": 294912,
-      "cost_ceiling_usd": 5.887263,
+      "cost_ceiling_usd": 5.886827,
       "targets": [
         {
           "target_id": "openai-frontier",
           "requests": 24,
-          "input_tokens_estimate": 69493,
-          "input_tokens_ceiling": 76453,
+          "input_tokens_estimate": 69451,
+          "input_tokens_ceiling": 76407,
           "output_tokens_ceiling": 98304,
-          "cost_ceiling_usd": 3.331385
+          "cost_ceiling_usd": 3.331155
         },
         {
           "target_id": "anthropic-balanced",
           "requests": 24,
-          "input_tokens_estimate": 69493,
-          "input_tokens_ceiling": 76453,
+          "input_tokens_estimate": 69451,
+          "input_tokens_ceiling": 76407,
           "output_tokens_ceiling": 98304,
-          "cost_ceiling_usd": 1.703919
+          "cost_ceiling_usd": 1.703781
         },
         {
           "target_id": "google-stable-agentic",
           "requests": 24,
-          "input_tokens_estimate": 69493,
-          "input_tokens_ceiling": 76453,
+          "input_tokens_estimate": 69451,
+          "input_tokens_ceiling": 76407,
           "output_tokens_ceiling": 98304,
-          "cost_ceiling_usd": 0.85196
+          "cost_ceiling_usd": 0.851891
         }
       ]
     },
     {
       "batch_id": "b03",
       "requests": 72,
-      "input_tokens_estimate": 186315,
-      "input_tokens_ceiling": 204978,
+      "input_tokens_estimate": 186189,
+      "input_tokens_ceiling": 204843,
       "output_tokens_ceiling": 294912,
-      "cost_ceiling_usd": 5.810057,
+      "cost_ceiling_usd": 5.80963,
       "targets": [
         {
           "target_id": "openai-frontier",
           "requests": 24,
-          "input_tokens_estimate": 62105,
-          "input_tokens_ceiling": 68326,
+          "input_tokens_estimate": 62063,
+          "input_tokens_ceiling": 68281,
           "output_tokens_ceiling": 98304,
-          "cost_ceiling_usd": 3.29075
+          "cost_ceiling_usd": 3.290525
         },
         {
           "target_id": "anthropic-balanced",
           "requests": 24,
-          "input_tokens_estimate": 62105,
-          "input_tokens_ceiling": 68326,
+          "input_tokens_estimate": 62063,
+          "input_tokens_ceiling": 68281,
           "output_tokens_ceiling": 98304,
-          "cost_ceiling_usd": 1.679538
+          "cost_ceiling_usd": 1.679403
         },
         {
           "target_id": "google-stable-agentic",
           "requests": 24,
-          "input_tokens_estimate": 62105,
-          "input_tokens_ceiling": 68326,
+          "input_tokens_estimate": 62063,
+          "input_tokens_ceiling": 68281,
           "output_tokens_ceiling": 98304,
-          "cost_ceiling_usd": 0.839769
+          "cost_ceiling_usd": 0.839702
         }
       ]
     },
     {
       "batch_id": "b04",
       "requests": 72,
-      "input_tokens_estimate": 276648,
-      "input_tokens_ceiling": 304353,
+      "input_tokens_estimate": 276531,
+      "input_tokens_ceiling": 304227,
       "output_tokens_ceiling": 294912,
-      "cost_ceiling_usd": 6.124745,
+      "cost_ceiling_usd": 6.124346,
       "targets": [
         {
           "target_id": "openai-frontier",
           "requests": 24,
-          "input_tokens_estimate": 92216,
-          "input_tokens_ceiling": 101451,
+          "input_tokens_estimate": 92177,
+          "input_tokens_ceiling": 101409,
           "output_tokens_ceiling": 98304,
-          "cost_ceiling_usd": 3.456375
+          "cost_ceiling_usd": 3.456165
         },
         {
           "target_id": "anthropic-balanced",
           "requests": 24,
-          "input_tokens_estimate": 92216,
-          "input_tokens_ceiling": 101451,
+          "input_tokens_estimate": 92177,
+          "input_tokens_ceiling": 101409,
           "output_tokens_ceiling": 98304,
-          "cost_ceiling_usd": 1.778913
+          "cost_ceiling_usd": 1.778787
         },
         {
           "target_id": "google-stable-agentic",
           "requests": 24,
-          "input_tokens_estimate": 92216,
-          "input_tokens_ceiling": 101451,
+          "input_tokens_estimate": 92177,
+          "input_tokens_ceiling": 101409,
           "output_tokens_ceiling": 98304,
-          "cost_ceiling_usd": 0.889457
+          "cost_ceiling_usd": 0.889394
         }
       ]
     },
     {
       "batch_id": "b05",
       "requests": 72,
-      "input_tokens_estimate": 208479,
-      "input_tokens_ceiling": 229359,
+      "input_tokens_estimate": 208353,
+      "input_tokens_ceiling": 229221,
       "output_tokens_ceiling": 294912,
-      "cost_ceiling_usd": 5.887263,
+      "cost_ceiling_usd": 5.886827,
       "targets": [
         {
           "target_id": "openai-frontier",
           "requests": 24,
-          "input_tokens_estimate": 69493,
-          "input_tokens_ceiling": 76453,
+          "input_tokens_estimate": 69451,
+          "input_tokens_ceiling": 76407,
           "output_tokens_ceiling": 98304,
-          "cost_ceiling_usd": 3.331385
+          "cost_ceiling_usd": 3.331155
         },
         {
           "target_id": "anthropic-balanced",
           "requests": 24,
-          "input_tokens_estimate": 69493,
-          "input_tokens_ceiling": 76453,
+          "input_tokens_estimate": 69451,
+          "input_tokens_ceiling": 76407,
           "output_tokens_ceiling": 98304,
-          "cost_ceiling_usd": 1.703919
+          "cost_ceiling_usd": 1.703781
         },
         {
           "target_id": "google-stable-agentic",
           "requests": 24,
-          "input_tokens_estimate": 69493,
-          "input_tokens_ceiling": 76453,
+          "input_tokens_estimate": 69451,
+          "input_tokens_ceiling": 76407,
           "output_tokens_ceiling": 98304,
-          "cost_ceiling_usd": 0.85196
+          "cost_ceiling_usd": 0.851891
         }
       ]
     },
     {
       "batch_id": "b06",
       "requests": 72,
-      "input_tokens_estimate": 186315,
-      "input_tokens_ceiling": 204978,
+      "input_tokens_estimate": 186189,
+      "input_tokens_ceiling": 204843,
       "output_tokens_ceiling": 294912,
-      "cost_ceiling_usd": 5.810057,
+      "cost_ceiling_usd": 5.80963,
       "targets": [
         {
           "target_id": "openai-frontier",
           "requests": 24,
-          "input_tokens_estimate": 62105,
-          "input_tokens_ceiling": 68326,
+          "input_tokens_estimate": 62063,
+          "input_tokens_ceiling": 68281,
           "output_tokens_ceiling": 98304,
-          "cost_ceiling_usd": 3.29075
+          "cost_ceiling_usd": 3.290525
         },
         {
           "target_id": "anthropic-balanced",
           "requests": 24,
-          "input_tokens_estimate": 62105,
-          "input_tokens_ceiling": 68326,
+          "input_tokens_estimate": 62063,
+          "input_tokens_ceiling": 68281,
           "output_tokens_ceiling": 98304,
-          "cost_ceiling_usd": 1.679538
+          "cost_ceiling_usd": 1.679403
         },
         {
           "target_id": "google-stable-agentic",
           "requests": 24,
-          "input_tokens_estimate": 62105,
-          "input_tokens_ceiling": 68326,
+          "input_tokens_estimate": 62063,
+          "input_tokens_ceiling": 68281,
           "output_tokens_ceiling": 98304,
-          "cost_ceiling_usd": 0.839769
+          "cost_ceiling_usd": 0.839702
         }
       ]
     },
     {
       "batch_id": "b07",
       "requests": 72,
-      "input_tokens_estimate": 276648,
-      "input_tokens_ceiling": 304353,
+      "input_tokens_estimate": 276531,
+      "input_tokens_ceiling": 304227,
       "output_tokens_ceiling": 294912,
-      "cost_ceiling_usd": 6.124745,
+      "cost_ceiling_usd": 6.124346,
       "targets": [
         {
           "target_id": "openai-frontier",
           "requests": 24,
-          "input_tokens_estimate": 92216,
-          "input_tokens_ceiling": 101451,
+          "input_tokens_estimate": 92177,
+          "input_tokens_ceiling": 101409,
           "output_tokens_ceiling": 98304,
-          "cost_ceiling_usd": 3.456375
+          "cost_ceiling_usd": 3.456165
         },
         {
           "target_id": "anthropic-balanced",
           "requests": 24,
-          "input_tokens_estimate": 92216,
-          "input_tokens_ceiling": 101451,
+          "input_tokens_estimate": 92177,
+          "input_tokens_ceiling": 101409,
           "output_tokens_ceiling": 98304,
-          "cost_ceiling_usd": 1.778913
+          "cost_ceiling_usd": 1.778787
         },
         {
           "target_id": "google-stable-agentic",
           "requests": 24,
-          "input_tokens_estimate": 92216,
-          "input_tokens_ceiling": 101451,
+          "input_tokens_estimate": 92177,
+          "input_tokens_ceiling": 101409,
           "output_tokens_ceiling": 98304,
-          "cost_ceiling_usd": 0.889457
+          "cost_ceiling_usd": 0.889394
         }
       ]
     },
     {
       "batch_id": "b08",
       "requests": 72,
-      "input_tokens_estimate": 208479,
-      "input_tokens_ceiling": 229359,
+      "input_tokens_estimate": 208353,
+      "input_tokens_ceiling": 229221,
       "output_tokens_ceiling": 294912,
-      "cost_ceiling_usd": 5.887263,
+      "cost_ceiling_usd": 5.886827,
       "targets": [
         {
           "target_id": "openai-frontier",
           "requests": 24,
-          "input_tokens_estimate": 69493,
-          "input_tokens_ceiling": 76453,
+          "input_tokens_estimate": 69451,
+          "input_tokens_ceiling": 76407,
           "output_tokens_ceiling": 98304,
-          "cost_ceiling_usd": 3.331385
+          "cost_ceiling_usd": 3.331155
         },
         {
           "target_id": "anthropic-balanced",
           "requests": 24,
-          "input_tokens_estimate": 69493,
-          "input_tokens_ceiling": 76453,
+          "input_tokens_estimate": 69451,
+          "input_tokens_ceiling": 76407,
           "output_tokens_ceiling": 98304,
-          "cost_ceiling_usd": 1.703919
+          "cost_ceiling_usd": 1.703781
         },
         {
           "target_id": "google-stable-agentic",
           "requests": 24,
-          "input_tokens_estimate": 69493,
-          "input_tokens_ceiling": 76453,
+          "input_tokens_estimate": 69451,
+          "input_tokens_ceiling": 76407,
           "output_tokens_ceiling": 98304,
-          "cost_ceiling_usd": 0.85196
+          "cost_ceiling_usd": 0.851891
         }
       ]
     },
     {
       "batch_id": "b09",
       "requests": 72,
-      "input_tokens_estimate": 186315,
-      "input_tokens_ceiling": 204978,
+      "input_tokens_estimate": 186189,
+      "input_tokens_ceiling": 204843,
       "output_tokens_ceiling": 294912,
-      "cost_ceiling_usd": 5.810057,
+      "cost_ceiling_usd": 5.80963,
       "targets": [
         {
           "target_id": "openai-frontier",
           "requests": 24,
-          "input_tokens_estimate": 62105,
-          "input_tokens_ceiling": 68326,
+          "input_tokens_estimate": 62063,
+          "input_tokens_ceiling": 68281,
           "output_tokens_ceiling": 98304,
-          "cost_ceiling_usd": 3.29075
+          "cost_ceiling_usd": 3.290525
         },
         {
           "target_id": "anthropic-balanced",
           "requests": 24,
-          "input_tokens_estimate": 62105,
-          "input_tokens_ceiling": 68326,
+          "input_tokens_estimate": 62063,
+          "input_tokens_ceiling": 68281,
           "output_tokens_ceiling": 98304,
-          "cost_ceiling_usd": 1.679538
+          "cost_ceiling_usd": 1.679403
         },
         {
           "target_id": "google-stable-agentic",
           "requests": 24,
-          "input_tokens_estimate": 62105,
-          "input_tokens_ceiling": 68326,
+          "input_tokens_estimate": 62063,
+          "input_tokens_ceiling": 68281,
           "output_tokens_ceiling": 98304,
-          "cost_ceiling_usd": 0.839769
+          "cost_ceiling_usd": 0.839702
         }
       ]
     }

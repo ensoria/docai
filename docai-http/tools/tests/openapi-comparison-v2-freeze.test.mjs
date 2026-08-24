@@ -6,11 +6,17 @@ import test from "node:test";
 
 import {
   buildFreezeManifest,
+  collectFreezeArtifacts,
   validateFrozenArtifacts,
 } from "../freeze-openapi-comparison-v2.mjs";
 import {
   buildCostEstimate,
+  validateModelResolutions,
 } from "../estimate-openapi-comparison-v2-cost.mjs";
+import {
+  BENCHMARK_DIR,
+  readV2Plan,
+} from "../openapi-comparison-v2-utils.mjs";
 
 const REQUIRED_CLASSES = [
   "authoritative-sources",
@@ -142,6 +148,7 @@ test("cost estimate reports provider-specific whole-pilot and batch ceilings", (
         requested_model: "model-a",
         resolved_model: "model-a",
         pricing_usd_per_million_tokens: { input: 2, output: 10 },
+        request_settings: { json_output_mode: "prompt-only" },
       },
     ],
   };
@@ -159,6 +166,32 @@ test("cost estimate reports provider-specific whole-pilot and batch ceilings", (
   assert.equal(estimate.whole_pilot.cost_ceiling_usd, 0.016);
   assert.equal(estimate.batches[0].cost_ceiling_usd, 0.007);
   assert.equal(estimate.batches[1].cost_ceiling_usd, 0.009);
+});
+
+test("frozen model settings use the provider-neutral prompt-only JSON mode", () => {
+  const plan = readV2Plan();
+  const modelResolutions = JSON.parse(fs.readFileSync(
+    path.join(BENCHMARK_DIR, "model-resolutions.json"),
+    "utf8",
+  ));
+
+  assert.doesNotThrow(() => validateModelResolutions(plan, modelResolutions));
+  modelResolutions.targets.forEach((target) => {
+    assert.equal(target.request_settings.json_output_mode, "prompt-only");
+    assert.equal(Object.hasOwn(target.request_settings, "structured_json"), false);
+  });
+});
+
+test("freeze artifacts include the provider runner and all transport adapters", () => {
+  const paths = new Set(collectFreezeArtifacts().map((artifact) => artifact.path));
+
+  [
+    "docai-http/tools/openapi-comparison-v2-runner.mjs",
+    "docai-http/tools/openapi-comparison-v2-openai-adapter.mjs",
+    "docai-http/tools/openapi-comparison-v2-anthropic-adapter.mjs",
+    "docai-http/tools/openapi-comparison-v2-google-adapter.mjs",
+    "docai-http/tools/check-openapi-comparison-v2-runs.mjs",
+  ].forEach((file) => assert.equal(paths.has(file), true, file));
 });
 
 function withFixture(callback) {

@@ -15,7 +15,7 @@ export function createAnthropicAdapter({
 } = {}) {
   return {
     provider: "anthropic",
-    async execute({ prompt, modelResolution, outputSchema }) {
+    async execute({ prompt, modelResolution }) {
       if (!apiKey) throw new Error("ANTHROPIC_API_KEY is required");
       const rendered = renderedProviderPrompt(prompt);
       const settings = modelResolution.request_settings;
@@ -25,12 +25,6 @@ export function createAnthropicAdapter({
         system: rendered.system,
         messages: [{ role: "user", content: rendered.user }],
         thinking: { type: settings.thinking },
-        output_config: {
-          format: {
-            type: "json_schema",
-            schema: outputSchema,
-          },
-        },
       };
       const response = await fetchProviderJson({
         fetchImpl,

@@ -1,6 +1,6 @@
 {
   "benchmark_id": "docai-http-openapi-comparison-v2",
-  "plan_version": "2.0.0-frozen.1",
+  "plan_version": "2.0.0-frozen.2",
   "status": "frozen",
   "created_on": "2026-07-21",
   "compatibility_scope": "adoption evidence outside the DocAI HTTP 1.0.0 compatibility boundary",
@@ -154,7 +154,7 @@
   },
   "freeze": {
     "manifest": "freeze-manifest.json",
-    "frozen_at": "2026-07-31T03:02:09Z",
+    "frozen_at": "2026-08-24T06:29:55Z",
     "required_artifact_classes": [
       "authoritative-sources",
       "docai-contexts",

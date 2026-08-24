@@ -5,7 +5,6 @@ import path from "node:path";
 import test from "node:test";
 
 import {
-  assertStrictOutputContractsRepresentable,
   FileRunStore,
   MemoryRunStore,
   ProviderResponseError,
@@ -37,23 +36,6 @@ test("selects exactly one frozen batch", () => {
   assert.throws(
     () => selectBatchPrompts({ plan, prompts, batchId: "b99" }),
     /unknown batch/,
-  );
-});
-
-test("strict-output preflight rejects flexible object slots instead of narrowing them", () => {
-  assert.throws(
-    () => assertStrictOutputContractsRepresentable({
-      output_contracts: {
-        flexible: {
-          json_shape: {
-            request: {
-              body: {},
-            },
-          },
-        },
-      },
-    }),
-    /cannot represent arbitrary object keys.*flexible:\/request\/body/,
   );
 });
 
@@ -460,7 +442,7 @@ test("run checker rejects records without a runner revision", async () => {
   assert.match(failures, /runner_revision is required/);
 });
 
-test("OpenAI adapter sends frozen reasoning and structured-output settings", async () => {
+test("OpenAI adapter uses prompt-only JSON without a provider output schema", async () => {
   const requests = [];
   const adapter = createOpenAIAdapter({
     apiKey: "test-openai-key",
@@ -477,13 +459,13 @@ test("OpenAI adapter sends frozen reasoning and structured-output settings", asy
 
   assert.equal(body.reasoning.effort, "medium");
   assert.equal(body.max_output_tokens, 4096);
-  assert.equal(body.text.format.type, "json_schema");
+  assert.equal(Object.hasOwn(body, "text"), false);
   assert.equal(Object.hasOwn(body, "temperature"), false);
   assert.equal(result.content_json.result, "ok");
   assert.equal(result.usage.input_tokens, 10);
 });
 
-test("Anthropic adapter uses adaptive thinking without sampling parameters", async () => {
+test("Anthropic adapter uses prompt-only JSON without a provider output schema", async () => {
   const requests = [];
   const adapter = createAnthropicAdapter({
     apiKey: "test-anthropic-key",
@@ -500,12 +482,12 @@ test("Anthropic adapter uses adaptive thinking without sampling parameters", asy
 
   assert.deepEqual(body.thinking, { type: "adaptive" });
   assert.equal(body.max_tokens, 4096);
-  assert.equal(body.output_config.format.type, "json_schema");
+  assert.equal(Object.hasOwn(body, "output_config"), false);
   assert.equal(Object.hasOwn(body, "temperature"), false);
   assert.equal(result.resolved_model, "claude-sonnet-5");
 });
 
-test("Google adapter uses medium thinking and the current response_format shape", async () => {
+test("Google adapter uses prompt-only JSON without a provider output schema", async () => {
   const requests = [];
   const adapter = createGoogleAdapter({
     apiKey: "test-google-key",
@@ -522,8 +504,7 @@ test("Google adapter uses medium thinking and the current response_format shape"
 
   assert.equal(body.generation_config.thinking_level, "medium");
   assert.equal(body.generation_config.max_output_tokens, 4096);
-  assert.equal(body.response_format.type, "text");
-  assert.equal(body.response_format.mime_type, "application/json");
+  assert.equal(Object.hasOwn(body, "response_format"), false);
   assert.equal(Object.hasOwn(body.generation_config, "temperature"), false);
   assert.equal(result.usage.total_tokens, 18);
 });
@@ -669,19 +650,13 @@ function adapterInput(targetId, model) {
       requested_model: model,
       resolved_model: model,
       request_settings: {
-        structured_json: true,
+        json_output_mode: "prompt-only",
         reasoning_effort: "medium",
         thinking: "adaptive",
         thinking_level: "medium",
         sampling_parameters: "omitted",
         max_output_tokens: 4096,
       },
-    },
-    outputSchema: {
-      type: "object",
-      properties: { result: { type: "string" } },
-      required: ["result"],
-      additionalProperties: false,
     },
   };
 }

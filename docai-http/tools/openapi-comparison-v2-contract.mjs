@@ -46,7 +46,7 @@ export function buildRequiredOutputText(contractId) {
   const contract = contracts.output_contracts[contractId];
   if (!contract) throw new Error(`unknown output contract ${contractId}`);
   return [
-    "Return one strict JSON object with no Markdown fence or surrounding prose.",
+    "Return one JSON object with no Markdown fence or surrounding prose.",
     "Use this exact top-level structure; replace placeholder values with the task result:",
     JSON.stringify(contract.json_shape, null, 2),
   ].join("\n");

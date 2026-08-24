@@ -153,7 +153,7 @@ OpenAPI YAML inputs, and Stable DocAI HTTP `1.0.0` document sets.
 
 **Interfaces:**
 - Consumes: frozen tasks, contracts, contexts, targets, and schedule.
-- Produces: strict provider-neutral prompt records and deterministic local
+- Produces: provider-neutral prompt records with an exact JSON contract and deterministic local
   context metrics.
 
 - [x] Write a failing test proving all four condition prompts differ only in
@@ -228,10 +228,10 @@ OpenAPI YAML inputs, and Stable DocAI HTTP `1.0.0` document sets.
   before the runner may call a provider.
 - [x] Record runner revisions, start/end timestamps, raw provider responses,
   checkpoints, and reports without overwriting attempt or run logs.
-- [ ] Resolve the provider strict-schema incompatibility for contract fields
-  that intentionally allow arbitrary JSON object keys. Do not silently narrow
-  those fields to empty objects. If the request setting or output contract
-  changes, create and freeze a new plan version before execution.
+- [x] Resolve the provider strict-schema incompatibility by preserving the
+  natural output contracts, using prompt-only JSON for all targets, and
+  enforcing shape locally. Freeze the revised request setting as
+  `2.0.0-frozen.2` before execution.
 - [ ] Run adapters only after the corresponding user approval.
 
 ### Task 10: Analysis And Publication

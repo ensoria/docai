@@ -70,7 +70,7 @@ test("rejects expected-outcome leakage into public prompt fields", () => {
 test("renders the required JSON output without benchmark answers", () => {
   const output = buildRequiredOutputText("request-construction.v1");
 
-  assert.match(output, /Return one strict JSON object/);
+  assert.match(output, /Return one JSON object/);
   assert.match(output, /"method": "string"/);
   assert.match(output, /"uncertainties": \[\s*"string"\s*\]/);
   assert.doesNotMatch(output, /(POST|\/users|Authorization)/);

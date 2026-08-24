@@ -144,6 +144,12 @@ export function validateModelResolutions(plan, modelResolutions) {
     if (!target.resolved_model) {
       throw new Error(`resolved model is required for target ${plannedTarget.id}`);
     }
+    if (target.request_settings?.json_output_mode !== "prompt-only") {
+      throw new Error(`model resolution ${plannedTarget.id} must use prompt-only JSON output`);
+    }
+    if (Object.hasOwn(target.request_settings, "structured_json")) {
+      throw new Error(`model resolution ${plannedTarget.id} must not enable structured_json`);
+    }
     if (!price || !isNonNegativeNumber(price.input) || !isNonNegativeNumber(price.output)) {
       throw new Error(`model resolution ${plannedTarget.id} requires non-negative input/output prices`);
     }

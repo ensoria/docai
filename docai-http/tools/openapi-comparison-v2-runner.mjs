@@ -27,7 +27,6 @@ import {
   ProviderResponseError,
   ProviderTransportError,
 } from "./openapi-comparison-v2-provider-errors.mjs";
-import { taskContracts } from "./openapi-comparison-v2-contract.mjs";
 import { createOpenAIAdapter } from "./openapi-comparison-v2-openai-adapter.mjs";
 import { createAnthropicAdapter } from "./openapi-comparison-v2-anthropic-adapter.mjs";
 import { createGoogleAdapter } from "./openapi-comparison-v2-google-adapter.mjs";
@@ -94,7 +93,6 @@ export async function runApprovedBatch({
   store,
   taskForPrompt,
   grader = gradeBenchmarkResponse,
-  outputSchemaForTask = schemaForTask,
   modelResolutions = null,
   priceByTarget = {},
   batchCostCeiling = null,
@@ -199,11 +197,10 @@ export async function runApprovedBatch({
       }
 
       try {
-        const task = taskForPrompt(prompt);
+        taskForPrompt(prompt);
         const response = await adapter.execute({
           prompt,
           modelResolution: resolutionForPrompt(prompt, modelResolutions),
-          outputSchema: outputSchemaForTask(task),
         });
         const completedAt = clock();
         store.appendAttempt({
@@ -643,84 +640,11 @@ function resolutionForPrompt(prompt, modelResolutions) {
     requested_model: prompt.target.planned_model,
     resolved_model: prompt.target.planned_model,
     request_settings: {
+      json_output_mode: "prompt-only",
       max_output_tokens: 4096,
       sampling_parameters: "omitted",
     },
   };
-}
-
-function schemaForTask(task) {
-  const contractId = task?.public?.output_contract;
-  const shape = taskContracts().output_contracts[contractId]?.json_shape;
-  if (!shape) return { type: "object" };
-  return jsonShapeToSchema(shape);
-}
-
-export function jsonShapeToSchema(shape) {
-  if (shape === "string") return { type: "string" };
-  if (shape === "string or null") return { type: ["string", "null"] };
-  if (typeof shape === "number") return { type: "number" };
-  if (Array.isArray(shape)) {
-    return {
-      type: "array",
-      items: shape.length === 0 ? {} : jsonShapeToSchema(shape[0]),
-    };
-  }
-  if (shape && typeof shape === "object") {
-    const keys = Object.keys(shape);
-    if (keys.length === 1 && keys[0] === "Header-Name") {
-      return {
-        type: "object",
-        additionalProperties: { type: "string" },
-      };
-    }
-    return {
-      type: "object",
-      properties: Object.fromEntries(
-        Object.entries(shape).map(([key, value]) => [key, jsonShapeToSchema(value)]),
-      ),
-      required: keys,
-      additionalProperties: false,
-    };
-  }
-  return {};
-}
-
-export function assertStrictOutputContractsRepresentable(contracts = taskContracts()) {
-  const flexibleSlots = Object.entries(contracts.output_contracts ?? {}).flatMap(
-    ([contractId, contract]) => findFlexibleObjectSlots(
-      contract.json_shape,
-      `${contractId}:`,
-    ),
-  );
-  if (flexibleSlots.length > 0) {
-    throw new Error(
-      "strict provider schemas cannot represent arbitrary object keys in the frozen "
-      + `output contracts: ${flexibleSlots.join(", ")}`,
-    );
-  }
-  return true;
-}
-
-function findFlexibleObjectSlots(shape, pointer) {
-  if (Array.isArray(shape)) {
-    return shape.length === 0 ? [] : findFlexibleObjectSlots(shape[0], `${pointer}/0`);
-  }
-  if (!shape || typeof shape !== "object") return [];
-  const keys = Object.keys(shape);
-  if (
-    keys.length === 0
-    || (keys.length === 1 && keys[0] === "Header-Name")
-  ) {
-    return [pointer || "/"];
-  }
-  return Object.entries(shape).flatMap(([key, value]) => (
-    findFlexibleObjectSlots(value, `${pointer}/${escapeJsonPointer(key)}`)
-  ));
-}
-
-function escapeJsonPointer(value) {
-  return value.replaceAll("~", "~0").replaceAll("/", "~1");
 }
 
 function assertValidExistingRecords(selected, attempts, runs) {
@@ -902,7 +826,6 @@ async function runCli() {
       `context parity failed for ${parity.summary.parity_failures} task(s)`,
     );
   }
-  assertStrictOutputContractsRepresentable();
   const prompts = readPromptRecords(PRIMARY_PROMPTS_FILE);
   const modelResolutions = JSON.parse(fs.readFileSync(MODEL_RESOLUTIONS_FILE, "utf8"));
   const costEstimate = JSON.parse(fs.readFileSync(COST_ESTIMATE_FILE, "utf8"));

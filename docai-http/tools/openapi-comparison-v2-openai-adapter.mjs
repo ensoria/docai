@@ -14,7 +14,7 @@ export function createOpenAIAdapter({
 } = {}) {
   return {
     provider: "openai",
-    async execute({ prompt, modelResolution, outputSchema }) {
+    async execute({ prompt, modelResolution }) {
       if (!apiKey) throw new Error("OPENAI_API_KEY is required");
       const rendered = renderedProviderPrompt(prompt);
       const settings = modelResolution.request_settings;
@@ -26,14 +26,6 @@ export function createOpenAIAdapter({
           effort: settings.reasoning_effort,
         },
         max_output_tokens: settings.max_output_tokens,
-        text: {
-          format: {
-            type: "json_schema",
-            name: "docai_http_benchmark_result",
-            strict: true,
-            schema: outputSchema,
-          },
-        },
       };
       const response = await fetchProviderJson({
         fetchImpl,

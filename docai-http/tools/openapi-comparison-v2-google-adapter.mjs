@@ -14,7 +14,7 @@ export function createGoogleAdapter({
 } = {}) {
   return {
     provider: "google",
-    async execute({ prompt, modelResolution, outputSchema }) {
+    async execute({ prompt, modelResolution }) {
       if (!apiKey) throw new Error("GOOGLE_API_KEY is required");
       const rendered = renderedProviderPrompt(prompt);
       const settings = modelResolution.request_settings;
@@ -25,11 +25,6 @@ export function createGoogleAdapter({
         generation_config: {
           thinking_level: settings.thinking_level,
           max_output_tokens: settings.max_output_tokens,
-        },
-        response_format: {
-          type: "text",
-          mime_type: "application/json",
-          schema: outputSchema,
         },
       };
       const response = await fetchProviderJson({
