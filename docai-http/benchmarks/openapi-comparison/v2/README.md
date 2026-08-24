@@ -11,9 +11,12 @@ format or conformance compatibility boundary.
 The plan is frozen as `2.0.0-frozen.3`. The two private holdout APIs, task
 contracts, output contracts, graders, prompt templates, context builders, model
 resolutions, schedule, and cost estimate are recorded in the SHA-256 freeze
-manifest. Live execution under this plan has not started and still requires
-separate approval. Four retained attempts from superseded `2.0.0-frozen.2` are
-excluded from primary analysis as recorded in `EXECUTION-LOG.md`.
+manifest. `b01` completed all 72 planned requests under this plan on
+2026-08-24. Its batch report requires review because malformed plus
+inconclusive outcomes exceeded the preregistered 5% gate. `b02` is not
+authorized while that review is open. Four retained attempts from superseded
+`2.0.0-frozen.2` are excluded from primary analysis as recorded in
+`EXECUTION-LOG.md`.
 
 Run the frozen-plan checker from the repository root:
 

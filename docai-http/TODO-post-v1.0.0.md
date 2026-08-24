@@ -97,8 +97,12 @@ future version before publication.
 - [x] Retain the four diagnostic `2.0.0-frozen.2` attempts as superseded
   evidence, repair semantic header grading and the batch-boundary review gate,
   and freeze the corrected pipeline as `2.0.0-frozen.3`.
-- [ ] Execute `b01` under `2.0.0-frozen.3` after renewed approval; do not count
+- [x] Execute `b01` under `2.0.0-frozen.3` after renewed approval; do not count
   the four superseded attempts in the 648 primary requests.
+- [ ] Complete the `b01` stop/go review before authorizing `b02`: preserve the
+  automated outcomes as primary, adjudicate only the 51 inconclusive records
+  with condition-blinded identifiers, and assess the 12 malformed outputs
+  (including 9 from Google) as a provider/output-format reliability signal.
 - [x] Split the 648 primary requests into nine batches of 72 requests. One batch
   is one API, one repetition, six tasks, three models, and four conditions.
 - [x] Treat 100 attempted provider requests as a hard maximum for one work step;
