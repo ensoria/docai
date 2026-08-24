@@ -8,10 +8,12 @@ format or conformance compatibility boundary.
 
 ## Current State
 
-The plan is frozen as `2.0.0-frozen.2`. The two private holdout APIs, task
+The plan is frozen as `2.0.0-frozen.3`. The two private holdout APIs, task
 contracts, output contracts, graders, prompt templates, context builders, model
 resolutions, schedule, and cost estimate are recorded in the SHA-256 freeze
-manifest. Live execution has not started and still requires separate approval.
+manifest. Live execution under this plan has not started and still requires
+separate approval. Four retained attempts from superseded `2.0.0-frozen.2` are
+excluded from primary analysis as recorded in `EXECUTION-LOG.md`.
 
 Run the frozen-plan checker from the repository root:
 
@@ -69,6 +71,12 @@ the private task assertions:
 Only `inconclusive` records require blinded manual review. Content, format, and
 grader outcomes never authorize an automatic rerun; only the separately frozen
 transport policy can do so before a usable provider response exists.
+
+The `header_contains` assertion compares HTTP header names case-insensitively,
+validates bearer and idempotency values by their wire contracts, and treats
+angle-bracket values as semantic placeholders rather than required literal
+output. This prevents valid generated credentials or operation keys from being
+graded as incorrect.
 
 Inspect the deterministic 648-request schedule without writing it:
 

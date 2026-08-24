@@ -198,6 +198,23 @@ function validateReport({
   if (report.status !== (checkpoint?.status ?? "pending")) {
     failures.push(`${batch.id}: report status does not match checkpoint`);
   }
+  const exceptionalCount = runs.filter((run) => (
+    run.status === "malformed" || run.status === "inconclusive"
+  )).length;
+  const exceptionalLimit = Math.floor(
+    batch.planned_requests
+      * plan.stop_rules.maximum_malformed_plus_inconclusive_percent
+      / 100,
+  );
+  const expectedReviewReasons = exceptionalCount > exceptionalLimit
+    ? ["malformed_plus_inconclusive_limit"]
+    : [];
+  if (
+    report.review_gate?.required !== (expectedReviewReasons.length > 0)
+    || !sameMembers(report.review_gate?.reasons ?? [], expectedReviewReasons)
+  ) {
+    failures.push(`${batch.id}: report review_gate does not match run counts`);
+  }
   const revisions = [...new Set(
     [...attempts, ...runs].map((record) => record.runner_revision).filter(Boolean),
   )].sort();

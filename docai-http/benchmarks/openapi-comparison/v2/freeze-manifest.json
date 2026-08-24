@@ -1,10 +1,10 @@
 {
   "manifest_version": "1",
   "benchmark_id": "docai-http-openapi-comparison-v2",
-  "plan_version": "2.0.0-frozen.2",
-  "frozen_at": "2026-08-24T06:29:55Z",
+  "plan_version": "2.0.0-frozen.3",
+  "frozen_at": "2026-08-24T07:28:03Z",
   "hash_algorithm": "sha256",
-  "artifact_count": 88,
+  "artifact_count": 89,
   "artifacts": [
     {
       "class": "authoritative-sources",
@@ -64,7 +64,7 @@
       "class": "context-builders",
       "path": "docai-http/benchmarks/openapi-comparison/v2/private/contexts/context-metrics.json",
       "visibility": "private",
-      "sha256": "a1124f01ebb7d3b0a1187bb06c4b0a5708821f2a5202d30d52d90165b66582c0"
+      "sha256": "583bbe5a177d817ac5e50f07b994f4713ca27d3ff50f0602e99c5dbe660e1477"
     },
     {
       "class": "context-builders",
@@ -88,7 +88,7 @@
       "class": "cost-estimate",
       "path": "docai-http/benchmarks/openapi-comparison/v2/cost-estimate.json",
       "visibility": "public",
-      "sha256": "35e581178e7aa645f8d208f5f72ac0b9a7fbb2f1c81a7e99c4aa119af7694de8"
+      "sha256": "7fd62d6d324daa7702e974cc992cd973f57afafb2aa180eb830cfba490976cda"
     },
     {
       "class": "cost-estimate",
@@ -358,25 +358,31 @@
       "class": "execution-plan",
       "path": "docai-http/benchmarks/openapi-comparison/v2/ARTIFACT-CONTRACT.md",
       "visibility": "public",
-      "sha256": "c154fb0b1dd93cfa8e43b41a7f9b699f035acbfec17b25a66c814f503c25f6d2"
+      "sha256": "598251a255b92333c422584c2b466f55115315d9837031da93d18f9829ea6445"
+    },
+    {
+      "class": "execution-plan",
+      "path": "docai-http/benchmarks/openapi-comparison/v2/EXECUTION-LOG.md",
+      "visibility": "public",
+      "sha256": "718e28c940aad5844a33c036484764a83e01078e94289367935a13f55a64151f"
     },
     {
       "class": "execution-plan",
       "path": "docai-http/benchmarks/openapi-comparison/v2/MODEL-COST-PREFLIGHT.md",
       "visibility": "public",
-      "sha256": "b8f3ad95778e9f12257af5befb0fc6de0b08ead3033d0572676e0071b7b2a67b"
+      "sha256": "373efe2208d4ff654133920944590fa3a2dad643af14880926d806f8c5caf37d"
     },
     {
       "class": "execution-plan",
       "path": "docai-http/benchmarks/openapi-comparison/v2/plan.json",
       "visibility": "public",
-      "sha256": "6cfcaf2a598886b4a10f879a00762a14cbb95daf5ca7a6e0f84be1c87b93f154"
+      "sha256": "62ceb94363665b7056c50981e2a6618431d8c031cbef1da2c9b5da13ec720c5a"
     },
     {
       "class": "execution-plan",
       "path": "docai-http/benchmarks/openapi-comparison/v2/PLAN.md",
       "visibility": "public",
-      "sha256": "e3ba77098a49f3f20b5d670c5cd9ec21b652c1dba4278ddff4591706d11cb522"
+      "sha256": "4e77438a79dde32be96d2465eaac88b50c995f4514f647db8138b9e27af2a9c0"
     },
     {
       "class": "execution-plan",
@@ -388,13 +394,13 @@
       "class": "execution-plan",
       "path": "docai-http/tools/check-openapi-comparison-v2-runs.mjs",
       "visibility": "public",
-      "sha256": "a25d9884f3439359f25641c9a0edf0a3ede48bed726dc629b91cd38d77e7c45d"
+      "sha256": "b8240be332cc3ea795863300bce28e742746dac3d775e2657e2f45dbbe8906fc"
     },
     {
       "class": "execution-plan",
       "path": "docai-http/tools/freeze-openapi-comparison-v2.mjs",
       "visibility": "public",
-      "sha256": "ab7a7e0d657f3c1e8530f7febce23e4d486316a0b7de63fa5da1bb322975ddfd"
+      "sha256": "6ba4b232c74c03bcbb92f5143d177eb9edc2ad1ea2d0b2c3f8aa1b942575213d"
     },
     {
       "class": "execution-plan",
@@ -430,13 +436,13 @@
       "class": "execution-plan",
       "path": "docai-http/tools/openapi-comparison-v2-runner.mjs",
       "visibility": "public",
-      "sha256": "c654d4d8140b4a9c80aa5e1851bd5b178a4d620e53cf6f27268dd1f0d8ce747c"
+      "sha256": "8c84c3ef886aa59312020cd29619be7bb9c637d1142038fb6a266ee7f4f7cb85"
     },
     {
       "class": "execution-schedule",
       "path": "docai-http/benchmarks/openapi-comparison/v2/schedule.jsonl",
       "visibility": "public",
-      "sha256": "85163a724993c4862932a0ec2a7ec618837bac395a489a91a4739012271e10a1"
+      "sha256": "4a7a8e86143f7fb5c093f86494604e52ebe7b18438beca04d81947935e3ccb16"
     },
     {
       "class": "graders",
@@ -478,25 +484,25 @@
       "class": "graders",
       "path": "docai-http/tools/openapi-comparison-v2-grader.mjs",
       "visibility": "public",
-      "sha256": "6ac78362c79fa05bcc8f151da2aac49631f28a5bcd7772e87865f0b53a6b14fc"
+      "sha256": "eafa924da1b4e439f0812317a33dbbf1b8f79d7ebe93db403090a3e7a78a42c8"
     },
     {
       "class": "model-resolutions",
       "path": "docai-http/benchmarks/openapi-comparison/v2/model-resolutions.json",
       "visibility": "public",
-      "sha256": "01278bbfc46fc4a9eea00bdde9b441a991ddf0a9bf10c64d1d6c57961be690c1"
+      "sha256": "f6c61b4183f8f59fea69bb86b35efae6c6feaac92f3f54eca1ea9bc52708047e"
     },
     {
       "class": "prompt-templates-and-output-schemas",
       "path": "docai-http/benchmarks/openapi-comparison/v2/contracts.json",
       "visibility": "public",
-      "sha256": "fb4d209a83f3e538e20d6d50c7a4a536df84543030af53f265a6e4fa9d6284d4"
+      "sha256": "f25158e790f25c23a60a285b4de38cbcd1d0b59d73a1e60b05fbac11a7560db6"
     },
     {
       "class": "prompt-templates-and-output-schemas",
       "path": "docai-http/benchmarks/openapi-comparison/v2/private/prompts/primary.jsonl",
       "visibility": "private",
-      "sha256": "cf585ea1c4114a4c3d24d4233d59fd5205e7162bad16ad6a19907ce4fe32ce46"
+      "sha256": "359ac3661a2054c8d4f6da849defc26bcf5c9cf3f253f6e6121ba60811e1479c"
     },
     {
       "class": "prompt-templates-and-output-schemas",
@@ -520,19 +526,19 @@
       "class": "tasks-and-expected-outcomes",
       "path": "docai-http/benchmarks/openapi-comparison/v2/continuity/tasks.json",
       "visibility": "public",
-      "sha256": "21b4d24df6fd432f77f6d7907ce731e8a6f026c34f4d114783b690c1a9c30c6b"
+      "sha256": "a2fbcb8244b4128b1ede358c6fad62c8175507191d3b29620fe1194f4a128310"
     },
     {
       "class": "tasks-and-expected-outcomes",
       "path": "docai-http/benchmarks/openapi-comparison/v2/private/holdouts/field-service/tasks.json",
       "visibility": "private",
-      "sha256": "4b8fce0811fa035fd94cfb8e2de923a2e1915ddcad70fa616f37b5da918936d8"
+      "sha256": "0a52f3e1229de7303522d575398066af59e5d7638c4ce46e46162110e18b1712"
     },
     {
       "class": "tasks-and-expected-outcomes",
       "path": "docai-http/benchmarks/openapi-comparison/v2/private/holdouts/media-processing/tasks.json",
       "visibility": "private",
-      "sha256": "3c2277246d91c1e0fd7e3c06f726929dd92d50c9a8dd62bf52306e302eeb69e4"
+      "sha256": "fc5ce97598a49f6b040fb0e0d49dda6144745f7b2c80820187544e71c86ccfd4"
     }
   ]
 }

@@ -61,7 +61,8 @@ Before freezing, review and verify:
    receive the same authoritative task facts.
 2. Prompt export contains no expected outcome or grader-only evidence.
 3. Every task passes its grader against a hand-authored positive result and
-   fails at least one targeted negative result.
+   fails at least one targeted negative result. Header assertions compare names
+   case-insensitively and validate semantic placeholder values by wire contract.
 4. Context metrics reproduce from the hashed inputs.
 5. The generated primary schedule has 648 unique run IDs in nine 72-request
    batches.

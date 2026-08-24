@@ -65,6 +65,11 @@ export function evaluateAssertion(contentJson, assertion) {
       ? { pass: true, reason: "" }
       : { pass: false, reason: `must contain ${format(assertion.value)}` };
   }
+  if (assertion.operator === "header_contains") {
+    return headerContains(resolved.value, assertion.value)
+      ? { pass: true, reason: "" }
+      : { pass: false, reason: `must satisfy header contract ${format(assertion.value)}` };
+  }
   if (assertion.operator === "set_equals") {
     return setEquals(resolved.value, assertion.value)
       ? { pass: true, reason: "" }
@@ -107,6 +112,44 @@ function containsValue(actual, expected) {
     ));
   }
   return isDeepStrictEqual(actual, expected);
+}
+
+function headerContains(actual, expected) {
+  if (!isPlainObject(actual) || !isPlainObject(expected)) return false;
+  const normalized = new Map(
+    Object.entries(actual).map(([name, value]) => [name.toLowerCase(), String(value)]),
+  );
+  return Object.entries(expected).every(([name, expectedValue]) => {
+    const actualValue = normalized.get(name.toLowerCase());
+    return actualValue !== undefined
+      && headerValueMatches(name, String(expectedValue), actualValue);
+  });
+}
+
+function headerValueMatches(name, expected, actual) {
+  const normalizedName = name.toLowerCase();
+  if (normalizedName === "authorization" && /^Bearer <[^>]+>$/.test(expected)) {
+    return /^Bearer\s+\S+$/i.test(actual);
+  }
+  if (normalizedName === "idempotency-key" && expected === "<operation-unique-key>") {
+    return actual.length >= 1 && actual.length <= 128 && /^[\x21-\x7e]+$/.test(actual);
+  }
+  if (expected.includes("<")) {
+    return placeholderPattern(expected).test(actual);
+  }
+  return actual === expected;
+}
+
+function placeholderPattern(template) {
+  const parts = template.split(/(<[^>]+>)/g).filter(Boolean);
+  const source = parts.map((part) => (
+    /^<[^>]+>$/.test(part) ? ".+" : escapeRegExp(part)
+  )).join("");
+  return new RegExp(`^${source}$`);
+}
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function setEquals(actual, expected) {

@@ -232,7 +232,7 @@ OpenAPI YAML inputs, and Stable DocAI HTTP `1.0.0` document sets.
   natural output contracts, using prompt-only JSON for all targets, and
   enforcing shape locally. Freeze the revised request setting as
   `2.0.0-frozen.2` before execution.
-- [ ] Run adapters only after the corresponding user approval.
+- [x] Run adapters only after the corresponding user approval.
 
 ### Task 10: Analysis And Publication
 

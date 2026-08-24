@@ -233,7 +233,7 @@ test("stops after a repeated rate limit without retrying either response", async
   assert.equal(result.checkpoint.stop_reason, "repeated_rate_limit");
 });
 
-test("stops when malformed plus inconclusive results exceed five percent of the planned batch", async () => {
+test("completes the batch and raises a review gate when exceptional results exceed five percent", async () => {
   const plan = makePlan(72);
   const prompts = Array.from({ length: 72 }, (_, index) => makePrompt(index + 1));
   const store = new MemoryRunStore();
@@ -261,8 +261,13 @@ test("stops when malformed plus inconclusive results exceed five percent of the 
     grader,
   }));
 
-  assert.equal(calls, 4);
-  assert.equal(result.checkpoint.stop_reason, "malformed_plus_inconclusive_limit");
+  assert.equal(calls, 72);
+  assert.equal(result.checkpoint.status, "complete");
+  assert.equal(result.checkpoint.stop_reason, null);
+  assert.deepEqual(result.report.review_gate, {
+    required: true,
+    reasons: ["malformed_plus_inconclusive_limit"],
+  });
 });
 
 test("stops and retains the provider response when the grader throws", async () => {
@@ -380,6 +385,32 @@ test("run checker accepts a completed batch", async () => {
 
   assert.deepEqual(result.failures, []);
   assert.equal(result.batches.find((batch) => batch.batch_id === "b01").status, "complete");
+});
+
+test("run checker rejects a report that suppresses the exceptional-output review gate", async () => {
+  const plan = makePlan(20);
+  const prompts = Array.from({ length: 20 }, (_, index) => makePrompt(index + 1));
+  const store = new MemoryRunStore();
+  const result = await runApprovedBatch(makeRunOptions({
+    plan,
+    prompts,
+    store,
+    adapters: { openai: { execute: async () => successfulResponse() } },
+    grader: () => ({
+      status: "inconclusive",
+      reasons: ["review needed"],
+      failure_categories: ["uncertainty"],
+      manual_review_required: true,
+    }),
+  }));
+  store.writeReport("b01", {
+    ...result.report,
+    review_gate: { required: false, reasons: [] },
+  });
+
+  const failures = checkRunState({ plan, prompts, store }).failures.join("\n");
+
+  assert.match(failures, /report review_gate does not match run counts/);
 });
 
 test("run checker rejects duplicate attempt numbers and a false complete checkpoint", () => {

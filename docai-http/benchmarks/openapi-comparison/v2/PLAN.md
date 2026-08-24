@@ -2,7 +2,7 @@
 
 Plan ID: `docai-http-openapi-comparison-v2`
 
-Status: frozen as `2.0.0-frozen.2` on 2026-08-24
+Status: frozen as `2.0.0-frozen.3` on 2026-08-24
 
 Created: 2026-07-21
 
@@ -10,6 +10,12 @@ This plan was frozen before the first Live LLM request. Any
 change to a task, prompt, output contract, grader, context, model panel,
 repetition count, exclusion rule, or analysis method creates a new plan version
 and invalidates unreported mixed-plan runs.
+
+`2.0.0-frozen.3` supersedes `2.0.0-frozen.2`. The first four `b01` responses
+from the earlier plan exposed a literal-placeholder grader defect and a runner
+that applied the 5% review rule during a batch instead of at its boundary. The
+attempts remain retained for audit but are excluded from primary analysis; see
+`EXECUTION-LOG.md`.
 
 ## Purpose And Claim Boundaries
 
@@ -184,6 +190,9 @@ Stop the pilot for review before another batch if cumulative malformed plus
 inconclusive records exceed 5%, any condition is missing paired records, a
 source-fact parity audit fails, or a model/condition combination has a systemic
 parser failure. A low pass rate by itself is a result, not a reason to rerun.
+The 5% threshold is evaluated in the completed batch report and does not stop
+the current batch midway. Immediate fixture, parser, or grader defects remain
+separate stop conditions.
 
 ## Analysis
 

@@ -142,6 +142,7 @@ export function collectFreezeArtifacts({
   addFiles(artifacts, repositoryRoot, "execution-plan", [
     path.join(benchmarkDir, "plan.json"),
     path.join(benchmarkDir, "PLAN.md"),
+    path.join(benchmarkDir, "EXECUTION-LOG.md"),
     path.join(benchmarkDir, "ARTIFACT-CONTRACT.md"),
     path.join(benchmarkDir, "MODEL-COST-PREFLIGHT.md"),
     path.join(toolsDir, "build-openapi-comparison-v2-schedule.mjs"),

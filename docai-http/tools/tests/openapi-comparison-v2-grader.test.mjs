@@ -55,6 +55,32 @@ test("grades equals, nested contains, absent, and set_equals assertions", () => 
   });
 });
 
+test("matches HTTP header contracts without requiring literal placeholder text", () => {
+  const content = {
+    request: {
+      headers: {
+        authorization: "Bearer actual-access-token",
+        "content-type": "application/json",
+        Accept: "application/json",
+        "Idempotency-Key": "f4d77264-7df8-4f61-b50a-e92830f3478d",
+      },
+    },
+  };
+  const assertion = {
+    path: "/request/headers",
+    operator: "header_contains",
+    value: {
+      Authorization: "Bearer <access_token>",
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      "Idempotency-Key": "<operation-unique-key>",
+    },
+    failure_category: "request-headers",
+  };
+
+  assert.deepEqual(evaluateAssertion(content, assertion), { pass: true, reason: "" });
+});
+
 test("reports every failed assertion category", () => {
   const task = taskFor("response-handling.v1", [
     {

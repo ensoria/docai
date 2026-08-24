@@ -1,8 +1,8 @@
 {
   "estimate_version": "1",
   "benchmark_id": "docai-http-openapi-comparison-v2",
-  "plan_version": "2.0.0-frozen.2",
-  "estimated_at": "2026-08-24T06:29:55Z",
+  "plan_version": "2.0.0-frozen.3",
+  "estimated_at": "2026-08-24T07:28:03Z",
   "currency": "USD",
   "methodology": {
     "input_tokens_estimate": "Deterministic ceil(characters / 4) for the complete rendered prompt.",
@@ -343,7 +343,7 @@
       "input_tokens_estimate": 186189,
       "input_tokens_ceiling": 204843,
       "output_tokens_ceiling": 294912,
-      "cost_ceiling_usd": 5.80963,
+      "cost_ceiling_usd": 5.809629,
       "targets": [
         {
           "target_id": "openai-frontier",

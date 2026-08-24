@@ -1,7 +1,7 @@
 {
   "resolution_version": "1",
   "benchmark_id": "docai-http-openapi-comparison-v2",
-  "plan_version": "2.0.0-frozen.2",
+  "plan_version": "2.0.0-frozen.3",
   "status": "frozen",
   "catalog_checked_on": "2026-08-24",
   "pricing_currency": "USD",

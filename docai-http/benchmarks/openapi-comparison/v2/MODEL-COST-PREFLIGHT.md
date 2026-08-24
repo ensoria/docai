@@ -6,7 +6,8 @@ not part of the DocAI HTTP `1.0.0` compatibility boundary.
 
 Catalog and price check date: 2026-08-24.
 
-Decision status: prompt-only JSON revision approved and frozen on 2026-08-24.
+Decision status: prompt-only JSON revision approved; corrected runner and grader
+frozen as `2.0.0-frozen.3` on 2026-08-24.
 
 ## Recommended Model Panel
 
@@ -116,6 +117,8 @@ The user approved:
 4. the conservative `$6.13` authorization for `b01`, which remains above the
    revised frozen estimate of `$6.124346`.
 
-This approval freezes the settings; it does not authorize a Live LLM request.
-Separate explicit approval remains required before executing `b01`, and again
-after every completed batch.
+The initial approval authorized `b01` under superseded `2.0.0-frozen.2`; four
+attempts consumed `$0.137860` before the diagnostic stop. The corrected
+`2.0.0-frozen.3` plan preserves the same request settings and `$6.124346` `b01`
+ceiling, but requires new explicit Live LLM approval because it has a new freeze
+identity. Separate approval remains required after every completed batch.

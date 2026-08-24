@@ -1,6 +1,6 @@
 {
   "benchmark_id": "docai-http-openapi-comparison-v2",
-  "plan_version": "2.0.0-frozen.2",
+  "plan_version": "2.0.0-frozen.3",
   "status": "frozen",
   "created_on": "2026-07-21",
   "compatibility_scope": "adoption evidence outside the DocAI HTTP 1.0.0 compatibility boundary",
@@ -152,9 +152,17 @@
     "separate_approval_required": true,
     "maximum_attempts_per_work_step": 100
   },
+  "supersession": {
+    "previous_plan_version": "2.0.0-frozen.2",
+    "source_commit": "6e8e3fdc6e3ffd8a5b02ee8caf628533b941ab19",
+    "reason": "The first four b01 responses exposed literal-placeholder grading and an incorrect mid-batch exceptional-output stop.",
+    "retained_private_run_path": "private/runs/2.0.0-frozen.2/b01",
+    "retained_attempts": 4,
+    "included_in_primary_analysis": false
+  },
   "freeze": {
     "manifest": "freeze-manifest.json",
-    "frozen_at": "2026-08-24T06:29:55Z",
+    "frozen_at": "2026-08-24T07:28:03Z",
     "required_artifact_classes": [
       "authoritative-sources",
       "docai-contexts",

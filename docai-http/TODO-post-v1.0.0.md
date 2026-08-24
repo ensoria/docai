@@ -94,6 +94,11 @@ future version before publication.
   provider/model targets, three repetitions, and four primary conditions, for
   exactly 648 primary live requests plus a separately approved limited
   full/compact ablation.
+- [x] Retain the four diagnostic `2.0.0-frozen.2` attempts as superseded
+  evidence, repair semantic header grading and the batch-boundary review gate,
+  and freeze the corrected pipeline as `2.0.0-frozen.3`.
+- [ ] Execute `b01` under `2.0.0-frozen.3` after renewed approval; do not count
+  the four superseded attempts in the 648 primary requests.
 - [x] Split the 648 primary requests into nine batches of 72 requests. One batch
   is one API, one repetition, six tasks, three models, and four conditions.
 - [x] Treat 100 attempted provider requests as a hard maximum for one work step;
@@ -114,7 +119,7 @@ future version before publication.
   or spend materially above the approved batch estimate.
 - [ ] Keep the full/compact ablation outside the nine primary batches and split
   it into separately estimated steps of at most 100 attempted requests.
-- [ ] Verify current model IDs in official provider catalogs immediately before
+- [x] Verify current model IDs in official provider catalogs immediately before
   execution and record exact resolved model or snapshot identifiers.
 - [x] Define deterministic rotation of condition order within API/task/model
   blocks; keep

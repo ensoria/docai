@@ -58,7 +58,7 @@
           },
           {
             "path": "/request/headers",
-            "operator": "contains",
+          "operator": "header_contains",
             "value": {
               "Authorization": "Bearer <access_token>",
               "Content-Type": "application/json",
@@ -174,7 +174,7 @@
           },
           {
             "path": "/request/headers",
-            "operator": "contains",
+          "operator": "header_contains",
             "value": {
               "Authorization": "Bearer <access_token>",
               "Accept": "application/json",

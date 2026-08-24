@@ -114,9 +114,6 @@ export async function runApprovedBatch({
   let skippedCompleted = 0;
   let stopReason = null;
   let rateLimits = existingAttempts.filter((attempt) => attempt.category === "rate_limit").length;
-  let exceptionalOutputs = existingRuns.filter((run) => (
-    run.status === "malformed" || run.status === "inconclusive"
-  )).length;
 
   for (const prompt of selected) {
     if (hasTerminalRun(store, batchId, prompt.run_id)) {
@@ -167,11 +164,6 @@ export async function runApprovedBatch({
       });
       if (recovery.stopReason) {
         stopReason = recovery.stopReason;
-        break;
-      }
-      if (["malformed", "inconclusive"].includes(recovery.run.status)) exceptionalOutputs += 1;
-      if (exceedsExceptionalOutputLimit(exceptionalOutputs, batch.planned_requests, plan)) {
-        stopReason = "malformed_plus_inconclusive_limit";
         break;
       }
       continue;
@@ -236,13 +228,6 @@ export async function runApprovedBatch({
         });
         if (finalized.stopReason) {
           stopReason = finalized.stopReason;
-          break;
-        }
-        if (["malformed", "inconclusive"].includes(finalized.run.status)) {
-          exceptionalOutputs += 1;
-        }
-        if (exceedsExceptionalOutputLimit(exceptionalOutputs, batch.planned_requests, plan)) {
-          stopReason = "malformed_plus_inconclusive_limit";
           break;
         }
         if (batchCostCeiling !== null) {
@@ -404,6 +389,8 @@ export function buildBatchReport({
   skippedCompleted = 0,
   priceByTarget = {},
 }) {
+  const batch = plan.execution.batches.find((candidate) => candidate.id === batchId);
+  if (!batch) throw new Error(`unknown batch ${batchId}`);
   const attempts = store.listAttempts(batchId);
   const runs = store.listRuns(batchId);
   const usage = attempts
@@ -430,6 +417,11 @@ export function buildBatchReport({
   for (const status of TERMINAL_STATUSES) {
     counts[status] = runs.filter((run) => run.status === status).length;
   }
+  const exceptionalOutputs = counts.malformed + counts.inconclusive;
+  const reviewReasons = [];
+  if (exceedsExceptionalOutputLimit(exceptionalOutputs, batch.planned_requests, plan)) {
+    reviewReasons.push("malformed_plus_inconclusive_limit");
+  }
   return {
     report_version: "1",
     benchmark_id: plan.benchmark_id,
@@ -449,6 +441,10 @@ export function buildBatchReport({
     ended_at: maximumTimestamp(attempts.map((attempt) => attempt.completed_at)),
     status: store.readCheckpoint(batchId)?.status ?? "pending",
     stop_reason: store.readCheckpoint(batchId)?.stop_reason ?? null,
+    review_gate: {
+      required: reviewReasons.length > 0,
+      reasons: reviewReasons,
+    },
     remaining_batches: plan.execution.batches.slice(batchIndex + 1).map((batch) => batch.id),
   };
 }

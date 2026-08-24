@@ -11,6 +11,7 @@
   "assertion_operators": [
     "equals",
     "contains",
+    "header_contains",
     "absent",
     "set_equals"
   ],
