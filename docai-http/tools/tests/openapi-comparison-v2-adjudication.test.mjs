@@ -28,9 +28,27 @@ test("builds a deterministic single-reviewer packet from inconclusive runs only"
   assert.equal(artifacts.sheet.includes("Decision records are edited in `decisions.jsonl`."), true);
 });
 
+test("renders an auditable Japanese sheet while preserving original evidence", () => {
+  const artifacts = buildAdjudicationArtifacts(fixtureInput());
+  const reviewCase = artifacts.packet.cases[0];
+
+  assert.match(artifacts.japaneseSheet, /^# 盲検手動判定シート/m);
+  assert.match(artifacts.japaneseSheet, /タスク（日本語）:/);
+  assert.match(artifacts.japaneseSheet, /ユーザー作成用の完全なHTTPリクエストを構築してください。/);
+  assert.match(artifacts.japaneseSheet, /Task \(original\): Construct the complete HTTP request/);
+  assert.equal(
+    artifacts.japaneseSheet.includes(JSON.stringify(reviewCase.expected_assertions, null, 2)),
+    true,
+  );
+  assert.equal(
+    artifacts.japaneseSheet.includes(JSON.stringify(reviewCase.model_output, null, 2)),
+    true,
+  );
+});
+
 test("reviewer artifacts redact documentation conditions, providers, models, and run identities", () => {
   const artifacts = buildAdjudicationArtifacts(fixtureInput());
-  const reviewerText = JSON.stringify(artifacts.packet) + artifacts.sheet;
+  const reviewerText = JSON.stringify(artifacts.packet) + artifacts.sheet + artifacts.japaneseSheet;
 
   [
     "run-openai-docai",
@@ -76,6 +94,7 @@ test("checker detects packet modification and invalid decision values", () => {
   modifiedPacket.cases[0].model_output = { changed: true };
   const decisions = structuredClone(artifacts.decisions);
   decisions[0].decision = "pass";
+  const japaneseSheet = artifacts.japaneseSheet.replace("盲検手動判定シート", "変更済み");
 
   const result = checkAdjudicationArtifacts({
     expected: artifacts,
@@ -83,10 +102,12 @@ test("checker detects packet modification and invalid decision values", () => {
     mapping: artifacts.mapping,
     decisions,
     sheet: artifacts.sheet,
+    japaneseSheet,
     requireComplete: false,
   });
 
   assert.match(result.failures.join("\n"), /review packet does not match/);
+  assert.match(result.failures.join("\n"), /Japanese review sheet does not match/);
   assert.match(result.failures.join("\n"), /invalid decision/);
 });
 
@@ -96,6 +117,10 @@ test("writer preserves an existing decision file", () => {
   try {
     writeAdjudicationArtifacts({ directory, artifacts });
     const decisionsFile = path.join(directory, "decisions.jsonl");
+    assert.equal(
+      fs.readFileSync(path.join(directory, "review-sheet.ja.md"), "utf8"),
+      artifacts.japaneseSheet,
+    );
     const retained = `${JSON.stringify({
       ...artifacts.decisions[0],
       decision: "correct",
@@ -146,9 +171,9 @@ function fixtureInput() {
     attempt("run-pass", { answer: "ok", uncertainties: [] }),
   ];
   const task = {
-    id: "task-one",
+    id: "create-user-request",
     public: {
-      user_task: "Construct the required client behavior.",
+      user_task: "Construct the complete HTTP request for creating a user named Taro Yamada with email taro@example.com. The operation may need a safe retry after an ambiguous network outcome.",
       output_contract: "contract.v1",
     },
     private: {
@@ -175,7 +200,7 @@ function prompt(runId, condition, targetId) {
     run_id: runId,
     batch_id: "b01",
     api_id: "api-one",
-    task_id: "task-one",
+    task_id: "create-user-request",
     condition,
     target_id: targetId,
   };
@@ -186,7 +211,7 @@ function run(runId, status) {
     run_id: runId,
     batch_id: "b01",
     api_id: "api-one",
-    task_id: "task-one",
+    task_id: "create-user-request",
     status,
     reasons: status === "inconclusive" ? ["/answer must equal expected"] : [],
     failure_categories: status === "inconclusive" ? ["answer"] : [],

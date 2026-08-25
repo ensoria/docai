@@ -24,6 +24,12 @@ The reviewer must not open `DO-NOT-SHARE-review-map.json`, the original run
 logs, prompt exports, or condition-specific documentation until every decision
 is final and the complete checker passes.
 
+`review-sheet.ja.md` is a reviewer-facing Japanese rendering of the same
+packet. It translates instructions, labels, and task prose, and retains the
+original English task immediately below the translation. Review IDs, case
+order, output contracts, expected assertions, model output, and automatic
+grader evidence are unchanged.
+
 ## Decision Rules
 
 For every case, compare the model output with the authoritative assertions.
@@ -51,11 +57,13 @@ node docai-http/tools/openapi-comparison-v2-adjudication.mjs \
   --batch b01 --write
 ```
 
-Open these two files side by side:
+Open the Japanese review sheet and the decision file side by side. The English
+sheet remains available for auditing the rendering:
 
 ```text
-docai-http/benchmarks/openapi-comparison/v2/private/adjudication/2.0.0-frozen.3/b01/review-sheet.md
+docai-http/benchmarks/openapi-comparison/v2/private/adjudication/2.0.0-frozen.3/b01/review-sheet.ja.md
 docai-http/benchmarks/openapi-comparison/v2/private/adjudication/2.0.0-frozen.3/b01/decisions.jsonl
+docai-http/benchmarks/openapi-comparison/v2/private/adjudication/2.0.0-frozen.3/b01/review-sheet.md
 ```
 
 The `review_id` connects each Markdown case to one JSONL decision record. Edit

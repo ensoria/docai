@@ -22,6 +22,32 @@ const PRIVATE_RUNS_DIR = path.join(PRIVATE_DIR, "runs");
 const ADJUDICATION_DIR = path.join(PRIVATE_DIR, "adjudication");
 const ALLOWED_DECISIONS = new Set(["pending", "correct", "incorrect", "unresolvable"]);
 const REVIEW_SEED = "20260721";
+const JAPANESE_TASK_TRANSLATIONS = new Map([
+  [
+    "Complete checkout for cart_01K0COMPLETE with a card payment for JPY 1200. Explain the ordered calls, values and idempotency keys to retain, recovery after an ambiguous order result, and reconciliation when payment.completed arrives before the order is confirmed.",
+    "cart_01K0COMPLETEに対し、JPY 1200のカード支払いでチェックアウトを完了してください。呼び出し順序、保持する値と冪等性キー、注文結果が不明な場合の復旧、および注文確定前にpayment.completedが到着した場合の照合について説明してください。",
+  ],
+  [
+    "Design error handling for creating a user when the email is already used, validation fails, the idempotency key conflicts, or the access token has expired. State whether and how each case may be retried.",
+    "メールアドレスがすでに使用されている場合、検証が失敗した場合、冪等性キーが競合した場合、またはアクセストークンの有効期限が切れた場合のユーザー作成エラー処理を設計してください。各ケースで再試行できるか、できる場合はその方法を示してください。",
+  ],
+  [
+    "Construct the complete HTTP request for creating a user named Taro Yamada with email taro@example.com. The operation may need a safe retry after an ambiguous network outcome.",
+    "Taro Yamadaという名前とtaro@example.comというメールアドレスを持つユーザー作成用の完全なHTTPリクエストを構築してください。この操作では、結果が不明なネットワーク障害の後に安全な再試行が必要になる場合があります。",
+  ],
+  [
+    "Implement a receiver for payment.completed. Describe the HTTP delivery, required header and payload handling, acknowledgement deadline, duplicate handling, opaque metadata treatment, and reconciliation with checkout when the event arrives early.",
+    "payment.completedの受信処理を実装してください。HTTP配信、必須headerとpayloadの処理、acknowledgement期限、重複処理、不透明なmetadataの扱い、およびcheckout中にeventが早く到着した場合の照合について説明してください。",
+  ],
+  [
+    "Handle the successful response from creating a checkout payment, including the values to retain and any follow-up workflow or webhook relationships.",
+    "チェックアウトの支払い作成に成功したresponseを処理してください。保持すべき値と、後続のworkflowまたはwebhookとの関係も含めてください。",
+  ],
+  [
+    "Construct the complete multipart HTTP request for uploading statement.pdf as a PDF with JSON metadata title Q2 statement and tags finance and quarterly. The operation may need a safe retry after an ambiguous network outcome.",
+    "statement.pdfをPDFとして、JSON metadataのtitleをQ2 statement、tagsをfinanceとquarterlyとしてアップロードする完全なmultipart HTTPリクエストを構築してください。この操作では、結果が不明なネットワーク障害の後に安全な再試行が必要になる場合があります。",
+  ],
+]);
 
 export function buildAdjudicationArtifacts({
   plan,
@@ -110,8 +136,9 @@ export function buildAdjudicationArtifacts({
     rationale: "",
   }));
   const sheet = renderReviewSheet(packet);
-  assertReviewerArtifactsAreBlinded({ packet, sheet, sensitiveStrings });
-  return { packet, mapping, decisions, sheet };
+  const japaneseSheet = renderJapaneseReviewSheet(packet);
+  assertReviewerArtifactsAreBlinded({ packet, sheet, japaneseSheet, sensitiveStrings });
+  return { packet, mapping, decisions, sheet, japaneseSheet };
 }
 
 export function checkAdjudicationArtifacts({
@@ -120,10 +147,11 @@ export function checkAdjudicationArtifacts({
   mapping,
   decisions,
   sheet,
+  japaneseSheet,
   requireComplete = false,
 }) {
   const failures = [];
-  const expectedArtifacts = expected ?? { packet, mapping, sheet };
+  const expectedArtifacts = expected ?? { packet, mapping, sheet, japaneseSheet };
   if (!sameJson(packet, expectedArtifacts.packet)) {
     failures.push("review packet does not match regenerated source records");
   }
@@ -132,6 +160,9 @@ export function checkAdjudicationArtifacts({
   }
   if (sheet !== expectedArtifacts.sheet) {
     failures.push("review sheet does not match regenerated packet");
+  }
+  if (japaneseSheet !== expectedArtifacts.japaneseSheet) {
+    failures.push("Japanese review sheet does not match regenerated packet");
   }
 
   const expectedIds = expectedArtifacts.packet?.cases?.map((entry) => entry.review_id) ?? [];
@@ -171,6 +202,7 @@ export function writeAdjudicationArtifacts({ directory, artifacts }) {
   writeJson(path.join(directory, "review-packet.json"), artifacts.packet);
   writeJson(path.join(directory, "DO-NOT-SHARE-review-map.json"), artifacts.mapping);
   fs.writeFileSync(path.join(directory, "review-sheet.md"), artifacts.sheet);
+  fs.writeFileSync(path.join(directory, "review-sheet.ja.md"), artifacts.japaneseSheet);
   const decisionsFile = path.join(directory, "decisions.jsonl");
   const decisionsCreated = !fs.existsSync(decisionsFile);
   if (decisionsCreated) writeJsonLines(decisionsFile, artifacts.decisions);
@@ -211,6 +243,7 @@ export function readAdjudicationArtifacts(directory) {
     mapping: readJson(path.join(directory, "DO-NOT-SHARE-review-map.json")),
     decisions: readJsonLines(path.join(directory, "decisions.jsonl")),
     sheet: fs.readFileSync(path.join(directory, "review-sheet.md"), "utf8"),
+    japaneseSheet: fs.readFileSync(path.join(directory, "review-sheet.ja.md"), "utf8"),
   };
 }
 
@@ -251,6 +284,59 @@ function renderReviewSheet(packet) {
       "````",
       "",
       "Automatic grader:",
+      "",
+      "````json",
+      JSON.stringify(entry.automatic_grader, null, 2),
+      "````",
+      "",
+    );
+  });
+  return `${lines.join("\n")}\n`;
+}
+
+function renderJapaneseReviewSheet(packet) {
+  const lines = [
+    "# 盲検手動判定シート",
+    "",
+    `プラン: \`${packet.plan_version}\``,
+    "",
+    `バッチ: \`${packet.batch_id}\``,
+    "",
+    `ケース数: ${packet.case_count}`,
+    "",
+    "自動採点結果が一次評価です。このレビューは二次評価であり、`inconclusive`（自動判定不能）のrecordだけを対象とします。",
+    "すべての判定が確定するまで`DO-NOT-SHARE-review-map.json`を開かないでください。",
+    "判定結果は`decisions.jsonl`で編集します。",
+    "`correct`、`incorrect`、`unresolvable`のいずれかを使用し、簡潔な根拠を記載してください。",
+    "",
+  ];
+  packet.cases.forEach((entry, index) => {
+    const translatedTask = JAPANESE_TASK_TRANSLATIONS.get(entry.user_task);
+    if (!translatedTask) {
+      throw new Error(`missing Japanese task translation for ${entry.task_id}`);
+    }
+    lines.push(
+      `## ケース ${index + 1}: ${entry.review_id}`,
+      "",
+      `タスク（日本語）: ${translatedTask}`,
+      "",
+      `Task (original): ${entry.user_task}`,
+      "",
+      `出力契約: \`${entry.output_contract}\``,
+      "",
+      "期待される条件（assertion）:",
+      "",
+      "````json",
+      JSON.stringify(entry.expected_assertions, null, 2),
+      "````",
+      "",
+      "モデル出力:",
+      "",
+      "````json",
+      JSON.stringify(entry.model_output, null, 2),
+      "````",
+      "",
+      "自動採点結果:",
       "",
       "````json",
       JSON.stringify(entry.automatic_grader, null, 2),
@@ -304,8 +390,8 @@ function redactReviewerString(value, sensitiveStrings) {
   return result;
 }
 
-function assertReviewerArtifactsAreBlinded({ packet, sheet, sensitiveStrings }) {
-  const text = `${JSON.stringify(packet)}\n${sheet}`;
+function assertReviewerArtifactsAreBlinded({ packet, sheet, japaneseSheet, sensitiveStrings }) {
+  const text = `${JSON.stringify(packet)}\n${sheet}\n${japaneseSheet}`;
   sensitiveStrings.forEach((sensitive) => {
     if (new RegExp(escapeRegExp(sensitive), "i").test(text)) {
       throw new Error(`reviewer artifact leaks blinded value ${sensitive}`);
