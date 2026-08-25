@@ -18,6 +18,11 @@ authorized while that review is open. Four retained attempts from superseded
 `2.0.0-frozen.2` are excluded from primary analysis as recorded in
 `EXECUTION-LOG.md`.
 
+The 51 inconclusive `b01` records have been exported as a deterministic,
+condition/provider/model-blinded packet for one-reviewer adjudication. Follow
+`MANUAL-ADJUDICATION.md`; `b02` remains unauthorized until that review and the
+separate malformed-output stop/go review are complete.
+
 Run the frozen-plan checker from the repository root:
 
 ```sh
@@ -106,6 +111,13 @@ private run state without making provider requests:
 node docai-http/tools/check-openapi-comparison-v2-runs.mjs
 ```
 
+Inspect the current `b01` adjudication progress without sending provider
+requests:
+
+```sh
+node docai-http/tools/check-openapi-comparison-v2-adjudication.mjs --batch b01
+```
+
 Before a provider call, the runner independently validates the frozen manifest,
 all frozen generated outputs, and private source parity. It also requires one
 matching command-line batch approval and the
@@ -143,6 +155,8 @@ authorize a later batch.
 - `ARTIFACT-CONTRACT.md` defines the public/private split and the evidence
   required to freeze the plan.
 - `IMPLEMENTATION.md` tracks the test-first implementation sequence.
+- `MANUAL-ADJUDICATION.md` defines the blinded one-reviewer procedure and
+  completion gate for automatically inconclusive records.
 - `model-resolutions.json` records the approved model IDs, request settings,
   and conservative standard token prices.
 - `cost-estimate.json` records whole-pilot and per-batch token and cost ceilings.

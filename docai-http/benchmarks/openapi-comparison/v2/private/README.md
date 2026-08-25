@@ -24,6 +24,11 @@ provider account identifiers, billing balances, or unrelated secrets here.
 After all batches close, review and redact the artifacts before deliberately
 moving publishable evidence out of this ignored directory.
 
+For a completed batch whose review gate is open, follow
+`../MANUAL-ADJUDICATION.md`. The generated `review-sheet.md` and
+`decisions.jsonl` are reviewer-facing. Keep
+`DO-NOT-SHARE-review-map.json` concealed until every decision is final.
+
 Require and validate all locally available private packets:
 
 ```sh

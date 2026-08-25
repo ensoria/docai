@@ -103,6 +103,12 @@ future version before publication.
   automated outcomes as primary, adjudicate only the 51 inconclusive records
   with condition-blinded identifiers, and assess the 12 malformed outputs
   (including 9 from Google) as a provider/output-format reliability signal.
+- [x] Select one reviewer and implement the condition/provider/model-blinded
+  adjudication packet, decision template, and reproducibility checker.
+- [x] Generate the deterministic `b01` packet containing all 51 inconclusive
+  records and verify that all decisions begin as `pending`.
+- [ ] Complete and validate all 51 `b01` adjudication decisions, then record
+  that inter-rater agreement was not measured because one reviewer was used.
 - [x] Split the 648 primary requests into nine batches of 72 requests. One batch
   is one API, one repetition, six tasks, three models, and four conditions.
 - [x] Treat 100 attempted provider requests as a hard maximum for one work step;
