@@ -1,0 +1,29 @@
+{
+  "docai_messaging": "0.17.1",
+  "cases": [
+    {
+      "caseId": "generator-validation-misclassified",
+      "messageName": "source-example-message",
+      "mediaType": "application/json",
+      "sourceLocation": "source.json#/components/schemas/SourceExample",
+      "sourceExampleSource": "5",
+      "sourceSchema": {
+        "type": "number",
+        "nullable": false,
+        "constraints": [
+          { "keyword": "minimum", "valueSource": "0" },
+          { "keyword": "maximum", "valueSource": "10" }
+        ]
+      },
+      "generatorCapabilities": {
+        "produceExample": false,
+        "validateExample": false
+      },
+      "projected": {
+        "outcome": "replacement-unsupported",
+        "reason": "provably-empty-supported-schema",
+        "replacement": "**unsupported**: replaces payload representation source-example-message 16:application/json: effective supported schema permits no valid decoded instance at source.json#/components/schemas/SourceExample"
+      }
+    }
+  ]
+}

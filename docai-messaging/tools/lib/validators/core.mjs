@@ -1,6 +1,6 @@
 import { diagnostic } from "../diagnostics.mjs";
 import { isDeepStrictEqual } from "node:util";
-import { parseExactJson } from "../json-value.mjs";
+import { compareExactJsonNumbers, parseExactJson } from "../json-value.mjs";
 import { scanMarkdown } from "../markdown.mjs";
 import { canonicalizeMediaType } from "../media-type.mjs";
 import { parseDocsPath } from "../paths.mjs";
@@ -499,6 +499,117 @@ export function validateSchemaFieldSourceExpectations(scenario, { file = "source
         `Schema field projection disagrees with ${mismatches.length} exact default or format expectation(s).`
       )],
     facts: { schemaFieldSourceExpectations: expectations }
+  };
+}
+
+const NUMERIC_LOWER_BOUNDS = new Set(["minimum", "exclusiveMinimum"]);
+const NUMERIC_UPPER_BOUNDS = new Set(["maximum", "exclusiveMaximum"]);
+const NUMERIC_SCHEMA_TYPES = new Set(["integer", "number"]);
+
+function sourceSchemaProvablyEmpty(sourceSchema) {
+  if (!NUMERIC_SCHEMA_TYPES.has(sourceSchema?.type)
+    || sourceSchema?.nullable === true
+    || !Array.isArray(sourceSchema?.constraints)) return false;
+  const constraints = sourceSchema.constraints.flatMap((constraint) => {
+    if (typeof constraint?.keyword !== "string" || typeof constraint?.valueSource !== "string") return [];
+    try {
+      return [{ keyword: constraint.keyword, value: parseExactJson(constraint.valueSource) }];
+    } catch {
+      return [];
+    }
+  });
+  const lower = constraints.filter((constraint) => NUMERIC_LOWER_BOUNDS.has(constraint.keyword));
+  const upper = constraints.filter((constraint) => NUMERIC_UPPER_BOUNDS.has(constraint.keyword));
+  for (const minimum of lower) {
+    for (const maximum of upper) {
+      const comparison = compareExactJsonNumbers(minimum.value, maximum.value);
+      if (comparison > 0 || (comparison === 0
+        && (minimum.keyword === "exclusiveMinimum" || maximum.keyword === "exclusiveMaximum"))) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+function schemaExampleSourceExpectation(entry) {
+  if (sourceSchemaProvablyEmpty(entry.sourceSchema)) {
+    if (typeof entry.sourceExampleSource === "string") {
+      return {
+        caseId: entry.caseId,
+        outcome: "generation-failure",
+        reason: "authoritative-conflict",
+        replacement: null
+      };
+    }
+    if (typeof entry.sourceLocation !== "string" || entry.sourceLocation.length === 0) {
+      return {
+        caseId: entry.caseId,
+        outcome: "generation-failure",
+        reason: "publication-safe-source-location-unavailable",
+        replacement: null
+      };
+    }
+    const mediaType = String(entry.mediaType);
+    return {
+      caseId: entry.caseId,
+      outcome: "replacement-unsupported",
+      reason: "provably-empty-supported-schema",
+      replacement: `**unsupported**: replaces payload representation ${entry.messageName} ${Buffer.byteLength(mediaType, "utf8")}:${mediaType}: effective supported schema permits no valid decoded instance at ${entry.sourceLocation}`
+    };
+  }
+  const capabilities = entry.generatorCapabilities ?? {};
+  if (typeof entry.sourceExampleSource !== "string" && capabilities.produceExample !== true) {
+    return {
+      caseId: entry.caseId,
+      outcome: "generation-failure",
+      reason: "generator-example-production-capability-unavailable",
+      replacement: null
+    };
+  }
+  if (capabilities.validateExample !== true) {
+    return {
+      caseId: entry.caseId,
+      outcome: "generation-failure",
+      reason: "generator-example-validation-capability-unavailable",
+      replacement: null
+    };
+  }
+  return {
+    caseId: entry.caseId,
+    outcome: "example-ready",
+    reason: null,
+    replacement: null
+  };
+}
+
+export function evaluateSchemaExampleSourceExpectations(scenario) {
+  return (scenario.cases ?? [])
+    .map(schemaExampleSourceExpectation)
+    .sort((left, right) => left.caseId < right.caseId ? -1 : left.caseId > right.caseId ? 1 : 0);
+}
+
+export function validateSchemaExampleSourceExpectations(scenario, { file = "source-input.json" } = {}) {
+  const expectations = evaluateSchemaExampleSourceExpectations(scenario);
+  const byCaseId = new Map((scenario.cases ?? []).map((entry) => [entry.caseId, entry]));
+  const mismatches = expectations.filter((expected) => {
+    const projected = byCaseId.get(expected.caseId)?.projected;
+    return !isDeepStrictEqual(projected, {
+      outcome: expected.outcome,
+      reason: expected.reason,
+      replacement: expected.replacement
+    });
+  });
+  return {
+    diagnostics: mismatches.length === 0
+      ? []
+      : [diagnostic(
+        "DM-MSG-005",
+        file,
+        1,
+        `Schema example projection disagrees with ${mismatches.length} satisfiability or generator-capability expectation(s).`
+      )],
+    facts: { schemaExampleSourceExpectations: expectations }
   };
 }
 

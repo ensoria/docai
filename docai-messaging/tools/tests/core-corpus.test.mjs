@@ -215,6 +215,12 @@ const payloadConstraintAndFormatCaseIds = [
   "schema-custom-format-projection-invalid"
 ];
 
+const schemaExampleProjectionCaseIds = [
+  "payload-unsatisfiable-constraints-replacement-valid",
+  "schema-example-projection-invalid",
+  "schema-example-projection-valid"
+];
+
 const partialCollectionSourceCaseIds = [
   "partial-collection-no-sibling-form-invalid",
   "partial-collection-source-valid",
@@ -365,6 +371,13 @@ function validateCase(fixturePath, fixtureCase) {
   if (fixtureCase.kind === "schema-field-source-scenario") {
     const scenario = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
     return coreValidator.validateSchemaFieldSourceExpectations(
+      scenario,
+      { file: fixtureCase.path }
+    );
+  }
+  if (fixtureCase.kind === "schema-example-source-scenario") {
+    const scenario = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
+    return coreValidator.validateSchemaExampleSourceExpectations(
       scenario,
       { file: fixtureCase.path }
     );
@@ -1841,6 +1854,78 @@ test("executes the Task 9 DM-MSG-005 DM-CONV-003 exact-constraint default and fo
   }
 });
 
+test("executes the Task 9 DM-MSG-004 DM-MSG-005 schema example projection corpus", () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
+  const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
+
+  assert.deepEqual(
+    schemaExampleProjectionCaseIds.filter((id) => !byId.has(id)),
+    []
+  );
+
+  const sourceCase = byId.get("schema-example-projection-valid");
+  const source = validateCase(path.join(corpusPath, sourceCase.path), sourceCase);
+  assert.deepEqual(source.diagnostics, []);
+  assert.deepEqual(source.facts.schemaExampleSourceExpectations, [
+    {
+      caseId: "contradictory-bounds-example-conflict",
+      outcome: "generation-failure",
+      reason: "authoritative-conflict",
+      replacement: null
+    },
+    {
+      caseId: "contradictory-bounds-location-unavailable",
+      outcome: "generation-failure",
+      reason: "publication-safe-source-location-unavailable",
+      replacement: null
+    },
+    {
+      caseId: "contradictory-bounds-replacement",
+      outcome: "replacement-unsupported",
+      reason: "provably-empty-supported-schema",
+      replacement: "**unsupported**: replaces payload representation empty-schema-message 16:application/json: effective supported schema permits no valid decoded instance at source.json#/components/schemas/Empty"
+    },
+    {
+      caseId: "generator-example-production-unavailable",
+      outcome: "generation-failure",
+      reason: "generator-example-production-capability-unavailable",
+      replacement: null
+    },
+    {
+      caseId: "generator-example-validation-unavailable",
+      outcome: "generation-failure",
+      reason: "generator-example-validation-capability-unavailable",
+      replacement: null
+    },
+    {
+      caseId: "nonnumeric-bounds-not-empty",
+      outcome: "generation-failure",
+      reason: "generator-example-production-capability-unavailable",
+      replacement: null
+    }
+  ]);
+
+  const replacementCase = byId.get("payload-unsatisfiable-constraints-replacement-valid");
+  const replacement = validateCase(
+    path.join(corpusPath, replacementCase.path),
+    replacementCase
+  );
+  assert.deepEqual(replacement.diagnostics, []);
+
+  const invalidCase = byId.get("schema-example-projection-invalid");
+  const invalid = validateCase(path.join(corpusPath, invalidCase.path), invalidCase);
+  const primary = invalid.diagnostics.filter((entry) => (
+    entry.severity === "error" && !entry.cascade
+  ));
+  assert.deepEqual(primary.map((entry) => entry.ruleId), ["DM-MSG-005"]);
+  assert.equal(primary[0].message.includes("source-example-message"), false);
+  assert.equal(primary[0].message.includes("generator-validation-misclassified"), false);
+  assert.equal(primary[0].message.includes("5"), false);
+
+  const result = runFixtureCorpus(corpusPath, validateCase);
+  assert.equal(result.failed, 0, result.report);
+});
+
 test("executes partial-collection source scenarios", () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
   const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
@@ -2728,7 +2813,7 @@ test("executes the Task 9 DM-INC-003 implementation-readiness capability matrix"
 
 test("audits every Task 9 invalid fixture as one primary concern", () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
-  assert.equal(manifest.cases.length, 199);
+  assert.equal(manifest.cases.length, 202);
   const result = runFixtureCorpus(corpusPath, validateCase);
   assert.equal(result.failed, 0, result.report);
   const audit = auditFixtureOneInvalidity({
@@ -2736,5 +2821,5 @@ test("audits every Task 9 invalid fixture as one primary concern", () => {
     corpusCases: result.cases
   });
 
-  assert.deepEqual(audit, { passed: true, audited: 148, errors: [] });
+  assert.deepEqual(audit, { passed: true, audited: 149, errors: [] });
 });

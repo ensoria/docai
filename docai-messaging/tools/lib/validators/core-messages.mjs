@@ -1,5 +1,5 @@
 import { diagnostic } from "../diagnostics.mjs";
-import { equalExactJson, parseExactJson } from "../json-value.mjs";
+import { compareExactJsonNumbers, equalExactJson, parseExactJson } from "../json-value.mjs";
 import { scanMarkdown } from "../markdown.mjs";
 import { canonicalizeMediaType } from "../media-type.mjs";
 import { validateSentenceLine } from "../sentence.mjs";
@@ -562,30 +562,6 @@ function exactNumber(value) {
   return value !== null && typeof value === "object" && value.kind === "number";
 }
 
-function compareExactNumbers(left, right) {
-  if (!exactNumber(left) || !exactNumber(right)) return null;
-  if (left.sign !== right.sign) return left.sign < right.sign ? -1 : 1;
-  if (left.sign === 0) return 0;
-  const leftOrder = BigInt(left.coefficient.length) + left.exponent;
-  const rightOrder = BigInt(right.coefficient.length) + right.exponent;
-  let magnitude;
-  if (leftOrder !== rightOrder) {
-    magnitude = leftOrder < rightOrder ? -1 : 1;
-  } else {
-    const length = Math.max(left.coefficient.length, right.coefficient.length);
-    magnitude = 0;
-    for (let index = 0; index < length; index += 1) {
-      const leftDigit = left.coefficient[index] ?? "0";
-      const rightDigit = right.coefficient[index] ?? "0";
-      if (leftDigit !== rightDigit) {
-        magnitude = leftDigit < rightDigit ? -1 : 1;
-        break;
-      }
-    }
-  }
-  return left.sign < 0 ? -magnitude : magnitude;
-}
-
 function positiveExactNumber(value) {
   return exactNumber(value) && value.sign > 0;
 }
@@ -627,7 +603,7 @@ function compareCountToExact(count, exact) {
   const value = count === 0
     ? { kind: "number", sign: 0, coefficient: "0", exponent: 0n }
     : { kind: "number", sign: 1, coefficient: String(count), exponent: 0n };
-  return compareExactNumbers(value, exact);
+  return compareExactJsonNumbers(value, exact);
 }
 
 function satisfiesConstraints(value, fragments) {
@@ -638,7 +614,7 @@ function satisfiesConstraints(value, fragments) {
       if (!Array.isArray(constraint) || !constraint.some((entry) => equalExactJson(value, entry))) return false;
     }
     if (["minimum", "exclusiveMinimum", "maximum", "exclusiveMaximum"].includes(fragment.keyword)) {
-      const comparison = compareExactNumbers(value, constraint);
+      const comparison = compareExactJsonNumbers(value, constraint);
       if (comparison === null) return false;
       if (fragment.keyword === "minimum" && comparison < 0) return false;
       if (fragment.keyword === "exclusiveMinimum" && comparison <= 0) return false;
@@ -717,7 +693,7 @@ function constraintsSatisfiable(fragments, nullable) {
   const upper = ["maximum", "exclusiveMaximum"].flatMap((name) => byName.has(name) ? [byName.get(name)] : []);
   for (const minimum of lower) {
     for (const maximum of upper) {
-      const comparison = compareExactNumbers(minimum.value, maximum.value);
+      const comparison = compareExactJsonNumbers(minimum.value, maximum.value);
       if (comparison > 0 || (comparison === 0
         && (minimum.keyword === "exclusiveMinimum" || maximum.keyword === "exclusiveMaximum"))) return false;
     }
@@ -728,7 +704,7 @@ function constraintsSatisfiable(fragments, nullable) {
     ["minProperties", "maxProperties"]
   ]) {
     if (byName.has(minimumName) && byName.has(maximumName)
-      && compareExactNumbers(byName.get(minimumName).value, byName.get(maximumName).value) > 0) return false;
+      && compareExactJsonNumbers(byName.get(minimumName).value, byName.get(maximumName).value) > 0) return false;
   }
   const other = fragments.filter((fragment) => fragment.keyword !== "const");
   if (byName.has("const") && !satisfiesConstraints(byName.get("const").value, other)) return false;

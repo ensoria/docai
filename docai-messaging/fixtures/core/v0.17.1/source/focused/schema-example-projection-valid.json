@@ -1,0 +1,142 @@
+{
+  "docai_messaging": "0.17.1",
+  "cases": [
+    {
+      "caseId": "contradictory-bounds-replacement",
+      "messageName": "empty-schema-message",
+      "mediaType": "application/json",
+      "sourceLocation": "source.json#/components/schemas/Empty",
+      "sourceSchema": {
+        "type": "number",
+        "nullable": false,
+        "constraints": [
+          { "keyword": "minimum", "valueSource": "10" },
+          { "keyword": "maximum", "valueSource": "5" }
+        ]
+      },
+      "generatorCapabilities": {
+        "produceExample": false,
+        "validateExample": false
+      },
+      "projected": {
+        "outcome": "replacement-unsupported",
+        "reason": "provably-empty-supported-schema",
+        "replacement": "**unsupported**: replaces payload representation empty-schema-message 16:application/json: effective supported schema permits no valid decoded instance at source.json#/components/schemas/Empty"
+      }
+    },
+    {
+      "caseId": "contradictory-bounds-example-conflict",
+      "messageName": "conflicting-example-message",
+      "mediaType": "application/json",
+      "sourceLocation": "source.json#/components/schemas/EmptyWithExample",
+      "sourceExampleSource": "7",
+      "sourceSchema": {
+        "type": "number",
+        "nullable": false,
+        "constraints": [
+          { "keyword": "minimum", "valueSource": "10" },
+          { "keyword": "maximum", "valueSource": "5" }
+        ]
+      },
+      "generatorCapabilities": {
+        "produceExample": true,
+        "validateExample": true
+      },
+      "projected": {
+        "outcome": "generation-failure",
+        "reason": "authoritative-conflict",
+        "replacement": null
+      }
+    },
+    {
+      "caseId": "contradictory-bounds-location-unavailable",
+      "messageName": "missing-location-message",
+      "mediaType": "application/json",
+      "sourceSchema": {
+        "type": "number",
+        "nullable": false,
+        "constraints": [
+          { "keyword": "minimum", "valueSource": "10" },
+          { "keyword": "maximum", "valueSource": "5" }
+        ]
+      },
+      "generatorCapabilities": {
+        "produceExample": true,
+        "validateExample": true
+      },
+      "projected": {
+        "outcome": "generation-failure",
+        "reason": "publication-safe-source-location-unavailable",
+        "replacement": null
+      }
+    },
+    {
+      "caseId": "nonnumeric-bounds-not-empty",
+      "messageName": "string-message",
+      "mediaType": "application/json",
+      "sourceLocation": "source.json#/components/schemas/StringWithIgnoredBounds",
+      "sourceSchema": {
+        "type": "string",
+        "nullable": false,
+        "constraints": [
+          { "keyword": "minimum", "valueSource": "10" },
+          { "keyword": "maximum", "valueSource": "5" }
+        ]
+      },
+      "generatorCapabilities": {
+        "produceExample": false,
+        "validateExample": true
+      },
+      "projected": {
+        "outcome": "generation-failure",
+        "reason": "generator-example-production-capability-unavailable",
+        "replacement": null
+      }
+    },
+    {
+      "caseId": "generator-example-production-unavailable",
+      "messageName": "generated-example-message",
+      "mediaType": "application/json",
+      "sourceSchema": {
+        "type": "number",
+        "nullable": false,
+        "constraints": [
+          { "keyword": "minimum", "valueSource": "0" },
+          { "keyword": "maximum", "valueSource": "10" }
+        ]
+      },
+      "generatorCapabilities": {
+        "produceExample": false,
+        "validateExample": true
+      },
+      "projected": {
+        "outcome": "generation-failure",
+        "reason": "generator-example-production-capability-unavailable",
+        "replacement": null
+      }
+    },
+    {
+      "caseId": "generator-example-validation-unavailable",
+      "messageName": "source-example-message",
+      "mediaType": "application/json",
+      "sourceExampleSource": "5",
+      "sourceSchema": {
+        "type": "number",
+        "nullable": false,
+        "constraints": [
+          { "keyword": "minimum", "valueSource": "0" },
+          { "keyword": "maximum", "valueSource": "10" }
+        ]
+      },
+      "generatorCapabilities": {
+        "produceExample": false,
+        "validateExample": false
+      },
+      "projected": {
+        "outcome": "generation-failure",
+        "reason": "generator-example-validation-capability-unavailable",
+        "replacement": null
+      }
+    }
+  ]
+}

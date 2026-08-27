@@ -202,6 +202,30 @@ export function parseExactJson(source) {
   return new ExactJsonParser(source).parse();
 }
 
+export function compareExactJsonNumbers(left, right) {
+  if (!isNumberTuple(left) || !isNumberTuple(right)) return null;
+  if (left.sign !== right.sign) return left.sign < right.sign ? -1 : 1;
+  if (left.sign === 0) return 0;
+  const leftOrder = BigInt(left.coefficient.length) + left.exponent;
+  const rightOrder = BigInt(right.coefficient.length) + right.exponent;
+  let magnitude;
+  if (leftOrder !== rightOrder) {
+    magnitude = leftOrder < rightOrder ? -1 : 1;
+  } else {
+    const length = Math.max(left.coefficient.length, right.coefficient.length);
+    magnitude = 0;
+    for (let index = 0; index < length; index += 1) {
+      const leftDigit = left.coefficient[index] ?? "0";
+      const rightDigit = right.coefficient[index] ?? "0";
+      if (leftDigit !== rightDigit) {
+        magnitude = leftDigit < rightDigit ? -1 : 1;
+        break;
+      }
+    }
+  }
+  return left.sign < 0 ? -magnitude : magnitude;
+}
+
 export function equalExactJson(left, right) {
   if (left === right) return true;
   if (isNumberTuple(left) || isNumberTuple(right)) {

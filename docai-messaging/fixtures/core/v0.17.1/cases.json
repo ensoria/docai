@@ -850,6 +850,13 @@
       "expected_rule_ids": ["DM-MSG-004"]
     },
     {
+      "id": "payload-unsatisfiable-constraints-replacement-valid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/valid/payload-unsatisfiable-constraints-replacement-valid",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
       "id": "payload-wire-and-raw-boundaries-valid",
       "kind": "task-scoped-document-set",
       "path": "focused/valid/payload-wire-and-raw-boundaries-valid",
@@ -1142,6 +1149,20 @@
       "path": "source/focused/schema-custom-format-projection-invalid.json",
       "expected": "invalid",
       "expected_rule_ids": ["DM-MSG-005"]
+    },
+    {
+      "id": "schema-example-projection-invalid",
+      "kind": "schema-example-source-scenario",
+      "path": "source/focused/schema-example-projection-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-MSG-005"]
+    },
+    {
+      "id": "schema-example-projection-valid",
+      "kind": "schema-example-source-scenario",
+      "path": "source/focused/schema-example-projection-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": []
     },
     {
       "id": "partial-collection-no-sibling-form-invalid",
