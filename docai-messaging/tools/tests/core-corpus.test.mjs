@@ -12,6 +12,7 @@ import {
   auditFixtureOneInvalidity,
   runFixtureCorpus
 } from "../lib/fixture-runner.mjs";
+import { scanMarkdown } from "../lib/markdown.mjs";
 import { parseOpeningMetadata } from "../lib/metadata.mjs";
 import { validateSentenceLine } from "../lib/sentence.mjs";
 import * as coreValidator from "../lib/validators/core.mjs";
@@ -217,6 +218,8 @@ const payloadConstraintAndFormatCaseIds = [
 
 const schemaExampleProjectionCaseIds = [
   "payload-unsatisfiable-constraints-replacement-valid",
+  "payload-valid-example-values-constraint-invalid",
+  "payload-valid-example-values-unknown-valid",
   "schema-example-projection-invalid",
   "schema-example-projection-valid"
 ];
@@ -1912,6 +1915,42 @@ test("executes the Task 9 DM-MSG-004 DM-MSG-005 schema example projection corpus
   );
   assert.deepEqual(replacement.diagnostics, []);
 
+  const illustrativeCase = byId.get("payload-valid-example-values-unknown-valid");
+  const illustrative = validateCase(
+    path.join(corpusPath, illustrativeCase.path),
+    illustrativeCase
+  );
+  assert.deepEqual(illustrative.diagnostics, []);
+
+  const constraintInvalidCase = byId.get("payload-valid-example-values-constraint-invalid");
+  const constraintInvalid = validateCase(
+    path.join(corpusPath, constraintInvalidCase.path),
+    constraintInvalidCase
+  );
+  const constraintInvalidPrimary = constraintInvalid.diagnostics.filter((entry) => (
+    entry.severity === "error" && !entry.cascade
+  ));
+  assert.deepEqual(constraintInvalidPrimary.map((entry) => entry.ruleId), ["DM-MSG-005"]);
+
+  const expectedMarker = "**unknown**: valid example values require representative business quantity samples at source.json#/examples/quantity";
+  for (const fixtureCase of [illustrativeCase, constraintInvalidCase]) {
+    const documentSet = loadDocumentSet(path.join(corpusPath, fixtureCase.path));
+    assert.deepEqual(documentSet.files.map((file) => ({
+      knowledge: file.metadata?.knowledge,
+      path: file.path
+    })), [
+      { knowledge: "complete", path: "CONVENTIONS.md" },
+      { knowledge: "requires-input", path: "INDEX.md" },
+      { knowledge: "requires-input", path: "channels/example.md" }
+    ]);
+    const channel = documentSet.files.find((file) => file.path === "channels/example.md");
+    const markdown = scanMarkdown({ text: channel.content, file: channel.path });
+    assert.notEqual(markdown.value, null);
+    assert.deepEqual(markdown.value.lines.filter((line) => (
+      !line.inFence && line.text.startsWith("**unknown**: valid example values require ")
+    )).map((line) => line.text), [expectedMarker]);
+  }
+
   const invalidCase = byId.get("schema-example-projection-invalid");
   const invalid = validateCase(path.join(corpusPath, invalidCase.path), invalidCase);
   const primary = invalid.diagnostics.filter((entry) => (
@@ -2813,7 +2852,7 @@ test("executes the Task 9 DM-INC-003 implementation-readiness capability matrix"
 
 test("audits every Task 9 invalid fixture as one primary concern", () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
-  assert.equal(manifest.cases.length, 202);
+  assert.equal(manifest.cases.length, 204);
   const result = runFixtureCorpus(corpusPath, validateCase);
   assert.equal(result.failed, 0, result.report);
   const audit = auditFixtureOneInvalidity({
@@ -2821,5 +2860,5 @@ test("audits every Task 9 invalid fixture as one primary concern", () => {
     corpusCases: result.cases
   });
 
-  assert.deepEqual(audit, { passed: true, audited: 149, errors: [] });
+  assert.deepEqual(audit, { passed: true, audited: 150, errors: [] });
 });

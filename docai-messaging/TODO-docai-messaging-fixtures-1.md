@@ -809,6 +809,10 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 
 > **Final review hardening (`R8-CORE-026` unsatisfiable / generator-capability checkpoint):** empty-schema proof は numeric domain の `integer` / `number` に限定し、数値境界を持つ非numeric schema を誤って empty としない counterexample を追加した。provably empty schema に independently asserted source example が併存する場合は replacement より優先して `authoritative-conflict` generation failure とする。replacement reason は scenario の publication-safe `sourceLocation` から `source.json#/components/schemas/Empty` を含む exact feature/locationへ変更し、location が得られない場合は `publication-safe-source-location-unavailable` generation failure とする。valid document set の identityも再計算した。影響として approved two-checkpoint design、公開 document grammar、manifest 202 / 149、`R8-CORE-026` の `partial` status は変わらない。
 
+> **Implementation note (`R8-CORE-026` valid-example-values closure checkpoint):** `payload-valid-example-values-unknown-valid` / `-constraint-invalid` は同じ SEND operation、`minimum=1` / `maximum=10` constraint、`**unknown**: valid example values require representative business quantity samples at source.json#/examples/quantity` marker、`knowledge: requires-input` propagation を持つpaired task-scoped document set とした。valid側のillustrative example `{"quantity":5}` は制約を満たし、invalid側はexampleだけを `{"quantity":11}` に変えて、markerがconstraint-invalid valueを正当化せず単一 `DM-MSG-005` になることを固定する。valid setはprojection manifestからrestampし、invalid setはそのidentityを継承する一-invalidity mutationとする。影響として Core manifestは204 cases / 150 invalid casesになり、`R8-CORE-026` は `covered` となる。production validator、公開document grammar、既存source scenario semanticsは変更しない。
+
+> **Final review hardening (`R8-CORE-026` valid-example-values closure checkpoint):** Core corpus test はpaired set双方について parsed metadata の `CONVENTIONS.md=complete`、`INDEX.md` / `channels/example.md=requires-input` と、Markdown parserがoutside-fenceで観測するexact valid-example-values markerをliteral assertionする。prefixを保った別のexpected-input文言へのmutationがexact marker mismatchで失敗することを確認した。影響としてfixture内容、manifest 204 / 150、rule対応、公開grammar、`R8-CORE-026` の `covered` statusは変わらない。
+
 - [x] Metadata、extension name/order/escape、unknown non-`x-` key、sentence grammar。
 - [x] Identity trailer、set/projection digest、closed root、mixed set、task-scoped identity check。
 - [x] Direct/sharded Sources、unknown API identity/version、Revision none、overlap、fixed-point、cycle。
@@ -867,9 +871,9 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
   - [x] `R8-CORE-025` の versioned evidence gap を解消する。
     - [x] case-mismatched format と AsyncAPI 3.0.0 / 3.1.0 source-independent semantics を固定する。
     - [x] missing catalog row と required-workflow closure を固定する。
-  - [ ] `R8-CORE-026` の unsatisfiable replacement、valid-example-values unknown、generator-capability failure の versioned evidence gap を解消する。
+  - [x] `R8-CORE-026` の unsatisfiable replacement、valid-example-values unknown、generator-capability failure の versioned evidence gap を解消する。
     - [x] unsatisfiable replacement と generator example production / validation capability failure を固定する。
-    - [ ] constraint-valid illustrative example と valid-example-values marker の valid / invalid pair を固定する。
+    - [x] constraint-valid illustrative example と valid-example-values marker の valid / invalid pair を固定する。
   - [ ] 残る Core corpus clause を `R8-CORE-*` row に分解して対応付け、`R8-CORE-001` を `covered` にする。
 
 #### Partial Collection / Parameters Unknown / Failure Root-Row Implementation Plan

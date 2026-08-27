@@ -857,6 +857,20 @@
       "expected_rule_ids": []
     },
     {
+      "id": "payload-valid-example-values-constraint-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/payload-valid-example-values-constraint-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-MSG-005"]
+    },
+    {
+      "id": "payload-valid-example-values-unknown-valid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/valid/payload-valid-example-values-unknown-valid",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
       "id": "payload-wire-and-raw-boundaries-valid",
       "kind": "task-scoped-document-set",
       "path": "focused/valid/payload-wire-and-raw-boundaries-valid",
