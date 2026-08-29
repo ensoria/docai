@@ -829,6 +829,10 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 
 > **Implementation note (`R8-CORE-030`–`R8-CORE-031` failure-shape / trust-boundary matrix checkpoint):** `R8-CORE-030` は `failure-actions-and-shapes-valid` のcommon / inline exact referencesとleading collapsed Headers / Bindings、`binding-scopes-valid` のcollapsed Headers、expanded Bindings、後続headed Payload `none`、`failure-reference-embedded-invalid` のembedded `inline:` token rejectionを対応付けて `covered` とした。`R8-CORE-031` は `trust-boundary-source-valid` の十四caseによりsource prose、navigation、bounded example、schema string、metadata / identity line、profile link、Behavior / Reply key、standard / `x-` marker、standalone / collapsed fixed value、headingのinert / bounded / neutralized / unsupported outcomeを固定し、三つのone-invalidity projection fixtureを対応付けて `covered` とした。影響としてCore manifestは206 cases / 151 invalid / 55 valid、one-invalidity auditは151 / 151のままで、production checker、公開document grammar、rule catalog、作業順序は変更しない。次はgrouping-key collisionとpost-table marker-group orderingからREADME §8の後続clause mappingへ進む。
 
+> **Approved plan split and order (`R8-CORE-032`–`R8-CORE-033` grouping / marker-order checkpoints):** 追加監査により、Unprojected Operations grouping-key collision は既存 versioned valid / invalid cases と exact checker assertions だけで独立して `covered` にできる一方、mixed post-table marker-group ordering は専用 versioned fixture がなく、message validator では collection-level `unknown` と ordinary `unknown` の順位が分離されていないことが判明した。ユーザー承認により、当初同じ checkpoint で扱う予定だった二 clause を分割し、先に docs-only の `R8-CORE-032` を完成させ、次の `R8-CORE-033` で shared canonical ordering semantics を TDD 実装する。影響として grouping-collision evidence の ownership を広い `R8-CORE-012` から `R8-CORE-032` へ移管し、この checkpoint では fixture、checker、manifest、公開 grammar を変更しない。`R8-CORE-033` では collection-level `unknown`、ordinary `unknown`、localized `unsupported`、`x-` marker の順序、各 rank 内の Unicode source-line order、contiguity、および coverage / knowledge aggregate を relevant operation / message / payload / failure surfaces で固定する。
+
+> **Implementation note (`R8-CORE-032` Unprojected grouping-collision matrix checkpoint):** `unprojected-direct-multibyte-sensitive-valid` は同じ `source-a` / `legacy: route` grouping key に一つずつの `unsupported` / `unknown` completeness dimension を保持できることを固定し、`unprojected-source-collision-invalid` は異なる二つの source operation が同じ grouping key を生成した場合に、非開示の単一 `DM-IDX-008` error と両 operation の `grouping-key-collision` generation-failure facts を固定する。duplicate same-dimension marker rejection も既存 literal unit test に対応付け、row を `covered` とした。影響として collision case を `R8-CORE-012` から移管したが、Core manifest は206 cases / 151 invalid / 55 valid、one-invalidity auditは151 / 151のままで、production checker、fixture、rule catalog、公開document grammarは変更しない。`R8-CORE-033` は versioned mixed-marker evidence と message validator の collection-before-ordinary-unknown ordering gap が残るため、次の独立 TDD checkpoint まで未完了とする。
+
 - [x] Metadata、extension name/order/escape、unknown non-`x-` key、sentence grammar。
 - [x] Identity trailer、set/projection digest、closed root、mixed set、task-scoped identity check。
 - [x] Direct/sharded Sources、unknown API identity/version、Revision none、overlap、fixed-point、cycle。
@@ -849,7 +853,8 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 - [x] Reply static/dynamic channel、correlation、timeout、whole-Reply fallback、no synthetic operation。
 - [x] Failure core states、deviations、common/inline shapes、receive malformed/unknown/handler errors。
 - [x] publication safety、unsafe mandatory value failure、instruction structural escape。
-- [x] canonical marker order、deviation placement、deprecated marker、single prose language、English structure。
+- [ ] mixed post-table marker-group canonical ordering（`R8-CORE-033` で versioned evidence と shared validator semantics を固定する）。
+- [x] deviation placement、deprecated marker、single prose language、English structure。
 - [x] implementation readiness cases: same contract under different reader/runtime/adapter capabilities。
 
 - [x] **Step: one-invalidity audit を行う**
@@ -893,6 +898,8 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
   - [x] `R8-CORE-027`–`R8-CORE-029`（wire / raw boundary、header encoding / exposure、publication safety）を対応付ける。
   - [x] `R8-CORE-028` の adapter-defined header schema と compatible / missing-or-incompatible encoding / exposure の versioned evidence gap を解消する。
   - [x] `R8-CORE-030`–`R8-CORE-031`（common / inline failure-shape collapse / exact reference、reader instruction-authority / structural escape）を対応付ける。
+  - [x] `R8-CORE-032`（Unprojected Operations grouping-key collision と completeness-dimension arity）を対応付ける。
+  - [ ] `R8-CORE-033`（mixed post-table marker-group canonical ordering）を versioned evidence と shared ordering semantics で対応付ける。
   - [ ] 残る Core corpus clause を `R8-CORE-*` row に分解して対応付け、`R8-CORE-001` を `covered` にする。
 
 #### Partial Collection / Parameters Unknown / Failure Root-Row Implementation Plan
