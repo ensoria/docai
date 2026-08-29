@@ -138,6 +138,43 @@
       }
     },
     {
+      "caseId": "parameterized-json-duplicate-mappings",
+      "adapterClass": "payload-wire",
+      "mediaType": "application/json;charset=utf-8",
+      "publicationMappings": [
+        {
+          "sourceId": "adapter-catalog-a",
+          "docaiMessagingVersion": "0.17.1",
+          "adapterClass": "payload-wire",
+          "target": "application/json;charset=utf-8",
+          "ruleId": "json-charset-preserving-wire-a",
+          "ruleVersion": "1.0.0",
+          "defines": ["byte-encoding", "canonical-comparison", "character-encoding", "compact-example", "decoded-value-model", "full-example", "parameter-semantics", "schema-composition"],
+          "emittedMediaType": "application/json;charset=utf-8",
+          "parameterHandling": "preserve"
+        },
+        {
+          "sourceId": "adapter-catalog-b",
+          "docaiMessagingVersion": "0.17.1",
+          "adapterClass": "payload-wire",
+          "target": "application/json;charset=utf-8",
+          "ruleId": "json-charset-preserving-wire-b",
+          "ruleVersion": "1.0.0",
+          "defines": ["byte-encoding", "canonical-comparison", "character-encoding", "compact-example", "decoded-value-model", "full-example", "parameter-semantics"],
+          "emittedMediaType": "application/json;charset=utf-8",
+          "parameterHandling": "preserve"
+        }
+      ],
+      "projected": {
+        "caseId": "parameterized-json-duplicate-mappings",
+        "outcome": "emit-unsupported",
+        "resolution": "no-exact-mapping",
+        "effectiveTarget": "application/json;charset=utf-8",
+        "projection": "replace-payload-representation",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    },
+    {
       "caseId": "mapped-kafka-headers",
       "adapterClass": "header-encoding",
       "target": {

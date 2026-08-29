@@ -5576,6 +5576,29 @@ task7Test("DM-ADAPTER-004 records exact protocol binding mapping availability", 
           ruleId: "old-kafka-channel-binding-map",
           ruleVersion: "1.0.0"
         }]
+      },
+      {
+        caseId: "duplicate-kafka-channel-binding",
+        adapterClass: "protocol-binding",
+        target: { protocol: "kafka", scope: "channel", bindingVersion: "0.5.0" },
+        publicationMappings: [
+          {
+            sourceId: "adapter-catalog-a",
+            docaiMessagingVersion: "0.17.1",
+            adapterClass: "protocol-binding",
+            target: { protocol: "kafka", scope: "channel", bindingVersion: "0.5.0" },
+            ruleId: "kafka-channel-binding-map-a",
+            ruleVersion: "1.0.0"
+          },
+          {
+            sourceId: "adapter-catalog-b",
+            docaiMessagingVersion: "0.17.1",
+            adapterClass: "protocol-binding",
+            target: { protocol: "kafka", scope: "channel", bindingVersion: "0.5.0" },
+            ruleId: "kafka-channel-binding-map-b",
+            ruleVersion: "1.0.0"
+          }
+        ]
       }
     ]
   });
@@ -5593,6 +5616,13 @@ task7Test("DM-ADAPTER-004 records exact protocol binding mapping availability", 
     },
     {
       caseId: "unmapped-kafka-channel-binding",
+      outcome: "emit-unsupported",
+      resolution: "no-exact-mapping",
+      projection: "smallest-channel-binding-unsupported",
+      ordinaryReaderRequirement: "normalized-contract-only"
+    },
+    {
+      caseId: "duplicate-kafka-channel-binding",
       outcome: "emit-unsupported",
       resolution: "no-exact-mapping",
       projection: "smallest-channel-binding-unsupported",

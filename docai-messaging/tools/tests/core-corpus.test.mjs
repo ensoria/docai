@@ -231,6 +231,8 @@ const partialCollectionSourceCaseIds = [
 ];
 
 const wireAndHeaderCaseIds = [
+  "adapter-defined-header-schema-projection-invalid",
+  "adapter-defined-header-schema-valid",
   "adapter-header-encoding-projection-invalid",
   "adapter-parameterized-wire-projection-invalid",
   "adapter-wire-header-projection-valid",
@@ -2187,6 +2189,14 @@ test("executes the Task 9 DM-ADAPTER-002 DM-ADAPTER-003 DM-MSG-004 wire header a
       ordinaryReaderRequirement: "normalized-contract-only"
     },
     {
+      caseId: "parameterized-json-duplicate-mappings",
+      outcome: "emit-unsupported",
+      resolution: "no-exact-mapping",
+      effectiveTarget: "application/json;charset=utf-8",
+      projection: "replace-payload-representation",
+      ordinaryReaderRequirement: "normalized-contract-only"
+    },
+    {
       caseId: "mapped-kafka-headers",
       outcome: "supported",
       resolution: "publication-mapping",
@@ -2205,8 +2215,75 @@ test("executes the Task 9 DM-ADAPTER-002 DM-ADAPTER-003 DM-MSG-004 wire header a
     }
   ]);
 
+  const adapterDefinedCase = byId.get("adapter-defined-header-schema-valid");
+  const adapterDefined = validateCase(
+    path.join(corpusPath, adapterDefinedCase.path),
+    adapterDefinedCase
+  );
+  assert.deepEqual(adapterDefined.diagnostics, []);
+  assert.deepEqual(adapterDefined.facts.adapterSourceExpectations, [
+    {
+      caseId: "adapter-defined-avro-kafka-headers",
+      outcome: "supported",
+      resolution: "publication-mapping",
+      ruleId: "kafka-avro-header-map",
+      ruleVersion: "1.0.0",
+      mappingSourceIds: ["adapter-catalog"],
+      projection: "emit-header-map",
+      ordinaryReaderRequirement: "normalized-contract-only",
+      schemaAdapter: {
+        resolution: "publication-mapping",
+        ruleId: "avro-schema-projection",
+        ruleVersion: "1.11.3-1",
+        mappingSourceIds: ["adapter-catalog"]
+      }
+    },
+    {
+      caseId: "adapter-defined-avro-schema-mapping-duplicate",
+      outcome: "emit-unsupported",
+      resolution: "no-exact-mapping",
+      projection: "replace-header-representation",
+      ordinaryReaderRequirement: "normalized-contract-only"
+    },
+    {
+      caseId: "adapter-defined-avro-schema-mapping-missing",
+      outcome: "emit-unsupported",
+      resolution: "no-exact-mapping",
+      projection: "replace-header-representation",
+      ordinaryReaderRequirement: "normalized-contract-only"
+    },
+    {
+      caseId: "adapter-defined-avro-schema-mapping-incomplete",
+      outcome: "emit-unsupported",
+      resolution: "no-exact-mapping",
+      projection: "replace-header-representation",
+      ordinaryReaderRequirement: "normalized-contract-only"
+    },
+    {
+      caseId: "adapter-defined-avro-header-mapping-duplicate",
+      outcome: "emit-unsupported",
+      resolution: "no-exact-mapping",
+      projection: "replace-header-representation",
+      ordinaryReaderRequirement: "normalized-contract-only"
+    },
+    {
+      caseId: "adapter-defined-avro-header-mapping-missing",
+      outcome: "emit-unsupported",
+      resolution: "no-exact-mapping",
+      projection: "replace-header-representation",
+      ordinaryReaderRequirement: "normalized-contract-only"
+    },
+    {
+      caseId: "adapter-defined-avro-header-mapping-incompatible",
+      outcome: "emit-unsupported",
+      resolution: "no-exact-mapping",
+      projection: "replace-header-representation",
+      ordinaryReaderRequirement: "normalized-contract-only"
+    }
+  ]);
+
   for (const id of wireAndHeaderCaseIds.filter((caseId) => (
-    ![documentCase.id, sourceCase.id].includes(caseId)
+    ![documentCase.id, sourceCase.id, adapterDefinedCase.id].includes(caseId)
   ))) {
     const fixtureCase = byId.get(id);
     const invalid = validateCase(path.join(corpusPath, fixtureCase.path), fixtureCase);
@@ -2852,7 +2929,7 @@ test("executes the Task 9 DM-INC-003 implementation-readiness capability matrix"
 
 test("audits every Task 9 invalid fixture as one primary concern", () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
-  assert.equal(manifest.cases.length, 204);
+  assert.equal(manifest.cases.length, 206);
   const result = runFixtureCorpus(corpusPath, validateCase);
   assert.equal(result.failed, 0, result.report);
   const audit = auditFixtureOneInvalidity({
@@ -2860,5 +2937,5 @@ test("audits every Task 9 invalid fixture as one primary concern", () => {
     corpusCases: result.cases
   });
 
-  assert.deepEqual(audit, { passed: true, audited: 150, errors: [] });
+  assert.deepEqual(audit, { passed: true, audited: 151, errors: [] });
 });

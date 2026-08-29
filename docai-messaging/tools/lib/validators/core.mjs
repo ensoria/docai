@@ -1280,12 +1280,12 @@ function exactTarget(left, right) {
 }
 
 function publicationMapping(entry, version, predicate = () => true) {
-  return (entry.publicationMappings ?? []).find((mapping) => (
+  const matches = (entry.publicationMappings ?? []).filter((mapping) => (
     mapping.docaiMessagingVersion === version
       && mapping.adapterClass === entry.adapterClass
       && exactTarget(mapping.target, entry.target)
-      && predicate(mapping)
   ));
+  return matches.length === 1 && predicate(matches[0]) ? matches[0] : undefined;
 }
 
 function supportedAdapter(entry, mapping, projection) {
@@ -1310,6 +1310,13 @@ const PAYLOAD_WIRE_MAPPING_DEFINES = [
   "compact-example",
   "canonical-comparison",
   "schema-composition"
+];
+
+const SCHEMA_MAPPING_DEFINES = [
+  "constraint-mapping",
+  "example-value-projection",
+  "logical-types",
+  "runtime-schema-resolution"
 ];
 
 function canonicalMediaTypeSource(value) {
@@ -1340,6 +1347,32 @@ function payloadWireMapping(entry, version) {
       return complete && canonicalMediaTypeSource(emitted) && (preserves || normalizes);
     }
   );
+}
+
+function headerSchemaAdapter(entry, version) {
+  if (entry.schemaTarget === undefined || DIRECT_SCHEMA_TARGETS.has(entry.schemaTarget)) {
+    return { supported: true };
+  }
+  const mapping = publicationMapping(
+    {
+      adapterClass: "schema",
+      target: entry.schemaTarget,
+      publicationMappings: entry.publicationMappings
+    },
+    version,
+    (candidate) => SCHEMA_MAPPING_DEFINES.every((name) => candidate.defines?.includes(name))
+  );
+  return mapping === undefined
+    ? { supported: false }
+    : {
+      supported: true,
+      provenance: {
+        resolution: "publication-mapping",
+        ruleId: mapping.ruleId,
+        ruleVersion: mapping.ruleVersion,
+        mappingSourceIds: [mapping.sourceId]
+      }
+    };
 }
 
 export function evaluateAdapterSourceExpectations({ docaiMessagingVersion, cases }) {
@@ -1416,21 +1449,28 @@ export function evaluateAdapterSourceExpectations({ docaiMessagingVersion, cases
     }
 
     if (entry.adapterClass === "header-encoding") {
-      const mapping = publicationMapping(entry, docaiMessagingVersion, (candidate) => (
-        candidate.defines?.includes("encoding")
-          && candidate.defines?.includes("exposure")
-          && (entry.schemaTarget === undefined
-            || candidate.compatibleSchemaTargets?.includes(entry.schemaTarget))
-      ));
-      return mapping === undefined
-        ? {
+      const schemaAdapter = headerSchemaAdapter(entry, docaiMessagingVersion);
+      const mapping = schemaAdapter.supported
+        ? publicationMapping(entry, docaiMessagingVersion, (candidate) => (
+          candidate.defines?.includes("encoding")
+            && candidate.defines?.includes("exposure")
+            && (entry.schemaTarget === undefined
+              || candidate.compatibleSchemaTargets?.includes(entry.schemaTarget))
+        ))
+        : undefined;
+      if (mapping === undefined) {
+        return {
           caseId: entry.caseId,
           outcome: "emit-unsupported",
           resolution: "no-exact-mapping",
           projection: "replace-header-representation",
           ordinaryReaderRequirement: "normalized-contract-only"
-        }
-        : supportedAdapter(entry, mapping, "emit-header-map");
+        };
+      }
+      const supported = supportedAdapter(entry, mapping, "emit-header-map");
+      return schemaAdapter.provenance === undefined
+        ? supported
+        : { ...supported, schemaAdapter: schemaAdapter.provenance };
     }
 
     const mapping = publicationMapping(entry, docaiMessagingVersion);

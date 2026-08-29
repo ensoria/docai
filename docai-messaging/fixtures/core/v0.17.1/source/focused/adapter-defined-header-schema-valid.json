@@ -1,0 +1,308 @@
+{
+  "docaiMessagingVersion": "0.17.1",
+  "cases": [
+    {
+      "caseId": "adapter-defined-avro-kafka-headers",
+      "adapterClass": "header-encoding",
+      "target": {
+        "protocol": "kafka",
+        "encoding": "record-headers",
+        "specificationVersion": "asyncapi-kafka-binding-0.5.0"
+      },
+      "schemaTarget": "application/vnd.apache.avro+json;version=1.11.3",
+      "publicationMappings": [
+        {
+          "sourceId": "adapter-catalog",
+          "docaiMessagingVersion": "0.17.1",
+          "adapterClass": "schema",
+          "target": "application/vnd.apache.avro+json;version=1.11.3",
+          "ruleId": "avro-schema-projection",
+          "ruleVersion": "1.11.3-1",
+          "defines": ["constraint-mapping", "example-value-projection", "logical-types", "runtime-schema-resolution"]
+        },
+        {
+          "sourceId": "adapter-catalog",
+          "docaiMessagingVersion": "0.17.1",
+          "adapterClass": "header-encoding",
+          "target": {
+            "protocol": "kafka",
+            "encoding": "record-headers",
+            "specificationVersion": "asyncapi-kafka-binding-0.5.0"
+          },
+          "ruleId": "kafka-avro-header-map",
+          "ruleVersion": "1.0.0",
+          "defines": ["encoding", "exposure"],
+          "compatibleSchemaTargets": ["application/vnd.apache.avro+json;version=1.11.3"]
+        }
+      ],
+      "projected": {
+        "caseId": "adapter-defined-avro-kafka-headers",
+        "outcome": "supported",
+        "resolution": "publication-mapping",
+        "ruleId": "kafka-avro-header-map",
+        "ruleVersion": "1.0.0",
+        "mappingSourceIds": ["adapter-catalog"],
+        "projection": "emit-header-map",
+        "ordinaryReaderRequirement": "normalized-contract-only",
+        "schemaAdapter": {
+          "resolution": "publication-mapping",
+          "ruleId": "avro-schema-projection",
+          "ruleVersion": "1.11.3-1",
+          "mappingSourceIds": ["adapter-catalog"]
+        }
+      }
+    },
+    {
+      "caseId": "adapter-defined-avro-schema-mapping-duplicate",
+      "adapterClass": "header-encoding",
+      "target": {
+        "protocol": "kafka",
+        "encoding": "record-headers",
+        "specificationVersion": "asyncapi-kafka-binding-0.5.0"
+      },
+      "schemaTarget": "application/vnd.apache.avro+json;version=1.11.3",
+      "publicationMappings": [
+        {
+          "sourceId": "adapter-catalog-a",
+          "docaiMessagingVersion": "0.17.1",
+          "adapterClass": "schema",
+          "target": "application/vnd.apache.avro+json;version=1.11.3",
+          "ruleId": "avro-schema-projection-a",
+          "ruleVersion": "1.11.3-1",
+          "defines": ["constraint-mapping", "example-value-projection", "logical-types", "runtime-schema-resolution"]
+        },
+        {
+          "sourceId": "adapter-catalog-b",
+          "docaiMessagingVersion": "0.17.1",
+          "adapterClass": "schema",
+          "target": "application/vnd.apache.avro+json;version=1.11.3",
+          "ruleId": "avro-schema-projection-b",
+          "ruleVersion": "1.11.3-1",
+          "defines": ["constraint-mapping", "example-value-projection", "logical-types"]
+        },
+        {
+          "sourceId": "header-adapter-catalog",
+          "docaiMessagingVersion": "0.17.1",
+          "adapterClass": "header-encoding",
+          "target": {
+            "protocol": "kafka",
+            "encoding": "record-headers",
+            "specificationVersion": "asyncapi-kafka-binding-0.5.0"
+          },
+          "ruleId": "kafka-avro-header-map",
+          "ruleVersion": "1.0.0",
+          "defines": ["encoding", "exposure"],
+          "compatibleSchemaTargets": ["application/vnd.apache.avro+json;version=1.11.3"]
+        }
+      ],
+      "projected": {
+        "caseId": "adapter-defined-avro-schema-mapping-duplicate",
+        "outcome": "emit-unsupported",
+        "resolution": "no-exact-mapping",
+        "projection": "replace-header-representation",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    },
+    {
+      "caseId": "adapter-defined-avro-schema-mapping-missing",
+      "adapterClass": "header-encoding",
+      "target": {
+        "protocol": "kafka",
+        "encoding": "record-headers",
+        "specificationVersion": "asyncapi-kafka-binding-0.5.0"
+      },
+      "schemaTarget": "application/vnd.apache.avro+json;version=1.11.3",
+      "publicationMappings": [
+        {
+          "sourceId": "adapter-catalog",
+          "docaiMessagingVersion": "0.17.1",
+          "adapterClass": "header-encoding",
+          "target": {
+            "protocol": "kafka",
+            "encoding": "record-headers",
+            "specificationVersion": "asyncapi-kafka-binding-0.5.0"
+          },
+          "ruleId": "kafka-avro-header-map",
+          "ruleVersion": "1.0.0",
+          "defines": ["encoding", "exposure"],
+          "compatibleSchemaTargets": ["application/vnd.apache.avro+json;version=1.11.3"]
+        }
+      ],
+      "projected": {
+        "caseId": "adapter-defined-avro-schema-mapping-missing",
+        "outcome": "emit-unsupported",
+        "resolution": "no-exact-mapping",
+        "projection": "replace-header-representation",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    },
+    {
+      "caseId": "adapter-defined-avro-schema-mapping-incomplete",
+      "adapterClass": "header-encoding",
+      "target": {
+        "protocol": "kafka",
+        "encoding": "record-headers",
+        "specificationVersion": "asyncapi-kafka-binding-0.5.0"
+      },
+      "schemaTarget": "application/vnd.apache.avro+json;version=1.11.3",
+      "publicationMappings": [
+        {
+          "sourceId": "adapter-catalog",
+          "docaiMessagingVersion": "0.17.1",
+          "adapterClass": "schema",
+          "target": "application/vnd.apache.avro+json;version=1.11.3",
+          "ruleId": "incomplete-avro-schema-projection",
+          "ruleVersion": "1.11.3-1",
+          "defines": ["constraint-mapping", "example-value-projection", "logical-types"]
+        },
+        {
+          "sourceId": "adapter-catalog",
+          "docaiMessagingVersion": "0.17.1",
+          "adapterClass": "header-encoding",
+          "target": {
+            "protocol": "kafka",
+            "encoding": "record-headers",
+            "specificationVersion": "asyncapi-kafka-binding-0.5.0"
+          },
+          "ruleId": "kafka-avro-header-map",
+          "ruleVersion": "1.0.0",
+          "defines": ["encoding", "exposure"],
+          "compatibleSchemaTargets": ["application/vnd.apache.avro+json;version=1.11.3"]
+        }
+      ],
+      "projected": {
+        "caseId": "adapter-defined-avro-schema-mapping-incomplete",
+        "outcome": "emit-unsupported",
+        "resolution": "no-exact-mapping",
+        "projection": "replace-header-representation",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    },
+    {
+      "caseId": "adapter-defined-avro-header-mapping-duplicate",
+      "adapterClass": "header-encoding",
+      "target": {
+        "protocol": "kafka",
+        "encoding": "record-headers",
+        "specificationVersion": "asyncapi-kafka-binding-0.5.0"
+      },
+      "schemaTarget": "application/vnd.apache.avro+json;version=1.11.3",
+      "publicationMappings": [
+        {
+          "sourceId": "schema-adapter-catalog",
+          "docaiMessagingVersion": "0.17.1",
+          "adapterClass": "schema",
+          "target": "application/vnd.apache.avro+json;version=1.11.3",
+          "ruleId": "avro-schema-projection",
+          "ruleVersion": "1.11.3-1",
+          "defines": ["constraint-mapping", "example-value-projection", "logical-types", "runtime-schema-resolution"]
+        },
+        {
+          "sourceId": "header-adapter-catalog-a",
+          "docaiMessagingVersion": "0.17.1",
+          "adapterClass": "header-encoding",
+          "target": {
+            "protocol": "kafka",
+            "encoding": "record-headers",
+            "specificationVersion": "asyncapi-kafka-binding-0.5.0"
+          },
+          "ruleId": "kafka-avro-header-map-a",
+          "ruleVersion": "1.0.0",
+          "defines": ["encoding", "exposure"],
+          "compatibleSchemaTargets": ["application/vnd.apache.avro+json;version=1.11.3"]
+        },
+        {
+          "sourceId": "header-adapter-catalog-b",
+          "docaiMessagingVersion": "0.17.1",
+          "adapterClass": "header-encoding",
+          "target": {
+            "protocol": "kafka",
+            "encoding": "record-headers",
+            "specificationVersion": "asyncapi-kafka-binding-0.5.0"
+          },
+          "ruleId": "kafka-avro-header-map-b",
+          "ruleVersion": "1.0.0",
+          "defines": ["encoding"],
+          "compatibleSchemaTargets": ["application/vnd.apache.avro+json;version=1.11.3"]
+        }
+      ],
+      "projected": {
+        "caseId": "adapter-defined-avro-header-mapping-duplicate",
+        "outcome": "emit-unsupported",
+        "resolution": "no-exact-mapping",
+        "projection": "replace-header-representation",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    },
+    {
+      "caseId": "adapter-defined-avro-header-mapping-missing",
+      "adapterClass": "header-encoding",
+      "target": {
+        "protocol": "kafka",
+        "encoding": "record-headers",
+        "specificationVersion": "asyncapi-kafka-binding-0.5.0"
+      },
+      "schemaTarget": "application/vnd.apache.avro+json;version=1.11.3",
+      "publicationMappings": [
+        {
+          "sourceId": "adapter-catalog",
+          "docaiMessagingVersion": "0.17.1",
+          "adapterClass": "schema",
+          "target": "application/vnd.apache.avro+json;version=1.11.3",
+          "ruleId": "avro-schema-projection",
+          "ruleVersion": "1.11.3-1",
+          "defines": ["constraint-mapping", "example-value-projection", "logical-types", "runtime-schema-resolution"]
+        }
+      ],
+      "projected": {
+        "caseId": "adapter-defined-avro-header-mapping-missing",
+        "outcome": "emit-unsupported",
+        "resolution": "no-exact-mapping",
+        "projection": "replace-header-representation",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    },
+    {
+      "caseId": "adapter-defined-avro-header-mapping-incompatible",
+      "adapterClass": "header-encoding",
+      "target": {
+        "protocol": "kafka",
+        "encoding": "record-headers",
+        "specificationVersion": "asyncapi-kafka-binding-0.5.0"
+      },
+      "schemaTarget": "application/vnd.apache.avro+json;version=1.11.3",
+      "publicationMappings": [
+        {
+          "sourceId": "adapter-catalog",
+          "docaiMessagingVersion": "0.17.1",
+          "adapterClass": "schema",
+          "target": "application/vnd.apache.avro+json;version=1.11.3",
+          "ruleId": "avro-schema-projection",
+          "ruleVersion": "1.11.3-1",
+          "defines": ["constraint-mapping", "example-value-projection", "logical-types", "runtime-schema-resolution"]
+        },
+        {
+          "sourceId": "adapter-catalog",
+          "docaiMessagingVersion": "0.17.1",
+          "adapterClass": "header-encoding",
+          "target": {
+            "protocol": "kafka",
+            "encoding": "record-headers",
+            "specificationVersion": "asyncapi-kafka-binding-0.5.0"
+          },
+          "ruleId": "kafka-direct-schema-header-map",
+          "ruleVersion": "1.0.0",
+          "defines": ["encoding", "exposure"],
+          "compatibleSchemaTargets": ["application/vnd.aai.asyncapi+json;version=3.1.0"]
+        }
+      ],
+      "projected": {
+        "caseId": "adapter-defined-avro-header-mapping-incompatible",
+        "outcome": "emit-unsupported",
+        "resolution": "no-exact-mapping",
+        "projection": "replace-header-representation",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    }
+  ]
+}

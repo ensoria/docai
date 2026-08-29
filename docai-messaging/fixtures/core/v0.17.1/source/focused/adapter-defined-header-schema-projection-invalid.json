@@ -1,0 +1,56 @@
+{
+  "docaiMessagingVersion": "0.17.1",
+  "cases": [
+    {
+      "caseId": "adapter-defined-avro-header-rule-without-exposure",
+      "adapterClass": "header-encoding",
+      "target": {
+        "protocol": "kafka",
+        "encoding": "record-headers",
+        "specificationVersion": "asyncapi-kafka-binding-0.5.0"
+      },
+      "schemaTarget": "application/vnd.apache.avro+json;version=1.11.3",
+      "publicationMappings": [
+        {
+          "sourceId": "adapter-catalog",
+          "docaiMessagingVersion": "0.17.1",
+          "adapterClass": "schema",
+          "target": "application/vnd.apache.avro+json;version=1.11.3",
+          "ruleId": "avro-schema-projection",
+          "ruleVersion": "1.11.3-1",
+          "defines": ["constraint-mapping", "example-value-projection", "logical-types", "runtime-schema-resolution"]
+        },
+        {
+          "sourceId": "adapter-catalog",
+          "docaiMessagingVersion": "0.17.1",
+          "adapterClass": "header-encoding",
+          "target": {
+            "protocol": "kafka",
+            "encoding": "record-headers",
+            "specificationVersion": "asyncapi-kafka-binding-0.5.0"
+          },
+          "ruleId": "incomplete-kafka-avro-header-map",
+          "ruleVersion": "1.0.0",
+          "defines": ["encoding"],
+          "compatibleSchemaTargets": ["application/vnd.apache.avro+json;version=1.11.3"]
+        }
+      ],
+      "projected": {
+        "caseId": "adapter-defined-avro-header-rule-without-exposure",
+        "outcome": "supported",
+        "resolution": "publication-mapping",
+        "ruleId": "incomplete-kafka-avro-header-map",
+        "ruleVersion": "1.0.0",
+        "mappingSourceIds": ["adapter-catalog"],
+        "projection": "emit-header-map",
+        "ordinaryReaderRequirement": "normalized-contract-only",
+        "schemaAdapter": {
+          "resolution": "publication-mapping",
+          "ruleId": "avro-schema-projection",
+          "ruleVersion": "1.11.3-1",
+          "mappingSourceIds": ["adapter-catalog"]
+        }
+      }
+    }
+  ]
+}

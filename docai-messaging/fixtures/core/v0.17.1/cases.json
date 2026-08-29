@@ -1200,6 +1200,20 @@
       "expected_rule_ids": ["DM-INC-004"]
     },
     {
+      "id": "adapter-defined-header-schema-projection-invalid",
+      "kind": "adapter-source-scenario",
+      "path": "source/focused/adapter-defined-header-schema-projection-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-ADAPTER-003"]
+    },
+    {
+      "id": "adapter-defined-header-schema-valid",
+      "kind": "adapter-source-scenario",
+      "path": "source/focused/adapter-defined-header-schema-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
       "id": "adapter-header-encoding-projection-invalid",
       "kind": "adapter-source-scenario",
       "path": "source/focused/adapter-header-encoding-projection-invalid.json",
