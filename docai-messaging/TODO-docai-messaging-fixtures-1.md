@@ -813,6 +813,12 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 
 > **Final review hardening (`R8-CORE-026` valid-example-values closure checkpoint):** Core corpus test はpaired set双方について parsed metadata の `CONVENTIONS.md=complete`、`INDEX.md` / `channels/example.md=requires-input` と、Markdown parserがoutside-fenceで観測するexact valid-example-values markerをliteral assertionする。prefixを保った別のexpected-input文言へのmutationがexact marker mismatchで失敗することを確認した。影響としてfixture内容、manifest 204 / 150、rule対応、公開grammar、`R8-CORE-026` の `covered` statusは変わらない。
 
+> **Approved design (`R8-CORE-027`–`R8-CORE-029` wire / header / publication-safety matrix checkpoint):** README §8 の記載順を維持し、wire projection と raw-binary boundary、header schema の protocol encoding / exposure、publication safety を三つの independently reviewable row に分ける。既存 versioned source scenario、task-scoped document set、one-invalidity invalid fixture、literal checker assertion が各 clause の positive / negative boundary を満たす前提で、この checkpoint は coverage artifact と plan record だけを更新し、fixture、production checker、manifest は変更しない。`R8-CORE-001` は後続 clause が残るため `partial` を維持する。
+
+> **Approved plan correction (`R8-CORE-028` adapter-defined header-schema evidence):** 実装前の追加監査により、既存 header scenario の `schemaTarget` はすべて directly registered AsyncAPI 3.1.0 targetで、publication mapping は `header-encoding` classだけを定義し、adapter-defined schema mappingを含まないことが判明した。ユーザー承認により、この文書 checkpoint では `R8-CORE-028` を不正確に `covered` とせず `partial` とし、adapter-defined header schema と compatible / missing-or-incompatible encoding / exposure のversioned positive / negative evidenceを後続の独立checkpointで追加する。影響として、fixture追加とchecker拡張は後続へ移り、README順、rule semantics、公開grammarは変更しない。
+
+> **Implementation note (`R8-CORE-027`–`R8-CORE-029` matrix checkpoint):** `R8-CORE-027` は parameterless JSON / `+json` direct projection、unmapped parameterized JSON / XML の localized unsupported、exact-version mapping による parameter preservation / proven normalization、opaque binary と structured-as-raw rejectionを対応付けて `covered` とした。`R8-CORE-028` は directly registered AsyncAPI schema target と Kafka header mapping の encoding / exposure / compatibility、missing exposure と incompatible target の unsupported outcomeを対応付けたが、adapter-defined header schemaのversioned evidenceがないため `partial` とした。`R8-CORE-029` は authorized non-secret emission、sensitive fact の value非開示 unsupported、synthetic example replacement、contract-equivalent safe override、unsafe mandatory structural value / Sources catalog cellのgeneration failureを対応付けて `covered` とした。影響として Core manifest は204 cases / 150 invalid casesのままで、fixture、rule、checker semantics、公開document grammar、作業順序は変更しない。次は `R8-CORE-028` evidence gapを独立checkpointで解消した後、common / inline failure shape と reader trust boundaryのmatrix mappingへ進む。
+
 - [x] Metadata、extension name/order/escape、unknown non-`x-` key、sentence grammar。
 - [x] Identity trailer、set/projection digest、closed root、mixed set、task-scoped identity check。
 - [x] Direct/sharded Sources、unknown API identity/version、Revision none、overlap、fixed-point、cycle。
@@ -874,6 +880,8 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
   - [x] `R8-CORE-026` の unsatisfiable replacement、valid-example-values unknown、generator-capability failure の versioned evidence gap を解消する。
     - [x] unsatisfiable replacement と generator example production / validation capability failure を固定する。
     - [x] constraint-valid illustrative example と valid-example-values marker の valid / invalid pair を固定する。
+  - [x] `R8-CORE-027`–`R8-CORE-029`（wire / raw boundary、header encoding / exposure、publication safety）を対応付ける。
+  - [ ] `R8-CORE-028` の adapter-defined header schema と compatible / missing-or-incompatible encoding / exposure の versioned evidence gap を解消する。
   - [ ] 残る Core corpus clause を `R8-CORE-*` row に分解して対応付け、`R8-CORE-001` を `covered` にする。
 
 #### Partial Collection / Parameters Unknown / Failure Root-Row Implementation Plan
