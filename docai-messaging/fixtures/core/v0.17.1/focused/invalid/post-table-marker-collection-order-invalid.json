@@ -1,0 +1,9 @@
+{
+  "id": "post-table-marker-collection-order-invalid",
+  "base": "../valid/post-table-marker-groups-valid",
+  "path": "channels/mixed-markers.md",
+  "replace": {
+    "from": "**unknown**: additional unnamed parameter requires the complete channel declaration at source-a\n**unknown**: Type for tenant requires the channel parameter schema",
+    "to": "**unknown**: Type for tenant requires the channel parameter schema\n**unknown**: additional unnamed parameter requires the complete channel declaration at source-a"
+  }
+}

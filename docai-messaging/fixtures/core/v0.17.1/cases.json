@@ -1347,6 +1347,48 @@
       "expected_rule_ids": ["DM-OP-003"]
     },
     {
+      "id": "post-table-marker-groups-valid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/valid/post-table-marker-groups-valid",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
+      "id": "post-table-marker-collection-order-invalid",
+      "kind": "task-scoped-document-set-mutation",
+      "path": "focused/invalid/post-table-marker-collection-order-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-OP-004"]
+    },
+    {
+      "id": "post-table-marker-rank-order-invalid",
+      "kind": "task-scoped-document-set-mutation",
+      "path": "focused/invalid/post-table-marker-rank-order-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-OP-004"]
+    },
+    {
+      "id": "post-table-marker-unicode-order-invalid",
+      "kind": "task-scoped-document-set-mutation",
+      "path": "focused/invalid/post-table-marker-unicode-order-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-FAIL-002"]
+    },
+    {
+      "id": "post-table-marker-reply-order-invalid",
+      "kind": "task-scoped-document-set-mutation",
+      "path": "focused/invalid/post-table-marker-reply-order-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-REPLY-002"]
+    },
+    {
+      "id": "post-table-marker-group-split-invalid",
+      "kind": "task-scoped-document-set-mutation",
+      "path": "focused/invalid/post-table-marker-group-split-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-OP-004"]
+    },
+    {
       "id": "canonical-deviations-deprecation-valid",
       "kind": "task-scoped-document-set",
       "path": "focused/valid/canonical-deviations-deprecation-valid",

@@ -4,6 +4,10 @@ import { scanMarkdown } from "../markdown.mjs";
 import { canonicalizeMediaType } from "../media-type.mjs";
 import { validateSentenceLine } from "../sentence.mjs";
 import { parsePipeTable } from "../tables.mjs";
+import {
+  collectPostTableMarkers as postTableMarkers,
+  validPostTableMarkerOrder as validMarkerOrder
+} from "./core-marker-order.mjs";
 import { validChannelAddress } from "./core-routing.mjs";
 
 const MESSAGE_NAME = /^[A-Za-z0-9._-]+$/;
@@ -72,45 +76,6 @@ function validHeader(actual, expected) {
     && suffix.every((cell) => cell.startsWith("x-") && cell.length > 2);
 }
 
-function markerKind(text) {
-  if (text.startsWith("**unknown**: ") && text.length > "**unknown**: ".length) {
-    return { rank: 0, type: "unknown" };
-  }
-  const unsupported = "**unsupported**: localized: ";
-  if (text.startsWith(unsupported) && text.length > unsupported.length) {
-    return { rank: 1, type: "unsupported" };
-  }
-  if (/^\*\*x-[A-Za-z0-9._-]+\*\*: .+$/.test(text)) {
-    return { rank: 2, type: "extension" };
-  }
-  return null;
-}
-
-function postTableMarkers(lines, table) {
-  const markers = [];
-  let expectedLine = table.endLine + 1;
-  while (true) {
-    const line = lines.find((entry) => entry.line === expectedLine);
-    if (line === undefined || line.text === "") break;
-    const kind = markerKind(line.text);
-    if (kind === null) break;
-    markers.push({ ...line, kind });
-    expectedLine += 1;
-  }
-  return markers;
-}
-
-function validMarkerOrder(markers) {
-  for (let index = 1; index < markers.length; index += 1) {
-    const previous = markers[index - 1];
-    const current = markers[index];
-    if (current.kind.rank < previous.kind.rank) return false;
-    if (current.kind.rank === previous.kind.rank
-      && unicodeScalarCompare(previous.text, current.text) >= 0) return false;
-  }
-  return true;
-}
-
 function tableAt(lines, startIndex) {
   const candidate = lines.slice(startIndex);
   const parsed = parsePipeTable(candidate);
@@ -164,18 +129,22 @@ function validateDirectionTable(file, lines, startIndex, direction, firstColumn,
   const expected = standardColumns(direction, firstColumn);
   const markers = postTableMarkers(lines, table);
   const hasUnknown = table.rows.some((row) => row.includes("unknown"));
-  const unknownMarkers = markers.filter((marker) => marker.kind.type === "unknown");
-  const hasUnknownMarker = unknownMarkers.length > 0;
+  const standardUnknownMarkers = markers.filter((marker) => marker.kind.type === "unknown");
+  const collectionMarkers = markers.filter((marker) => marker.kind.type === "collection-unknown");
   const unnamedKind = firstColumn === "Name" ? "header" : "field";
-  const validMarkerOnlyUnknowns = unknownMarkers.every((marker) => (
-    marker.text.startsWith(`**unknown**: additional unnamed ${unnamedKind} requires `)
-      || (firstColumn === "Field" && marker.text.startsWith("**unknown**: valid example values require "))
+  const collectionPrefix = `**unknown**: additional unnamed ${unnamedKind} requires `;
+  const validCollectionMarkers = collectionMarkers.every((marker) => (
+    marker.text.startsWith(collectionPrefix) && marker.text.length > collectionPrefix.length
+  ));
+  const validMarkerOnlyUnknowns = standardUnknownMarkers.every((marker) => (
+    firstColumn === "Field" && marker.text.startsWith("**unknown**: valid example values require ")
   ));
   if (!validHeader(table.header, expected)
     || table.rows.length === 0
     || !validDirectionRows(table, direction, payloadNullable)
     || !validMarkerOrder(markers)
-    || (hasUnknown ? !hasUnknownMarker : !validMarkerOnlyUnknowns)) {
+    || !validCollectionMarkers
+    || (hasUnknown ? standardUnknownMarkers.length === 0 : !validMarkerOnlyUnknowns)) {
     return [messageDiagnostic(
       "DM-MSG-001",
       file,
@@ -999,10 +968,13 @@ function validateExpandedRepresentation(file, markdown, region, direction, opera
   if (remaining[0]?.text.startsWith("|")) {
     const table = tableAt(remaining, 0);
     const markers = table === null ? [] : postTableMarkers(remaining, table);
-    const collectionMarker = markers.find((marker) => nonEmptyMarker(marker.text, "**unknown**: additional unnamed field requires "));
+    const collectionMarkers = markers.filter((marker) => (
+      nonEmptyMarker(marker.text, "**unknown**: additional unnamed field requires ")
+    ));
     const consumed = markers.at(-1)?.line ?? table?.endLine;
-    if (table === null || collectionMarker === undefined
+    if (table === null || collectionMarkers.length !== 1
       || remaining.some((line) => line.line > consumed)
+      || !validMarkerOrder(markers)
       || !validateFields(table, undefined, operation, name, formatUses, objectOpennessDefault)) {
       diagnostics.push(...payloadDiagnostic("DM-MSG-004", file, remaining[0].line, "A named-sibling example omission requires one field table and its immediate additional-unnamed-field marker."));
     }
@@ -1178,21 +1150,23 @@ function canonicalUnitState(lines, {
   if (table === null || table.rows.length === 0) return null;
   const markers = postTableMarkers(core, table);
   const consumedLine = markers.at(-1)?.line ?? table.endLine;
-  const unknownMarkers = markers.filter((marker) => marker.kind.type === "unknown");
+  const standardUnknownMarkers = markers.filter((marker) => marker.kind.type === "unknown");
+  const collectionMarkers = markers.filter((marker) => marker.kind.type === "collection-unknown");
   const hasUnknownCell = table.rows.some((row) => row.includes("unknown"));
-  const collectionOnlyUnknowns = collectionUnknownPrefix !== null
-    && unknownMarkers.every((marker) => (
-      marker.text.startsWith(collectionUnknownPrefix)
-        && marker.text.length > collectionUnknownPrefix.length
-    ));
+  const validCollectionMarkers = collectionMarkers.every((marker) => (
+    collectionUnknownPrefix !== null
+      && marker.text.startsWith(collectionUnknownPrefix)
+      && marker.text.length > collectionUnknownPrefix.length
+  ));
   if (core.some((line) => line.line > consumedLine)
     || table.rows.some((row) => row.some((cell, index) => (
       cell === "" && (bindingTable || index !== 4)
     )))
     || !validMarkerOrder(markers)
+    || !validCollectionMarkers
     || (hasUnknownCell
-      ? unknownMarkers.length === 0
-      : unknownMarkers.length > 0 && !collectionOnlyUnknowns)) return null;
+      ? standardUnknownMarkers.length === 0
+      : standardUnknownMarkers.length > 0)) return null;
   if (bindingTable
     && !validHeader(table.header, ["Protocol", "Property", "Value / Rule"])) return null;
   return "expanded";
@@ -1365,17 +1339,20 @@ function replyChannelUnitState(lines, { parameter, replacementUnit }) {
     : ["Protocol", "Property", "Value / Rule"];
   const markers = postTableMarkers(core, table);
   const consumedLine = markers.at(-1)?.line ?? table.endLine;
-  const unknownMarkers = markers.filter((marker) => marker.kind.type === "unknown");
+  const standardUnknownMarkers = markers.filter((marker) => marker.kind.type === "unknown");
+  const collectionMarkerLines = markers.filter((marker) => marker.kind.type === "collection-unknown");
   const hasUnknown = table.rows.some((row) => row.includes("unknown"));
-  const collectionMarkers = parameter && unknownMarkers.every((marker) => (
-    marker.text.startsWith("**unknown**: additional unnamed parameter requires ")
+  const validCollectionMarkers = collectionMarkerLines.every((marker) => (
+    parameter
+      && marker.text.startsWith("**unknown**: additional unnamed parameter requires ")
       && marker.text.length > "**unknown**: additional unnamed parameter requires ".length
   ));
   if (!validHeader(table.header, expectedHeader)
     || table.rows.some((row) => row.some((cell) => cell === ""))
     || core.some((line) => line.line > consumedLine)
     || !validMarkerOrder(markers)
-    || (hasUnknown ? unknownMarkers.length === 0 : unknownMarkers.length > 0 && !collectionMarkers)) {
+    || !validCollectionMarkers
+    || (hasUnknown ? standardUnknownMarkers.length === 0 : standardUnknownMarkers.length > 0)) {
     return null;
   }
   return { state: "expanded", table };
@@ -1974,6 +1951,7 @@ function validateFailureHandling(
     && table.rows.every((row) => actionDescribesRecovery(row[3]))
     && tailContent.length === 0
     && validMarkerOrder(markers)
+    && markers.every((marker) => marker.kind.type !== "collection-unknown")
     && (table.rows.some((row) => row.includes("unknown"))
       ? markers.some((marker) => marker.kind.type === "unknown")
       : markers.every((marker) => marker.kind.type !== "unknown"));

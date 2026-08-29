@@ -833,6 +833,8 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 
 > **Implementation note (`R8-CORE-032` Unprojected grouping-collision matrix checkpoint):** `unprojected-direct-multibyte-sensitive-valid` は同じ `source-a` / `legacy: route` grouping key に一つずつの `unsupported` / `unknown` completeness dimension を保持できることを固定し、`unprojected-source-collision-invalid` は異なる二つの source operation が同じ grouping key を生成した場合に、非開示の単一 `DM-IDX-008` error と両 operation の `grouping-key-collision` generation-failure facts を固定する。duplicate same-dimension marker rejection も既存 literal unit test に対応付け、row を `covered` とした。影響として collision case を `R8-CORE-012` から移管したが、Core manifest は206 cases / 151 invalid / 55 valid、one-invalidity auditは151 / 151のままで、production checker、fixture、rule catalog、公開document grammarは変更しない。`R8-CORE-033` は versioned mixed-marker evidence と message validator の collection-before-ordinary-unknown ordering gap が残るため、次の独立 TDD checkpoint まで未完了とする。
 
+> **Implementation note (`R8-CORE-033` deterministic mixed post-table marker-group checkpoint):** `post-table-marker-groups-valid` は Operation Bindings、primary / Reply Channel Parameters / Bindings、Message Headers / Bindings / Payload、Failure Handling の各 table で、collection-level additional-unnamed `unknown`、ordinary `unknown`、localized `unsupported`、`x-` の rank 順と rank 内 Unicode scalar-value 順を固定し、root と operation file が同時に `coverage: requires-source | knowledge: requires-input`、独立な CONVENTIONS が `complete` を維持することを確認する。五つの mutation invalid fixtures は collection-first、contiguity、cross-rank、Reply collection-first、rank 内 Unicode order（U+E000 と U+1F600）を一件ずつ壊し、単一 `DM-OP-004` / `DM-REPLY-002` / `DM-FAIL-002` concern に固定する。RED では message validator が collection-level と ordinary unknown を同順位で比較し、canonical valid fixtureを `DM-MSG-001` / `DM-MSG-002` で拒否した。GREEN では shared `core-marker-order.mjs` が四 rank の分類・contiguous collection・Unicode orderを一元化し、operation / message / payload / reply / failure callers は standard unknown と collection-level unknown の役割を分離して検証する。独立レビューで Reply caller の versioned behavior evidence 不足が見つかったため、同じ checkpoint 内で expanded Reply Parameters / Bindings と Reply 固有 mutation を追加した。影響として Core manifest は212 cases / 156 invalid / 56 valid、one-invalidity auditは156 / 156となり、公開document grammarとrule catalogは変更しない。
+
 - [x] Metadata、extension name/order/escape、unknown non-`x-` key、sentence grammar。
 - [x] Identity trailer、set/projection digest、closed root、mixed set、task-scoped identity check。
 - [x] Direct/sharded Sources、unknown API identity/version、Revision none、overlap、fixed-point、cycle。
@@ -853,7 +855,7 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 - [x] Reply static/dynamic channel、correlation、timeout、whole-Reply fallback、no synthetic operation。
 - [x] Failure core states、deviations、common/inline shapes、receive malformed/unknown/handler errors。
 - [x] publication safety、unsafe mandatory value failure、instruction structural escape。
-- [ ] mixed post-table marker-group canonical ordering（`R8-CORE-033` で versioned evidence と shared validator semantics を固定する）。
+- [x] mixed post-table marker-group canonical ordering（`R8-CORE-033` で versioned evidence と shared validator semantics を固定する）。
 - [x] deviation placement、deprecated marker、single prose language、English structure。
 - [x] implementation readiness cases: same contract under different reader/runtime/adapter capabilities。
 
@@ -899,7 +901,7 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
   - [x] `R8-CORE-028` の adapter-defined header schema と compatible / missing-or-incompatible encoding / exposure の versioned evidence gap を解消する。
   - [x] `R8-CORE-030`–`R8-CORE-031`（common / inline failure-shape collapse / exact reference、reader instruction-authority / structural escape）を対応付ける。
   - [x] `R8-CORE-032`（Unprojected Operations grouping-key collision と completeness-dimension arity）を対応付ける。
-  - [ ] `R8-CORE-033`（mixed post-table marker-group canonical ordering）を versioned evidence と shared ordering semantics で対応付ける。
+  - [x] `R8-CORE-033`（mixed post-table marker-group canonical ordering）を versioned evidence と shared ordering semantics で対応付ける。
   - [ ] 残る Core corpus clause を `R8-CORE-*` row に分解して対応付け、`R8-CORE-001` を `covered` にする。
 
 #### Partial Collection / Parameters Unknown / Failure Root-Row Implementation Plan

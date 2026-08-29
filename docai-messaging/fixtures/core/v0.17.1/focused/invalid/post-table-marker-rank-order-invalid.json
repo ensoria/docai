@@ -1,0 +1,9 @@
+{
+  "id": "post-table-marker-rank-order-invalid",
+  "base": "../valid/post-table-marker-groups-valid",
+  "path": "channels/mixed-markers.md",
+  "replace": {
+    "from": "**unknown**: Value / Rule for acknowledgements requires the broker contract\n**unsupported**: localized: alpha operation binding omitted at source-a#/operation-bindings/alpha",
+    "to": "**unsupported**: localized: alpha operation binding omitted at source-a#/operation-bindings/alpha\n**unknown**: Value / Rule for acknowledgements requires the broker contract"
+  }
+}

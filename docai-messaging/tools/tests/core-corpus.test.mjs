@@ -112,6 +112,15 @@ const unprojectedCaseIds = [
   "unprojected-unrelated-marker-readiness-valid"
 ];
 
+const postTableMarkerCaseIds = [
+  "post-table-marker-collection-order-invalid",
+  "post-table-marker-group-split-invalid",
+  "post-table-marker-groups-valid",
+  "post-table-marker-rank-order-invalid",
+  "post-table-marker-reply-order-invalid",
+  "post-table-marker-unicode-order-invalid"
+];
+
 const perspectiveCaseIds = [
   "perspective-action-only-fallback-valid",
   "perspective-counterpart-complete-valid",
@@ -872,6 +881,48 @@ test("executes the Task 9 Unprojected Operations corpus and fixes audit retrieva
       }
     ]
   );
+});
+
+test("executes the Task 9 deterministic mixed post-table marker-group corpus", () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
+  const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
+
+  assert.deepEqual(postTableMarkerCaseIds.filter((id) => !byId.has(id)), []);
+  for (const id of postTableMarkerCaseIds) {
+    const fixtureCase = byId.get(id);
+    assert.equal(
+      fixtureCase.expected === "valid" || fixtureCase.expected_rule_ids.length === 1,
+      true,
+      id
+    );
+  }
+
+  const validCase = byId.get("post-table-marker-groups-valid");
+  const documentSet = loadDocumentSet(path.join(corpusPath, validCase.path));
+  const valid = validateCase(path.join(corpusPath, validCase.path), validCase);
+  assert.deepEqual(valid.diagnostics, []);
+  assert.deepEqual(documentSet.files.map((file) => ({
+    coverage: file.metadata?.coverage,
+    knowledge: file.metadata?.knowledge,
+    path: file.path
+  })), [
+    { coverage: "complete", knowledge: "complete", path: "CONVENTIONS.md" },
+    { coverage: "requires-source", knowledge: "requires-input", path: "INDEX.md" },
+    {
+      coverage: "requires-source",
+      knowledge: "requires-input",
+      path: "channels/mixed-markers.md"
+    }
+  ]);
+
+  for (const id of postTableMarkerCaseIds.filter((caseId) => caseId !== validCase.id)) {
+    const fixtureCase = byId.get(id);
+    const invalid = validateCase(path.join(corpusPath, fixtureCase.path), fixtureCase);
+    const primary = invalid.diagnostics.filter((entry) => (
+      entry.severity === "error" && !entry.cascade
+    ));
+    assert.deepEqual(primary.map((entry) => entry.ruleId), fixtureCase.expected_rule_ids, id);
+  }
 });
 
 test("executes the Task 9 DM-INC-001 DM-INC-006 DM-INC-007 perspective corpus", () => {
@@ -2929,7 +2980,7 @@ test("executes the Task 9 DM-INC-003 implementation-readiness capability matrix"
 
 test("audits every Task 9 invalid fixture as one primary concern", () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
-  assert.equal(manifest.cases.length, 206);
+  assert.equal(manifest.cases.length, 212);
   const result = runFixtureCorpus(corpusPath, validateCase);
   assert.equal(result.failed, 0, result.report);
   const audit = auditFixtureOneInvalidity({
@@ -2937,5 +2988,5 @@ test("audits every Task 9 invalid fixture as one primary concern", () => {
     corpusCases: result.cases
   });
 
-  assert.deepEqual(audit, { passed: true, audited: 151, errors: [] });
+  assert.deepEqual(audit, { passed: true, audited: 156, errors: [] });
 });

@@ -1,0 +1,9 @@
+{
+  "id": "post-table-marker-unicode-order-invalid",
+  "base": "../valid/post-table-marker-groups-valid",
+  "path": "channels/mixed-markers.md",
+  "replace": {
+    "from": "**unsupported**: localized:  failure feature omitted at source-a#/failures/private-use\n**unsupported**: localized: 😀 failure feature omitted at source-a#/failures/emoji",
+    "to": "**unsupported**: localized: 😀 failure feature omitted at source-a#/failures/emoji\n**unsupported**: localized:  failure feature omitted at source-a#/failures/private-use"
+  }
+}

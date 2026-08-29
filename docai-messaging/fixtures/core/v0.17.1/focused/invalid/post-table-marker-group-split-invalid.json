@@ -1,0 +1,9 @@
+{
+  "id": "post-table-marker-group-split-invalid",
+  "base": "../valid/post-table-marker-groups-valid",
+  "path": "channels/mixed-markers.md",
+  "replace": {
+    "from": "**unknown**: Broker acknowledgement mode requires the deployment configuration\n**unknown**: Value / Rule for acknowledgements requires the broker contract",
+    "to": "**unknown**: Broker acknowledgement mode requires the deployment configuration\n\n**unknown**: Value / Rule for acknowledgements requires the broker contract"
+  }
+}

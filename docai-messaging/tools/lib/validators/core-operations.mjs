@@ -2,6 +2,10 @@ import { diagnostic } from "../diagnostics.mjs";
 import { scanMarkdown } from "../markdown.mjs";
 import { validateSentenceLine } from "../sentence.mjs";
 import { parsePipeTable } from "../tables.mjs";
+import {
+  postTableMarkerKind,
+  validPostTableMarkerOrder
+} from "./core-marker-order.mjs";
 import { validChannelAddress } from "./core-routing.mjs";
 
 const OPERATION_HEADING = /^(SEND|RECEIVE) (.+) \(([A-Za-z0-9._-]+)\)$/;
@@ -130,22 +134,6 @@ function validLeadingDeviations(lines) {
   ));
 }
 
-function markerKind(text, parameterTable) {
-  const collectionPrefix = "**unknown**: additional unnamed parameter requires ";
-  if (parameterTable && text.startsWith(collectionPrefix) && text.length > collectionPrefix.length) {
-    return { rank: 0, type: "collection-unknown" };
-  }
-  if (text.startsWith("**unknown**: ") && text.length > "**unknown**: ".length) {
-    return { rank: 1, type: "unknown" };
-  }
-  const unsupportedPrefix = "**unsupported**: localized: ";
-  if (text.startsWith(unsupportedPrefix) && text.length > unsupportedPrefix.length) {
-    return { rank: 2, type: "unsupported" };
-  }
-  if (/^\*\*x-[A-Za-z0-9._-]+\*\*: .+$/.test(text)) return { rank: 3, type: "extension" };
-  return null;
-}
-
 function validPostTableMarkers(markers, table, parameterTable) {
   const hasUnknownCell = table.rows.some((row) => row.includes("unknown"));
   if (markers.length === 0) return !hasUnknownCell;
@@ -153,14 +141,17 @@ function validPostTableMarkers(markers, table, parameterTable) {
     || markers.some((line, index) => index > 0 && line.line !== markers[index - 1].line + 1)) {
     return false;
   }
-  const classified = markers.map((line) => markerKind(line.text, parameterTable));
+  const classified = markers.map((line) => postTableMarkerKind(line.text));
   if (classified.some((entry) => entry === null)) return false;
-  for (let index = 1; index < classified.length; index += 1) {
-    if (classified[index].rank < classified[index - 1].rank) return false;
-    if (classified[index].rank === classified[index - 1].rank
-      && unicodeScalarCompare(markers[index - 1].text, markers[index].text) >= 0) return false;
-  }
-  if (classified.filter((entry) => entry.type === "collection-unknown").length > 1) return false;
+  const marked = markers.map((line, index) => ({ ...line, kind: classified[index] }));
+  const collectionPrefix = "**unknown**: additional unnamed parameter requires ";
+  const collectionMarkers = marked.filter((entry) => entry.kind.type === "collection-unknown");
+  if (!validPostTableMarkerOrder(marked)
+    || collectionMarkers.some((entry) => (
+      !parameterTable
+        || !entry.text.startsWith(collectionPrefix)
+        || entry.text.length <= collectionPrefix.length
+    ))) return false;
   const hasStandardUnknownMarker = classified.some((entry) => entry.type === "unknown");
   return hasUnknownCell === hasStandardUnknownMarker;
 }
