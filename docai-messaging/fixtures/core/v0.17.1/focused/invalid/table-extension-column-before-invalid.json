@@ -1,0 +1,9 @@
+{
+  "id": "table-extension-column-before-invalid",
+  "base": "../valid/table-extension-columns-valid",
+  "path": "channels/tables.md",
+  "replace": {
+    "from": "| Field | Type | Required | Nullable | Constraints / Meaning | x-source | x-note |",
+    "to": "| x-source | Field | Type | Required | Nullable | Constraints / Meaning | x-note |"
+  }
+}

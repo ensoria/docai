@@ -1,0 +1,9 @@
+{
+  "id": "table-extension-column-between-invalid",
+  "base": "../valid/table-extension-columns-valid",
+  "path": "channels/tables.md",
+  "replace": {
+    "from": "| Field | Type | Required | Nullable | Constraints / Meaning | x-source | x-note |",
+    "to": "| Field | Type | x-source | Required | Nullable | Constraints / Meaning | x-note |"
+  }
+}

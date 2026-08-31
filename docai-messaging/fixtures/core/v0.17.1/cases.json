@@ -1193,6 +1193,27 @@
       "expected_rule_ids": ["DM-MSG-003"]
     },
     {
+      "id": "table-extension-columns-valid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/valid/table-extension-columns-valid",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
+      "id": "table-extension-column-before-invalid",
+      "kind": "task-scoped-document-set-mutation",
+      "path": "focused/invalid/table-extension-column-before-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-MSG-001"]
+    },
+    {
+      "id": "table-extension-column-between-invalid",
+      "kind": "task-scoped-document-set-mutation",
+      "path": "focused/invalid/table-extension-column-between-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-MSG-001"]
+    },
+    {
       "id": "schema-custom-format-projection-invalid",
       "kind": "schema-field-source-scenario",
       "path": "source/focused/schema-custom-format-projection-invalid.json",

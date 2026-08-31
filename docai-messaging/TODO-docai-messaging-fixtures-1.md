@@ -837,6 +837,8 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 
 > **Approved design and implementation note (`R8-CORE-034` operation / message-selection sentence-grammar checkpoint):** 既存の standalone sentence-line fixtures と unit tests だけでは README §8 が要求する Operation purpose / multi-message selection 両 caller の versioned behavior evidence が不足するため、docs-only mapping にはせず、専用 `sentence-operation-message-valid` document setを追加する。二つのoperationと四つのmessageにより、両surfaceの一文・二文を固定し、各selectionは対応するSEND Headers tableに定義したheader valueというobservable factを保持したまま、空白なしの隣接日本語文、URL内の `.`、inline code内の `?` をliteral terminatorとして数える。四つのmutationはOperationの未終端 / 三文を単一 `DM-OP-002`、observable selection conditionを維持したMessage selectionの未終端 / URLと`e.g.`を含む四終端を単一 `DM-MSG-003` concernに固定する。既存parser-level casesは `DM-PARSE-004` boundary evidenceとして維持する。独立レビューでselection proseのobservable-condition不足、条件headerの未記載、`Reply: none` と矛盾する応答待ちpurposeを順に検出したため、条件headerを展開して後続empty Bindingsを見出し付き`none`にし、日本語purposeをReply非依存の利用目的へ直して、grammar以外のinvalidityを除去してから再検証した。作業順序はREADME §8とRemaining Core Inventoryの記載どおりで変更せず、production validator、公開document grammar、rule catalogは変更しない。影響としてCore manifestは217 cases / 160 invalid / 57 valid、one-invalidity auditは160 / 160となる。
 
+> **Approved design and implementation note (`R8-CORE-035` exact-column table extension-suffix checkpoint):** 既存unit testはPayload field tableのfinal `x-` columnと先頭配置拒否を固定していたが、README §8が要求するversioned fixture、標準prefixだけの同型table、複数extension columnのcontiguous final suffix、標準列途中への挿入拒否が不足していたため、専用`table-extension-columns-valid` document setと二つのmutationを追加する。同じSEND Payload field-table形式で標準5列だけのtableと、必須契約情報を持たない`x-source` / `x-note`を末尾に連続配置したtableを固定する。mutationはtable headerだけで`x-source`を標準prefixの前または途中へ移動し、各々をcolumn boundaryだけの単一`DM-MSG-001` concernにする。body cellまで移動する試行は位置依存のexample-field評価も変えて`DM-MSG-005`を追加するため採用せず、既存のheader-order mutation方式と一-invalidity原則を維持する。作業順序はREADME §8とRemaining Core Inventoryの記載どおりで変更せず、production validator、公開document grammar、rule catalogは変更しない。影響としてCore manifestは220 cases / 162 invalid / 58 valid、one-invalidity auditは162 / 162となる。
+
 - [x] Metadata、extension name/order/escape、unknown non-`x-` key、sentence grammar。
 - [x] Identity trailer、set/projection digest、closed root、mixed set、task-scoped identity check。
 - [x] Direct/sharded Sources、unknown API identity/version、Revision none、overlap、fixed-point、cycle。
@@ -905,6 +907,7 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
   - [x] `R8-CORE-032`（Unprojected Operations grouping-key collision と completeness-dimension arity）を対応付ける。
   - [x] `R8-CORE-033`（mixed post-table marker-group canonical ordering）を versioned evidence と shared ordering semantics で対応付ける。
   - [x] `R8-CORE-034`（Operation purpose / Message selection sentence grammar）を caller-specific versioned evidence と parser-level boundary casesで対応付ける。
+  - [x] `R8-CORE-035`（exact-column tableのstandard prefix / final `x-` suffix境界）を同型versioned table pairとbefore/between mutationsで対応付ける。
   - [ ] 残る Core corpus clause を `R8-CORE-*` row に分解して対応付け、`R8-CORE-001` を `covered` にする。
 
 #### Partial Collection / Parameters Unknown / Failure Root-Row Implementation Plan

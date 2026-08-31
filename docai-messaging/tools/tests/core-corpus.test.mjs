@@ -15,6 +15,7 @@ import {
 import { scanMarkdown } from "../lib/markdown.mjs";
 import { parseOpeningMetadata } from "../lib/metadata.mjs";
 import { validateSentenceLine } from "../lib/sentence.mjs";
+import { parsePipeTable } from "../lib/tables.mjs";
 import * as coreValidator from "../lib/validators/core.mjs";
 import * as coreRouting from "../lib/validators/core-routing.mjs";
 
@@ -127,6 +128,12 @@ const sentenceGrammarCaseIds = [
   "sentence-operation-message-valid",
   "sentence-operation-three-invalid",
   "sentence-operation-unterminated-invalid"
+];
+
+const tableExtensionCaseIds = [
+  "table-extension-column-before-invalid",
+  "table-extension-column-between-invalid",
+  "table-extension-columns-valid"
 ];
 
 const perspectiveCaseIds = [
@@ -962,6 +969,46 @@ test("executes the Task 9 operation and message-selection sentence grammar corpu
   }
 
   for (const id of sentenceGrammarCaseIds.filter((caseId) => caseId !== validCase.id)) {
+    const fixtureCase = byId.get(id);
+    const invalid = validateCase(path.join(corpusPath, fixtureCase.path), fixtureCase);
+    const primary = invalid.diagnostics.filter((entry) => (
+      entry.severity === "error" && !entry.cascade
+    ));
+    assert.deepEqual(primary.map((entry) => entry.ruleId), fixtureCase.expected_rule_ids, id);
+  }
+});
+
+test("executes the Task 9 exact-column table extension-suffix corpus", () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
+  const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
+
+  assert.deepEqual(tableExtensionCaseIds.filter((id) => !byId.has(id)), []);
+  const validCase = byId.get("table-extension-columns-valid");
+  const documentSet = loadDocumentSet(path.join(corpusPath, validCase.path));
+  const valid = validateCase(path.join(corpusPath, validCase.path), validCase);
+  assert.deepEqual(valid.diagnostics, []);
+
+  const operationFile = documentSet.files.find((file) => file.path === "channels/tables.md");
+  assert.notEqual(operationFile, undefined);
+  const lines = scanMarkdown({ text: operationFile.content, file: operationFile.path }).value.lines;
+  const tables = lines
+    .map((line, index) => ({ index, line }))
+    .filter(({ line }) => line.text.startsWith("| Field |"))
+    .map(({ index }) => parsePipeTable(lines.slice(index)).value);
+  assert.deepEqual(tables.map((table) => table.header), [
+    ["Field", "Type", "Required", "Nullable", "Constraints / Meaning"],
+    [
+      "Field",
+      "Type",
+      "Required",
+      "Nullable",
+      "Constraints / Meaning",
+      "x-source",
+      "x-note"
+    ]
+  ]);
+
+  for (const id of tableExtensionCaseIds.filter((caseId) => caseId !== validCase.id)) {
     const fixtureCase = byId.get(id);
     const invalid = validateCase(path.join(corpusPath, fixtureCase.path), fixtureCase);
     const primary = invalid.diagnostics.filter((entry) => (
@@ -3026,7 +3073,7 @@ test("executes the Task 9 DM-INC-003 implementation-readiness capability matrix"
 
 test("audits every Task 9 invalid fixture as one primary concern", () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
-  assert.equal(manifest.cases.length, 217);
+  assert.equal(manifest.cases.length, 220);
   const result = runFixtureCorpus(corpusPath, validateCase);
   assert.equal(result.failed, 0, result.report);
   const audit = auditFixtureOneInvalidity({
@@ -3034,5 +3081,5 @@ test("audits every Task 9 invalid fixture as one primary concern", () => {
     corpusCases: result.cases
   });
 
-  assert.deepEqual(audit, { passed: true, audited: 160, errors: [] });
+  assert.deepEqual(audit, { passed: true, audited: 162, errors: [] });
 });
