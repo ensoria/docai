@@ -1158,6 +1158,41 @@
       "expected_rule_ids": ["DM-PARSE-004"]
     },
     {
+      "id": "sentence-operation-message-valid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/valid/sentence-operation-message-valid",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
+      "id": "sentence-operation-unterminated-invalid",
+      "kind": "task-scoped-document-set-mutation",
+      "path": "focused/invalid/sentence-operation-unterminated-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-OP-002"]
+    },
+    {
+      "id": "sentence-operation-three-invalid",
+      "kind": "task-scoped-document-set-mutation",
+      "path": "focused/invalid/sentence-operation-three-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-OP-002"]
+    },
+    {
+      "id": "sentence-message-unterminated-invalid",
+      "kind": "task-scoped-document-set-mutation",
+      "path": "focused/invalid/sentence-message-unterminated-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-MSG-003"]
+    },
+    {
+      "id": "sentence-message-abbreviation-invalid",
+      "kind": "task-scoped-document-set-mutation",
+      "path": "focused/invalid/sentence-message-abbreviation-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-MSG-003"]
+    },
+    {
       "id": "schema-custom-format-projection-invalid",
       "kind": "schema-field-source-scenario",
       "path": "source/focused/schema-custom-format-projection-invalid.json",

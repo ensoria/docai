@@ -1,0 +1,9 @@
+{
+  "id": "sentence-operation-unterminated-invalid",
+  "base": "../valid/sentence-operation-message-valid",
+  "path": "channels/sentences.md",
+  "replace": {
+    "from": "Publishes an alpha event when producers complete alpha processing.",
+    "to": "Publishes an alpha event when producers complete alpha processing"
+  }
+}

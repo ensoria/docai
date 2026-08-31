@@ -1,0 +1,9 @@
+{
+  "id": "sentence-operation-three-invalid",
+  "base": "../valid/sentence-operation-message-valid",
+  "path": "channels/sentences.md",
+  "replace": {
+    "from": "ベータ処理が完了したイベントを送信します。購読者への状態更新に使用します。",
+    "to": "ベータ処理が完了したイベントを送信します。購読者への状態更新に使用します。監査処理にも使用します。"
+  }
+}

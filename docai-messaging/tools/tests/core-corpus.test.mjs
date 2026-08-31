@@ -121,6 +121,14 @@ const postTableMarkerCaseIds = [
   "post-table-marker-unicode-order-invalid"
 ];
 
+const sentenceGrammarCaseIds = [
+  "sentence-message-abbreviation-invalid",
+  "sentence-message-unterminated-invalid",
+  "sentence-operation-message-valid",
+  "sentence-operation-three-invalid",
+  "sentence-operation-unterminated-invalid"
+];
+
 const perspectiveCaseIds = [
   "perspective-action-only-fallback-valid",
   "perspective-counterpart-complete-valid",
@@ -916,6 +924,44 @@ test("executes the Task 9 deterministic mixed post-table marker-group corpus", (
   ]);
 
   for (const id of postTableMarkerCaseIds.filter((caseId) => caseId !== validCase.id)) {
+    const fixtureCase = byId.get(id);
+    const invalid = validateCase(path.join(corpusPath, fixtureCase.path), fixtureCase);
+    const primary = invalid.diagnostics.filter((entry) => (
+      entry.severity === "error" && !entry.cascade
+    ));
+    assert.deepEqual(primary.map((entry) => entry.ruleId), fixtureCase.expected_rule_ids, id);
+  }
+});
+
+test("executes the Task 9 operation and message-selection sentence grammar corpus", () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
+  const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
+
+  assert.deepEqual(sentenceGrammarCaseIds.filter((id) => !byId.has(id)), []);
+  const validCase = byId.get("sentence-operation-message-valid");
+  const documentSet = loadDocumentSet(path.join(corpusPath, validCase.path));
+  const valid = validateCase(path.join(corpusPath, validCase.path), validCase);
+  assert.deepEqual(valid.diagnostics, []);
+
+  const operationFile = documentSet.files.find((file) => file.path === "channels/sentences.md");
+  assert.notEqual(operationFile, undefined);
+  const lines = scanMarkdown({ text: operationFile.content, file: operationFile.path }).value.lines;
+  const sentenceCounts = new Map([
+    ["Publishes an alpha event when producers complete alpha processing.", 1],
+    ["ベータ処理が完了したイベントを送信します。購読者への状態更新に使用します。", 2],
+    ["Use this message when the `kind` header is `alpha-created`.", 1],
+    ["Use this message when the `state` header is `ready?`.", 2],
+    ["Use this message when the `kind` header is `beta-created`.", 1],
+    ["Use this message when the `source` header is https://example.test.", 2]
+  ]);
+  for (const [text, expectedCount] of sentenceCounts) {
+    const line = lines.find((entry) => entry.text === text);
+    assert.notEqual(line, undefined, text);
+    const result = validateSentenceLine({ text: line.text, file: operationFile.path, line: line.line }, 1, 2);
+    assert.equal(result.value?.count, expectedCount, text);
+  }
+
+  for (const id of sentenceGrammarCaseIds.filter((caseId) => caseId !== validCase.id)) {
     const fixtureCase = byId.get(id);
     const invalid = validateCase(path.join(corpusPath, fixtureCase.path), fixtureCase);
     const primary = invalid.diagnostics.filter((entry) => (
@@ -2980,7 +3026,7 @@ test("executes the Task 9 DM-INC-003 implementation-readiness capability matrix"
 
 test("audits every Task 9 invalid fixture as one primary concern", () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
-  assert.equal(manifest.cases.length, 212);
+  assert.equal(manifest.cases.length, 217);
   const result = runFixtureCorpus(corpusPath, validateCase);
   assert.equal(result.failed, 0, result.report);
   const audit = auditFixtureOneInvalidity({
@@ -2988,5 +3034,5 @@ test("audits every Task 9 invalid fixture as one primary concern", () => {
     corpusCases: result.cases
   });
 
-  assert.deepEqual(audit, { passed: true, audited: 156, errors: [] });
+  assert.deepEqual(audit, { passed: true, audited: 160, errors: [] });
 });

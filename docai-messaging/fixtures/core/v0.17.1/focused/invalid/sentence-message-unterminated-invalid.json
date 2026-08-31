@@ -1,0 +1,9 @@
+{
+  "id": "sentence-message-unterminated-invalid",
+  "base": "../valid/sentence-operation-message-valid",
+  "path": "channels/sentences.md",
+  "replace": {
+    "from": "Use this message when the `kind` header is `alpha-created`.",
+    "to": "Use this message when the `kind` header is `alpha-created`"
+  }
+}

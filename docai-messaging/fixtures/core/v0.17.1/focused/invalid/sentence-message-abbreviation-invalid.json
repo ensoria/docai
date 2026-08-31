@@ -1,0 +1,9 @@
+{
+  "id": "sentence-message-abbreviation-invalid",
+  "base": "../valid/sentence-operation-message-valid",
+  "path": "channels/sentences.md",
+  "replace": {
+    "from": "Use this message when the `source` header is https://example.test.",
+    "to": "Use this message when the `source` header is https://example.test, e.g. for imported events."
+  }
+}
