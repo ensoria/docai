@@ -97,9 +97,8 @@
       ],
       "projected": {
         "caseId": "adapter-defined-avro-schema-mapping-duplicate",
-        "outcome": "emit-unsupported",
-        "resolution": "no-exact-mapping",
-        "projection": "replace-header-representation",
+        "outcome": "generation-failure",
+        "reason": "duplicate-publication-mapping",
         "ordinaryReaderRequirement": "normalized-contract-only"
       }
     },
@@ -228,9 +227,8 @@
       ],
       "projected": {
         "caseId": "adapter-defined-avro-header-mapping-duplicate",
-        "outcome": "emit-unsupported",
-        "resolution": "no-exact-mapping",
-        "projection": "replace-header-representation",
+        "outcome": "generation-failure",
+        "reason": "duplicate-publication-mapping",
         "ordinaryReaderRequirement": "normalized-contract-only"
       }
     },

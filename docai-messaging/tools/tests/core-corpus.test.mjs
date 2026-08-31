@@ -254,6 +254,11 @@ const partialCollectionSourceCaseIds = [
   "partial-collection-synthetic-member-invalid"
 ];
 
+const schemaAdapterCaseIds = [
+  "schema-adapter-duplicate-mapping-projection-invalid",
+  "schema-adapter-targets-valid"
+];
+
 const wireAndHeaderCaseIds = [
   "adapter-defined-header-schema-projection-invalid",
   "adapter-defined-header-schema-valid",
@@ -2226,6 +2231,85 @@ test("associates duplicate partial-collection IDs by source-case index", () => {
   ]);
 });
 
+test("executes the Task 9 DM-ADAPTER-001 exact schema-target corpus", () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
+  const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
+
+  assert.deepEqual(schemaAdapterCaseIds.filter((id) => !byId.has(id)), []);
+  const validCase = byId.get("schema-adapter-targets-valid");
+  const valid = validateCase(path.join(corpusPath, validCase.path), validCase);
+  assert.deepEqual(valid.diagnostics, []);
+
+  const expectations = valid.facts.adapterSourceExpectations;
+  assert.deepEqual(
+    expectations
+      .filter((entry) => entry.resolution === "direct")
+      .map((entry) => [entry.effectiveTarget, entry.ruleId]),
+    [
+      ["application/vnd.aai.asyncapi;version=3.0.0", "direct-asyncapi-schema-object-3.0.0"],
+      ["application/vnd.aai.asyncapi+json;version=3.0.0", "direct-asyncapi-schema-object-3.0.0"],
+      ["application/vnd.aai.asyncapi+yaml;version=3.0.0", "direct-asyncapi-schema-object-3.0.0"],
+      ["application/vnd.aai.asyncapi;version=3.1.0", "direct-asyncapi-schema-object-3.1.0"],
+      ["application/vnd.aai.asyncapi+json;version=3.1.0", "direct-asyncapi-schema-object-3.1.0"],
+      ["application/vnd.aai.asyncapi+yaml;version=3.1.0", "direct-asyncapi-schema-object-3.1.0"],
+      ["application/schema+json;version=draft-07", "direct-json-schema-draft-07"],
+      ["application/schema+yaml;version=draft-07", "direct-json-schema-draft-07"]
+    ]
+  );
+  assert.deepEqual(
+    expectations
+      .filter((entry) => entry.resolution === "source-default")
+      .map((entry) => [entry.caseId, entry.effectiveTarget]),
+    [
+      ["asyncapi-3.0-default", "application/vnd.aai.asyncapi+json;version=3.0.0"],
+      ["asyncapi-3.1-default", "application/vnd.aai.asyncapi+json;version=3.1.0"]
+    ]
+  );
+  assert.deepEqual(
+    expectations.find((entry) => entry.caseId === "unmapped-case-mismatched"),
+    {
+      caseId: "unmapped-case-mismatched",
+      outcome: "emit-unsupported",
+      resolution: "no-exact-mapping",
+      effectiveTarget: "Application/Schema+JSON;version=draft-07",
+      projection: "smallest-applicable-unsupported",
+      ordinaryReaderRequirement: "normalized-contract-only"
+    }
+  );
+  assert.deepEqual(
+    expectations.find((entry) => entry.caseId === "publication-mapped-avro"),
+    {
+      caseId: "publication-mapped-avro",
+      outcome: "supported",
+      resolution: "publication-mapping",
+      effectiveTarget: "application/vnd.apache.avro+json;version=1.11.3",
+      ruleId: "avro-schema-projection",
+      ruleVersion: "1.11.3-1",
+      mappingSourceIds: ["adapter-catalog"],
+      projection: "emit-schema-projection",
+      ordinaryReaderRequirement: "normalized-contract-only"
+    }
+  );
+  assert.deepEqual(
+    expectations.find((entry) => entry.caseId === "duplicate-avro-mappings"),
+    {
+      caseId: "duplicate-avro-mappings",
+      outcome: "generation-failure",
+      reason: "duplicate-publication-mapping",
+      ordinaryReaderRequirement: "normalized-contract-only"
+    }
+  );
+
+  const invalidCase = byId.get("schema-adapter-duplicate-mapping-projection-invalid");
+  const invalid = validateCase(path.join(corpusPath, invalidCase.path), invalidCase);
+  const primary = invalid.diagnostics.filter((entry) => (
+    entry.severity === "error" && !entry.cascade
+  ));
+  assert.deepEqual(primary.map((entry) => entry.ruleId), ["DM-ADAPTER-001"]);
+  assert.equal(primary[0].message.includes("adapter-catalog"), false);
+  assert.equal(primary[0].message.includes("avro"), false);
+});
+
 test("executes the Task 9 DM-ADAPTER-002 DM-ADAPTER-003 DM-MSG-004 wire header and raw corpus", () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
   const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
@@ -2334,10 +2418,8 @@ test("executes the Task 9 DM-ADAPTER-002 DM-ADAPTER-003 DM-MSG-004 wire header a
     },
     {
       caseId: "parameterized-json-duplicate-mappings",
-      outcome: "emit-unsupported",
-      resolution: "no-exact-mapping",
-      effectiveTarget: "application/json;charset=utf-8",
-      projection: "replace-payload-representation",
+      outcome: "generation-failure",
+      reason: "duplicate-publication-mapping",
       ordinaryReaderRequirement: "normalized-contract-only"
     },
     {
@@ -2384,9 +2466,8 @@ test("executes the Task 9 DM-ADAPTER-002 DM-ADAPTER-003 DM-MSG-004 wire header a
     },
     {
       caseId: "adapter-defined-avro-schema-mapping-duplicate",
-      outcome: "emit-unsupported",
-      resolution: "no-exact-mapping",
-      projection: "replace-header-representation",
+      outcome: "generation-failure",
+      reason: "duplicate-publication-mapping",
       ordinaryReaderRequirement: "normalized-contract-only"
     },
     {
@@ -2405,9 +2486,8 @@ test("executes the Task 9 DM-ADAPTER-002 DM-ADAPTER-003 DM-MSG-004 wire header a
     },
     {
       caseId: "adapter-defined-avro-header-mapping-duplicate",
-      outcome: "emit-unsupported",
-      resolution: "no-exact-mapping",
-      projection: "replace-header-representation",
+      outcome: "generation-failure",
+      reason: "duplicate-publication-mapping",
       ordinaryReaderRequirement: "normalized-contract-only"
     },
     {
@@ -3073,7 +3153,7 @@ test("executes the Task 9 DM-INC-003 implementation-readiness capability matrix"
 
 test("audits every Task 9 invalid fixture as one primary concern", () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
-  assert.equal(manifest.cases.length, 220);
+  assert.equal(manifest.cases.length, 222);
   const result = runFixtureCorpus(corpusPath, validateCase);
   assert.equal(result.failed, 0, result.report);
   const audit = auditFixtureOneInvalidity({
@@ -3081,5 +3161,5 @@ test("audits every Task 9 invalid fixture as one primary concern", () => {
     corpusCases: result.cases
   });
 
-  assert.deepEqual(audit, { passed: true, audited: 162, errors: [] });
+  assert.deepEqual(audit, { passed: true, audited: 163, errors: [] });
 });

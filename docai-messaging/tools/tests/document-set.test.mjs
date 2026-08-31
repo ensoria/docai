@@ -5393,6 +5393,82 @@ task7Test("DM-ADAPTER-001 resolves only exact directly registered schema targets
         projection: "smallest-applicable-unsupported",
         ordinaryReaderRequirement: "normalized-contract-only"
       }
+    },
+    {
+      input: {
+        caseId: "publication-mapped-avro-schema",
+        adapterClass: "schema",
+        sourceSpecification: "Apache Avro 1.11.3",
+        schemaFormat: "application/vnd.apache.avro+json;version=1.11.3",
+        publicationMappings: [{
+          sourceId: "adapter-catalog",
+          docaiMessagingVersion: "0.17.1",
+          adapterClass: "schema",
+          target: "application/vnd.apache.avro+json;version=1.11.3",
+          ruleId: "avro-schema-projection",
+          ruleVersion: "1.11.3-1",
+          defines: [
+            "constraint-mapping",
+            "example-value-projection",
+            "logical-types",
+            "runtime-schema-resolution"
+          ]
+        }]
+      },
+      want: {
+        caseId: "publication-mapped-avro-schema",
+        outcome: "supported",
+        resolution: "publication-mapping",
+        effectiveTarget: "application/vnd.apache.avro+json;version=1.11.3",
+        ruleId: "avro-schema-projection",
+        ruleVersion: "1.11.3-1",
+        mappingSourceIds: ["adapter-catalog"],
+        projection: "emit-schema-projection",
+        ordinaryReaderRequirement: "normalized-contract-only"
+      }
+    },
+    {
+      input: {
+        caseId: "duplicate-avro-schema-mappings",
+        adapterClass: "schema",
+        sourceSpecification: "Apache Avro 1.11.3",
+        schemaFormat: "application/vnd.apache.avro+json;version=1.11.3",
+        publicationMappings: [
+          {
+            sourceId: "adapter-catalog-a",
+            docaiMessagingVersion: "0.17.1",
+            adapterClass: "schema",
+            target: "application/vnd.apache.avro+json;version=1.11.3",
+            ruleId: "avro-schema-projection-a",
+            ruleVersion: "1.11.3-1",
+            defines: [
+              "constraint-mapping",
+              "example-value-projection",
+              "logical-types",
+              "runtime-schema-resolution"
+            ]
+          },
+          {
+            sourceId: "adapter-catalog-b",
+            docaiMessagingVersion: "0.17.1",
+            adapterClass: "schema",
+            target: "application/vnd.apache.avro+json;version=1.11.3",
+            ruleId: "avro-schema-projection-b",
+            ruleVersion: "1.11.3-2",
+            defines: [
+              "constraint-mapping",
+              "example-value-projection",
+              "logical-types"
+            ]
+          }
+        ]
+      },
+      want: {
+        caseId: "duplicate-avro-schema-mappings",
+        outcome: "generation-failure",
+        reason: "duplicate-publication-mapping",
+        ordinaryReaderRequirement: "normalized-contract-only"
+      }
     }
   ];
 
@@ -5431,6 +5507,44 @@ task7Test("DM-ADAPTER-002 distinguishes direct JSON wire targets from mapped-onl
         adapterClass: "payload-wire",
         mediaType: "application/xml",
         publicationMappings: []
+      },
+      {
+        caseId: "duplicate-parameterized-json-mappings",
+        adapterClass: "payload-wire",
+        mediaType: "application/json;charset=utf-8",
+        publicationMappings: [
+          {
+            sourceId: "adapter-catalog-a",
+            docaiMessagingVersion: "0.17.1",
+            adapterClass: "payload-wire",
+            target: "application/json;charset=utf-8",
+            ruleId: "json-wire-a",
+            ruleVersion: "1.0.0",
+            defines: [
+              "byte-encoding",
+              "character-encoding",
+              "parameter-semantics",
+              "decoded-value-model",
+              "full-example",
+              "compact-example",
+              "canonical-comparison",
+              "schema-composition"
+            ],
+            emittedMediaType: "application/json;charset=utf-8",
+            parameterHandling: "preserve"
+          },
+          {
+            sourceId: "adapter-catalog-b",
+            docaiMessagingVersion: "0.17.1",
+            adapterClass: "payload-wire",
+            target: "application/json;charset=utf-8",
+            ruleId: "json-wire-b",
+            ruleVersion: "1.0.0",
+            defines: ["byte-encoding"],
+            emittedMediaType: "application/json;charset=utf-8",
+            parameterHandling: "preserve"
+          }
+        ]
       }
     ]
   });
@@ -5468,6 +5582,12 @@ task7Test("DM-ADAPTER-002 distinguishes direct JSON wire targets from mapped-onl
       resolution: "no-exact-mapping",
       effectiveTarget: "application/xml",
       projection: "replace-payload-representation",
+      ordinaryReaderRequirement: "normalized-contract-only"
+    },
+    {
+      caseId: "duplicate-parameterized-json-mappings",
+      outcome: "generation-failure",
+      reason: "duplicate-publication-mapping",
       ordinaryReaderRequirement: "normalized-contract-only"
     }
   ]);
@@ -5521,6 +5641,44 @@ task7Test("DM-ADAPTER-003 records exact header encoding and exposure mapping ava
           ruleVersion: "1.0.0",
           defines: ["encoding", "exposure"]
         }]
+      },
+      {
+        caseId: "duplicate-kafka-header-mappings",
+        adapterClass: "header-encoding",
+        target: {
+          protocol: "kafka",
+          encoding: "record-headers",
+          specificationVersion: "asyncapi-kafka-binding-0.5.0"
+        },
+        schemaTarget: "application/vnd.apache.avro+json;version=1.11.3",
+        publicationMappings: [
+          {
+            sourceId: "adapter-catalog-a",
+            docaiMessagingVersion: "0.17.1",
+            adapterClass: "header-encoding",
+            target: {
+              protocol: "kafka",
+              encoding: "record-headers",
+              specificationVersion: "asyncapi-kafka-binding-0.5.0"
+            },
+            ruleId: "kafka-header-map-a",
+            ruleVersion: "1.0.0",
+            defines: ["encoding", "exposure"]
+          },
+          {
+            sourceId: "adapter-catalog-b",
+            docaiMessagingVersion: "0.17.1",
+            adapterClass: "header-encoding",
+            target: {
+              protocol: "kafka",
+              encoding: "record-headers",
+              specificationVersion: "asyncapi-kafka-binding-0.5.0"
+            },
+            ruleId: "kafka-header-map-b",
+            ruleVersion: "1.0.0",
+            defines: ["encoding"]
+          }
+        ]
       }
     ]
   });
@@ -5541,6 +5699,12 @@ task7Test("DM-ADAPTER-003 records exact header encoding and exposure mapping ava
       outcome: "emit-unsupported",
       resolution: "no-exact-mapping",
       projection: "replace-header-representation",
+      ordinaryReaderRequirement: "normalized-contract-only"
+    },
+    {
+      caseId: "duplicate-kafka-header-mappings",
+      outcome: "generation-failure",
+      reason: "duplicate-publication-mapping",
       ordinaryReaderRequirement: "normalized-contract-only"
     }
   ]);
@@ -5623,9 +5787,8 @@ task7Test("DM-ADAPTER-004 records exact protocol binding mapping availability", 
     },
     {
       caseId: "duplicate-kafka-channel-binding",
-      outcome: "emit-unsupported",
-      resolution: "no-exact-mapping",
-      projection: "smallest-channel-binding-unsupported",
+      outcome: "generation-failure",
+      reason: "duplicate-publication-mapping",
       ordinaryReaderRequirement: "normalized-contract-only"
     }
   ]);

@@ -1,0 +1,48 @@
+{
+  "docaiMessagingVersion": "0.17.1",
+  "cases": [
+    {
+      "caseId": "duplicate-avro-mappings",
+      "adapterClass": "schema",
+      "sourceSpecification": "Apache Avro 1.11.3",
+      "schemaFormat": "application/vnd.apache.avro+json;version=1.11.3",
+      "publicationMappings": [
+        {
+          "sourceId": "adapter-catalog-a",
+          "docaiMessagingVersion": "0.17.1",
+          "adapterClass": "schema",
+          "target": "application/vnd.apache.avro+json;version=1.11.3",
+          "ruleId": "avro-schema-projection-a",
+          "ruleVersion": "1.11.3-1",
+          "defines": [
+            "constraint-mapping",
+            "example-value-projection",
+            "logical-types",
+            "runtime-schema-resolution"
+          ]
+        },
+        {
+          "sourceId": "adapter-catalog-b",
+          "docaiMessagingVersion": "0.17.1",
+          "adapterClass": "schema",
+          "target": "application/vnd.apache.avro+json;version=1.11.3",
+          "ruleId": "avro-schema-projection-b",
+          "ruleVersion": "1.11.3-2",
+          "defines": [
+            "constraint-mapping",
+            "example-value-projection",
+            "logical-types"
+          ]
+        }
+      ],
+      "projected": {
+        "caseId": "duplicate-avro-mappings",
+        "outcome": "emit-unsupported",
+        "resolution": "no-exact-mapping",
+        "effectiveTarget": "application/vnd.apache.avro+json;version=1.11.3",
+        "projection": "smallest-applicable-unsupported",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    }
+  ]
+}

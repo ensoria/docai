@@ -1291,6 +1291,20 @@
       "expected_rule_ids": []
     },
     {
+      "id": "schema-adapter-duplicate-mapping-projection-invalid",
+      "kind": "adapter-source-scenario",
+      "path": "source/focused/schema-adapter-duplicate-mapping-projection-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-ADAPTER-001"]
+    },
+    {
+      "id": "schema-adapter-targets-valid",
+      "kind": "adapter-source-scenario",
+      "path": "source/focused/schema-adapter-targets-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
       "id": "schema-format-default-projection-valid",
       "kind": "schema-field-source-scenario",
       "path": "source/focused/schema-format-default-projection-valid.json",

@@ -167,10 +167,8 @@
       ],
       "projected": {
         "caseId": "parameterized-json-duplicate-mappings",
-        "outcome": "emit-unsupported",
-        "resolution": "no-exact-mapping",
-        "effectiveTarget": "application/json;charset=utf-8",
-        "projection": "replace-payload-representation",
+        "outcome": "generation-failure",
+        "reason": "duplicate-publication-mapping",
         "ordinaryReaderRequirement": "normalized-contract-only"
       }
     },

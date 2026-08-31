@@ -333,25 +333,25 @@
     {
       "rule_id": "DM-ADAPTER-001",
       "readme_section": "§3.6 Authoritative Input Resolution and Schema Representability",
-      "description": "Schema adapter selection resolves AsyncAPI 3.0.0 and 3.1.0 source defaults and only the exact registered AsyncAPI Schema Object and JSON Schema Draft 07 targets; any established unmapped target uses the smallest unsupported projection.",
+      "description": "Schema adapter selection resolves AsyncAPI 3.0.0 and 3.1.0 source defaults, exact registered AsyncAPI Schema Object and JSON Schema Draft 07 targets, or one complete exact publication mapping; an established unmapped target uses the smallest unsupported projection, while duplicate exact mappings invalidate the publication scope and fail generation.",
       "scope": "core"
     },
     {
       "rule_id": "DM-ADAPTER-002",
       "readme_section": "§3.6 Authoritative Input Resolution and Schema Representability",
-      "description": "The direct JSON wire adapter accepts only parameterless application/json and parameterless lowercase-subtype +json targets; parameterized or other established unmapped wire targets replace the affected payload representation as unsupported.",
+      "description": "The direct JSON wire adapter accepts only parameterless application/json and parameterless lowercase-subtype +json targets; one complete exact publication mapping may support another target, an established unmapped target replaces the affected payload representation as unsupported, and duplicate exact mappings invalidate the publication scope and fail generation.",
       "scope": "core"
     },
     {
       "rule_id": "DM-ADAPTER-003",
       "readme_section": "§3.6 Authoritative Input Resolution and Schema Representability",
-      "description": "A logical header map is supported only by one exact-version header-encoding mapping that defines both wire encoding and client-library exposure; an established target without that mapping replaces the header representation as unsupported.",
+      "description": "A logical header map is supported only by one exact-version header-encoding mapping that defines both wire encoding and client-library exposure and by a directly registered or uniquely mapped compatible schema; an established target without complete mappings replaces the header representation as unsupported, while duplicate exact mappings invalidate the publication scope and fail generation.",
       "scope": "core"
     },
     {
       "rule_id": "DM-ADAPTER-004",
       "readme_section": "§3.6 Authoritative Input Resolution and Schema Representability",
-      "description": "Protocol binding projection requires one exact mapping for protocol, binding scope, and binding or specification version; an established target without that mapping uses the smallest binding-local unsupported form.",
+      "description": "Protocol binding projection requires one exact mapping for protocol, binding scope, and binding or specification version; an established target without that mapping uses the smallest binding-local unsupported form, while duplicate exact mappings invalidate the publication scope and fail generation.",
       "scope": "core"
     },
     {

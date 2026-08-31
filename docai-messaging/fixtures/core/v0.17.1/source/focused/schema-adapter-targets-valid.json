@@ -1,0 +1,256 @@
+{
+  "docaiMessagingVersion": "0.17.1",
+  "cases": [
+    {
+      "caseId": "asyncapi-3.0-base",
+      "adapterClass": "schema",
+      "sourceSpecification": "AsyncAPI 3.0.0",
+      "schemaFormat": "application/vnd.aai.asyncapi;version=3.0.0",
+      "publicationMappings": [],
+      "projected": {
+        "caseId": "asyncapi-3.0-base",
+        "outcome": "supported",
+        "resolution": "direct",
+        "effectiveTarget": "application/vnd.aai.asyncapi;version=3.0.0",
+        "ruleId": "direct-asyncapi-schema-object-3.0.0",
+        "ruleVersion": "0.17.1",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    },
+    {
+      "caseId": "asyncapi-3.0-default",
+      "adapterClass": "schema",
+      "sourceSpecification": "AsyncAPI 3.0.0",
+      "schemaFormat": null,
+      "publicationMappings": [],
+      "projected": {
+        "caseId": "asyncapi-3.0-default",
+        "outcome": "supported",
+        "resolution": "source-default",
+        "effectiveTarget": "application/vnd.aai.asyncapi+json;version=3.0.0",
+        "ruleId": "direct-asyncapi-schema-object-3.0.0",
+        "ruleVersion": "0.17.1",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    },
+    {
+      "caseId": "asyncapi-3.0-json",
+      "adapterClass": "schema",
+      "sourceSpecification": "AsyncAPI 3.0.0",
+      "schemaFormat": "application/vnd.aai.asyncapi+json;version=3.0.0",
+      "publicationMappings": [],
+      "projected": {
+        "caseId": "asyncapi-3.0-json",
+        "outcome": "supported",
+        "resolution": "direct",
+        "effectiveTarget": "application/vnd.aai.asyncapi+json;version=3.0.0",
+        "ruleId": "direct-asyncapi-schema-object-3.0.0",
+        "ruleVersion": "0.17.1",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    },
+    {
+      "caseId": "asyncapi-3.0-yaml",
+      "adapterClass": "schema",
+      "sourceSpecification": "AsyncAPI 3.0.0",
+      "schemaFormat": "application/vnd.aai.asyncapi+yaml;version=3.0.0",
+      "publicationMappings": [],
+      "projected": {
+        "caseId": "asyncapi-3.0-yaml",
+        "outcome": "supported",
+        "resolution": "direct",
+        "effectiveTarget": "application/vnd.aai.asyncapi+yaml;version=3.0.0",
+        "ruleId": "direct-asyncapi-schema-object-3.0.0",
+        "ruleVersion": "0.17.1",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    },
+    {
+      "caseId": "asyncapi-3.1-base",
+      "adapterClass": "schema",
+      "sourceSpecification": "AsyncAPI 3.1.0",
+      "schemaFormat": "application/vnd.aai.asyncapi;version=3.1.0",
+      "publicationMappings": [],
+      "projected": {
+        "caseId": "asyncapi-3.1-base",
+        "outcome": "supported",
+        "resolution": "direct",
+        "effectiveTarget": "application/vnd.aai.asyncapi;version=3.1.0",
+        "ruleId": "direct-asyncapi-schema-object-3.1.0",
+        "ruleVersion": "0.17.1",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    },
+    {
+      "caseId": "asyncapi-3.1-default",
+      "adapterClass": "schema",
+      "sourceSpecification": "AsyncAPI 3.1.0",
+      "schemaFormat": null,
+      "publicationMappings": [],
+      "projected": {
+        "caseId": "asyncapi-3.1-default",
+        "outcome": "supported",
+        "resolution": "source-default",
+        "effectiveTarget": "application/vnd.aai.asyncapi+json;version=3.1.0",
+        "ruleId": "direct-asyncapi-schema-object-3.1.0",
+        "ruleVersion": "0.17.1",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    },
+    {
+      "caseId": "asyncapi-3.1-json",
+      "adapterClass": "schema",
+      "sourceSpecification": "AsyncAPI 3.1.0",
+      "schemaFormat": "application/vnd.aai.asyncapi+json;version=3.1.0",
+      "publicationMappings": [],
+      "projected": {
+        "caseId": "asyncapi-3.1-json",
+        "outcome": "supported",
+        "resolution": "direct",
+        "effectiveTarget": "application/vnd.aai.asyncapi+json;version=3.1.0",
+        "ruleId": "direct-asyncapi-schema-object-3.1.0",
+        "ruleVersion": "0.17.1",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    },
+    {
+      "caseId": "asyncapi-3.1-yaml",
+      "adapterClass": "schema",
+      "sourceSpecification": "AsyncAPI 3.1.0",
+      "schemaFormat": "application/vnd.aai.asyncapi+yaml;version=3.1.0",
+      "publicationMappings": [],
+      "projected": {
+        "caseId": "asyncapi-3.1-yaml",
+        "outcome": "supported",
+        "resolution": "direct",
+        "effectiveTarget": "application/vnd.aai.asyncapi+yaml;version=3.1.0",
+        "ruleId": "direct-asyncapi-schema-object-3.1.0",
+        "ruleVersion": "0.17.1",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    },
+    {
+      "caseId": "draft07-json",
+      "adapterClass": "schema",
+      "sourceSpecification": "JSON Schema Draft 07",
+      "schemaFormat": "application/schema+json;version=draft-07",
+      "publicationMappings": [],
+      "projected": {
+        "caseId": "draft07-json",
+        "outcome": "supported",
+        "resolution": "direct",
+        "effectiveTarget": "application/schema+json;version=draft-07",
+        "ruleId": "direct-json-schema-draft-07",
+        "ruleVersion": "0.17.1",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    },
+    {
+      "caseId": "draft07-yaml",
+      "adapterClass": "schema",
+      "sourceSpecification": "JSON Schema Draft 07",
+      "schemaFormat": "application/schema+yaml;version=draft-07",
+      "publicationMappings": [],
+      "projected": {
+        "caseId": "draft07-yaml",
+        "outcome": "supported",
+        "resolution": "direct",
+        "effectiveTarget": "application/schema+yaml;version=draft-07",
+        "ruleId": "direct-json-schema-draft-07",
+        "ruleVersion": "0.17.1",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    },
+    {
+      "caseId": "duplicate-avro-mappings",
+      "adapterClass": "schema",
+      "sourceSpecification": "Apache Avro 1.11.3",
+      "schemaFormat": "application/vnd.apache.avro+json;version=1.11.3",
+      "publicationMappings": [
+        {
+          "sourceId": "adapter-catalog-a",
+          "docaiMessagingVersion": "0.17.1",
+          "adapterClass": "schema",
+          "target": "application/vnd.apache.avro+json;version=1.11.3",
+          "ruleId": "avro-schema-projection-a",
+          "ruleVersion": "1.11.3-1",
+          "defines": [
+            "constraint-mapping",
+            "example-value-projection",
+            "logical-types",
+            "runtime-schema-resolution"
+          ]
+        },
+        {
+          "sourceId": "adapter-catalog-b",
+          "docaiMessagingVersion": "0.17.1",
+          "adapterClass": "schema",
+          "target": "application/vnd.apache.avro+json;version=1.11.3",
+          "ruleId": "avro-schema-projection-b",
+          "ruleVersion": "1.11.3-2",
+          "defines": [
+            "constraint-mapping",
+            "example-value-projection",
+            "logical-types"
+          ]
+        }
+      ],
+      "projected": {
+        "caseId": "duplicate-avro-mappings",
+        "outcome": "generation-failure",
+        "reason": "duplicate-publication-mapping",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    },
+    {
+      "caseId": "publication-mapped-avro",
+      "adapterClass": "schema",
+      "sourceSpecification": "Apache Avro 1.11.3",
+      "schemaFormat": "application/vnd.apache.avro+json;version=1.11.3",
+      "publicationMappings": [
+        {
+          "sourceId": "adapter-catalog",
+          "docaiMessagingVersion": "0.17.1",
+          "adapterClass": "schema",
+          "target": "application/vnd.apache.avro+json;version=1.11.3",
+          "ruleId": "avro-schema-projection",
+          "ruleVersion": "1.11.3-1",
+          "defines": [
+            "constraint-mapping",
+            "example-value-projection",
+            "logical-types",
+            "runtime-schema-resolution"
+          ]
+        }
+      ],
+      "projected": {
+        "caseId": "publication-mapped-avro",
+        "outcome": "supported",
+        "resolution": "publication-mapping",
+        "effectiveTarget": "application/vnd.apache.avro+json;version=1.11.3",
+        "ruleId": "avro-schema-projection",
+        "ruleVersion": "1.11.3-1",
+        "mappingSourceIds": [
+          "adapter-catalog"
+        ],
+        "projection": "emit-schema-projection",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    },
+    {
+      "caseId": "unmapped-case-mismatched",
+      "adapterClass": "schema",
+      "sourceSpecification": "JSON Schema Draft 07",
+      "schemaFormat": "Application/Schema+JSON;version=draft-07",
+      "publicationMappings": [],
+      "projected": {
+        "caseId": "unmapped-case-mismatched",
+        "outcome": "emit-unsupported",
+        "resolution": "no-exact-mapping",
+        "effectiveTarget": "Application/Schema+JSON;version=draft-07",
+        "projection": "smallest-applicable-unsupported",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    }
+  ]
+}

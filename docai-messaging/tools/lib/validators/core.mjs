@@ -1279,13 +1279,24 @@ function exactTarget(left, right) {
     ));
 }
 
-function publicationMapping(entry, version, predicate = () => true) {
+function resolvePublicationMapping(entry, version, predicate = () => true) {
   const matches = (entry.publicationMappings ?? []).filter((mapping) => (
     mapping.docaiMessagingVersion === version
       && mapping.adapterClass === entry.adapterClass
       && exactTarget(mapping.target, entry.target)
   ));
-  return matches.length === 1 && predicate(matches[0]) ? matches[0] : undefined;
+  if (matches.length > 1) return { status: "duplicate" };
+  if (matches.length !== 1 || !predicate(matches[0])) return { status: "missing" };
+  return { status: "unique", mapping: matches[0] };
+}
+
+function duplicatePublicationMappingFailure(entry) {
+  return {
+    caseId: entry.caseId,
+    outcome: "generation-failure",
+    reason: "duplicate-publication-mapping",
+    ordinaryReaderRequirement: "normalized-contract-only"
+  };
 }
 
 function supportedAdapter(entry, mapping, projection) {
@@ -1331,8 +1342,8 @@ function directJsonWireTarget(value) {
     || (slash !== -1 && value.slice(slash + 1).endsWith("+json"));
 }
 
-function payloadWireMapping(entry, version) {
-  return publicationMapping(
+function resolvePayloadWireMapping(entry, version) {
+  return resolvePublicationMapping(
     { ...entry, target: entry.mediaType },
     version,
     (candidate) => {
@@ -1353,7 +1364,7 @@ function headerSchemaAdapter(entry, version) {
   if (entry.schemaTarget === undefined || DIRECT_SCHEMA_TARGETS.has(entry.schemaTarget)) {
     return { supported: true };
   }
-  const mapping = publicationMapping(
+  const resolution = resolvePublicationMapping(
     {
       adapterClass: "schema",
       target: entry.schemaTarget,
@@ -1362,15 +1373,16 @@ function headerSchemaAdapter(entry, version) {
     version,
     (candidate) => SCHEMA_MAPPING_DEFINES.every((name) => candidate.defines?.includes(name))
   );
-  return mapping === undefined
+  if (resolution.status === "duplicate") return { supported: false, duplicate: true };
+  return resolution.status !== "unique"
     ? { supported: false }
     : {
       supported: true,
       provenance: {
         resolution: "publication-mapping",
-        ruleId: mapping.ruleId,
-        ruleVersion: mapping.ruleVersion,
-        mappingSourceIds: [mapping.sourceId]
+        ruleId: resolution.mapping.ruleId,
+        ruleVersion: resolution.mapping.ruleVersion,
+        mappingSourceIds: [resolution.mapping.sourceId]
       }
     };
 }
@@ -1397,6 +1409,27 @@ export function evaluateAdapterSourceExpectations({ docaiMessagingVersion, cases
           ordinaryReaderRequirement: "normalized-contract-only"
         };
       }
+      const resolution = resolvePublicationMapping(
+        { ...entry, target: effectiveTarget },
+        docaiMessagingVersion,
+        (candidate) => SCHEMA_MAPPING_DEFINES.every((name) => candidate.defines?.includes(name))
+      );
+      if (resolution.status === "duplicate") {
+        return duplicatePublicationMappingFailure(entry);
+      }
+      if (resolution.status === "unique") {
+        return {
+          caseId: entry.caseId,
+          outcome: "supported",
+          resolution: "publication-mapping",
+          effectiveTarget,
+          ruleId: resolution.mapping.ruleId,
+          ruleVersion: resolution.mapping.ruleVersion,
+          mappingSourceIds: [resolution.mapping.sourceId],
+          projection: "emit-schema-projection",
+          ordinaryReaderRequirement: "normalized-contract-only"
+        };
+      }
       return {
         caseId: entry.caseId,
         outcome: "emit-unsupported",
@@ -1420,8 +1453,12 @@ export function evaluateAdapterSourceExpectations({ docaiMessagingVersion, cases
           ordinaryReaderRequirement: "normalized-contract-only"
         };
       }
-      const mapping = payloadWireMapping(entry, docaiMessagingVersion);
-      if (mapping !== undefined) {
+      const resolution = resolvePayloadWireMapping(entry, docaiMessagingVersion);
+      if (resolution.status === "duplicate") {
+        return duplicatePublicationMappingFailure(entry);
+      }
+      if (resolution.status === "unique") {
+        const mapping = resolution.mapping;
         return {
           caseId: entry.caseId,
           outcome: "supported",
@@ -1449,16 +1486,18 @@ export function evaluateAdapterSourceExpectations({ docaiMessagingVersion, cases
     }
 
     if (entry.adapterClass === "header-encoding") {
+      const resolution = resolvePublicationMapping(entry, docaiMessagingVersion, (candidate) => (
+        candidate.defines?.includes("encoding")
+          && candidate.defines?.includes("exposure")
+          && (entry.schemaTarget === undefined
+            || candidate.compatibleSchemaTargets?.includes(entry.schemaTarget))
+      ));
+      if (resolution.status === "duplicate") {
+        return duplicatePublicationMappingFailure(entry);
+      }
       const schemaAdapter = headerSchemaAdapter(entry, docaiMessagingVersion);
-      const mapping = schemaAdapter.supported
-        ? publicationMapping(entry, docaiMessagingVersion, (candidate) => (
-          candidate.defines?.includes("encoding")
-            && candidate.defines?.includes("exposure")
-            && (entry.schemaTarget === undefined
-              || candidate.compatibleSchemaTargets?.includes(entry.schemaTarget))
-        ))
-        : undefined;
-      if (mapping === undefined) {
+      if (schemaAdapter.duplicate) return duplicatePublicationMappingFailure(entry);
+      if (!schemaAdapter.supported || resolution.status !== "unique") {
         return {
           caseId: entry.caseId,
           outcome: "emit-unsupported",
@@ -1467,14 +1506,18 @@ export function evaluateAdapterSourceExpectations({ docaiMessagingVersion, cases
           ordinaryReaderRequirement: "normalized-contract-only"
         };
       }
+      const mapping = resolution.mapping;
       const supported = supportedAdapter(entry, mapping, "emit-header-map");
       return schemaAdapter.provenance === undefined
         ? supported
         : { ...supported, schemaAdapter: schemaAdapter.provenance };
     }
 
-    const mapping = publicationMapping(entry, docaiMessagingVersion);
-    return mapping === undefined
+    const resolution = resolvePublicationMapping(entry, docaiMessagingVersion);
+    if (resolution.status === "duplicate") {
+      return duplicatePublicationMappingFailure(entry);
+    }
+    return resolution.status !== "unique"
       ? {
         caseId: entry.caseId,
         outcome: "emit-unsupported",
@@ -1482,7 +1525,7 @@ export function evaluateAdapterSourceExpectations({ docaiMessagingVersion, cases
         projection: "smallest-channel-binding-unsupported",
         ordinaryReaderRequirement: "normalized-contract-only"
       }
-      : supportedAdapter(entry, mapping, "emit-channel-binding");
+      : supportedAdapter(entry, resolution.mapping, "emit-channel-binding");
   });
 }
 
@@ -1493,7 +1536,13 @@ export function validateAdapterSourceExpectations(scenario, { file = "source-inp
     const source = sources.get(expected.caseId);
     if (exactTarget(expected, source?.projected)) return [];
     return [{
-      ruleId: source?.adapterClass === "header-encoding" ? "DM-ADAPTER-003" : "DM-ADAPTER-002"
+      ruleId: source?.adapterClass === "schema"
+        ? "DM-ADAPTER-001"
+        : source?.adapterClass === "header-encoding"
+          ? "DM-ADAPTER-003"
+          : source?.adapterClass === "protocol-binding"
+            ? "DM-ADAPTER-004"
+            : "DM-ADAPTER-002"
     }];
   });
   const rules = [...new Set(mismatches.map((entry) => entry.ruleId))];
