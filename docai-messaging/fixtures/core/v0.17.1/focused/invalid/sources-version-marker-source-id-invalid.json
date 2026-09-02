@@ -1,0 +1,9 @@
+{
+  "id": "sources-version-marker-source-id-invalid",
+  "base": "../valid/sources-api-identity-version-markers-valid",
+  "path": "INDEX.md",
+  "replace": {
+    "from": "**unknown**: API contract version for source api-a requires AsyncAPI info.version at api-a.json",
+    "to": "**unknown**: API contract version requires AsyncAPI info.version at api-a.json"
+  }
+}

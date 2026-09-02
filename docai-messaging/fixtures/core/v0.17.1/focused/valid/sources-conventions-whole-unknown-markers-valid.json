@@ -1,0 +1,9 @@
+{
+  "id": "sources-conventions-whole-unknown-markers-valid",
+  "base": "../valid/sources-api-identity-version-markers-valid",
+  "path": "CONVENTIONS.md",
+  "replace": {
+    "from": "Logical API identities and contract versions remain independently unresolved.",
+    "to": "unknown\n**unknown**: schema evolution requires authoritative compatibility guidance"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "id": "sources-conventions-marker-order-invalid",
+  "base": "../valid/sources-api-identity-version-markers-valid",
+  "path": "CONVENTIONS.md",
+  "replace": {
+    "from": "**unknown**: API contract version for source api-d requires AsyncAPI info.version at api-d.json\n**unknown**: API identity for source api-b requires authoritative logical API identity input",
+    "to": "**unknown**: API identity for source api-b requires authoritative logical API identity input\n**unknown**: API contract version for source api-d requires AsyncAPI info.version at api-d.json"
+  }
+}

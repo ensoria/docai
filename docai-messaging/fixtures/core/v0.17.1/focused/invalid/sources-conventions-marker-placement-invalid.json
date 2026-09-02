@@ -1,0 +1,9 @@
+{
+  "id": "sources-conventions-marker-placement-invalid",
+  "base": "../valid/sources-api-identity-version-markers-valid",
+  "path": "CONVENTIONS.md",
+  "replace": {
+    "from": "Logical API identities and contract versions remain independently unresolved.\n\n**unknown**: API contract version for source api-a requires AsyncAPI info.version at api-a.json\n**unknown**: API contract version for source api-c requires AsyncAPI info.version at api-c.json\n**unknown**: API contract version for source api-d requires AsyncAPI info.version at api-d.json\n**unknown**: API identity for source api-b requires authoritative logical API identity input\n**unknown**: API identity for source api-c requires authoritative logical API identity input",
+    "to": "**unknown**: API contract version for source api-a requires AsyncAPI info.version at api-a.json\n**unknown**: API contract version for source api-c requires AsyncAPI info.version at api-c.json\n**unknown**: API contract version for source api-d requires AsyncAPI info.version at api-d.json\n**unknown**: API identity for source api-b requires authoritative logical API identity input\n**unknown**: API identity for source api-c requires authoritative logical API identity input\n\nLogical API identities and contract versions remain independently unresolved."
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "cases": [
+    {
+      "caseId": "authoritative-identity-conflict",
+      "sourceId": "catalog-asyncapi",
+      "source": {
+        "asyncapi": "3.1.0",
+        "info": {
+          "title": "Catalog API",
+          "version": "1.0.0"
+        }
+      },
+      "logicalApiIdentityInputs": [
+        {
+          "sourceId": "catalog-identity-a",
+          "identity": "urn:example:catalog-a",
+          "authoritative": true,
+          "priority": 10
+        },
+        {
+          "sourceId": "catalog-identity-z",
+          "identity": "urn:example:catalog-z",
+          "authoritative": true,
+          "priority": 10
+        }
+      ],
+      "projected": {
+        "caseId": "authoritative-identity-conflict",
+        "outcome": "generation-failure",
+        "reason": "authoritative-conflict",
+        "conflictingSourceIds": ["catalog-identity-a", "catalog-identity-z"]
+      }
+    }
+  ]
+}

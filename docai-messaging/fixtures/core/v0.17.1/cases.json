@@ -1333,6 +1333,76 @@
       "expected_rule_ids": []
     },
     {
+      "id": "source-api-identity-resolution-valid",
+      "kind": "source-api-identity-scenario",
+      "path": "source/focused/source-api-identity-resolution-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
+      "id": "source-api-identity-derivation-invalid",
+      "kind": "source-api-identity-scenario",
+      "path": "source/focused/source-api-identity-derivation-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-SRC-003"]
+    },
+    {
+      "id": "source-api-identity-conflict-invalid",
+      "kind": "source-api-identity-scenario",
+      "path": "source/focused/source-api-identity-conflict-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-SRC-003"]
+    },
+    {
+      "id": "sources-api-identity-version-markers-valid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/valid/sources-api-identity-version-markers-valid",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
+      "id": "sources-version-marker-source-id-invalid",
+      "kind": "task-scoped-document-set-mutation",
+      "path": "focused/invalid/sources-version-marker-source-id-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-SRC-003"]
+    },
+    {
+      "id": "sources-api-marker-order-invalid",
+      "kind": "task-scoped-document-set-mutation",
+      "path": "focused/invalid/sources-api-marker-order-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-SRC-003"]
+    },
+    {
+      "id": "sources-conventions-marker-order-invalid",
+      "kind": "task-scoped-document-set-mutation",
+      "path": "focused/invalid/sources-conventions-marker-order-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-SRC-003"]
+    },
+    {
+      "id": "sources-conventions-marker-placement-invalid",
+      "kind": "task-scoped-document-set-mutation",
+      "path": "focused/invalid/sources-conventions-marker-placement-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-SRC-003"]
+    },
+    {
+      "id": "sources-conventions-orphan-marker-invalid",
+      "kind": "task-scoped-document-set-mutation",
+      "path": "focused/invalid/sources-conventions-orphan-marker-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-SRC-003"]
+    },
+    {
+      "id": "sources-conventions-whole-unknown-markers-valid",
+      "kind": "task-scoped-document-set-mutation",
+      "path": "focused/valid/sources-conventions-whole-unknown-markers-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
       "id": "sources-direct-unknown-api-valid",
       "kind": "task-scoped-document-set",
       "path": "focused/valid/sources-direct-unknown-api-valid",

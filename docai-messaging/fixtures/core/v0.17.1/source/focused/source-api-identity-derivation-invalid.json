@@ -1,0 +1,67 @@
+{
+  "cases": [
+    {
+      "caseId": "derived-from-title",
+      "sourceId": "billing-asyncapi",
+      "source": {
+        "asyncapi": "3.1.0",
+        "info": {
+          "title": "Billing Display API",
+          "version": "1.0.0"
+        }
+      },
+      "traversalPosition": 3,
+      "outputPath": "channels/billing.md",
+      "logicalApiIdentityInputs": [],
+      "projected": {
+        "caseId": "derived-from-title",
+        "outcome": "emit-api-identity",
+        "identity": "Billing Display API",
+        "resolution": "derived-title",
+        "contributingSourceIds": ["billing-asyncapi"]
+      }
+    },
+    {
+      "caseId": "derived-from-traversal-position",
+      "sourceId": "inventory-asyncapi",
+      "source": {
+        "asyncapi": "3.1.0",
+        "info": {
+          "title": "Inventory Display API",
+          "version": "1.0.0"
+        }
+      },
+      "traversalPosition": 3,
+      "outputPath": "channels/inventory.md",
+      "logicalApiIdentityInputs": [],
+      "projected": {
+        "caseId": "derived-from-traversal-position",
+        "outcome": "emit-api-identity",
+        "identity": "3",
+        "resolution": "derived-traversal-position",
+        "contributingSourceIds": ["inventory-asyncapi"]
+      }
+    },
+    {
+      "caseId": "derived-from-output-path",
+      "sourceId": "orders-asyncapi",
+      "source": {
+        "asyncapi": "3.1.0",
+        "info": {
+          "title": "Orders Display API",
+          "version": "1.0.0"
+        }
+      },
+      "traversalPosition": 4,
+      "outputPath": "channels/orders.md",
+      "logicalApiIdentityInputs": [],
+      "projected": {
+        "caseId": "derived-from-output-path",
+        "outcome": "emit-api-identity",
+        "identity": "channels/orders.md",
+        "resolution": "derived-output-path",
+        "contributingSourceIds": ["orders-asyncapi"]
+      }
+    }
+  ]
+}

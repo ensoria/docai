@@ -315,6 +315,79 @@ export function evaluateIncompleteSourceExpectations(cases) {
   });
 }
 
+export function evaluateSourceApiIdentityExpectations({ cases }) {
+  return cases.map((entry) => {
+    if (typeof entry.source?.id === "string" && entry.source.id !== "") {
+      return {
+        caseId: entry.caseId,
+        outcome: "emit-api-identity",
+        identity: entry.source.id,
+        resolution: "source-id",
+        contributingSourceIds: [entry.sourceId]
+      };
+    }
+
+    const authoritative = (entry.logicalApiIdentityInputs ?? []).filter((input) => (
+      input.authoritative === true
+        && typeof input.identity === "string"
+        && input.identity !== ""
+        && typeof input.sourceId === "string"
+        && input.sourceId !== ""
+        && Number.isFinite(input.priority)
+    ));
+    if (authoritative.length > 0) {
+      const highestPriority = Math.min(...authoritative.map((input) => input.priority));
+      const selected = authoritative.filter((input) => input.priority === highestPriority);
+      if (new Set(selected.map((input) => input.identity)).size > 1) {
+        return {
+          caseId: entry.caseId,
+          outcome: "generation-failure",
+          reason: "authoritative-conflict",
+          conflictingSourceIds: selected.map((input) => input.sourceId).sort()
+        };
+      }
+      return {
+        caseId: entry.caseId,
+        outcome: "emit-api-identity",
+        identity: selected[0].identity,
+        resolution: "authoritative-input",
+        contributingSourceIds: selected.map((input) => input.sourceId).sort()
+      };
+    }
+
+    return {
+      caseId: entry.caseId,
+      outcome: "emit-unknown",
+      api: "unknown",
+      marker: `**unknown**: API identity for source ${entry.sourceId} requires authoritative logical API identity input`,
+      knowledge: "requires-input"
+    };
+  });
+}
+
+export function validateSourceApiIdentityExpectations(
+  scenario,
+  { file = "source-input.json" } = {}
+) {
+  const expectations = evaluateSourceApiIdentityExpectations(scenario);
+  const sources = new Map((scenario.cases ?? []).map((entry) => [entry.caseId, entry]));
+  const mismatches = expectations.filter((expected) => (
+    !isDeepStrictEqual(expected, sources.get(expected.caseId)?.projected)
+  ));
+  const failures = expectations.filter((expected) => expected.outcome === "generation-failure");
+  return {
+    diagnostics: mismatches.length === 0 && failures.length === 0
+      ? []
+      : [diagnostic(
+        "DM-SRC-003",
+        file,
+        1,
+        `Source API identity resolution has ${failures.length} conflict(s) and ${mismatches.length} projection mismatch(es).`
+      )],
+    facts: { sourceApiIdentityExpectations: expectations }
+  };
+}
+
 export function evaluatePartialCollectionSourceExpectations(cases) {
   return cases.map((entry) => {
     const namedMembers = Array.isArray(entry.namedMembers) ? entry.namedMembers : [];

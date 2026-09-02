@@ -1,0 +1,9 @@
+{
+  "id": "sources-conventions-orphan-marker-invalid",
+  "base": "../valid/sources-api-identity-version-markers-valid",
+  "path": "CONVENTIONS.md",
+  "replace": {
+    "from": "Logical API identities and contract versions remain independently unresolved.\n\n**unknown**: API contract version for source api-a requires AsyncAPI info.version at api-a.json",
+    "to": "Logical API identities and contract versions remain independently unresolved.\n**unknown**: API identity for source ghost requires fabricated input\n**unknown**: API contract version for source api-a requires AsyncAPI info.version at api-a.json"
+  }
+}

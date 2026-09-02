@@ -80,6 +80,19 @@ const sourceCaseIds = [
   "sources-unknown-marker-missing-invalid"
 ];
 
+const sourceApiIdentityCaseIds = [
+  "source-api-identity-resolution-valid",
+  "source-api-identity-derivation-invalid",
+  "source-api-identity-conflict-invalid",
+  "sources-api-identity-version-markers-valid",
+  "sources-version-marker-source-id-invalid",
+  "sources-api-marker-order-invalid",
+  "sources-conventions-marker-order-invalid",
+  "sources-conventions-marker-placement-invalid",
+  "sources-conventions-orphan-marker-invalid",
+  "sources-conventions-whole-unknown-markers-valid"
+];
+
 const operationCaseIds = [
   "operations-flat-routing-valid",
   "operations-flat-table-invalid",
@@ -388,6 +401,13 @@ function validateCase(fixturePath, fixtureCase) {
       { file: fixtureCase.path }
     );
   }
+  if (fixtureCase.kind === "source-api-identity-scenario") {
+    const scenario = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
+    return coreValidator.validateSourceApiIdentityExpectations(
+      scenario,
+      { file: fixtureCase.path }
+    );
+  }
   if (fixtureCase.kind === "asyncapi-operation-message-selection") {
     const source = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
     return coreValidator.validateAsyncApiOperationMessageSelection(
@@ -602,6 +622,137 @@ test("executes the Task 9 Sources focused corpus and fixes retrieval facts", () 
     resolvedIds: ["a", "b", "c"],
     loadedPaths: ["indexes/sources-a-c.md", "indexes/sources-b.md"]
   });
+});
+
+test("executes the Task 9 source API identity and missing-marker corpus", () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
+  const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
+
+  assert.deepEqual(sourceApiIdentityCaseIds.filter((id) => !byId.has(id)), []);
+  for (const id of sourceApiIdentityCaseIds) {
+    const fixtureCase = byId.get(id);
+    assert.equal(
+      fixtureCase.expected === "valid" || fixtureCase.expected_rule_ids.length === 1,
+      true,
+      id
+    );
+  }
+
+  const result = runFixtureCorpus(corpusPath, validateCase);
+  assert.equal(result.failed, 0, result.report);
+
+  const identityCase = byId.get("source-api-identity-resolution-valid");
+  const identity = validateCase(path.join(corpusPath, identityCase.path), identityCase);
+  assert.deepEqual(identity.facts.sourceApiIdentityExpectations, [
+    {
+      caseId: "source-supplied-id",
+      outcome: "emit-api-identity",
+      identity: "urn:example:orders",
+      resolution: "source-id",
+      contributingSourceIds: ["orders-asyncapi"]
+    },
+    {
+      caseId: "authoritative-identity-input",
+      outcome: "emit-api-identity",
+      identity: "urn:example:orders-authoritative",
+      resolution: "authoritative-input",
+      contributingSourceIds: ["orders-identity"]
+    },
+    {
+      caseId: "authoritative-precedence",
+      outcome: "emit-api-identity",
+      identity: "urn:example:payments",
+      resolution: "authoritative-input",
+      contributingSourceIds: ["payments-identity-primary"]
+    },
+    {
+      caseId: "authoritative-same-value",
+      outcome: "emit-api-identity",
+      identity: "urn:example:shipping",
+      resolution: "authoritative-input",
+      contributingSourceIds: ["shipping-identity-a", "shipping-identity-z"]
+    },
+    {
+      caseId: "identity-omitted",
+      outcome: "emit-unknown",
+      api: "unknown",
+      marker: "**unknown**: API identity for source inventory-asyncapi requires authoritative logical API identity input",
+      knowledge: "requires-input"
+    },
+    {
+      caseId: "forbidden-derivation-candidates",
+      outcome: "emit-unknown",
+      api: "unknown",
+      marker: "**unknown**: API identity for source billing-asyncapi requires authoritative logical API identity input",
+      knowledge: "requires-input"
+    }
+  ]);
+
+  const derivationCase = byId.get("source-api-identity-derivation-invalid");
+  const derivation = validateCase(path.join(corpusPath, derivationCase.path), derivationCase);
+  assert.deepEqual(
+    derivation.diagnostics.map(({ ruleId, severity }) => ({ ruleId, severity })),
+    [{ ruleId: "DM-SRC-003", severity: "error" }]
+  );
+  assert.deepEqual(derivation.facts.sourceApiIdentityExpectations, [
+    {
+      caseId: "derived-from-title",
+      outcome: "emit-unknown",
+      api: "unknown",
+      marker: "**unknown**: API identity for source billing-asyncapi requires authoritative logical API identity input",
+      knowledge: "requires-input"
+    },
+    {
+      caseId: "derived-from-traversal-position",
+      outcome: "emit-unknown",
+      api: "unknown",
+      marker: "**unknown**: API identity for source inventory-asyncapi requires authoritative logical API identity input",
+      knowledge: "requires-input"
+    },
+    {
+      caseId: "derived-from-output-path",
+      outcome: "emit-unknown",
+      api: "unknown",
+      marker: "**unknown**: API identity for source orders-asyncapi requires authoritative logical API identity input",
+      knowledge: "requires-input"
+    }
+  ]);
+
+  const conflictCase = byId.get("source-api-identity-conflict-invalid");
+  const conflict = validateCase(path.join(corpusPath, conflictCase.path), conflictCase);
+  assert.deepEqual(conflict.facts.sourceApiIdentityExpectations, [{
+    caseId: "authoritative-identity-conflict",
+    outcome: "generation-failure",
+    reason: "authoritative-conflict",
+    conflictingSourceIds: ["catalog-identity-a", "catalog-identity-z"]
+  }]);
+
+  const wholeUnknownCase = byId.get("sources-conventions-whole-unknown-markers-valid");
+  const wholeUnknown = validateCase(
+    path.join(corpusPath, wholeUnknownCase.path),
+    wholeUnknownCase
+  );
+  assert.equal(
+    wholeUnknown.facts.core.conventions.sections["Schema Evolution"].state,
+    "unknown"
+  );
+
+  const markerCase = byId.get("sources-api-identity-version-markers-valid");
+  const markers = validateCase(path.join(corpusPath, markerCase.path), markerCase);
+  assert.deepEqual(markers.diagnostics, []);
+  assert.deepEqual(
+    markers.facts.core.sources.rows.map(({ id, api, contractVersion }) => ({
+      id,
+      api,
+      contractVersion
+    })),
+    [
+      { id: "api-a", api: "urn:example:a", contractVersion: "unknown" },
+      { id: "api-b", api: "unknown", contractVersion: "2.0.0" },
+      { id: "api-c", api: "unknown", contractVersion: "unknown" },
+      { id: "api-d", api: "urn:example:d", contractVersion: "unknown" }
+    ]
+  );
 });
 
 test("executes the Task 9 Operations focused corpus and fixes retrieval facts", () => {
@@ -3153,7 +3304,7 @@ test("executes the Task 9 DM-INC-003 implementation-readiness capability matrix"
 
 test("audits every Task 9 invalid fixture as one primary concern", () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
-  assert.equal(manifest.cases.length, 222);
+  assert.equal(manifest.cases.length, 232);
   const result = runFixtureCorpus(corpusPath, validateCase);
   assert.equal(result.failed, 0, result.report);
   const audit = auditFixtureOneInvalidity({
@@ -3161,5 +3312,5 @@ test("audits every Task 9 invalid fixture as one primary concern", () => {
     corpusCases: result.cases
   });
 
-  assert.deepEqual(audit, { passed: true, audited: 163, errors: [] });
+  assert.deepEqual(audit, { passed: true, audited: 170, errors: [] });
 });

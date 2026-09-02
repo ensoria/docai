@@ -3,6 +3,7 @@ import { parseExactJson } from "../json-value.mjs";
 import { scanMarkdown } from "../markdown.mjs";
 import { parsePipeTable } from "../tables.mjs";
 import { hasObjectOpennessDefault, validateCommonFailureShapes } from "./core-messages.mjs";
+import { isSourceApiUnknownMarker } from "./core-source-markers.mjs";
 
 export const CONVENTION_HEADINGS = [
   "Environments",
@@ -77,6 +78,9 @@ function sectionLines(file, markdown, heading, nextHeading) {
 }
 
 function sectionState(heading, lines) {
+  if (heading.text === "Schema Evolution") {
+    lines = lines.filter((line) => !isSourceApiUnknownMarker(line.text));
+  }
   const firstIndex = lines.findIndex((line) => line.text !== "");
   if (firstIndex === -1) return null;
 

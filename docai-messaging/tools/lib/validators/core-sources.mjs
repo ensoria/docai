@@ -2,6 +2,7 @@ import { diagnostic } from "../diagnostics.mjs";
 import { scanMarkdown } from "../markdown.mjs";
 import { parseDocsPath } from "../paths.mjs";
 import { parsePipeTable } from "../tables.mjs";
+import { isSourceApiUnknownMarker } from "./core-source-markers.mjs";
 
 const SOURCE_COLUMNS = [
   "ID",
@@ -168,7 +169,6 @@ function sourceRows(file, table, markers) {
 }
 
 function conventionsUnknownMarkerDiagnostics(documentSet, markers) {
-  if (markers.length === 0) return [];
   const file = documentSet.files.find((entry) => entry.path === "CONVENTIONS.md");
   if (file === undefined) return [];
   const scanned = scanMarkdown({ text: file.content, file: file.path });
@@ -185,15 +185,33 @@ function conventionsUnknownMarkerDiagnostics(documentSet, markers) {
       && entry.line < (nextHeading?.line ?? Number.MAX_SAFE_INTEGER)
       && !entry.inFence
   ));
+  const expected = [...markers].sort(unicodeScalarCompare);
+  const positions = lines.flatMap((line, index) => (
+    isSourceApiUnknownMarker(line.text) ? [{ index, text: line.text }] : []
+  ));
   const counts = new Map();
-  for (const line of lines) counts.set(line.text, (counts.get(line.text) ?? 0) + 1);
-  const missing = markers.filter((marker) => counts.get(marker) !== 1);
-  if (missing.length === 0) return [];
+  for (const position of positions) {
+    counts.set(position.text, (counts.get(position.text) ?? 0) + 1);
+  }
+  const exactOnce = expected.every((marker) => counts.get(marker) === 1);
+  const contiguous = positions.every((position, index) => (
+    index === 0 || position.index === positions[index - 1].index + 1
+  ));
+  const canonicalOrder = positions.every((position, index) => position.text === expected[index]);
+  const lastNonEmptyIndex = lines.reduce((last, line, index) => (
+    line.text === "" ? last : index
+  ), -1);
+  const finalGroup = expected.length === 0 || positions.at(-1)?.index === lastNonEmptyIndex;
+  if (positions.length === expected.length
+    && exactOnce
+    && contiguous
+    && canonicalOrder
+    && finalGroup) return [];
   return [sourceDiagnostic(
     "DM-SRC-003",
     file,
     heading.line,
-    "Schema Evolution must repeat each source-qualified unknown API identity and contract version marker exactly once."
+    "Schema Evolution must repeat each source-qualified unknown API identity and contract version marker exactly once in one canonical contiguous group."
   )];
 }
 

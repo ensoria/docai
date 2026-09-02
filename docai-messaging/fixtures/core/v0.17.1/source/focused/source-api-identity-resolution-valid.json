@@ -1,0 +1,154 @@
+{
+  "cases": [
+    {
+      "caseId": "source-supplied-id",
+      "sourceId": "orders-asyncapi",
+      "source": {
+        "asyncapi": "3.1.0",
+        "id": "urn:example:orders",
+        "info": {
+          "title": "Orders API",
+          "version": "1.0.0"
+        }
+      },
+      "logicalApiIdentityInputs": [],
+      "projected": {
+        "caseId": "source-supplied-id",
+        "outcome": "emit-api-identity",
+        "identity": "urn:example:orders",
+        "resolution": "source-id",
+        "contributingSourceIds": ["orders-asyncapi"]
+      }
+    },
+    {
+      "caseId": "authoritative-identity-input",
+      "sourceId": "orders-asyncapi",
+      "source": {
+        "asyncapi": "3.1.0",
+        "info": {
+          "title": "Orders API",
+          "version": "2.0.0"
+        }
+      },
+      "logicalApiIdentityInputs": [
+        {
+          "sourceId": "orders-identity",
+          "identity": "urn:example:orders-authoritative",
+          "authoritative": true,
+          "priority": 10
+        }
+      ],
+      "projected": {
+        "caseId": "authoritative-identity-input",
+        "outcome": "emit-api-identity",
+        "identity": "urn:example:orders-authoritative",
+        "resolution": "authoritative-input",
+        "contributingSourceIds": ["orders-identity"]
+      }
+    },
+    {
+      "caseId": "authoritative-precedence",
+      "sourceId": "payments-asyncapi",
+      "source": {
+        "asyncapi": "3.1.0",
+        "info": {
+          "title": "Payments API",
+          "version": "1.0.0"
+        }
+      },
+      "logicalApiIdentityInputs": [
+        {
+          "sourceId": "payments-identity-fallback",
+          "identity": "urn:example:payments-fallback",
+          "authoritative": true,
+          "priority": 20
+        },
+        {
+          "sourceId": "payments-identity-primary",
+          "identity": "urn:example:payments",
+          "authoritative": true,
+          "priority": 10
+        }
+      ],
+      "projected": {
+        "caseId": "authoritative-precedence",
+        "outcome": "emit-api-identity",
+        "identity": "urn:example:payments",
+        "resolution": "authoritative-input",
+        "contributingSourceIds": ["payments-identity-primary"]
+      }
+    },
+    {
+      "caseId": "authoritative-same-value",
+      "sourceId": "shipping-asyncapi",
+      "source": {
+        "asyncapi": "3.1.0",
+        "info": {
+          "title": "Shipping API",
+          "version": "1.0.0"
+        }
+      },
+      "logicalApiIdentityInputs": [
+        {
+          "sourceId": "shipping-identity-a",
+          "identity": "urn:example:shipping",
+          "authoritative": true,
+          "priority": 10
+        },
+        {
+          "sourceId": "shipping-identity-z",
+          "identity": "urn:example:shipping",
+          "authoritative": true,
+          "priority": 10
+        }
+      ],
+      "projected": {
+        "caseId": "authoritative-same-value",
+        "outcome": "emit-api-identity",
+        "identity": "urn:example:shipping",
+        "resolution": "authoritative-input",
+        "contributingSourceIds": ["shipping-identity-a", "shipping-identity-z"]
+      }
+    },
+    {
+      "caseId": "identity-omitted",
+      "sourceId": "inventory-asyncapi",
+      "source": {
+        "asyncapi": "3.0.0",
+        "info": {
+          "title": "Inventory API",
+          "version": "1.0.0"
+        }
+      },
+      "logicalApiIdentityInputs": [],
+      "projected": {
+        "caseId": "identity-omitted",
+        "outcome": "emit-unknown",
+        "api": "unknown",
+        "marker": "**unknown**: API identity for source inventory-asyncapi requires authoritative logical API identity input",
+        "knowledge": "requires-input"
+      }
+    },
+    {
+      "caseId": "forbidden-derivation-candidates",
+      "sourceId": "billing-asyncapi",
+      "source": {
+        "asyncapi": "3.1.0",
+        "info": {
+          "title": "Billing Display API",
+          "version": "1.0.0"
+        }
+      },
+      "traversalPosition": 3,
+      "outputPath": "channels/billing.md",
+      "logicalApiIdentityInputs": [],
+      "projected": {
+        "caseId": "forbidden-derivation-candidates",
+        "outcome": "emit-unknown",
+        "api": "unknown",
+        "marker": "**unknown**: API identity for source billing-asyncapi requires authoritative logical API identity input",
+        "knowledge": "requires-input"
+      }
+    }
+  ]
+}
