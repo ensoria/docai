@@ -1,0 +1,77 @@
+{
+  "estimate_version": "1",
+  "benchmark_id": "docai-http-openapi-comparison-v3",
+  "plan_version": "3.0.0-calibration.1",
+  "estimated_at": "2026-09-03T00:00:00Z",
+  "catalog_checked_on": "2026-09-03",
+  "currency": "USD",
+  "methodology": {
+    "input_tokens_estimate": "Deterministic ceil(characters / 4) for each complete rendered prompt.",
+    "input_contingency_percent": 10,
+    "input_tokens_ceiling": "Apply 10% to each request estimate and round each request up before summing.",
+    "output_tokens_per_request_ceiling": 8192,
+    "provider_accounting": "Calculate each provider independently with its own input/output token accounting and effective rates; do not normalize token counts or prices across providers.",
+    "cost_ceiling": "Sum provider-specific input and output ceilings; excludes tax, discounts, caching, retries, and provider price changes after catalog_checked_on."
+  },
+  "calibration": {
+    "requests": 24,
+    "input_tokens_estimate": 114678,
+    "input_tokens_ceiling": 126162,
+    "output_tokens_ceiling": 196608,
+    "total_tokens_ceiling": 322770,
+    "cost_ceiling_usd": 2.4957045,
+    "targets": [
+      {
+        "target_id": "openai-frontier",
+        "provider": "openai",
+        "requested_model": "gpt-5.6-sol",
+        "resolved_model": "gpt-5.6-sol",
+        "requests": 8,
+        "input_tokens_estimate": 38226,
+        "input_tokens_ceiling": 42054,
+        "output_tokens_ceiling": 65536,
+        "total_tokens_ceiling": 107590,
+        "pricing_usd_per_million_tokens": {
+          "input": 4,
+          "output": 20
+        },
+        "token_accounting": "openai-provider-specific",
+        "cost_ceiling_usd": 1.478936
+      },
+      {
+        "target_id": "anthropic-balanced",
+        "provider": "anthropic",
+        "requested_model": "claude-sonnet-5",
+        "resolved_model": "claude-sonnet-5",
+        "requests": 8,
+        "input_tokens_estimate": 38226,
+        "input_tokens_ceiling": 42054,
+        "output_tokens_ceiling": 65536,
+        "total_tokens_ceiling": 107590,
+        "pricing_usd_per_million_tokens": {
+          "input": 2,
+          "output": 10
+        },
+        "token_accounting": "anthropic-provider-specific",
+        "cost_ceiling_usd": 0.739468
+      },
+      {
+        "target_id": "google-stable-agentic",
+        "provider": "google",
+        "requested_model": "gemini-3.7-flash",
+        "resolved_model": "gemini-3.7-flash",
+        "requests": 8,
+        "input_tokens_estimate": 38226,
+        "input_tokens_ceiling": 42054,
+        "output_tokens_ceiling": 65536,
+        "total_tokens_ceiling": 107590,
+        "pricing_usd_per_million_tokens": {
+          "input": 0.75,
+          "output": 3.75
+        },
+        "token_accounting": "google-provider-specific",
+        "cost_ceiling_usd": 0.2773005
+      }
+    ]
+  }
+}

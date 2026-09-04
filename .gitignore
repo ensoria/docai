@@ -1,4 +1,7 @@
 AGENTS.md
 CLAUDE.md
+docs/superpowers/*
 docai-http/benchmarks/openapi-comparison/v2/private/*
 !docai-http/benchmarks/openapi-comparison/v2/private/README.md
+docai-http/benchmarks/openapi-comparison/v3/private/*
+!docai-http/benchmarks/openapi-comparison/v3/private/README.md

@@ -1,0 +1,123 @@
+{
+  "resolution_version": "1",
+  "benchmark_id": "docai-http-openapi-comparison-v3",
+  "plan_version": "3.0.0-calibration.1",
+  "status": "frozen",
+  "catalog_checked_on": "2026-09-03",
+  "pricing_currency": "USD",
+  "pricing_unit": "per 1000000 tokens",
+  "pricing_basis": "current-standard-first-party-api-rates-effective-on-catalog-check-date",
+  "pricing_notes": {
+    "openai_promotion_available_at_least_through": "2026-11-21",
+    "google_promotion_effective_through": "2026-12-31"
+  },
+  "announced_future_pricing": [
+    {
+      "target_id": "google-stable-agentic",
+      "effective_from": "2027-01-01",
+      "pricing_usd_per_million_tokens": {
+        "input": 1.5,
+        "output": 7.5
+      }
+    }
+  ],
+  "targets": [
+    {
+      "target_id": "openai-frontier",
+      "provider": "openai",
+      "requested_model": "gpt-5.6-sol",
+      "resolved_model": "gpt-5.6-sol",
+      "resolution_kind": "exact-catalog-model-id",
+      "official_sources": [
+        "https://developers.openai.com/api/docs/models/gpt-5.6-sol",
+        "https://developers.openai.com/api/docs/guides/latest-model"
+      ],
+      "model_limits": {
+        "input_tokens": 1050000,
+        "max_output_tokens": 128000
+      },
+      "pricing_usd_per_million_tokens": {
+        "input": 4,
+        "output": 20
+      },
+      "token_accounting": "openai-provider-specific",
+      "request_settings": {
+        "json_output_mode": "prompt-only",
+        "schema_constrained_output": false,
+        "sampling_parameters": "omitted",
+        "prompt_caching": false,
+        "tools": false,
+        "output_token_parameter": "max_output_tokens",
+        "max_output_tokens": 8192,
+        "reasoning_parameter": "reasoning.effort",
+        "reasoning_effort": "medium"
+      }
+    },
+    {
+      "target_id": "anthropic-balanced",
+      "provider": "anthropic",
+      "requested_model": "claude-sonnet-5",
+      "resolved_model": "claude-sonnet-5",
+      "resolution_kind": "exact-pinned-model-id",
+      "official_sources": [
+        "https://platform.claude.com/docs/en/models/sonnet-5/whats-new-sonnet-5",
+        "https://platform.claude.com/docs/en/about-claude/pricing",
+        "https://platform.claude.com/docs/en/build-with-claude/effort"
+      ],
+      "model_limits": {
+        "input_tokens": 1000000,
+        "max_output_tokens": 128000
+      },
+      "pricing_usd_per_million_tokens": {
+        "input": 2,
+        "output": 10
+      },
+      "token_accounting": "anthropic-provider-specific",
+      "request_settings": {
+        "json_output_mode": "prompt-only",
+        "schema_constrained_output": false,
+        "sampling_parameters": "omitted",
+        "prompt_caching": false,
+        "tools": false,
+        "output_token_parameter": "max_tokens",
+        "max_output_tokens": 8192,
+        "thinking_parameter": "thinking.type",
+        "thinking": "adaptive"
+      }
+    },
+    {
+      "target_id": "google-stable-agentic",
+      "provider": "google",
+      "requested_model": "gemini-3.7-flash",
+      "resolved_model": "gemini-3.7-flash",
+      "resolution_kind": "exact-stable-model-id",
+      "official_sources": [
+        "https://ai.google.dev/gemini-api/docs/latest-model",
+        "https://ai.google.dev/gemini-api/docs/models/gemini-3.7-flash",
+        "https://ai.google.dev/gemini-api/docs/pricing",
+        "https://ai.google.dev/api/interactions-api"
+      ],
+      "model_limits": {
+        "input_tokens": 1048576,
+        "max_output_tokens": 65536
+      },
+      "pricing_usd_per_million_tokens": {
+        "input": 0.75,
+        "output": 3.75
+      },
+      "token_accounting": "google-provider-specific",
+      "request_settings": {
+        "json_output_mode": "prompt-only",
+        "schema_constrained_output": false,
+        "sampling_parameters": "omitted",
+        "prompt_caching": false,
+        "tools": false,
+        "grounding": false,
+        "output_token_parameter": "generation_config.max_output_tokens",
+        "max_output_tokens": 8192,
+        "thinking_parameter": "generation_config.thinking_level",
+        "thinking_level": "medium"
+      }
+    }
+  ]
+}

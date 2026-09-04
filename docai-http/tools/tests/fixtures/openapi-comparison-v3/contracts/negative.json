@@ -1,0 +1,254 @@
+[
+  {
+    "name": "request missing retry",
+    "contract_id": "request-construction.v3",
+    "value": {
+      "request": {
+        "method": "POST",
+        "path": "/v1/widgets",
+        "headers": {},
+        "query": {},
+        "content_type": null,
+        "body": {},
+        "parts": []
+      },
+      "uncertainties": []
+    },
+    "error": "/retry: is required"
+  },
+  {
+    "name": "response unknown root key",
+    "contract_id": "response-handling.v3",
+    "value": {
+      "response": {
+        "status": 200,
+        "headers": {},
+        "body": {},
+        "retained_fields": [],
+        "relations": []
+      },
+      "uncertainties": [],
+      "notes": "not in the closed contract"
+    },
+    "error": "/notes: is not allowed"
+  },
+  {
+    "name": "request unknown nested key",
+    "contract_id": "request-construction.v3",
+    "value": {
+      "request": {
+        "method": "POST",
+        "path": "/v1/widgets",
+        "headers": {},
+        "query": {},
+        "content_type": null,
+        "body": {},
+        "parts": [],
+        "timeout": 30
+      },
+      "retry": {
+        "ambiguous_outcome": "unknown",
+        "key_header": null
+      },
+      "uncertainties": []
+    },
+    "error": "/request/timeout: is not allowed"
+  },
+  {
+    "name": "request bad retry enum",
+    "contract_id": "request-construction.v3",
+    "value": {
+      "request": {
+        "method": "POST",
+        "path": "/v1/widgets",
+        "headers": {},
+        "query": {},
+        "content_type": null,
+        "body": {},
+        "parts": []
+      },
+      "retry": {
+        "ambiguous_outcome": "retry-maybe",
+        "key_header": null
+      },
+      "uncertainties": []
+    },
+    "error": "/retry/ambiguous_outcome: must equal one of"
+  },
+  {
+    "name": "retrieval malformed uncertainty pointer",
+    "contract_id": "retrieval-selection.v3",
+    "value": {
+      "request": {
+        "method": "GET",
+        "path": "/v1/widgets",
+        "query": {},
+        "headers": {}
+      },
+      "pagination": {
+        "items_path": "/data",
+        "next_cursor_path": "/next_cursor",
+        "cursor_parameter": "cursor",
+        "stop_condition": "empty-page",
+        "deduplicate_by": null
+      },
+      "uncertainties": [
+        {
+          "path": "pagination/deduplicate_by",
+          "reason": "documentation-gap"
+        }
+      ]
+    },
+    "error": "/uncertainties/0/path: must match pattern"
+  },
+  {
+    "name": "response header value is not a string",
+    "contract_id": "response-handling.v3",
+    "value": {
+      "response": {
+        "status": 200,
+        "headers": {
+          "Retry-After": 10
+        },
+        "body": {},
+        "retained_fields": [],
+        "relations": []
+      },
+      "uncertainties": []
+    },
+    "error": "/response/headers/Retry-After: must be a string"
+  },
+  {
+    "name": "request multipart part is closed",
+    "contract_id": "request-construction.v3",
+    "value": {
+      "request": {
+        "method": "POST",
+        "path": "/v1/widgets",
+        "headers": {},
+        "query": {},
+        "content_type": "multipart/form-data",
+        "body": {},
+        "parts": [
+          {
+            "name": "document",
+            "content_type": "application/pdf",
+            "value": "<bytes>",
+            "encoding": "binary"
+          }
+        ]
+      },
+      "retry": {
+        "ambiguous_outcome": "unknown",
+        "key_header": null
+      },
+      "uncertainties": []
+    },
+    "error": "/request/parts/0/encoding: is not allowed"
+  },
+  {
+    "name": "workflow step is closed",
+    "contract_id": "workflow-completion.v3",
+    "value": {
+      "steps": [
+        {
+          "order": 1,
+          "method": "POST",
+          "path": "/v1/widgets",
+          "input": {},
+          "keep": [],
+          "states_after_success": [],
+          "notes": "extra"
+        }
+      ],
+      "failure_recovery": [],
+      "webhook_reconciliation": [],
+      "uncertainties": []
+    },
+    "error": "/steps/0/notes: is not allowed"
+  },
+  {
+    "name": "error status is below HTTP range",
+    "contract_id": "error-recovery.v3",
+    "value": {
+      "errors": [
+        {
+          "status": 99,
+          "code": "invalid",
+          "retry_policy": "never",
+          "caller_action": "Stop.",
+          "preserve": []
+        }
+      ],
+      "uncertainties": []
+    },
+    "error": "/errors/0/status: must be greater than or equal to 100"
+  },
+  {
+    "name": "response relation has unsupported action",
+    "contract_id": "response-handling.v3",
+    "value": {
+      "response": {
+        "status": 200,
+        "headers": {},
+        "body": {},
+        "retained_fields": [],
+        "relations": [
+          {
+            "target": "another operation",
+            "field": "id",
+            "action": "copy"
+          }
+        ]
+      },
+      "uncertainties": []
+    },
+    "error": "/response/relations/0/action: must equal one of"
+  },
+  {
+    "name": "webhook acknowledgement deadline must be positive",
+    "contract_id": "webhook-handling.v3",
+    "value": {
+      "webhook": {
+        "event": "widget.completed",
+        "method": "POST",
+        "path": "<registered URL>",
+        "delivery": {
+          "at_least_once": true,
+          "ordered": false,
+          "deduplicate_by": "event_id"
+        },
+        "headers": {},
+        "payload": {},
+        "acknowledgement": {
+          "status_class": "2xx",
+          "deadline_seconds": 0
+        },
+        "reconciliation": []
+      },
+      "uncertainties": []
+    },
+    "error": "/webhook/acknowledgement/deadline_seconds: must be greater than or equal to"
+  },
+  {
+    "name": "retrieval stop condition is canonical",
+    "contract_id": "retrieval-selection.v3",
+    "value": {
+      "request": {
+        "method": "GET",
+        "path": "/v1/widgets",
+        "query": {},
+        "headers": {}
+      },
+      "pagination": {
+        "items_path": "/data",
+        "next_cursor_path": "/next_cursor",
+        "cursor_parameter": "cursor",
+        "stop_condition": "until-done",
+        "deduplicate_by": null
+      },
+      "uncertainties": []
+    },
+    "error": "/pagination/stop_condition: must equal one of"
+  }
+]

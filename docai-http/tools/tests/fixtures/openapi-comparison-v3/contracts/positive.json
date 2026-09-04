@@ -1,0 +1,161 @@
+{
+  "request-construction.v3": {
+    "request": {
+      "method": "POST",
+      "path": "/v1/widgets",
+      "headers": {
+        "Authorization": "Bearer <access_token>"
+      },
+      "query": {
+        "dry_run": false
+      },
+      "content_type": "application/json",
+      "body": {
+        "name": "example"
+      },
+      "parts": []
+    },
+    "retry": {
+      "ambiguous_outcome": "same-request-and-key",
+      "key_header": "Idempotency-Key"
+    },
+    "uncertainties": []
+  },
+  "response-handling.v3": {
+    "response": {
+      "status": 201,
+      "headers": {
+        "Location": "/v1/widgets/widget_123"
+      },
+      "body": {
+        "id": "widget_123"
+      },
+      "retained_fields": [
+        "id"
+      ],
+      "relations": [
+        {
+          "target": "POST /dependent-resources",
+          "field": "id",
+          "action": "pass-as-input"
+        }
+      ]
+    },
+    "uncertainties": []
+  },
+  "error-recovery.v3": {
+    "errors": [
+      {
+        "status": 409,
+        "code": "conflict",
+        "retry_policy": "after-correction-with-new-key",
+        "caller_action": "Correct the request before retrying.",
+        "preserve": []
+      }
+    ],
+    "uncertainties": []
+  },
+  "workflow-completion.v3": {
+    "steps": [
+      {
+        "order": 1,
+        "method": "POST",
+        "path": "/v1/widgets",
+        "input": {
+          "name": "example"
+        },
+        "keep": [
+          "widget_id"
+        ],
+        "states_after_success": [
+          "widget.created"
+        ]
+      }
+    ],
+    "failure_recovery": [
+      {
+        "case": "ambiguous create result",
+        "action": "same-request-and-key",
+        "preserve": [
+          "Idempotency-Key"
+        ],
+        "repeat_side_effect": false
+      }
+    ],
+    "webhook_reconciliation": [
+      {
+        "event": "widget.completed",
+        "match_by": [
+          "widget_id"
+        ],
+        "record_states": [
+          "widget.completed"
+        ],
+        "continue_operation": null,
+        "repeat_side_effect": false
+      }
+    ],
+    "uncertainties": []
+  },
+  "webhook-handling.v3": {
+    "webhook": {
+      "event": "widget.completed",
+      "method": "POST",
+      "path": "<registered URL>",
+      "delivery": {
+        "at_least_once": true,
+        "ordered": false,
+        "deduplicate_by": "event_id"
+      },
+      "headers": {
+        "X-Delivery-Attempt": "<required string>"
+      },
+      "payload": {
+        "event_id": "event_123"
+      },
+      "acknowledgement": {
+        "status_class": "2xx",
+        "deadline_seconds": 5
+      },
+      "reconciliation": [
+        {
+          "event": "widget.completed",
+          "match_by": [
+            "widget_id"
+          ],
+          "record_states": [
+            "widget.completed"
+          ],
+          "continue_operation": null,
+          "repeat_side_effect": false
+        }
+      ]
+    },
+    "uncertainties": []
+  },
+  "retrieval-selection.v3": {
+    "request": {
+      "method": "GET",
+      "path": "/v1/widgets",
+      "query": {
+        "limit": 100
+      },
+      "headers": {
+        "Accept": "application/json"
+      }
+    },
+    "pagination": {
+      "items_path": "/data",
+      "next_cursor_path": "/next_cursor",
+      "cursor_parameter": "cursor",
+      "stop_condition": "missing-or-null-next-cursor",
+      "deduplicate_by": "id"
+    },
+    "uncertainties": [
+      {
+        "path": "/pagination/deduplicate_by",
+        "reason": "documentation-gap"
+      }
+    ]
+  }
+}

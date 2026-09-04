@@ -1,0 +1,27 @@
+{
+  "contract_version": "3",
+  "task_classes": {
+    "example": "example.v3"
+  },
+  "assertion_operators": [
+    "equals"
+  ],
+  "output_contracts": {
+    "example.v3": {
+      "schema_version": "1",
+      "schema": {
+        "type": "object",
+        "required": [
+          "value"
+        ],
+        "properties": {
+          "value": {
+            "type": "string",
+            "pattern": "^foo|bar$"
+          }
+        },
+        "additional_properties": false
+      }
+    }
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "reported_gap": {
+    "task_id": "create-user-request",
+    "condition": "openapi-raw",
+    "uncertainties": [
+      { "path": "/request/path", "reason": "documentation-gap" },
+      { "path": "/request/headers/Authorization", "reason": "documentation-gap" },
+      { "path": "/request/headers/Idempotency-Key", "reason": "documentation-gap" },
+      { "path": "/retry", "reason": "documentation-gap" }
+    ],
+    "expected_status": "reported-gap"
+  },
+  "missed_fact": {
+    "task_id": "create-user-request",
+    "condition": "docai-selected",
+    "uncertainties": [
+      { "path": "/request/body", "reason": "documentation-gap" }
+    ],
+    "expected_status": "missed-fact"
+  },
+  "unsupported_guess": {
+    "task_id": "create-user-request",
+    "condition": "openapi-raw",
+    "uncertainties": [],
+    "expected_status": "unsupported-guess"
+  },
+  "no_uncertainty": {
+    "task_id": "create-user-request",
+    "condition": "docai-selected",
+    "uncertainties": [],
+    "expected_status": "none"
+  },
+  "wrong_workflow_with_gap": {
+    "task_id": "complete-checkout-workflow",
+    "condition": "openapi-raw",
+    "uncertainties": [
+      { "path": "/steps", "reason": "documentation-gap" },
+      { "path": "/failure_recovery", "reason": "documentation-gap" },
+      { "path": "/webhook_reconciliation", "reason": "documentation-gap" }
+    ],
+    "expected_status": "missed-fact"
+  }
+}

@@ -1,0 +1,401 @@
+{
+  "manifest_version": "1",
+  "benchmark_id": "docai-http-openapi-comparison-v3",
+  "plan_version": "3.0.0-calibration.1",
+  "status": "frozen",
+  "frozen_at": "2026-09-03T00:00:00Z",
+  "hash_algorithm": "sha256",
+  "artifact_count": 65,
+  "artifacts": [
+    {
+      "class": "authoritative-sources",
+      "path": "docai-http/fixtures/conformance/v1.0.0/source/complete-behavior.yaml",
+      "visibility": "public",
+      "sha256": "6719df971d99b6e18db37976f0ce2602290c29d4e2919ea8940058f677d56431"
+    },
+    {
+      "class": "authoritative-sources",
+      "path": "docai-http/fixtures/conformance/v1.0.0/source/complete-input-set.yaml",
+      "visibility": "public",
+      "sha256": "4da7f22b010b268cc71c0516617d6c4c9e340ec04f527cf8034b826ded972a06"
+    },
+    {
+      "class": "authoritative-sources",
+      "path": "docai-http/fixtures/conformance/v1.0.0/source/complete-openapi.yaml",
+      "visibility": "public",
+      "sha256": "3bb3ef56052bde989815fbe81cc7e1b6219f0cacf78df316bf95a66dea217583"
+    },
+    {
+      "class": "calibration-schedule-and-gate",
+      "path": "docai-http/benchmarks/openapi-comparison/V2-DIAGNOSTIC-CLOSURE.md",
+      "visibility": "public",
+      "sha256": "cdaaa1c29fb3f959b2c9097f13f6457ce92728a36d9da14abaa7cec2c1105b8c"
+    },
+    {
+      "class": "calibration-schedule-and-gate",
+      "path": "docai-http/benchmarks/openapi-comparison/v3/ARTIFACT-CONTRACT.md",
+      "visibility": "public",
+      "sha256": "7fe1ec7a961f840d293b8ab30bd3a7aec51bc476572e3164de9c3a4ce806febd"
+    },
+    {
+      "class": "calibration-schedule-and-gate",
+      "path": "docai-http/benchmarks/openapi-comparison/v3/CALIBRATION.md",
+      "visibility": "public",
+      "sha256": "5396988b44c9109ab46f2500c15cdf66809f5df89c5e7486bed443a8855460ce"
+    },
+    {
+      "class": "calibration-schedule-and-gate",
+      "path": "docai-http/benchmarks/openapi-comparison/v3/PLAN.md",
+      "visibility": "public",
+      "sha256": "1ad4809f31bd89660effc300f8ff753db7a896fa4c92c2601acf0fd7a6ee2758"
+    },
+    {
+      "class": "calibration-schedule-and-gate",
+      "path": "docai-http/benchmarks/openapi-comparison/v3/README.md",
+      "visibility": "public",
+      "sha256": "666dfea3125a0c236abfcf160f4a988db6efa2ca05adb3f73202dc04675f1c72"
+    },
+    {
+      "class": "calibration-schedule-and-gate",
+      "path": "docai-http/benchmarks/openapi-comparison/v3/calibration-schedule.jsonl",
+      "visibility": "public",
+      "sha256": "d9cf8711062e878df6a9b9c3b7d1b2ba730b7d1f32b3b124bc24ef25cc16776f"
+    },
+    {
+      "class": "calibration-schedule-and-gate",
+      "path": "docai-http/benchmarks/openapi-comparison/v3/plan.json",
+      "visibility": "public",
+      "sha256": "db298a38f941ac00da5ea35d6f6a9f4dd93ccf331aacc3710f39596dae4e3dd0"
+    },
+    {
+      "class": "calibration-schedule-and-gate",
+      "path": "docai-http/tools/build-openapi-comparison-v3-calibration-schedule.mjs",
+      "visibility": "public",
+      "sha256": "3a9cf3bb548a59917e30c4c8a94f061e4e9c644e535b48dc7d67b9d5b701b92c"
+    },
+    {
+      "class": "calibration-schedule-and-gate",
+      "path": "docai-http/tools/check-openapi-comparison-v3-adjudication.mjs",
+      "visibility": "public",
+      "sha256": "38a0987a202b4e2e80a0c55e65746cc3b8d5d4b155fbebe6a45700d0ba0f7ed1"
+    },
+    {
+      "class": "calibration-schedule-and-gate",
+      "path": "docai-http/tools/check-openapi-comparison-v3-calibration.mjs",
+      "visibility": "public",
+      "sha256": "1c54a45065a5245064e129b87270fb9306b04a63c5ea6929c7d58a2edbda67fc"
+    },
+    {
+      "class": "calibration-schedule-and-gate",
+      "path": "docai-http/tools/check-openapi-comparison-v3-plan.mjs",
+      "visibility": "public",
+      "sha256": "710e5b17ce817ccdd1865495cac354d6ed7c00ac377dd5b0fc842d19e62c9f54"
+    },
+    {
+      "class": "calibration-schedule-and-gate",
+      "path": "docai-http/tools/freeze-openapi-comparison-v3.mjs",
+      "visibility": "public",
+      "sha256": "4074c3bcf1c150a8a0ad6392ced1859ea94feb817d655fd571396ce69f97ec08"
+    },
+    {
+      "class": "calibration-schedule-and-gate",
+      "path": "docai-http/tools/openapi-comparison-v3-adjudication.mjs",
+      "visibility": "public",
+      "sha256": "1f2d30d64cb66d7dcfd03dc128a095cb850312fd521b43a3bbf1630161b12b2e"
+    },
+    {
+      "class": "calibration-schedule-and-gate",
+      "path": "docai-http/tools/openapi-comparison-v3-calibration-gate.mjs",
+      "visibility": "public",
+      "sha256": "e3ff3fb2469bad566fd50040d140797f2b117f6ff2aa884472e3ac51b68b83b0"
+    },
+    {
+      "class": "calibration-schedule-and-gate",
+      "path": "docai-http/tools/openapi-comparison-v3-strict-json.mjs",
+      "visibility": "public",
+      "sha256": "60fada4f9c323de3e9f9f7038d5eb9383af2e3a914b70be05e0e1dc93eec4d1d"
+    },
+    {
+      "class": "context-builders",
+      "path": "docai-http/benchmarks/openapi-comparison/v3/private/contexts/calibration-metrics.json",
+      "visibility": "private",
+      "sha256": "09c8fdec9cbba569f565addc2d16368be5d0c4ddd05de8b7558e54f4ac917d9c"
+    },
+    {
+      "class": "context-builders",
+      "path": "docai-http/tools/check-openapi-comparison-v3-parity.mjs",
+      "visibility": "public",
+      "sha256": "f3a017c8ada5cd9e8b12e99e82ade621865ac223578d485676b2fdaa93b094fb"
+    },
+    {
+      "class": "context-builders",
+      "path": "docai-http/tools/openapi-comparison-v3-context.mjs",
+      "visibility": "public",
+      "sha256": "fa38580abb085e9a8fb574eaf08ceeac078c57414793beafa9f9685c5ff80959"
+    },
+    {
+      "class": "context-builders",
+      "path": "docai-http/tools/openapi-comparison-v3-utils.mjs",
+      "visibility": "public",
+      "sha256": "b793ae03ae047030d829e3601665674a8496a1437eca20b81b5e29461c953bdd"
+    },
+    {
+      "class": "contracts-and-prompts",
+      "path": "docai-http/benchmarks/openapi-comparison/v3/contracts.json",
+      "visibility": "public",
+      "sha256": "712bc1747e9da4a23cbc25943a83818d173ea14d6da55068378ac7e2f7f8bd16"
+    },
+    {
+      "class": "contracts-and-prompts",
+      "path": "docai-http/benchmarks/openapi-comparison/v3/private/README.md",
+      "visibility": "private",
+      "sha256": "8fffe0591788a56c5e3a6f36d61b2dd5e927f3d7e0bf123896f4670d53806869"
+    },
+    {
+      "class": "contracts-and-prompts",
+      "path": "docai-http/benchmarks/openapi-comparison/v3/private/prompts/calibration.jsonl",
+      "visibility": "private",
+      "sha256": "39a19a4936a88ff223f3851920f36353245c43e712ce0986ec2f7b9b899b7181"
+    },
+    {
+      "class": "contracts-and-prompts",
+      "path": "docai-http/tools/build-openapi-comparison-v3-prompts.mjs",
+      "visibility": "public",
+      "sha256": "bcd4e6643071e4b10cbc3a1ad2514654546a922a3d958f14dd230f26375258b5"
+    },
+    {
+      "class": "contracts-and-prompts",
+      "path": "docai-http/tools/openapi-comparison-v3-contract.mjs",
+      "visibility": "public",
+      "sha256": "aed607851d92e7d068354a1a16b3c76bb336c95d3c46807fc554dd9dd060c61a"
+    },
+    {
+      "class": "contracts-and-prompts",
+      "path": "docai-http/tools/openapi-comparison-v3-prompt.mjs",
+      "visibility": "public",
+      "sha256": "e9be712827960a29eb2c361a1447382c8d0782cea3386b1bbbac5aa51652d2d7"
+    },
+    {
+      "class": "cost-estimate",
+      "path": "docai-http/benchmarks/openapi-comparison/v3/MODEL-COST-PREFLIGHT.md",
+      "visibility": "public",
+      "sha256": "b8371edd64e7a662d158bda72e24034cd00e8486e70d81bef03cad7f95bb6be5"
+    },
+    {
+      "class": "cost-estimate",
+      "path": "docai-http/benchmarks/openapi-comparison/v3/cost-estimate.json",
+      "visibility": "public",
+      "sha256": "1353d1520b3c66a64ea54d70d458bea623dc13fdb4d5244020e396e932e60ea9"
+    },
+    {
+      "class": "cost-estimate",
+      "path": "docai-http/tools/estimate-openapi-comparison-v3-cost.mjs",
+      "visibility": "public",
+      "sha256": "7d3ed687e66847c9b86339c9e078c6a63df480a7091409b3b52fd183a9f57720"
+    },
+    {
+      "class": "docai-contexts",
+      "path": "docai-http/fixtures/conformance/v1.0.0/valid/compact/CONVENTIONS.md",
+      "visibility": "public",
+      "sha256": "ae0dd3398f0b547b5fe854e8ac070d42558afbc5902714db00bf10523aa4db9b"
+    },
+    {
+      "class": "docai-contexts",
+      "path": "docai-http/fixtures/conformance/v1.0.0/valid/compact/INDEX.md",
+      "visibility": "public",
+      "sha256": "4f911dc0dd8ef4be3b0a867bfb68a813cdcbb6af419c2a1b030f559eae9a1d12"
+    },
+    {
+      "class": "docai-contexts",
+      "path": "docai-http/fixtures/conformance/v1.0.0/valid/compact/resources/checkout.md",
+      "visibility": "public",
+      "sha256": "5e3153bc13e88b1c0203d3da1e684fbddd7845e2747fdd1ceb14dc21a2c28e1c"
+    },
+    {
+      "class": "docai-contexts",
+      "path": "docai-http/fixtures/conformance/v1.0.0/valid/compact/resources/documents.md",
+      "visibility": "public",
+      "sha256": "2585eeb7cc174a93cb2a8217ed8b688b242c21f4df6945e9549a3d1e63ad150e"
+    },
+    {
+      "class": "docai-contexts",
+      "path": "docai-http/fixtures/conformance/v1.0.0/valid/compact/resources/payments.md",
+      "visibility": "public",
+      "sha256": "2afaca0e7fe7ee96591c60d54db7e33d1c7b6348015fd9f6dbbfe184fac63382"
+    },
+    {
+      "class": "docai-contexts",
+      "path": "docai-http/fixtures/conformance/v1.0.0/valid/compact/resources/users.md",
+      "visibility": "public",
+      "sha256": "9283035a4998127095506d21b53a9b59862c38c5a35fa78c12deb6d92875dbe1"
+    },
+    {
+      "class": "docai-contexts",
+      "path": "docai-http/fixtures/conformance/v1.0.0/valid/compact/webhooks/payment-completed.md",
+      "visibility": "public",
+      "sha256": "f909233f2ba440268f42efcb1c9014278f9952e305878c9ec25b0193dc1a207a"
+    },
+    {
+      "class": "docai-contexts",
+      "path": "docai-http/fixtures/conformance/v1.0.0/valid/compact/workflows/checkout.md",
+      "visibility": "public",
+      "sha256": "35f20cef6e30430725ff800f51ad3b181d5ebc7d6c5fc2db3bf82ae43bc9c00a"
+    },
+    {
+      "class": "docai-contexts",
+      "path": "docai-http/fixtures/conformance/v1.0.0/valid/full/CONVENTIONS.md",
+      "visibility": "public",
+      "sha256": "a42874cabfb108c47c8e78b9070e81cb80f7708ddc623de85e2ab7c62787b781"
+    },
+    {
+      "class": "docai-contexts",
+      "path": "docai-http/fixtures/conformance/v1.0.0/valid/full/INDEX.md",
+      "visibility": "public",
+      "sha256": "ddb09bb9c9fa9942cbbae0530f8d6988868014257a9521107f43eddb06eae7ad"
+    },
+    {
+      "class": "docai-contexts",
+      "path": "docai-http/fixtures/conformance/v1.0.0/valid/full/resources/checkout.md",
+      "visibility": "public",
+      "sha256": "e29a9fa92daf2e79fdf0f24150f0756439b2b0654c7ce945e207e19baf02695a"
+    },
+    {
+      "class": "docai-contexts",
+      "path": "docai-http/fixtures/conformance/v1.0.0/valid/full/resources/documents.md",
+      "visibility": "public",
+      "sha256": "aecf79fc041b630230d1cb5bbfc75c36fb01ef56e67e099d4be78169240910f4"
+    },
+    {
+      "class": "docai-contexts",
+      "path": "docai-http/fixtures/conformance/v1.0.0/valid/full/resources/payments.md",
+      "visibility": "public",
+      "sha256": "f9de70a5e19d8b9e09a820683299bb9efc8ef2b8998ea68202e03f875111ab14"
+    },
+    {
+      "class": "docai-contexts",
+      "path": "docai-http/fixtures/conformance/v1.0.0/valid/full/resources/users.md",
+      "visibility": "public",
+      "sha256": "8994d564d1fef00b3108115a3d1da47a493b68d95f4b9a924c5d0360692a7ceb"
+    },
+    {
+      "class": "docai-contexts",
+      "path": "docai-http/fixtures/conformance/v1.0.0/valid/full/webhooks/payment-completed.md",
+      "visibility": "public",
+      "sha256": "9157b2727b51c6403d4bf4a565b0c22504e051d286a091039000f546e74a5c1c"
+    },
+    {
+      "class": "docai-contexts",
+      "path": "docai-http/fixtures/conformance/v1.0.0/valid/full/workflows/checkout.md",
+      "visibility": "public",
+      "sha256": "f9ad1a454ff5977fb053d780b8cbf4fb7b83bacac340c0de77dfc87991d97081"
+    },
+    {
+      "class": "imported-v2-dependencies",
+      "path": "docai-http/benchmarks/openapi-comparison/v2/contracts.json",
+      "visibility": "public",
+      "sha256": "f25158e790f25c23a60a285b4de38cbcd1d0b59d73a1e60b05fbac11a7560db6"
+    },
+    {
+      "class": "imported-v2-dependencies",
+      "path": "docai-http/benchmarks/openapi-comparison/v2/plan.json",
+      "visibility": "public",
+      "sha256": "62ceb94363665b7056c50981e2a6618431d8c031cbef1da2c9b5da13ec720c5a"
+    },
+    {
+      "class": "imported-v2-dependencies",
+      "path": "docai-http/tools/openapi-comparison-v2-context.mjs",
+      "visibility": "public",
+      "sha256": "dd63fb88e1ac56649f021a1feedefe2552508f199a9bdf2fee256864e19e36eb"
+    },
+    {
+      "class": "imported-v2-dependencies",
+      "path": "docai-http/tools/openapi-comparison-v2-contract.mjs",
+      "visibility": "public",
+      "sha256": "b5b2e06c05e7f9272bccdb4393efed58c2d4080e2f7a4844c022b627147af17d"
+    },
+    {
+      "class": "imported-v2-dependencies",
+      "path": "docai-http/tools/openapi-comparison-v2-utils.mjs",
+      "visibility": "public",
+      "sha256": "b9b4feea67b5ad41ec3cd0e7f7cb6bf9bdf5115ead6c231d1d8afdceb47c4983"
+    },
+    {
+      "class": "model-resolutions",
+      "path": "docai-http/benchmarks/openapi-comparison/v3/model-resolutions.json",
+      "visibility": "public",
+      "sha256": "2dd1103cdf1a4f9993e5e1436e65c173ea5f2848e225700c08df02bbb62aa773"
+    },
+    {
+      "class": "parser-and-graders",
+      "path": "docai-http/tools/openapi-comparison-v3-grader.mjs",
+      "visibility": "public",
+      "sha256": "67bf0c2b2dab53b759cfba7096ec831088458e332834795c6d732c3f005ea888"
+    },
+    {
+      "class": "parser-and-graders",
+      "path": "docai-http/tools/openapi-comparison-v3-parser.mjs",
+      "visibility": "public",
+      "sha256": "1762ca04bfe390f19280c9d5b54c4e91a629ada6545d8c8043d9cc75c8b690e6"
+    },
+    {
+      "class": "parser-and-graders",
+      "path": "docai-http/tools/openapi-comparison-v3-record.mjs",
+      "visibility": "public",
+      "sha256": "bf4aa2b377473a7202b7f722a09b48ab171071c6ce36af92000d117ed2bf2d56"
+    },
+    {
+      "class": "provider-adapters-and-runner",
+      "path": "docai-http/tools/check-openapi-comparison-v3-runs.mjs",
+      "visibility": "public",
+      "sha256": "62e4d7b8fd97be7c13979806ef5e6ba4ce18ad8b4b378d04911a19522cc9dc4d"
+    },
+    {
+      "class": "provider-adapters-and-runner",
+      "path": "docai-http/tools/openapi-comparison-v3-anthropic-adapter.mjs",
+      "visibility": "public",
+      "sha256": "ec31845a3bf386f9ac17eed0ec86d2d9424138bf433395c313a384ea5e263342"
+    },
+    {
+      "class": "provider-adapters-and-runner",
+      "path": "docai-http/tools/openapi-comparison-v3-google-adapter.mjs",
+      "visibility": "public",
+      "sha256": "7f0941f771d6213d639acfa9d5fd6fd6e0a267d7b149dc7d1499fb505f670833"
+    },
+    {
+      "class": "provider-adapters-and-runner",
+      "path": "docai-http/tools/openapi-comparison-v3-openai-adapter.mjs",
+      "visibility": "public",
+      "sha256": "fbc6d8559fa9dc042604a7156307fa1305c804a2a4d6d6e447786ffb90437830"
+    },
+    {
+      "class": "provider-adapters-and-runner",
+      "path": "docai-http/tools/openapi-comparison-v3-provider-adapter-utils.mjs",
+      "visibility": "public",
+      "sha256": "5a0260443fc492b3513aeb884e7e6527c119ff3f389ad2fb9f7b0f6595bbdacc"
+    },
+    {
+      "class": "provider-adapters-and-runner",
+      "path": "docai-http/tools/openapi-comparison-v3-provider-errors.mjs",
+      "visibility": "public",
+      "sha256": "08a7fa45ebc52da4774ab30f07ebbdcd77a5968a0772251d8ee91bb60d1ab13b"
+    },
+    {
+      "class": "provider-adapters-and-runner",
+      "path": "docai-http/tools/openapi-comparison-v3-runner.mjs",
+      "visibility": "public",
+      "sha256": "da7ae85f420fa0b440d0744f93a79981a287f026c6f39ceef4ab9ba20e877c78"
+    },
+    {
+      "class": "provider-adapters-and-runner",
+      "path": "docai-http/tools/run-openapi-comparison-v3-calibration.mjs",
+      "visibility": "public",
+      "sha256": "54f8f7c166ed5f7edc8de4c11c8ea16d0db596faf57eb60d894a1c5441184880"
+    },
+    {
+      "class": "tasks-and-expected-outcomes",
+      "path": "docai-http/benchmarks/openapi-comparison/v3/continuity/tasks.json",
+      "visibility": "public",
+      "sha256": "c4ea514219b54ddc201b8d0909f222a7d5378f4c0371e51c77347ae559f3403a"
+    }
+  ]
+}

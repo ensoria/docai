@@ -99,16 +99,19 @@ future version before publication.
   and freeze the corrected pipeline as `2.0.0-frozen.3`.
 - [x] Execute `b01` under `2.0.0-frozen.3` after renewed approval; do not count
   the four superseded attempts in the 648 primary requests.
-- [ ] Complete the `b01` stop/go review before authorizing `b02`: preserve the
-  automated outcomes as primary, adjudicate only the 51 inconclusive records
-  with condition-blinded identifiers, and assess the 12 malformed outputs
-  (including 9 from Google) as a provider/output-format reliability signal.
+- [x] Complete the `b01` stop/go review: preserve the automated outcomes as
+  primary, adjudicate the 51 inconclusive records with condition-blinded
+  identifiers, and assess the 12 malformed outputs (including 9 from Google)
+  as a provider/output-format reliability signal.
 - [x] Select one reviewer and implement the condition/provider/model-blinded
   adjudication packet, decision template, and reproducibility checker.
 - [x] Generate the deterministic `b01` packet containing all 51 inconclusive
   records and verify that all decisions begin as `pending`.
-- [ ] Complete and validate all 51 `b01` adjudication decisions, then record
+- [x] Complete and validate all 51 `b01` adjudication decisions, then record
   that inter-rater agreement was not measured because one reviewer was used.
+- [x] Record the `b01` stop/go decision: v2 is closed as diagnostic evidence
+  and cannot support an accuracy headline.
+- [x] Cancel `b02` through `b09`; they must not execute.
 - [x] Split the 648 primary requests into nine batches of 72 requests. One batch
   is one API, one repetition, six tasks, three models, and four conditions.
 - [x] Treat 100 attempted provider requests as a hard maximum for one work step;
@@ -175,6 +178,22 @@ future version before publication.
 - [ ] Update the top-level README only with claims supported by the completed
   benchmark scope; do not generalize to all APIs, models, or implementation
   tasks.
+
+## P2: OpenAPI Comparison Benchmark v3 Calibration
+
+Implementation plan:
+[`../docs/superpowers/plans/2026-08-27-openapi-comparison-v3-calibration.md`](../docs/superpowers/plans/2026-08-27-openapi-comparison-v3-calibration.md).
+
+- [x] Close v2 outside its frozen boundary and define the
+  `3.0.0-calibration.1` v3 calibration draft.
+- [x] Verify the exact catalog model IDs for the three v3 targets without
+  changing the calibration matrix.
+- [x] Build, validate, and freeze the 24-request calibration packet before
+  requesting separate explicit approval for any provider request.
+- [ ] Send the approved v3 calibration requests only after explicit approval;
+  do not create or execute any primary schedule before calibration review.
+- [ ] Evaluate calibration results against the 23 automated-decision and
+  1 exceptional-run gate before proposing any primary benchmark work.
 
 ## P2: Additional Adoption Evidence
 
