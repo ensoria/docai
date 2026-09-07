@@ -190,7 +190,15 @@ Implementation plan:
   changing the calibration matrix.
 - [x] Build, validate, and freeze the 24-request calibration packet before
   requesting separate explicit approval for any provider request.
-- [ ] Send the approved v3 calibration requests only after explicit approval;
+- [x] Add frozen v3 plan, freeze, and parity checks to ordinary release
+  readiness, and record the preflight and calibration status
+  in `OPENAPI-COMPARISON-V3-CALIBRATION-RUNBOOK.md`.
+- [ ] Supersede `3.0.0-calibration.1` without modifying its frozen artifacts:
+  recompute retained run results from provider responses and canonical tasks,
+  reject response/run mismatches, add tamper regressions, and freeze a new
+  calibration identity before any provider request.
+- [ ] Send the replacement v3 calibration requests only after explicit
+  approval for its exact frozen envelope;
   do not create or execute any primary schedule before calibration review.
 - [ ] Evaluate calibration results against the 23 automated-decision and
   1 exceptional-run gate before proposing any primary benchmark work.
