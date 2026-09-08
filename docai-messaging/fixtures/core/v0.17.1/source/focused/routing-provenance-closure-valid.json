@@ -1,0 +1,34 @@
+{
+  "documentSet": "../../focused/valid/routing-provenance-closure-valid",
+  "selection": { "operation": "create-order" },
+  "contributions": [
+    {
+      "sourceId": "source-contract",
+      "surface": "channel-body",
+      "channelPath": "channels/orders.md"
+    },
+    {
+      "sourceId": "source-contract",
+      "surface": "operation-row",
+      "operation": "create-order",
+      "field": "Summary"
+    },
+    {
+      "sourceId": "source-routing",
+      "surface": "operation-row",
+      "operation": "create-order",
+      "field": "Task"
+    },
+    {
+      "sourceId": "source-unrelated",
+      "surface": "channel-body",
+      "channelPath": "channels/inventory.md"
+    },
+    {
+      "sourceId": "source-unrelated",
+      "surface": "operation-row",
+      "operation": "inventory-changed",
+      "field": "Task"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "baseScenario": "routing-provenance-closure-valid.json",
+  "mutation": {
+    "path": "channels/orders.md",
+    "replace": {
+      "from": "source_refs: source-contract, source-routing",
+      "to": "source_refs: source-contract"
+    }
+  }
+}

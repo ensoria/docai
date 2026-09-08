@@ -93,6 +93,11 @@ const sourceApiIdentityCaseIds = [
   "sources-conventions-whole-unknown-markers-valid"
 ];
 
+const routingProvenanceCaseIds = [
+  "routing-provenance-closure-valid",
+  "routing-provenance-closure-invalid"
+];
+
 const operationCaseIds = [
   "operations-flat-routing-valid",
   "operations-flat-table-invalid",
@@ -371,6 +376,41 @@ function validateDocumentSetMutation(fixturePath) {
   return validateDocumentSet(documentSet, { wholeSet: false });
 }
 
+function loadRoutingProvenanceScenario(fixturePath) {
+  const source = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
+  const scenario = source.baseScenario === undefined
+    ? source
+    : {
+      ...JSON.parse(fs.readFileSync(
+        path.resolve(path.dirname(fixturePath), source.baseScenario),
+        "utf8"
+      )),
+      mutation: source.mutation
+    };
+  const documentSet = loadDocumentSet(path.resolve(
+    path.dirname(fixturePath),
+    scenario.documentSet
+  ));
+  if (scenario.mutation !== undefined) {
+    const file = documentSet.files.find((entry) => entry.path === scenario.mutation.path);
+    assert.notEqual(file, undefined, `${scenario.mutation.path} must exist in ${scenario.documentSet}`);
+    const occurrences = file.content.split(scenario.mutation.replace.from).length - 1;
+    assert.equal(occurrences, 1, `${scenario.mutation.path} replacement source must occur exactly once`);
+    file.content = file.content.replace(
+      scenario.mutation.replace.from,
+      scenario.mutation.replace.to
+    );
+    const metadata = parseOpeningMetadata({
+      text: file.content.split("\n", 1)[0],
+      file: file.path,
+      line: file.metadataLine
+    });
+    assert.deepEqual(metadata.diagnostics, [], `${scenario.mutation.path} mutated metadata`);
+    file.metadata = metadata.value;
+  }
+  return { documentSet, scenario };
+}
+
 function validateCase(fixturePath, fixtureCase) {
   if (fixtureCase.kind === "document-set") {
     return validateDocumentSet(loadDocumentSet(fixturePath), { wholeSet: true });
@@ -404,6 +444,19 @@ function validateCase(fixturePath, fixtureCase) {
   if (fixtureCase.kind === "source-api-identity-scenario") {
     const scenario = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
     return coreValidator.validateSourceApiIdentityExpectations(
+      scenario,
+      { file: fixtureCase.path }
+    );
+  }
+  if (fixtureCase.kind === "routing-provenance-source-scenario") {
+    const { documentSet, scenario } = loadRoutingProvenanceScenario(fixturePath);
+    const validation = validateDocumentSet(documentSet, {
+      wholeSet: scenario.mutation === undefined
+    });
+    assert.deepEqual(validation.diagnostics, [], `${fixtureCase.id} document set`);
+    return coreRouting.validateRoutingProvenanceExpectations(
+      documentSet,
+      validation.facts.core,
       scenario,
       { file: fixtureCase.path }
     );
@@ -753,6 +806,68 @@ test("executes the Task 9 source API identity and missing-marker corpus", () => 
       { id: "api-d", api: "urn:example:d", contractVersion: "unknown" }
     ]
   );
+});
+
+test("executes the Task 9 routing-provenance closure corpus", () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
+  const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
+
+  assert.deepEqual(
+    routingProvenanceCaseIds.filter((id) => !byId.has(id)),
+    []
+  );
+  assert.equal(
+    typeof coreRouting.validateRoutingProvenanceExpectations,
+    "function",
+    "routing-provenance closure requires a source-aware validator"
+  );
+
+  const result = runFixtureCorpus(corpusPath, validateCase);
+  assert.equal(result.failed, 0, result.report);
+
+  const validCase = byId.get("routing-provenance-closure-valid");
+  const { documentSet, scenario } = loadRoutingProvenanceScenario(
+    path.join(corpusPath, validCase.path)
+  );
+  const documentValidation = validateDocumentSet(documentSet, { wholeSet: true });
+  const valid = coreRouting.validateRoutingProvenanceExpectations(
+    documentSet,
+    documentValidation.facts.core,
+    scenario,
+    { file: validCase.path }
+  );
+  assert.deepEqual(valid.diagnostics, []);
+  assert.deepEqual(valid.facts.routingProvenanceExpectations, {
+    channelSourceRefs: {
+      "channels/inventory.md": ["source-unrelated"],
+      "channels/orders.md": ["source-contract", "source-routing"]
+    },
+    selectedOperation: "create-order",
+    routingOnlySourceIds: ["source-routing"],
+    selectedSourceIds: ["source-contract", "source-routing"],
+    loadedSourceIndexPaths: ["INDEX.md"]
+  });
+
+  const malformed = coreRouting.validateRoutingProvenanceExpectations(
+    documentSet,
+    documentValidation.facts.core,
+    { ...scenario, contributions: {} },
+    { file: validCase.path }
+  );
+  assert.deepEqual(
+    malformed.diagnostics.map((entry) => entry.ruleId),
+    ["DM-IDX-007"]
+  );
+
+  const invalidCase = byId.get("routing-provenance-closure-invalid");
+  const invalidLoaded = loadRoutingProvenanceScenario(
+    path.join(corpusPath, invalidCase.path)
+  );
+  const { mutation, ...invalidBase } = invalidLoaded.scenario;
+  assert.notEqual(mutation, undefined);
+  assert.deepEqual(invalidBase, scenario);
+  const invalid = validateCase(path.join(corpusPath, invalidCase.path), invalidCase);
+  assert.deepEqual(invalid.diagnostics.map((entry) => entry.ruleId), ["DM-IDX-007"]);
 });
 
 test("executes the Task 9 Operations focused corpus and fixes retrieval facts", () => {
@@ -3304,7 +3419,7 @@ test("executes the Task 9 DM-INC-003 implementation-readiness capability matrix"
 
 test("audits every Task 9 invalid fixture as one primary concern", () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
-  assert.equal(manifest.cases.length, 232);
+  assert.equal(manifest.cases.length, 234);
   const result = runFixtureCorpus(corpusPath, validateCase);
   assert.equal(result.failed, 0, result.report);
   const audit = auditFixtureOneInvalidity({
@@ -3312,5 +3427,5 @@ test("audits every Task 9 invalid fixture as one primary concern", () => {
     corpusCases: result.cases
   });
 
-  assert.deepEqual(audit, { passed: true, audited: 170, errors: [] });
+  assert.deepEqual(audit, { passed: true, audited: 171, errors: [] });
 });

@@ -1625,6 +1625,20 @@
       "path": "focused/invalid/implementation-readiness-required-workflow-projection-invalid.json",
       "expected": "invalid",
       "expected_rule_ids": ["DM-INC-003"]
+    },
+    {
+      "id": "routing-provenance-closure-valid",
+      "kind": "routing-provenance-source-scenario",
+      "path": "source/focused/routing-provenance-closure-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
+      "id": "routing-provenance-closure-invalid",
+      "kind": "routing-provenance-source-scenario",
+      "path": "source/focused/routing-provenance-closure-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-IDX-007"]
     }
   ]
 }

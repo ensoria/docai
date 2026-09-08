@@ -831,6 +831,162 @@ function flatRetrieval(rows, sourceResolutions) {
   };
 }
 
+const OPERATION_PROVENANCE_FIELDS = new Set([
+  "Action",
+  "Channel",
+  "Operation",
+  "Message",
+  "Task",
+  "Summary",
+  "Required context",
+  "Supplemental context",
+  "Conventions"
+]);
+
+function addProvenanceSource(target, key, sourceId) {
+  if (!target.has(key)) target.set(key, new Set());
+  target.get(key).add(sourceId);
+}
+
+function sortedProvenanceRecord(sourceSets) {
+  return Object.fromEntries(
+    [...sourceSets.entries()]
+      .sort(([left], [right]) => asciiCompare(left, right))
+      .map(([key, sourceIds]) => [key, uniqueSorted(sourceIds)])
+  );
+}
+
+function sameStringArray(left, right) {
+  return Array.isArray(left)
+    && left.length === right.length
+    && left.every((value, index) => value === right[index]);
+}
+
+export function evaluateRoutingProvenanceExpectations(coreFacts, scenario) {
+  const rows = coreFacts.operations?.rows ?? [];
+  const rowsByOperation = new Map(rows.map((row) => [row.operation, row]));
+  const channelSources = new Map();
+  const bodySources = new Map();
+  const routingSources = new Map();
+  const contributions = Array.isArray(scenario.contributions)
+    ? scenario.contributions
+    : [];
+  const invalidContributions = Array.isArray(scenario.contributions)
+    ? []
+    : ["contributions"];
+  const knownSourceIds = new Set(coreFacts.sources?.rows?.map((row) => row.id) ?? []);
+
+  for (const [index, contribution] of contributions.entries()) {
+    const sourceId = contribution?.sourceId;
+    if (typeof sourceId !== "string" || !knownSourceIds.has(sourceId)) {
+      invalidContributions.push(index);
+      continue;
+    }
+    if (contribution.surface === "channel-body") {
+      const channelPath = contribution.channelPath;
+      if (typeof channelPath !== "string" || !rows.some((row) => row.channelPath === channelPath)) {
+        invalidContributions.push(index);
+        continue;
+      }
+      addProvenanceSource(channelSources, channelPath, sourceId);
+      addProvenanceSource(bodySources, channelPath, sourceId);
+      continue;
+    }
+    if (contribution.surface === "operation-row") {
+      const row = rowsByOperation.get(contribution.operation);
+      if (row === undefined || !OPERATION_PROVENANCE_FIELDS.has(contribution.field)) {
+        invalidContributions.push(index);
+        continue;
+      }
+      addProvenanceSource(channelSources, row.channelPath, sourceId);
+      addProvenanceSource(routingSources, row.operation, sourceId);
+      continue;
+    }
+    invalidContributions.push(index);
+  }
+
+  const selectedOperation = scenario.selection?.operation;
+  const selectedRow = rowsByOperation.get(selectedOperation);
+  const selectedChannelPath = selectedRow?.channelPath;
+  const selectedChannelSources = selectedChannelPath === undefined
+    ? []
+    : uniqueSorted(channelSources.get(selectedChannelPath) ?? []);
+  const selectedBodySources = new Set(
+    selectedChannelPath === undefined ? [] : bodySources.get(selectedChannelPath) ?? []
+  );
+  const routingOnlySourceIds = uniqueSorted(
+    [...(routingSources.get(selectedOperation) ?? [])]
+      .filter((sourceId) => !selectedBodySources.has(sourceId))
+  );
+  const requiredProvenancePaths = [
+    "CONVENTIONS.md",
+    ...(selectedRow?.requiredContexts ?? [])
+  ];
+  const selectedSourceIds = uniqueSorted([
+    ...selectedChannelSources,
+    ...requiredProvenancePaths.flatMap(
+      (filePath) => coreFacts.sourceResolutions?.[filePath]?.requestedIds ?? []
+    )
+  ]);
+  const loadedSourceIndexPaths = coreFacts.sources?.form === "direct"
+    && selectedSourceIds.length > 0
+    ? ["INDEX.md"]
+    : [];
+
+  return {
+    facts: {
+      channelSourceRefs: sortedProvenanceRecord(channelSources),
+      selectedOperation,
+      routingOnlySourceIds,
+      selectedSourceIds,
+      loadedSourceIndexPaths
+    },
+    invalidContributions,
+    selectedRow
+  };
+}
+
+export function validateRoutingProvenanceExpectations(
+  documentSet,
+  coreFacts,
+  scenario,
+  { file = "source-input.json" } = {}
+) {
+  const evaluated = evaluateRoutingProvenanceExpectations(coreFacts, scenario);
+  const expected = evaluated.facts;
+  const knownSourceIds = uniqueSorted(coreFacts.sources?.rows?.map((row) => row.id) ?? []);
+  const filesByPath = new Map(documentSet.files.map((entry) => [entry.path, entry]));
+  const channelMismatches = Object.entries(expected.channelSourceRefs)
+    .filter(([channelPath, sourceIds]) => {
+      const value = filesByPath.get(channelPath)?.metadata?.source_refs;
+      const actual = value === "all"
+        ? knownSourceIds
+        : typeof value === "string"
+          ? value.split(", ")
+          : null;
+      return !sameStringArray(actual, sourceIds);
+    });
+  const trace = coreFacts.operationRetrieval?.exact?.operation?.[expected.selectedOperation];
+  const mismatch = evaluated.invalidContributions.length > 0
+    || evaluated.selectedRow === undefined
+    || expected.routingOnlySourceIds.length === 0
+    || channelMismatches.length > 0
+    || !sameStringArray(trace?.sourceIds, expected.selectedSourceIds)
+    || !sameStringArray(trace?.loadedSourceIndexPaths, expected.loadedSourceIndexPaths);
+
+  return {
+    diagnostics: mismatch
+      ? [diagnostic(
+        "DM-IDX-007",
+        file,
+        1,
+        "Projected channel source_refs or selected-operation source resolution disagrees with routing-provenance closure."
+      )]
+      : [],
+    facts: { routingProvenanceExpectations: expected }
+  };
+}
+
 function parseOrderedTasks(value) {
   if (typeof value !== "string" || value === "") return null;
   const tasks = value.split("; ");
