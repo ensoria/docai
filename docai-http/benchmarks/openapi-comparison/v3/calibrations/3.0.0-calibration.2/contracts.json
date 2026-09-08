@@ -1,0 +1,796 @@
+{
+  "contract_version": "3",
+  "task_classes": {
+    "request_construction": "request-construction.v3",
+    "response_handling": "response-handling.v3",
+    "error_recovery": "error-recovery.v3",
+    "workflow_completion": "workflow-completion.v3",
+    "webhook_handling": "webhook-handling.v3",
+    "retrieval_selection": "retrieval-selection.v3"
+  },
+  "assertion_operators": [
+    "equals",
+    "contains",
+    "header_contains",
+    "absent",
+    "evaluator-ambiguity.v1",
+    "set_equals"
+  ],
+  "output_contracts": {
+    "request-construction.v3": {
+      "schema_version": "1",
+      "schema": {
+        "type": "object",
+        "required": [
+          "request",
+          "retry",
+          "uncertainties"
+        ],
+        "properties": {
+          "request": {
+            "type": "object",
+            "required": [
+              "method",
+              "path",
+              "headers",
+              "query",
+              "content_type",
+              "body",
+              "parts"
+            ],
+            "properties": {
+              "method": {
+                "type": "string",
+                "enum": [
+                  "GET",
+                  "POST",
+                  "PUT",
+                  "PATCH",
+                  "DELETE",
+                  "HEAD",
+                  "OPTIONS"
+                ]
+              },
+              "path": {
+                "type": "string"
+              },
+              "headers": {
+                "type": "object",
+                "required": [],
+                "properties": {},
+                "additional_properties": {
+                  "type": "string"
+                }
+              },
+              "query": {
+                "type": "object",
+                "required": [],
+                "properties": {},
+                "additional_properties": {
+                  "type": "any-json"
+                }
+              },
+              "content_type": {
+                "type": "string",
+                "nullable": true
+              },
+              "body": {
+                "type": "object",
+                "required": [],
+                "properties": {},
+                "additional_properties": {
+                  "type": "any-json"
+                }
+              },
+              "parts": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "name",
+                    "content_type",
+                    "value"
+                  ],
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "filename": {
+                      "type": "string"
+                    },
+                    "content_type": {
+                      "type": "string"
+                    },
+                    "value": {
+                      "type": "any-json"
+                    }
+                  },
+                  "additional_properties": false
+                }
+              }
+            },
+            "additional_properties": false
+          },
+          "retry": {
+            "type": "object",
+            "required": [
+              "ambiguous_outcome",
+              "key_header"
+            ],
+            "properties": {
+              "ambiguous_outcome": {
+                "type": "string",
+                "enum": [
+                  "same-request-and-key",
+                  "do-not-retry",
+                  "unknown"
+                ]
+              },
+              "key_header": {
+                "type": "string",
+                "nullable": true
+              }
+            },
+            "additional_properties": false
+          },
+          "uncertainties": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "path",
+                "reason"
+              ],
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "pattern": "^(?:/(?:[^~/]|~[01])*(?:/(?:[^~/]|~[01])*)*)$"
+                },
+                "reason": {
+                  "type": "string",
+                  "enum": [
+                    "documentation-gap"
+                  ]
+                }
+              },
+              "additional_properties": false
+            }
+          }
+        },
+        "additional_properties": false
+      }
+    },
+    "response-handling.v3": {
+      "schema_version": "1",
+      "schema": {
+        "type": "object",
+        "required": [
+          "response",
+          "uncertainties"
+        ],
+        "properties": {
+          "response": {
+            "type": "object",
+            "required": [
+              "status",
+              "headers",
+              "body",
+              "retained_fields",
+              "relations"
+            ],
+            "properties": {
+              "status": {
+                "type": "integer",
+                "minimum": 100
+              },
+              "headers": {
+                "type": "object",
+                "required": [],
+                "properties": {},
+                "additional_properties": {
+                  "type": "string"
+                }
+              },
+              "body": {
+                "type": "object",
+                "required": [],
+                "properties": {},
+                "additional_properties": {
+                  "type": "any-json"
+                }
+              },
+              "retained_fields": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "relations": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "target",
+                    "field",
+                    "action"
+                  ],
+                  "properties": {
+                    "target": {
+                      "type": "string"
+                    },
+                    "field": {
+                      "type": "string"
+                    },
+                    "action": {
+                      "type": "string",
+                      "enum": [
+                        "pass-as-input",
+                        "match",
+                        "store",
+                        "none"
+                      ]
+                    }
+                  },
+                  "additional_properties": false
+                }
+              }
+            },
+            "additional_properties": false
+          },
+          "uncertainties": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "path",
+                "reason"
+              ],
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "pattern": "^(?:/(?:[^~/]|~[01])*(?:/(?:[^~/]|~[01])*)*)$"
+                },
+                "reason": {
+                  "type": "string",
+                  "enum": [
+                    "documentation-gap"
+                  ]
+                }
+              },
+              "additional_properties": false
+            }
+          }
+        },
+        "additional_properties": false
+      }
+    },
+    "error-recovery.v3": {
+      "schema_version": "1",
+      "schema": {
+        "type": "object",
+        "required": [
+          "errors",
+          "uncertainties"
+        ],
+        "properties": {
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "status",
+                "code",
+                "retry_policy",
+                "caller_action",
+                "preserve"
+              ],
+              "properties": {
+                "status": {
+                  "type": "integer",
+                  "minimum": 100
+                },
+                "code": {
+                  "type": "string"
+                },
+                "retry_policy": {
+                  "type": "string",
+                  "enum": [
+                    "never",
+                    "after-correction-with-new-key",
+                    "original-request-or-new-logical-operation",
+                    "once-after-token-refresh-with-same-request-and-key",
+                    "retry-after",
+                    "same-request-with-same-key",
+                    "unknown"
+                  ]
+                },
+                "caller_action": {
+                  "type": "string"
+                },
+                "preserve": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "additional_properties": false
+            }
+          },
+          "uncertainties": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "path",
+                "reason"
+              ],
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "pattern": "^(?:/(?:[^~/]|~[01])*(?:/(?:[^~/]|~[01])*)*)$"
+                },
+                "reason": {
+                  "type": "string",
+                  "enum": [
+                    "documentation-gap"
+                  ]
+                }
+              },
+              "additional_properties": false
+            }
+          }
+        },
+        "additional_properties": false
+      }
+    },
+    "workflow-completion.v3": {
+      "schema_version": "1",
+      "schema": {
+        "type": "object",
+        "required": [
+          "steps",
+          "failure_recovery",
+          "webhook_reconciliation",
+          "uncertainties"
+        ],
+        "properties": {
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "order",
+                "method",
+                "path",
+                "input",
+                "keep",
+                "states_after_success"
+              ],
+              "properties": {
+                "order": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "method": {
+                  "type": "string",
+                  "enum": [
+                    "GET",
+                    "POST",
+                    "PUT",
+                    "PATCH",
+                    "DELETE",
+                    "HEAD",
+                    "OPTIONS"
+                  ]
+                },
+                "path": {
+                  "type": "string"
+                },
+                "input": {
+                  "type": "object",
+                  "required": [],
+                  "properties": {},
+                  "additional_properties": {
+                    "type": "any-json"
+                  }
+                },
+                "keep": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "states_after_success": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "additional_properties": false
+            }
+          },
+          "failure_recovery": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "case",
+                "action",
+                "preserve",
+                "repeat_side_effect"
+              ],
+              "properties": {
+                "case": {
+                  "type": "string"
+                },
+                "action": {
+                  "type": "string",
+                  "enum": [
+                    "same-request-and-key",
+                    "continue-without-recapture",
+                    "do-not-retry",
+                    "unknown"
+                  ]
+                },
+                "preserve": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "repeat_side_effect": {
+                  "type": "boolean"
+                }
+              },
+              "additional_properties": false
+            }
+          },
+          "webhook_reconciliation": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "event",
+                "match_by",
+                "record_states",
+                "continue_operation",
+                "repeat_side_effect"
+              ],
+              "properties": {
+                "event": {
+                  "type": "string"
+                },
+                "match_by": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "record_states": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "continue_operation": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "repeat_side_effect": {
+                  "type": "boolean"
+                }
+              },
+              "additional_properties": false
+            }
+          },
+          "uncertainties": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "path",
+                "reason"
+              ],
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "pattern": "^(?:/(?:[^~/]|~[01])*(?:/(?:[^~/]|~[01])*)*)$"
+                },
+                "reason": {
+                  "type": "string",
+                  "enum": [
+                    "documentation-gap"
+                  ]
+                }
+              },
+              "additional_properties": false
+            }
+          }
+        },
+        "additional_properties": false
+      }
+    },
+    "webhook-handling.v3": {
+      "schema_version": "1",
+      "schema": {
+        "type": "object",
+        "required": [
+          "webhook",
+          "uncertainties"
+        ],
+        "properties": {
+          "webhook": {
+            "type": "object",
+            "required": [
+              "event",
+              "method",
+              "path",
+              "delivery",
+              "headers",
+              "payload",
+              "acknowledgement",
+              "reconciliation"
+            ],
+            "properties": {
+              "event": {
+                "type": "string"
+              },
+              "method": {
+                "type": "string",
+                "enum": [
+                  "GET",
+                  "POST",
+                  "PUT",
+                  "PATCH",
+                  "DELETE",
+                  "HEAD",
+                  "OPTIONS"
+                ]
+              },
+              "path": {
+                "type": "string"
+              },
+              "delivery": {
+                "type": "object",
+                "required": [
+                  "at_least_once",
+                  "ordered",
+                  "deduplicate_by"
+                ],
+                "properties": {
+                  "at_least_once": {
+                    "type": "boolean"
+                  },
+                  "ordered": {
+                    "type": "boolean"
+                  },
+                  "deduplicate_by": {
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "additional_properties": false
+              },
+              "headers": {
+                "type": "object",
+                "required": [],
+                "properties": {},
+                "additional_properties": {
+                  "type": "string"
+                }
+              },
+              "payload": {
+                "type": "object",
+                "required": [],
+                "properties": {},
+                "additional_properties": {
+                  "type": "any-json"
+                }
+              },
+              "acknowledgement": {
+                "type": "object",
+                "required": [
+                  "status_class",
+                  "deadline_seconds"
+                ],
+                "properties": {
+                  "status_class": {
+                    "type": "string",
+                    "enum": [
+                      "2xx"
+                    ]
+                  },
+                  "deadline_seconds": {
+                    "type": "number",
+                    "minimum": 5e-324
+                  }
+                },
+                "additional_properties": false
+              },
+              "reconciliation": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "event",
+                    "match_by",
+                    "record_states",
+                    "continue_operation",
+                    "repeat_side_effect"
+                  ],
+                  "properties": {
+                    "event": {
+                      "type": "string"
+                    },
+                    "match_by": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "record_states": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "continue_operation": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "repeat_side_effect": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additional_properties": false
+                }
+              }
+            },
+            "additional_properties": false
+          },
+          "uncertainties": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "path",
+                "reason"
+              ],
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "pattern": "^(?:/(?:[^~/]|~[01])*(?:/(?:[^~/]|~[01])*)*)$"
+                },
+                "reason": {
+                  "type": "string",
+                  "enum": [
+                    "documentation-gap"
+                  ]
+                }
+              },
+              "additional_properties": false
+            }
+          }
+        },
+        "additional_properties": false
+      }
+    },
+    "retrieval-selection.v3": {
+      "schema_version": "1",
+      "schema": {
+        "type": "object",
+        "required": [
+          "request",
+          "pagination",
+          "uncertainties"
+        ],
+        "properties": {
+          "request": {
+            "type": "object",
+            "required": [
+              "method",
+              "path",
+              "query",
+              "headers"
+            ],
+            "properties": {
+              "method": {
+                "type": "string",
+                "enum": [
+                  "GET",
+                  "POST",
+                  "PUT",
+                  "PATCH",
+                  "DELETE",
+                  "HEAD",
+                  "OPTIONS"
+                ]
+              },
+              "path": {
+                "type": "string"
+              },
+              "query": {
+                "type": "object",
+                "required": [],
+                "properties": {},
+                "additional_properties": {
+                  "type": "any-json"
+                }
+              },
+              "headers": {
+                "type": "object",
+                "required": [],
+                "properties": {},
+                "additional_properties": {
+                  "type": "string"
+                }
+              }
+            },
+            "additional_properties": false
+          },
+          "pagination": {
+            "type": "object",
+            "required": [
+              "items_path",
+              "next_cursor_path",
+              "cursor_parameter",
+              "stop_condition",
+              "deduplicate_by"
+            ],
+            "properties": {
+              "items_path": {
+                "type": "string"
+              },
+              "next_cursor_path": {
+                "type": "string"
+              },
+              "cursor_parameter": {
+                "type": "string"
+              },
+              "stop_condition": {
+                "type": "string",
+                "enum": [
+                  "missing-or-null-next-cursor",
+                  "empty-page",
+                  "explicit-end-flag",
+                  "unknown"
+                ]
+              },
+              "deduplicate_by": {
+                "type": "string",
+                "nullable": true
+              }
+            },
+            "additional_properties": false
+          },
+          "uncertainties": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "path",
+                "reason"
+              ],
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "pattern": "^(?:/(?:[^~/]|~[01])*(?:/(?:[^~/]|~[01])*)*)$"
+                },
+                "reason": {
+                  "type": "string",
+                  "enum": [
+                    "documentation-gap"
+                  ]
+                }
+              },
+              "additional_properties": false
+            }
+          }
+        },
+        "additional_properties": false
+      }
+    }
+  }
+}

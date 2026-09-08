@@ -5,3 +5,5 @@ docai-http/benchmarks/openapi-comparison/v2/private/*
 !docai-http/benchmarks/openapi-comparison/v2/private/README.md
 docai-http/benchmarks/openapi-comparison/v3/private/*
 !docai-http/benchmarks/openapi-comparison/v3/private/README.md
+docai-http/benchmarks/openapi-comparison/v3/calibrations/3.0.0-calibration.2/private/*
+!docai-http/benchmarks/openapi-comparison/v3/calibrations/3.0.0-calibration.2/private/README.md
