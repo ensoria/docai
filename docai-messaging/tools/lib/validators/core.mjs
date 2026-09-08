@@ -1514,19 +1514,41 @@ export function evaluateAdapterSourceExpectations({ docaiMessagingVersion, cases
     }
 
     if (entry.adapterClass === "payload-wire") {
-      const direct = directJsonWireTarget(entry.mediaType);
+      if (entry.mediaType === undefined) {
+        return {
+          caseId: entry.caseId,
+          outcome: "emit-unknown",
+          resolution: "missing-target",
+          projection: "emit-payload-representation-set-unknown",
+          ordinaryReaderRequirement: "normalized-contract-only"
+        };
+      }
+      let mediaType;
+      try {
+        mediaType = canonicalizeMediaType(entry.mediaType);
+      } catch (error) {
+        if (!(error instanceof SyntaxError)) throw error;
+        return {
+          caseId: entry.caseId,
+          outcome: "generation-failure",
+          reason: "invalid-media-type",
+          ordinaryReaderRequirement: "normalized-contract-only"
+        };
+      }
+      const canonicalEntry = { ...entry, mediaType };
+      const direct = directJsonWireTarget(mediaType);
       if (direct) {
         return {
           caseId: entry.caseId,
           outcome: "supported",
           resolution: "direct",
-          effectiveTarget: entry.mediaType,
+          effectiveTarget: mediaType,
           ruleId: "direct-json-wire",
           ruleVersion: docaiMessagingVersion,
           ordinaryReaderRequirement: "normalized-contract-only"
         };
       }
-      const resolution = resolvePayloadWireMapping(entry, docaiMessagingVersion);
+      const resolution = resolvePayloadWireMapping(canonicalEntry, docaiMessagingVersion);
       if (resolution.status === "duplicate") {
         return duplicatePublicationMappingFailure(entry);
       }
@@ -1536,9 +1558,9 @@ export function evaluateAdapterSourceExpectations({ docaiMessagingVersion, cases
           caseId: entry.caseId,
           outcome: "supported",
           resolution: "publication-mapping",
-          effectiveTarget: entry.mediaType,
+          effectiveTarget: mediaType,
           emittedMediaType: mapping.emittedMediaType,
-          mediaTypeResolution: mapping.emittedMediaType === entry.mediaType
+          mediaTypeResolution: mapping.emittedMediaType === mediaType
             ? "preserved"
             : "adapter-normalized",
           ruleId: mapping.ruleId,
@@ -1552,7 +1574,7 @@ export function evaluateAdapterSourceExpectations({ docaiMessagingVersion, cases
         caseId: entry.caseId,
         outcome: "emit-unsupported",
         resolution: "no-exact-mapping",
-        effectiveTarget: entry.mediaType,
+        effectiveTarget: mediaType,
         projection: "replace-payload-representation",
         ordinaryReaderRequirement: "normalized-contract-only"
       };

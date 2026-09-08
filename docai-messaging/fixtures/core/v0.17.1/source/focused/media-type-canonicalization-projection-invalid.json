@@ -1,0 +1,19 @@
+{
+  "docaiMessagingVersion": "0.17.1",
+  "cases": [
+    {
+      "caseId": "invalid-media-type-treated-as-missing-adapter",
+      "adapterClass": "payload-wire",
+      "mediaType": "application/json;charset =utf-8",
+      "publicationMappings": [],
+      "projected": {
+        "caseId": "invalid-media-type-treated-as-missing-adapter",
+        "outcome": "emit-unsupported",
+        "resolution": "no-exact-mapping",
+        "effectiveTarget": "application/json;charset =utf-8",
+        "projection": "replace-payload-representation",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    }
+  ]
+}

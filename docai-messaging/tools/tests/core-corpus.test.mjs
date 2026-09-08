@@ -288,6 +288,11 @@ const wireAndHeaderCaseIds = [
   "payload-wire-and-raw-boundaries-valid"
 ];
 
+const mediaTypeCanonicalizationCaseIds = [
+  "media-type-canonicalization-projection-invalid",
+  "media-type-canonicalization-valid"
+];
+
 const replyContractCaseIds = [
   "reply-correlation-none-invalid",
   "reply-dynamic-channel-parameters-invalid",
@@ -2784,6 +2789,59 @@ test("executes the Task 9 DM-ADAPTER-002 DM-ADAPTER-003 DM-MSG-004 wire header a
   }
 });
 
+test("executes the Task 9 pre-adapter media-type canonicalization corpus", () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
+  const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
+
+  assert.deepEqual(mediaTypeCanonicalizationCaseIds.filter((id) => !byId.has(id)), []);
+  for (const id of mediaTypeCanonicalizationCaseIds) {
+    const fixtureCase = byId.get(id);
+    assert.equal(
+      fixtureCase.expected === "valid" || fixtureCase.expected_rule_ids.length === 1,
+      true,
+      id
+    );
+  }
+
+  const result = runFixtureCorpus(corpusPath, validateCase);
+  assert.equal(result.failed, 0, result.report);
+
+  const validCase = byId.get("media-type-canonicalization-valid");
+  const valid = validateCase(path.join(corpusPath, validCase.path), validCase);
+  assert.deepEqual(valid.diagnostics, []);
+  assert.deepEqual(
+    valid.facts.adapterSourceExpectations.map((entry) => ({
+      caseId: entry.caseId,
+      outcome: entry.outcome,
+      effectiveTarget: entry.effectiveTarget,
+      reason: entry.reason
+    })),
+    [
+      { caseId: "type-subtype-parameter-case-and-order", outcome: "emit-unsupported", effectiveTarget: "application/vnd.example+json;a=First;z=Last", reason: undefined },
+      { caseId: "empty-entries-and-semicolon-ows", outcome: "emit-unsupported", effectiveTarget: "text/plain;charset=utf-8", reason: undefined },
+      { caseId: "token-value", outcome: "emit-unsupported", effectiveTarget: "text/plain;note=Token", reason: undefined },
+      { caseId: "quoted-token-equivalent", outcome: "emit-unsupported", effectiveTarget: "text/plain;note=Token", reason: undefined },
+      { caseId: "quoted-pair-space", outcome: "emit-unsupported", effectiveTarget: "text/plain;note=\"a b\"", reason: undefined },
+      { caseId: "multibyte-value-case-and-colon", outcome: "emit-unsupported", effectiveTarget: "application/json;title=\"雪: UTF-8\"", reason: undefined },
+      { caseId: "quoted-pair-adjacent-to-multibyte", outcome: "emit-unsupported", effectiveTarget: "application/json;title=\"雪é\"", reason: undefined },
+      { caseId: "unicode-composed", outcome: "emit-unsupported", effectiveTarget: "application/json;title=\"é\"", reason: undefined },
+      { caseId: "unicode-decomposed", outcome: "emit-unsupported", effectiveTarget: "application/json;title=\"é\"", reason: undefined },
+      { caseId: "canonical-target-mapping", outcome: "supported", effectiveTarget: "application/json;charset=UTF-8", reason: undefined },
+      { caseId: "canonical-parameterless-direct-target", outcome: "supported", effectiveTarget: "application/json", reason: undefined },
+      { caseId: "whitespace-around-equals", outcome: "generation-failure", effectiveTarget: undefined, reason: "invalid-media-type" },
+      { caseId: "duplicate-case-folded-parameter", outcome: "generation-failure", effectiveTarget: undefined, reason: "invalid-media-type" },
+      { caseId: "missing-type-subtype-separator", outcome: "generation-failure", effectiveTarget: undefined, reason: "invalid-media-type" },
+      { caseId: "missing-media-type", outcome: "emit-unknown", effectiveTarget: undefined, reason: undefined }
+    ]
+  );
+
+  const composed = valid.facts.adapterSourceExpectations.find((entry) => entry.caseId === "unicode-composed");
+  const decomposed = valid.facts.adapterSourceExpectations.find((entry) => entry.caseId === "unicode-decomposed");
+  assert.notEqual(composed.effectiveTarget, decomposed.effectiveTarget);
+  assert.equal(Buffer.byteLength(composed.effectiveTarget, "utf8"), 27);
+  assert.equal(Buffer.byteLength(decomposed.effectiveTarget, "utf8"), 28);
+});
+
 test("executes the Task 9 DM-REPLY-001 DM-REPLY-002 DM-REPLY-003 channel state and routing corpus", () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
   const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
@@ -3419,7 +3477,7 @@ test("executes the Task 9 DM-INC-003 implementation-readiness capability matrix"
 
 test("audits every Task 9 invalid fixture as one primary concern", () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
-  assert.equal(manifest.cases.length, 234);
+  assert.equal(manifest.cases.length, 236);
   const result = runFixtureCorpus(corpusPath, validateCase);
   assert.equal(result.failed, 0, result.report);
   const audit = auditFixtureOneInvalidity({
@@ -3427,5 +3485,5 @@ test("audits every Task 9 invalid fixture as one primary concern", () => {
     corpusCases: result.cases
   });
 
-  assert.deepEqual(audit, { passed: true, audited: 171, errors: [] });
+  assert.deepEqual(audit, { passed: true, audited: 172, errors: [] });
 });

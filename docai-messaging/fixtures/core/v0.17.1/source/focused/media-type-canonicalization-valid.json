@@ -1,0 +1,225 @@
+{
+  "docaiMessagingVersion": "0.17.1",
+  "cases": [
+    {
+      "caseId": "type-subtype-parameter-case-and-order",
+      "adapterClass": "payload-wire",
+      "mediaType": "Application/Vnd.Example+JSON;Z=Last;a=First",
+      "publicationMappings": [],
+      "projected": {
+        "caseId": "type-subtype-parameter-case-and-order",
+        "outcome": "emit-unsupported",
+        "resolution": "no-exact-mapping",
+        "effectiveTarget": "application/vnd.example+json;a=First;z=Last",
+        "projection": "replace-payload-representation",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    },
+    {
+      "caseId": "empty-entries-and-semicolon-ows",
+      "adapterClass": "payload-wire",
+      "mediaType": "text/plain ; ;charset=utf-8;",
+      "publicationMappings": [],
+      "projected": {
+        "caseId": "empty-entries-and-semicolon-ows",
+        "outcome": "emit-unsupported",
+        "resolution": "no-exact-mapping",
+        "effectiveTarget": "text/plain;charset=utf-8",
+        "projection": "replace-payload-representation",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    },
+    {
+      "caseId": "token-value",
+      "adapterClass": "payload-wire",
+      "mediaType": "text/plain;note=Token",
+      "publicationMappings": [],
+      "projected": {
+        "caseId": "token-value",
+        "outcome": "emit-unsupported",
+        "resolution": "no-exact-mapping",
+        "effectiveTarget": "text/plain;note=Token",
+        "projection": "replace-payload-representation",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    },
+    {
+      "caseId": "quoted-token-equivalent",
+      "adapterClass": "payload-wire",
+      "mediaType": "text/plain;note=\"Token\"",
+      "publicationMappings": [],
+      "projected": {
+        "caseId": "quoted-token-equivalent",
+        "outcome": "emit-unsupported",
+        "resolution": "no-exact-mapping",
+        "effectiveTarget": "text/plain;note=Token",
+        "projection": "replace-payload-representation",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    },
+    {
+      "caseId": "quoted-pair-space",
+      "adapterClass": "payload-wire",
+      "mediaType": "text/plain;note=\"a\\ b\"",
+      "publicationMappings": [],
+      "projected": {
+        "caseId": "quoted-pair-space",
+        "outcome": "emit-unsupported",
+        "resolution": "no-exact-mapping",
+        "effectiveTarget": "text/plain;note=\"a b\"",
+        "projection": "replace-payload-representation",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    },
+    {
+      "caseId": "multibyte-value-case-and-colon",
+      "adapterClass": "payload-wire",
+      "mediaType": "application/json;title=\"雪: UTF-8\"",
+      "publicationMappings": [],
+      "projected": {
+        "caseId": "multibyte-value-case-and-colon",
+        "outcome": "emit-unsupported",
+        "resolution": "no-exact-mapping",
+        "effectiveTarget": "application/json;title=\"雪: UTF-8\"",
+        "projection": "replace-payload-representation",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    },
+    {
+      "caseId": "quoted-pair-adjacent-to-multibyte",
+      "adapterClass": "payload-wire",
+      "mediaType": "application/json;title=\"雪\\é\"",
+      "publicationMappings": [],
+      "projected": {
+        "caseId": "quoted-pair-adjacent-to-multibyte",
+        "outcome": "emit-unsupported",
+        "resolution": "no-exact-mapping",
+        "effectiveTarget": "application/json;title=\"雪é\"",
+        "projection": "replace-payload-representation",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    },
+    {
+      "caseId": "unicode-composed",
+      "adapterClass": "payload-wire",
+      "mediaType": "application/json;title=\"é\"",
+      "publicationMappings": [],
+      "projected": {
+        "caseId": "unicode-composed",
+        "outcome": "emit-unsupported",
+        "resolution": "no-exact-mapping",
+        "effectiveTarget": "application/json;title=\"é\"",
+        "projection": "replace-payload-representation",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    },
+    {
+      "caseId": "unicode-decomposed",
+      "adapterClass": "payload-wire",
+      "mediaType": "application/json;title=\"é\"",
+      "publicationMappings": [],
+      "projected": {
+        "caseId": "unicode-decomposed",
+        "outcome": "emit-unsupported",
+        "resolution": "no-exact-mapping",
+        "effectiveTarget": "application/json;title=\"é\"",
+        "projection": "replace-payload-representation",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    },
+    {
+      "caseId": "canonical-target-mapping",
+      "adapterClass": "payload-wire",
+      "mediaType": "Application/JSON; Charset=\"UTF-8\"",
+      "publicationMappings": [
+        {
+          "sourceId": "adapter-catalog",
+          "docaiMessagingVersion": "0.17.1",
+          "adapterClass": "payload-wire",
+          "target": "application/json;charset=UTF-8",
+          "ruleId": "json-charset-preserving-wire",
+          "ruleVersion": "1.0.0",
+          "defines": ["byte-encoding", "canonical-comparison", "character-encoding", "compact-example", "decoded-value-model", "full-example", "parameter-semantics", "schema-composition"],
+          "emittedMediaType": "application/json;charset=UTF-8",
+          "parameterHandling": "preserve"
+        }
+      ],
+      "projected": {
+        "caseId": "canonical-target-mapping",
+        "outcome": "supported",
+        "resolution": "publication-mapping",
+        "effectiveTarget": "application/json;charset=UTF-8",
+        "emittedMediaType": "application/json;charset=UTF-8",
+        "mediaTypeResolution": "preserved",
+        "ruleId": "json-charset-preserving-wire",
+        "ruleVersion": "1.0.0",
+        "mappingSourceIds": ["adapter-catalog"],
+        "projection": "emit-payload-representation",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    },
+    {
+      "caseId": "canonical-parameterless-direct-target",
+      "adapterClass": "payload-wire",
+      "mediaType": "Application/JSON",
+      "publicationMappings": [],
+      "projected": {
+        "caseId": "canonical-parameterless-direct-target",
+        "outcome": "supported",
+        "resolution": "direct",
+        "effectiveTarget": "application/json",
+        "ruleId": "direct-json-wire",
+        "ruleVersion": "0.17.1",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    },
+    {
+      "caseId": "whitespace-around-equals",
+      "adapterClass": "payload-wire",
+      "mediaType": "application/json;charset =utf-8",
+      "publicationMappings": [],
+      "projected": {
+        "caseId": "whitespace-around-equals",
+        "outcome": "generation-failure",
+        "reason": "invalid-media-type",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    },
+    {
+      "caseId": "duplicate-case-folded-parameter",
+      "adapterClass": "payload-wire",
+      "mediaType": "application/json;Charset=utf-8;charset=ascii",
+      "publicationMappings": [],
+      "projected": {
+        "caseId": "duplicate-case-folded-parameter",
+        "outcome": "generation-failure",
+        "reason": "invalid-media-type",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    },
+    {
+      "caseId": "missing-type-subtype-separator",
+      "adapterClass": "payload-wire",
+      "mediaType": "application-json",
+      "publicationMappings": [],
+      "projected": {
+        "caseId": "missing-type-subtype-separator",
+        "outcome": "generation-failure",
+        "reason": "invalid-media-type",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    },
+    {
+      "caseId": "missing-media-type",
+      "adapterClass": "payload-wire",
+      "publicationMappings": [],
+      "projected": {
+        "caseId": "missing-media-type",
+        "outcome": "emit-unknown",
+        "resolution": "missing-target",
+        "projection": "emit-payload-representation-set-unknown",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    }
+  ]
+}
