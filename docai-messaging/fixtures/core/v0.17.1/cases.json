@@ -598,11 +598,25 @@
       "expected_rule_ids": []
     },
     {
+      "id": "common-failure-shape-replacement-content-invalid",
+      "kind": "task-scoped-document-set-mutation",
+      "path": "focused/invalid/common-failure-shape-replacement-content-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-CONV-004"]
+    },
+    {
       "id": "common-failure-shape-replacement-mismatch-invalid",
       "kind": "task-scoped-document-set",
       "path": "focused/invalid/common-failure-shape-replacement-mismatch-invalid",
       "expected": "invalid",
       "expected_rule_ids": ["DM-CONV-004"]
+    },
+    {
+      "id": "failure-common-reference-unresolved-invalid",
+      "kind": "task-scoped-document-set-mutation",
+      "path": "focused/invalid/failure-common-reference-unresolved-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-FAIL-002"]
     },
     {
       "id": "conventions-state-mixed-invalid",
@@ -617,6 +631,13 @@
       "path": "focused/valid/conventions-states-format-failures-valid",
       "expected": "valid",
       "expected_rule_ids": []
+    },
+    {
+      "id": "failure-inline-reference-unresolved-invalid",
+      "kind": "task-scoped-document-set-mutation",
+      "path": "focused/invalid/failure-inline-reference-unresolved-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-FAIL-002"]
     },
     {
       "id": "failure-shape-replacement-mismatch-invalid",

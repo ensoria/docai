@@ -1,0 +1,9 @@
+{
+  "id": "failure-inline-reference-unresolved-invalid",
+  "base": "../valid/failure-actions-and-shapes-valid",
+  "path": "channels/failures.md",
+  "replace": {
+    "from": "| malformed-payload | inline:malformed-payload |",
+    "to": "| malformed-payload | inline:missing-payload |"
+  }
+}

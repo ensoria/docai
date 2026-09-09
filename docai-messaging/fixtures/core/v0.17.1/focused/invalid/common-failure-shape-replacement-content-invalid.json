@@ -1,0 +1,9 @@
+{
+  "id": "common-failure-shape-replacement-content-invalid",
+  "base": "../valid/failure-actions-and-shapes-valid",
+  "path": "CONVENTIONS.md",
+  "replace": {
+    "from": "**unsupported**: replaces failure shape legacy-error: legacy encoded handler error at source-a#/failures/legacy-error",
+    "to": "**unsupported**: replaces failure shape legacy-error: legacy encoded handler error at source-a#/failures/legacy-error\n\n#### Payload\n\nnone"
+  }
+}

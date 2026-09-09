@@ -859,6 +859,12 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 
 > **Review hardening (`R8-CORE-040`):** 独立reviewで、generation failureには`resolution`が存在しないのに新evaluatorがown property `resolution: undefined`を出力し、JSONで表現可能な正しいprojected identityとexact一致できないgapを確認した。追加REDではinvalid media typeの`{ caseId, outcome, reason }`投影が`DM-ADAPTER-002`になることを再現し、GREENでは`resolution`と`reason`を存在時だけ出力するJSON-safeなoutcome shapeへ修正した。あわせて同一`caseId`を持つpreserve / normalize entriesがMapで上書きされず、source-case indexで別々のreplacement identityへ対応する回帰testを追加した。manifest件数、one-invalidity件数、公開grammar、rule catalogへの影響はない。
 
+> **Approved design (`R8-CORE-041` expanded / replacement failure-shape resolution checkpoint):** README §8のfailure-shape後続clauseを、既存`failure-actions-and-shapes-valid`のexpanded / replacement common・inline facts、既存のcommon / inline replacement label mismatchとinline replacement後subsection rejection、新規のcommon replacement後subsection rejectionおよびcommon / inline unresolved reference mutationsで固定する。専用corpus testはvalid factsをliteral deep equalityで検証し、六invalid caseの単一primary `DM-CONV-004` / `DM-FAIL-002` / `DM-FAIL-003`を固定する。production validator、公開document grammar、rule catalog、Remaining Core Inventoryの作業順序は変更しない。
+
+> **Approved plan adjustment (`R8-CORE-041` mutation identity-line recalculation):** common replacementへ禁止subsectionを挿入するmutationは行数を増やすが、test-local `validateDocumentSetMutation()`がbase documentの`identityLine`を保持したため、後続CONVENTIONS sectionの終端が古いtrailer位置で切られ、意図した`DM-CONV-004`に無関係な`DM-CONV-002`が追加された。ユーザー承認により、standalone fixtureの複製ではなく、mutation後にidentity trailerの実際の行番号を再計算する案1へ変更する。影響はtask-scoped mutation test infrastructureに限定され、line-count-preserving既存mutation、production loader / validator、identity grammar、公開document grammarは変更しない。今後の行数変更mutationも実際のtrailer位置で検証される。
+
+> **Implementation note (`R8-CORE-041` expanded / replacement failure-shape resolution checkpoint):** `common-failure-shape-replacement-content-invalid`はcommon replacement後の`Payload`を単一`DM-CONV-004`、`failure-common-reference-unresolved-invalid` / `failure-inline-reference-unresolved-invalid`は存在しないexact labelを各単一`DM-FAIL-002`にする。既存valid setからcommon `handler-error` / `legacy-error`、inline `malformed-payload` / `unknown-variant` / `encoded-signal`のexpanded / replacement factsと二common referenceをliteral assertionし、既存label mismatchおよびinline replacement content casesと統合した。REDでは三case不在を確認し、fixture追加後にstale `identityLine`由来の余分な`DM-CONV-002`を再現して承認済みhelper修正でGREENにした。影響としてCore manifestは246 cases / 180 invalid / 66 valid、one-invalidity auditは180 / 180となり、`R8-CORE-041`は`covered`となる。
+
 - [x] Metadata、extension name/order/escape、unknown non-`x-` key、sentence grammar。
 - [x] Identity trailer、set/projection digest、closed root、mixed set、task-scoped identity check。
 - [x] Direct/sharded Sources、unknown API identity/version、Revision none、overlap、fixed-point、cycle。
@@ -933,6 +939,7 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
   - [x] `R8-CORE-038`（selected channelのrouting-provenance closureとtask-scoped source resolution）をsource-aware contribution scenarioとversioned document setで対応付ける。
   - [x] `R8-CORE-039`（source media-typeのoctet parsing、initial canonical target、invalid-source generation failure）をversioned adapter-source scenarioで対応付ける。
   - [x] `R8-CORE-040`（post-adapter emitted media typeの一貫性とpayload-representation replacement identity）をversioned evidenceで対応付ける。
+  - [x] `R8-CORE-041`（expanded / replacement common・inline failure shapeのlabel一致、禁止subsection、unique reference resolution）をversioned mutationsとexact factsで対応付ける。
   - [ ] 残る Core corpus clause を `R8-CORE-*` row に分解して対応付け、`R8-CORE-001` を `covered` にする。
 
 #### Partial Collection / Parameters Unknown / Failure Root-Row Implementation Plan

@@ -1,0 +1,9 @@
+{
+  "id": "failure-common-reference-unresolved-invalid",
+  "base": "../valid/failure-actions-and-shapes-valid",
+  "path": "channels/failures.md",
+  "replace": {
+    "from": "| handler-error | common:handler-error |",
+    "to": "| handler-error | common:missing-handler |"
+  }
+}

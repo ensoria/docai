@@ -12,6 +12,7 @@ import {
   auditFixtureOneInvalidity,
   runFixtureCorpus
 } from "../lib/fixture-runner.mjs";
+import { scanUtf8Lines } from "../lib/identity.mjs";
 import { scanMarkdown } from "../lib/markdown.mjs";
 import { parseOpeningMetadata } from "../lib/metadata.mjs";
 import { validateSentenceLine } from "../lib/sentence.mjs";
@@ -327,6 +328,16 @@ const failureContractCaseIds = [
   "failure-state-mixed-invalid"
 ];
 
+const failureShapeResolutionCaseIds = [
+  "common-failure-shape-replacement-content-invalid",
+  "common-failure-shape-replacement-mismatch-invalid",
+  "failure-actions-and-shapes-valid",
+  "failure-common-reference-unresolved-invalid",
+  "failure-inline-reference-unresolved-invalid",
+  "failure-inline-replacement-content-invalid",
+  "failure-shape-replacement-mismatch-invalid"
+];
+
 const trustAndPublicationCaseIds = [
   "publication-safety-feature-class-disclosure-invalid",
   "publication-safety-identical-override-invalid",
@@ -388,6 +399,10 @@ function validateDocumentSetMutation(fixturePath) {
   const occurrences = file.content.split(scenario.replace.from).length - 1;
   assert.equal(occurrences, 1, `${scenario.id} replacement source must occur exactly once`);
   file.content = file.content.replace(scenario.replace.from, scenario.replace.to);
+  const identityLines = scanUtf8Lines(file.content).lines
+    .filter((line) => line.text.startsWith("> docai-identity:"));
+  assert.equal(identityLines.length, 1, `${scenario.id} must retain exactly one identity trailer`);
+  file.identityLine = identityLines[0].line;
   return validateDocumentSet(documentSet, { wholeSet: false });
 }
 
@@ -3157,6 +3172,62 @@ test("executes the Task 9 DM-FAIL-001 DM-FAIL-002 DM-FAIL-003 DM-CONV-004 states
   }
 });
 
+test("executes the Task 9 expanded and replacement failure-shape resolution corpus", () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
+  const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
+
+  assert.deepEqual(failureShapeResolutionCaseIds.filter((id) => !byId.has(id)), []);
+
+  const result = runFixtureCorpus(corpusPath, validateCase);
+  assert.equal(result.failed, 0, result.report);
+
+  const validCase = byId.get("failure-actions-and-shapes-valid");
+  const valid = validateCase(path.join(corpusPath, validCase.path), validCase);
+  assert.deepEqual(valid.diagnostics, []);
+  assert.deepEqual(
+    valid.facts.core.failureShapes.common.map((shape) => ({
+      label: shape.label,
+      replacement: shape.replacement
+    })),
+    [
+      { label: "handler-error", replacement: false },
+      { label: "legacy-error", replacement: true }
+    ]
+  );
+  assert.deepEqual(valid.facts.core.failureShapes.commonReferences, [
+    { label: "handler-error", operation: "expanded-receive" },
+    { label: "legacy-error", operation: "expanded-receive" }
+  ]);
+  assert.deepEqual(
+    valid.facts.core.failureShapes.inline.map((shape) => ({
+      label: shape.label,
+      operation: shape.operation,
+      replacement: shape.replacement
+    })),
+    [
+      { label: "malformed-payload", operation: "expanded-receive", replacement: false },
+      { label: "unknown-variant", operation: "expanded-receive", replacement: false },
+      { label: "encoded-signal", operation: "expanded-receive", replacement: true }
+    ]
+  );
+
+  for (const [id, ruleId] of [
+    ["common-failure-shape-replacement-content-invalid", "DM-CONV-004"],
+    ["common-failure-shape-replacement-mismatch-invalid", "DM-CONV-004"],
+    ["failure-common-reference-unresolved-invalid", "DM-FAIL-002"],
+    ["failure-inline-reference-unresolved-invalid", "DM-FAIL-002"],
+    ["failure-inline-replacement-content-invalid", "DM-FAIL-003"],
+    ["failure-shape-replacement-mismatch-invalid", "DM-FAIL-003"]
+  ]) {
+    const fixtureCase = byId.get(id);
+    const invalid = validateCase(path.join(corpusPath, fixtureCase.path), fixtureCase);
+    const primary = invalid.diagnostics.filter((entry) => (
+      entry.severity === "error" && !entry.cascade
+    ));
+    assert.deepEqual(primary.map((entry) => entry.ruleId), [ruleId], id);
+  }
+});
+
 test("executes the failure-signal root-row corpus", () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
   const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
@@ -3616,7 +3687,7 @@ test("executes the Task 9 DM-INC-003 implementation-readiness capability matrix"
 
 test("audits every Task 9 invalid fixture as one primary concern", () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
-  assert.equal(manifest.cases.length, 243);
+  assert.equal(manifest.cases.length, 246);
   const result = runFixtureCorpus(corpusPath, validateCase);
   assert.equal(result.failed, 0, result.report);
   const audit = auditFixtureOneInvalidity({
@@ -3624,5 +3695,5 @@ test("audits every Task 9 invalid fixture as one primary concern", () => {
     corpusCases: result.cases
   });
 
-  assert.deepEqual(audit, { passed: true, audited: 177, errors: [] });
+  assert.deepEqual(audit, { passed: true, audited: 180, errors: [] });
 });
