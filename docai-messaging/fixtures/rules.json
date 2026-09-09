@@ -93,7 +93,7 @@
     {
       "rule_id": "DM-SRC-005",
       "readme_section": "§3 File Structure / §3.2 INDEX.md(required)",
-      "description": "source_refs is all or a unique ASCII-ordered canonical ID list that resolves within the Sources catalog and covers each source shard's own rows.",
+      "description": "source_refs is all or a unique ASCII-ordered canonical ID list that resolves within the Sources catalog and covers each source shard's own rows plus every source contributing a fact to any row or localized marker.",
       "scope": "core"
     },
     {

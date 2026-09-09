@@ -13,6 +13,15 @@ const SOURCE_COLUMNS = [
   "Location",
   "Revision"
 ];
+const SOURCE_COLUMN_FIELDS = new Map([
+  ["ID", "id"],
+  ["Kind", "kind"],
+  ["Specification", "specification"],
+  ["API", "api"],
+  ["Contract version", "contractVersion"],
+  ["Location", "location"],
+  ["Revision", "revision"]
+]);
 const SOURCE_ID = /^[A-Za-z0-9._-]+$/;
 const SOURCE_KIND = /^[a-z0-9._-]+$/;
 const SHA256_REVISION = /^sha256:[0-9a-f]{64}$/;
@@ -614,6 +623,235 @@ export function validateCoreSources(documentSet, root, markdown) {
     facts: {
       sources: { form: "direct", rows: catalog.rows },
       sourceResolutions: resolved.sourceResolutions
+    }
+  };
+}
+
+function sourceIdsForRefs(sourceRefs, allSourceIds) {
+  if (sourceRefs === "all") return allSourceIds;
+  return Array.isArray(sourceRefs) ? sourceRefs : [];
+}
+
+function contributorEdges(shards, ownerBySourceId, allSourceIds) {
+  return shards.flatMap((shard) => {
+    const ownIds = new Set((Array.isArray(shard?.rows) ? shard.rows : [])
+      .map((row) => row?.id)
+      .filter((id) => typeof id === "string"));
+    return sourceIdsForRefs(shard?.sourceRefs, allSourceIds)
+      .filter((sourceId) => !ownIds.has(sourceId))
+      .map((sourceId) => ({
+        fromShardPath: shard?.path,
+        sourceId,
+        toShardPath: ownerBySourceId.get(sourceId)
+      }));
+  }).filter((edge) => (
+    typeof edge.fromShardPath === "string"
+    && typeof edge.sourceId === "string"
+    && typeof edge.toShardPath === "string"
+  ))
+    .sort((left, right) => (
+      asciiCompare(left.fromShardPath, right.fromShardPath)
+      || asciiCompare(left.sourceId, right.sourceId)
+      || asciiCompare(left.toShardPath, right.toShardPath)
+    ));
+}
+
+function hasContributorCycle(edges) {
+  const adjacent = new Map();
+  for (const edge of edges) {
+    if (!adjacent.has(edge.fromShardPath)) adjacent.set(edge.fromShardPath, []);
+    adjacent.get(edge.fromShardPath).push(edge.toShardPath);
+  }
+  const visiting = new Set();
+  const visited = new Set();
+  function visit(path) {
+    if (visiting.has(path)) return true;
+    if (visited.has(path)) return false;
+    visiting.add(path);
+    for (const next of adjacent.get(path) ?? []) {
+      if (visit(next)) return true;
+    }
+    visiting.delete(path);
+    visited.add(path);
+    return false;
+  }
+  return [...adjacent.keys()].some((path) => visit(path));
+}
+
+export function validateSourceShardProvenanceExpectations(
+  documentSet,
+  coreFacts,
+  scenario,
+  { file = "source-input.json" } = {}
+) {
+  const safeCoreFacts = coreFacts !== null && typeof coreFacts === "object"
+    ? coreFacts
+    : {};
+  const sourceFacts = safeCoreFacts.sources !== null
+    && typeof safeCoreFacts.sources === "object"
+    && !Array.isArray(safeCoreFacts.sources)
+    ? safeCoreFacts.sources
+    : {};
+  const rowCandidates = Array.isArray(sourceFacts.rows) ? sourceFacts.rows : [];
+  const rows = rowCandidates.filter((row) => (
+    row !== null
+    && typeof row === "object"
+    && !Array.isArray(row)
+    && typeof row.id === "string"
+    && typeof row.file === "string"
+  ));
+  const shardCandidates = Array.isArray(sourceFacts.shards) ? sourceFacts.shards : [];
+  const shards = shardCandidates.filter((shard) => (
+    shard !== null
+    && typeof shard === "object"
+    && !Array.isArray(shard)
+    && typeof shard.path === "string"
+    && Array.isArray(shard.rows)
+    && shard.rows.every((row) => (
+      row !== null
+      && typeof row === "object"
+      && !Array.isArray(row)
+      && typeof row.id === "string"
+    ))
+    && (shard.sourceRefs === "all"
+      || (Array.isArray(shard.sourceRefs)
+        && shard.sourceRefs.every((sourceId) => typeof sourceId === "string")))
+  ));
+  const safeScenario = scenario !== null
+    && typeof scenario === "object"
+    && !Array.isArray(scenario)
+    ? scenario
+    : {};
+  const files = Array.isArray(documentSet?.files) ? documentSet.files : [];
+  const malformedInput = sourceFacts !== safeCoreFacts.sources
+    || !Array.isArray(sourceFacts.rows)
+    || rows.length !== rowCandidates.length
+    || !Array.isArray(sourceFacts.shards)
+    || shards.length !== shardCandidates.length
+    || safeScenario !== scenario
+    || !Array.isArray(documentSet?.files)
+    || files.some((entry) => (
+      entry === null
+      || typeof entry !== "object"
+      || typeof entry.path !== "string"
+    ));
+  const sourceIds = rows.map((row) => row.id).sort(asciiCompare);
+  const ownerBySourceId = new Map(rows.map((row) => [row.id, row.file]));
+  const rowsBySourceId = new Map(rows.map((row) => [row.id, row]));
+  const shardsByPath = new Map(shards.map((shard) => [shard.path, shard]));
+  const contributions = [];
+  let invalidContribution = false;
+
+  if (!Array.isArray(safeScenario.catalogCellContributions)
+    || safeScenario.catalogCellContributions.length === 0) {
+    invalidContribution = true;
+  } else {
+    for (const contribution of safeScenario.catalogCellContributions) {
+      const providerSourceId = typeof contribution?.providerSourceId === "string"
+        ? contribution.providerSourceId
+        : null;
+      const targetSourceId = typeof contribution?.targetSourceId === "string"
+        ? contribution.targetSourceId
+        : null;
+      const column = typeof contribution?.column === "string" ? contribution.column : null;
+      const value = typeof contribution?.value === "string" ? contribution.value : null;
+      const field = SOURCE_COLUMN_FIELDS.get(column);
+      const targetRow = rowsBySourceId.get(targetSourceId);
+      const providerRow = rowsBySourceId.get(providerSourceId);
+      const targetShardPath = ownerBySourceId.get(targetSourceId) ?? null;
+      const providerShardPath = ownerBySourceId.get(providerSourceId) ?? null;
+      const targetShard = shardsByPath.get(targetShardPath);
+      const targetRefs = sourceIdsForRefs(targetShard?.sourceRefs, sourceIds);
+      if (providerSourceId === null
+        || targetSourceId === null
+        || value === null
+        || field === undefined
+        || targetRow === undefined
+        || providerRow === undefined
+        || targetShardPath === providerShardPath
+        || targetRow[field] !== value
+        || !targetRefs.includes(providerSourceId)) {
+        invalidContribution = true;
+      }
+      contributions.push({
+        providerSourceId,
+        targetSourceId,
+        column,
+        value,
+        targetShardPath,
+        providerShardPath
+      });
+    }
+  }
+
+  const selectedFile = typeof safeScenario.selectedFile === "string"
+    ? safeScenario.selectedFile
+    : null;
+  const sourceResolutions = safeCoreFacts.sourceResolutions !== null
+    && typeof safeCoreFacts.sourceResolutions === "object"
+    && !Array.isArray(safeCoreFacts.sourceResolutions)
+    ? safeCoreFacts.sourceResolutions
+    : {};
+  const fixedPointCandidate = selectedFile === null
+    ? undefined
+    : sourceResolutions[selectedFile];
+  const fixedPointIsValid = fixedPointCandidate !== null
+    && typeof fixedPointCandidate === "object"
+    && !Array.isArray(fixedPointCandidate)
+    && [
+      fixedPointCandidate.requestedIds,
+      fixedPointCandidate.resolvedIds,
+      fixedPointCandidate.loadedPaths
+    ].every((values) => (
+      Array.isArray(values) && values.every((value) => typeof value === "string")
+    ));
+  const fixedPoint = fixedPointIsValid
+    ? {
+      requestedIds: [...fixedPointCandidate.requestedIds],
+      resolvedIds: [...fixedPointCandidate.resolvedIds],
+      loadedPaths: [...fixedPointCandidate.loadedPaths]
+    }
+    : null;
+  const edges = contributorEdges(shards, ownerBySourceId, sourceIds);
+  const duplicateSourceIds = sourceIds.filter((id, index) => sourceIds.indexOf(id) !== index);
+  const repeatedLoadedPaths = fixedPoint === null
+    ? []
+    : fixedPoint.loadedPaths.filter((path, index) => fixedPoint.loadedPaths.indexOf(path) !== index);
+  const providerPaths = contributions.map((entry) => entry.providerShardPath);
+  const providerIds = contributions.map((entry) => entry.providerSourceId);
+  const filesByPath = new Set(files
+    .map((entry) => entry?.path)
+    .filter((path) => typeof path === "string"));
+  const mismatch = malformedInput
+    || sourceFacts.form !== "sharded"
+    || selectedFile === null
+    || !filesByPath.has(selectedFile)
+    || fixedPoint === null
+    || invalidContribution
+    || duplicateSourceIds.length > 0
+    || repeatedLoadedPaths.length > 0
+    || providerPaths.some((path) => !fixedPoint?.loadedPaths.includes(path))
+    || providerIds.some((id) => !fixedPoint?.resolvedIds.includes(id))
+    || safeScenario.requireContributorCycle !== true
+    || !hasContributorCycle(edges);
+
+  return {
+    diagnostics: mismatch
+      ? [diagnostic(
+        "DM-SRC-005",
+        file,
+        1,
+        "Projected source-shard provenance disagrees with catalog-cell contribution closure."
+      )]
+      : [],
+    facts: {
+      sourceShardProvenanceExpectations: {
+        catalogCellContributions: contributions,
+        selectedFile,
+        fixedPoint,
+        contributorEdges: edges,
+        sourceIds
+      }
     }
   };
 }

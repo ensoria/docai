@@ -1,0 +1,10 @@
+{
+  "baseScenario": "source-shard-provenance-fixed-point-valid.json",
+  "mutation": {
+    "path": "indexes/sources-a.md",
+    "replace": {
+      "from": "source_refs: a, z",
+      "to": "source_refs: a"
+    }
+  }
+}

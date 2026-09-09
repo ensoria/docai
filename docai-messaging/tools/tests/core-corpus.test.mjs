@@ -19,6 +19,7 @@ import { validateSentenceLine } from "../lib/sentence.mjs";
 import { parsePipeTable } from "../lib/tables.mjs";
 import * as coreValidator from "../lib/validators/core.mjs";
 import * as coreRouting from "../lib/validators/core-routing.mjs";
+import * as coreSources from "../lib/validators/core-sources.mjs";
 
 const corpusPath = fileURLToPath(new URL("../../fixtures/core/v0.17.1/", import.meta.url));
 
@@ -79,6 +80,11 @@ const sourceCaseIds = [
   "sources-source-refs-missing-invalid",
   "sources-unknown-conventions-repeat-missing-invalid",
   "sources-unknown-marker-missing-invalid"
+];
+
+const sourceShardProvenanceCaseIds = [
+  "source-shard-provenance-fixed-point-valid",
+  "source-shard-provenance-omission-invalid"
 ];
 
 const sourceApiIdentityCaseIds = [
@@ -441,6 +447,41 @@ function loadRoutingProvenanceScenario(fixturePath) {
   return { documentSet, scenario };
 }
 
+function loadSourceShardProvenanceScenario(fixturePath) {
+  const source = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
+  const scenario = source.baseScenario === undefined
+    ? source
+    : {
+      ...JSON.parse(fs.readFileSync(
+        path.resolve(path.dirname(fixturePath), source.baseScenario),
+        "utf8"
+      )),
+      mutation: source.mutation
+    };
+  const documentSet = loadDocumentSet(path.resolve(
+    path.dirname(fixturePath),
+    scenario.documentSet
+  ));
+  if (scenario.mutation !== undefined) {
+    const file = documentSet.files.find((entry) => entry.path === scenario.mutation.path);
+    assert.notEqual(file, undefined, `${scenario.mutation.path} must exist`);
+    const occurrences = file.content.split(scenario.mutation.replace.from).length - 1;
+    assert.equal(occurrences, 1, `${scenario.mutation.path} replacement source must occur exactly once`);
+    file.content = file.content.replace(
+      scenario.mutation.replace.from,
+      scenario.mutation.replace.to
+    );
+    const metadata = parseOpeningMetadata({
+      text: file.content.split("\n", 1)[0],
+      file: file.path,
+      line: file.metadataLine
+    });
+    assert.deepEqual(metadata.diagnostics, [], `${scenario.mutation.path} mutated metadata`);
+    file.metadata = metadata.value;
+  }
+  return { documentSet, scenario };
+}
+
 function validateCase(fixturePath, fixtureCase) {
   if (fixtureCase.kind === "document-set") {
     return validateDocumentSet(loadDocumentSet(fixturePath), { wholeSet: true });
@@ -485,6 +526,17 @@ function validateCase(fixturePath, fixtureCase) {
     });
     assert.deepEqual(validation.diagnostics, [], `${fixtureCase.id} document set`);
     return coreRouting.validateRoutingProvenanceExpectations(
+      documentSet,
+      validation.facts.core,
+      scenario,
+      { file: fixtureCase.path }
+    );
+  }
+  if (fixtureCase.kind === "source-shard-provenance-scenario") {
+    const { documentSet, scenario } = loadSourceShardProvenanceScenario(fixturePath);
+    const validation = validateDocumentSet(documentSet, { wholeSet: false });
+    assert.deepEqual(validation.diagnostics, [], `${fixtureCase.id} document set`);
+    return coreSources.validateSourceShardProvenanceExpectations(
       documentSet,
       validation.facts.core,
       scenario,
@@ -712,6 +764,146 @@ test("executes the Task 9 Sources focused corpus and fixes retrieval facts", () 
     resolvedIds: ["a", "b", "c"],
     loadedPaths: ["indexes/sources-a-c.md", "indexes/sources-b.md"]
   });
+});
+
+test("executes the Task 9 source-shard provenance fixed-point corpus", () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
+  const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
+
+  assert.deepEqual(sourceShardProvenanceCaseIds.filter((id) => !byId.has(id)), []);
+  assert.equal(
+    typeof coreSources.validateSourceShardProvenanceExpectations,
+    "function",
+    "source-shard provenance requires a source-aware validator"
+  );
+
+  const result = runFixtureCorpus(corpusPath, validateCase);
+  assert.equal(result.failed, 0, result.report);
+
+  const validCase = byId.get("source-shard-provenance-fixed-point-valid");
+  const loaded = loadSourceShardProvenanceScenario(path.join(corpusPath, validCase.path));
+  const documentValidation = validateDocumentSet(loaded.documentSet, { wholeSet: false });
+  const valid = coreSources.validateSourceShardProvenanceExpectations(
+    loaded.documentSet,
+    documentValidation.facts.core,
+    loaded.scenario,
+    { file: validCase.path }
+  );
+  assert.deepEqual(valid.diagnostics, []);
+  assert.deepEqual(valid.facts.sourceShardProvenanceExpectations, {
+    catalogCellContributions: [
+      {
+        providerSourceId: "z",
+        targetSourceId: "a",
+        column: "Location",
+        value: "a.json",
+        targetShardPath: "indexes/sources-a.md",
+        providerShardPath: "indexes/sources-z.md"
+      }
+    ],
+    selectedFile: "CONVENTIONS.md",
+    fixedPoint: {
+      requestedIds: ["a"],
+      resolvedIds: ["a", "z"],
+      loadedPaths: ["indexes/sources-a.md", "indexes/sources-z.md"]
+    },
+    contributorEdges: [
+      {
+        fromShardPath: "indexes/sources-a.md",
+        sourceId: "z",
+        toShardPath: "indexes/sources-z.md"
+      },
+      {
+        fromShardPath: "indexes/sources-z.md",
+        sourceId: "a",
+        toShardPath: "indexes/sources-a.md"
+      }
+    ],
+    sourceIds: ["a", "z"]
+  });
+
+  const malformedCoreFacts = [
+    {
+      name: "non-array source rows",
+      facts: {
+        ...documentValidation.facts.core,
+        sources: { ...documentValidation.facts.core.sources, rows: {} }
+      }
+    },
+    {
+      name: "non-array source shards",
+      facts: {
+        ...documentValidation.facts.core,
+        sources: { ...documentValidation.facts.core.sources, shards: {} }
+      }
+    },
+    {
+      name: "source shard without rows",
+      facts: {
+        ...documentValidation.facts.core,
+        sources: {
+          ...documentValidation.facts.core.sources,
+          shards: documentValidation.facts.core.sources.shards.map((shard, index) => {
+            if (index !== 0) return shard;
+            const { rows, ...withoutRows } = shard;
+            return withoutRows;
+          })
+        }
+      }
+    },
+    {
+      name: "source resolution without fixed-point arrays",
+      facts: {
+        ...documentValidation.facts.core,
+        sourceResolutions: {
+          ...documentValidation.facts.core.sourceResolutions,
+          "CONVENTIONS.md": {}
+        }
+      }
+    }
+  ];
+  for (const malformed of malformedCoreFacts) {
+    const result = coreSources.validateSourceShardProvenanceExpectations(
+      loaded.documentSet,
+      malformed.facts,
+      loaded.scenario,
+      { file: validCase.path }
+    );
+    assert.deepEqual(
+      result.diagnostics.map((entry) => entry.ruleId),
+      ["DM-SRC-005"],
+      malformed.name
+    );
+  }
+
+  const acyclicFacts = {
+    ...documentValidation.facts.core,
+    sources: {
+      ...documentValidation.facts.core.sources,
+      shards: documentValidation.facts.core.sources.shards.map((shard) => (
+        shard.path === "indexes/sources-z.md"
+          ? { ...shard, sourceRefs: ["z"] }
+          : shard
+      ))
+    }
+  };
+  const acyclic = coreSources.validateSourceShardProvenanceExpectations(
+    loaded.documentSet,
+    acyclicFacts,
+    loaded.scenario,
+    { file: validCase.path }
+  );
+  assert.deepEqual(acyclic.diagnostics.map((entry) => entry.ruleId), ["DM-SRC-005"]);
+
+  const invalidCase = byId.get("source-shard-provenance-omission-invalid");
+  const invalidLoaded = loadSourceShardProvenanceScenario(
+    path.join(corpusPath, invalidCase.path)
+  );
+  const { mutation, ...invalidBase } = invalidLoaded.scenario;
+  assert.notEqual(mutation, undefined);
+  assert.deepEqual(invalidBase, loaded.scenario);
+  const invalid = validateCase(path.join(corpusPath, invalidCase.path), invalidCase);
+  assert.deepEqual(invalid.diagnostics.map((entry) => entry.ruleId), ["DM-SRC-005"]);
 });
 
 test("executes the Task 9 source API identity and missing-marker corpus", () => {
@@ -3687,7 +3879,7 @@ test("executes the Task 9 DM-INC-003 implementation-readiness capability matrix"
 
 test("audits every Task 9 invalid fixture as one primary concern", () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
-  assert.equal(manifest.cases.length, 246);
+  assert.equal(manifest.cases.length, 248);
   const result = runFixtureCorpus(corpusPath, validateCase);
   assert.equal(result.failed, 0, result.report);
   const audit = auditFixtureOneInvalidity({
@@ -3695,5 +3887,5 @@ test("audits every Task 9 invalid fixture as one primary concern", () => {
     corpusCases: result.cases
   });
 
-  assert.deepEqual(audit, { passed: true, audited: 180, errors: [] });
+  assert.deepEqual(audit, { passed: true, audited: 181, errors: [] });
 });

@@ -1,0 +1,13 @@
+{
+  "documentSet": "../../focused/valid/sources-sharded-cycle-valid",
+  "selectedFile": "CONVENTIONS.md",
+  "requireContributorCycle": true,
+  "catalogCellContributions": [
+    {
+      "providerSourceId": "z",
+      "targetSourceId": "a",
+      "column": "Location",
+      "value": "a.json"
+    }
+  ]
+}
