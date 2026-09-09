@@ -1,0 +1,54 @@
+{
+  "manifestVersion": "1.0.0",
+  "docaiMessaging": "0.17.1",
+  "classification": "synthetic-conformance",
+  "evidenceScope": "core-source-shard-token-measurement",
+  "generator": {
+    "id": "docai-messaging-core-source-shard-evidence",
+    "version": "1.0.0"
+  },
+  "perspective": "storefront",
+  "inputSerialization": "Each projectionInputs sha256 covers the referenced file's exact UTF-8 bytes, including insignificant JSON whitespace and the final LF.",
+  "projectionInputs": [
+    {
+      "role": "authoritative-source-catalog",
+      "path": "source-inputs/authoritative-sources.json",
+      "bytes": 8646,
+      "sha256": "sha256:139faa52aea35ec51a0b64bce231300a2655410b7d01a4311c54b9ce75b9e706"
+    },
+    {
+      "role": "projection-configuration",
+      "path": "source-inputs/projection-config.json",
+      "bytes": 805,
+      "sha256": "sha256:9837bce16378ddb3493065eb841e4273c3a49d94c37763a7adf12336c5e3d093"
+    }
+  ],
+  "catalog": [
+    {"id": "a", "kind": "configuration", "specification": "none", "api": "none", "contractVersion": "none", "location": "sources/a-authoritative-messaging-contract-reference.json", "revision": "none"},
+    {"id": "b", "kind": "annotation", "specification": "none", "api": "none", "contractVersion": "none", "location": "sources/b-authoritative-messaging-contract-reference.json", "revision": "none"},
+    {"id": "c", "kind": "configuration", "specification": "none", "api": "none", "contractVersion": "none", "location": "sources/c-authoritative-messaging-contract-reference.json", "revision": "none"},
+    {"id": "d", "kind": "pass-through", "specification": "none", "api": "none", "contractVersion": "none", "location": "sources/d-authoritative-messaging-contract-reference-with-complete-protocol-binding-schema-message-behavior-and-security-policy-definitions.json", "revision": "none"},
+    {"id": "e", "kind": "pass-through", "specification": "none", "api": "none", "contractVersion": "none", "location": "sources/e-authoritative-messaging-contract-reference-with-complete-protocol-binding-schema-message-behavior-and-security-policy-definitions.json", "revision": "none"},
+    {"id": "f", "kind": "pass-through", "specification": "none", "api": "none", "contractVersion": "none", "location": "sources/f-authoritative-messaging-contract-reference-with-complete-protocol-binding-schema-message-behavior-and-security-policy-definitions.json", "revision": "none"},
+    {"id": "g", "kind": "pass-through", "specification": "none", "api": "none", "contractVersion": "none", "location": "sources/g-authoritative-messaging-contract-reference-with-complete-protocol-binding-schema-message-behavior-and-security-policy-definitions.json", "revision": "none"},
+    {"id": "h", "kind": "pass-through", "specification": "none", "api": "none", "contractVersion": "none", "location": "sources/h-authoritative-messaging-contract-reference-with-complete-protocol-binding-schema-message-behavior-and-security-policy-definitions.json", "revision": "none"},
+    {"id": "i", "kind": "pass-through", "specification": "none", "api": "none", "contractVersion": "none", "location": "sources/i-authoritative-messaging-contract-reference-with-complete-protocol-binding-schema-message-behavior-and-security-policy-definitions.json", "revision": "none"},
+    {"id": "j", "kind": "pass-through", "specification": "none", "api": "none", "contractVersion": "none", "location": "sources/j-authoritative-messaging-contract-reference-with-complete-protocol-binding-schema-message-behavior-and-security-policy-definitions.json", "revision": "none"},
+    {"id": "k", "kind": "pass-through", "specification": "none", "api": "none", "contractVersion": "none", "location": "sources/k-authoritative-messaging-contract-reference-with-complete-protocol-binding-schema-message-behavior-and-security-policy-definitions.json", "revision": "none"},
+    {"id": "l", "kind": "pass-through", "specification": "none", "api": "none", "contractVersion": "none", "location": "sources/l-authoritative-messaging-contract-reference-with-complete-protocol-binding-schema-message-behavior-and-security-policy-definitions.json", "revision": "none"},
+    {"id": "m", "kind": "pass-through", "specification": "none", "api": "none", "contractVersion": "none", "location": "sources/m-authoritative-messaging-contract-reference-with-complete-protocol-binding-schema-message-behavior-and-security-policy-definitions.json", "revision": "none"},
+    {"id": "n", "kind": "pass-through", "specification": "none", "api": "none", "contractVersion": "none", "location": "sources/n-authoritative-messaging-contract-reference-with-complete-protocol-binding-schema-message-behavior-and-security-policy-definitions.json", "revision": "none"},
+    {"id": "o", "kind": "pass-through", "specification": "none", "api": "none", "contractVersion": "none", "location": "sources/o-authoritative-messaging-contract-reference-with-complete-protocol-binding-schema-message-behavior-and-security-policy-definitions.json", "revision": "none"},
+    {"id": "p", "kind": "pass-through", "specification": "none", "api": "none", "contractVersion": "none", "location": "sources/p-authoritative-messaging-contract-reference-with-complete-protocol-binding-schema-message-behavior-and-security-policy-definitions.json", "revision": "none"},
+    {"id": "q", "kind": "pass-through", "specification": "none", "api": "none", "contractVersion": "none", "location": "sources/q-authoritative-messaging-contract-reference-with-complete-protocol-binding-schema-message-behavior-and-security-policy-definitions.json", "revision": "none"},
+    {"id": "r", "kind": "pass-through", "specification": "none", "api": "none", "contractVersion": "none", "location": "sources/r-authoritative-messaging-contract-reference-with-complete-protocol-binding-schema-message-behavior-and-security-policy-definitions.json", "revision": "none"},
+    {"id": "s", "kind": "pass-through", "specification": "none", "api": "none", "contractVersion": "none", "location": "sources/s-authoritative-messaging-contract-reference-with-complete-protocol-binding-schema-message-behavior-and-security-policy-definitions.json", "revision": "none"},
+    {"id": "t", "kind": "pass-through", "specification": "none", "api": "none", "contractVersion": "none", "location": "sources/t-authoritative-messaging-contract-reference-with-complete-protocol-binding-schema-message-behavior-and-security-policy-definitions.json", "revision": "none"},
+    {"id": "u", "kind": "pass-through", "specification": "none", "api": "none", "contractVersion": "none", "location": "sources/u-authoritative-messaging-contract-reference-with-complete-protocol-binding-schema-message-behavior-and-security-policy-definitions.json", "revision": "none"},
+    {"id": "v", "kind": "pass-through", "specification": "none", "api": "none", "contractVersion": "none", "location": "sources/v-authoritative-messaging-contract-reference-with-complete-protocol-binding-schema-message-behavior-and-security-policy-definitions.json", "revision": "none"},
+    {"id": "w", "kind": "pass-through", "specification": "none", "api": "none", "contractVersion": "none", "location": "sources/w-authoritative-messaging-contract-reference-with-complete-protocol-binding-schema-message-behavior-and-security-policy-definitions.json", "revision": "none"},
+    {"id": "x", "kind": "pass-through", "specification": "none", "api": "none", "contractVersion": "none", "location": "sources/x-authoritative-messaging-contract-reference-with-complete-protocol-binding-schema-message-behavior-and-security-policy-definitions.json", "revision": "none"},
+    {"id": "y", "kind": "pass-through", "specification": "none", "api": "none", "contractVersion": "none", "location": "sources/y-authoritative-messaging-contract-reference-with-complete-protocol-binding-schema-message-behavior-and-security-policy-definitions.json", "revision": "none"},
+    {"id": "z", "kind": "configuration", "specification": "none", "api": "none", "contractVersion": "none", "location": "sources/z-authoritative-messaging-contract-reference.json", "revision": "none"}
+  ]
+}

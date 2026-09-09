@@ -1,0 +1,123 @@
+{
+  "schemaVersion": "1.0.0",
+  "docaiMessaging": "0.17.1",
+  "projectionManifest": "projection-input-manifest.json",
+  "evaluatedProfiles": ["full"],
+  "tokenizer": {
+    "library": "tiktoken",
+    "version": "0.13.0",
+    "encoding": "o200k_base"
+  },
+  "targetModel": null,
+  "tokenBudget": 4096,
+  "retrievalUnitPolicy": "Each run is one canonical UTF-8 envelope containing shared task context, representation-specific retrieval instructions, canonical JSON tool-result context, and exact loaded document bytes in declared order.",
+  "normalizationBoundary": "No document bytes are normalized. Envelope labels and JSON tool-result context use UTF-8, LF, sorted keys, compact separators, and ensure_ascii=false.",
+  "readerAccountingBoundary": "No preinstalled DocAI or baseline reader is excluded. Representation-specific instructions and selection/resolution tool-result context are counted in their respective runs.",
+  "sharedContext": {
+    "taskPrompt": "Resolve the authoritative source provenance needed to interpret the selected CONVENTIONS.md contract.",
+    "expectedCodeContext": ""
+  },
+  "claim": {
+    "scope": "exact source b resolution",
+    "cacheOrBilledTokenSavings": false
+  },
+  "tasks": [
+    {
+      "id": "resolve-source-b-provenance",
+      "selectionInput": {
+        "documentPath": "CONVENTIONS.md",
+        "sourceRefs": ["b"]
+      },
+      "catalogCellContributions": [
+        {
+          "providerSourceId": "z",
+          "targetSourceId": "b",
+          "column": "Location",
+          "value": "sources/b-authoritative-messaging-contract-reference.json"
+        }
+      ],
+      "runs": {
+        "sharded": {
+          "documentSet": "document-sets/sharded",
+          "baseline": false,
+          "catalogForms": {
+            "Sources": "sharded",
+            "Operations": "direct",
+            "Workflows": "direct",
+            "Unprojected Operations": "absent"
+          },
+          "formatSpecificInstructions": "Inspect every Source Shards route whose inclusive ID range contains an unresolved source ID. Load all matching shards, retain false-positive rows, add each loaded shard source_refs value, and repeat until no unresolved source ID remains. Do not reload a resolved cycle.",
+          "consideredRootRows": [
+            "indexes/sources-a-c.md",
+            "indexes/sources-b.md",
+            "indexes/sources-d-y.md",
+            "indexes/sources-z.md"
+          ],
+          "loadedDocumentPaths": [
+            "INDEX.md",
+            "CONVENTIONS.md",
+            "indexes/sources-a-c.md",
+            "indexes/sources-b.md",
+            "indexes/sources-z.md"
+          ],
+          "loadedSourceShards": [
+            "indexes/sources-a-c.md",
+            "indexes/sources-b.md",
+            "indexes/sources-z.md"
+          ],
+          "matchingSourceShards": [
+            "indexes/sources-a-c.md",
+            "indexes/sources-b.md"
+          ],
+          "falsePositiveSourceShards": ["indexes/sources-a-c.md"],
+          "transitiveSourceShards": ["indexes/sources-z.md"],
+          "unloadedSourceShards": ["indexes/sources-d-y.md"],
+          "fixedPoint": {
+            "requestedIds": ["b"],
+            "resolvedIds": ["a", "b", "c", "z"],
+            "loadedPaths": [
+              "indexes/sources-a-c.md",
+              "indexes/sources-b.md",
+              "indexes/sources-z.md"
+            ]
+          },
+          "requiredContextPaths": [],
+          "consideredSupplementalContextPaths": [],
+          "loadedSupplementalContextPaths": [],
+          "loadAllFallback": false,
+          "fullProfileFallback": false,
+          "wholeConventionsFallback": false
+        },
+        "direct": {
+          "documentSet": "document-sets/direct",
+          "baseline": true,
+          "catalogForms": {
+            "Sources": "direct",
+            "Operations": "direct",
+            "Workflows": "direct",
+            "Unprojected Operations": "absent"
+          },
+          "formatSpecificInstructions": "Read the selected document source_refs value and resolve each exact source ID from the direct Sources table already loaded in INDEX.md.",
+          "consideredRootRows": [],
+          "loadedDocumentPaths": ["INDEX.md", "CONVENTIONS.md"],
+          "loadedSourceShards": [],
+          "matchingSourceShards": [],
+          "falsePositiveSourceShards": [],
+          "transitiveSourceShards": [],
+          "unloadedSourceShards": [],
+          "fixedPoint": {
+            "requestedIds": ["b"],
+            "resolvedIds": ["b"],
+            "loadedPaths": ["INDEX.md"]
+          },
+          "requiredContextPaths": [],
+          "consideredSupplementalContextPaths": [],
+          "loadedSupplementalContextPaths": [],
+          "loadAllFallback": false,
+          "fullProfileFallback": false,
+          "wholeConventionsFallback": false
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "1.0.0",
+  "classification": "synthetic-conformance",
+  "catalogDerivation": {
+    "rowOrder": "source-id-ascii-ascending",
+    "baseValuePrecedence": "authoritative-contribution-then-source-self-description",
+    "multipleAuthoritativeContributors": "generation-failure",
+    "missingRequiredCell": "generation-failure"
+  },
+  "representations": {
+    "direct": {
+      "sourcesForm": "direct"
+    },
+    "sharded": {
+      "sourcesForm": "sharded",
+      "routes": [
+        {"firstId": "a", "lastId": "c", "path": "indexes/sources-a-c.md"},
+        {"firstId": "b", "lastId": "b", "path": "indexes/sources-b.md"},
+        {"firstId": "d", "lastId": "y", "path": "indexes/sources-d-y.md"},
+        {"firstId": "z", "lastId": "z", "path": "indexes/sources-z.md"}
+      ]
+    }
+  }
+}

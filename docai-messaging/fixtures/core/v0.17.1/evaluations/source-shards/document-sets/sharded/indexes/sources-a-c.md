@@ -1,0 +1,12 @@
+> docai-messaging: 0.17.1 | profile: full | perspective: storefront | coverage: complete | knowledge: complete | source_refs: a, c
+
+# Messaging Source Index
+
+## Sources
+
+| ID | Kind | Specification | API | Contract version | Location | Revision |
+|---|---|---|---|---|---|---|
+| a | configuration | none | none | none | sources/a-authoritative-messaging-contract-reference.json | none |
+| c | configuration | none | none | none | sources/c-authoritative-messaging-contract-reference.json | none |
+
+> docai-identity: set_id: b32:qswwnrmbo3s6ke5stvknx6qzya | projection_id: b32:472fl7j3appoqc7pslwez2wwlq
