@@ -1652,6 +1652,64 @@ export function validateAdapterSourceExpectations(scenario, { file = "source-inp
   };
 }
 
+export function evaluatePayloadMediaIdentityExpectations(scenario) {
+  const adapterExpectations = evaluateAdapterSourceExpectations(scenario);
+  return adapterExpectations.map((adapter, index) => {
+    const source = scenario.cases?.[index];
+    if (source?.adapterClass !== "payload-wire" || adapter.outcome !== "supported") {
+      return {
+        caseId: adapter.caseId,
+        outcome: adapter.outcome,
+        ...(adapter.resolution === undefined ? {} : { resolution: adapter.resolution }),
+        ...(adapter.reason === undefined ? {} : { reason: adapter.reason })
+      };
+    }
+    const emittedMediaType = adapter.emittedMediaType ?? adapter.effectiveTarget;
+    return {
+      caseId: adapter.caseId,
+      outcome: adapter.outcome,
+      resolution: adapter.resolution,
+      effectiveTarget: adapter.effectiveTarget,
+      emittedMediaType,
+      mediaTypeResolution: adapter.mediaTypeResolution ?? "preserved",
+      ruleId: adapter.ruleId,
+      ruleVersion: adapter.ruleVersion,
+      normalizationProjectionDigestCovered: adapter.mediaTypeResolution === "adapter-normalized"
+        ? true
+        : null,
+      identityUses: {
+        mediaMarkerValue: emittedMediaType,
+        sameAsComparisonKey: emittedMediaType,
+        uniquenessKey: emittedMediaType,
+        replacementUnitIdentity: `${Buffer.byteLength(emittedMediaType, "utf8")}:${emittedMediaType}`
+      }
+    };
+  });
+}
+
+export function validatePayloadMediaIdentityExpectations(
+  scenario,
+  { file = "source-input.json" } = {}
+) {
+  const expectations = evaluatePayloadMediaIdentityExpectations(scenario);
+  const mismatches = expectations.flatMap((expected, index) => (
+    isDeepStrictEqual(expected, scenario.cases?.[index]?.projectedIdentity)
+      ? []
+      : [{ caseId: expected.caseId }]
+  ));
+  return {
+    diagnostics: mismatches.length === 0
+      ? []
+      : [diagnostic(
+        "DM-ADAPTER-002",
+        file,
+        1,
+        `Post-adapter payload media-type identity disagrees with ${mismatches.length} exact source expectation(s).`
+      )],
+    facts: { payloadMediaIdentityExpectations: expectations }
+  };
+}
+
 function trustResult(entry, outcome, details = {}) {
   return {
     caseId: entry.caseId,

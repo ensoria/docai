@@ -1,0 +1,9 @@
+{
+  "id": "payload-media-identity-leading-zero-invalid",
+  "base": "../valid/payload-media-identities-valid",
+  "path": "channels/media-identities.md",
+  "replace": {
+    "from": "identity-message 16:application/json: normalized representation",
+    "to": "identity-message 016:application/json: normalized representation"
+  }
+}

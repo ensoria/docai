@@ -855,6 +855,10 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 
 > **Review hardening (`R8-CORE-039`):** 独立reviewでmissing payload-wire targetまでcanonicalizerのsyntax errorへ畳み込むgapを確認した。追加REDではomitted `mediaType` が`invalid-media-type` generation failureになることを再現し、GREENではmissing targetを先に`emit-unknown` / `missing-target` / `emit-payload-representation-set-unknown`へ分類してREADME §3.6のmissing-target境界を維持した。canonicalizationのcatchは`SyntaxError`だけをsource-invalid outcomeへ変換し、予期しないimplementation errorは再throwする。noncanonical parameterless `Application/JSON` がcanonical targetでdirect adapterを選ぶcaseも追加した。manifest件数とone-invalidity件数への影響はない。
 
+> **Implementation note (`R8-CORE-040` post-adapter media-type identity checkpoint):** `payload-media-identity-valid` はexact-version payload-wire mappingがparameterized JSON media typeをpreserveする場合と、`normalize-proven`かつ`projectionDigestCovered: true`でparameterless JSONへ正規化する場合を分け、adapterが発行したcanonical media typeをmedia marker、`same_as`比較、representation uniqueness、UTF-8 byte-length-prefixed replacement unit identityのすべてに使うsource-aware factsを固定する。paired invalid scenarioは正規化後もinitial targetをreplacement identityへ使う誤投影を単一`DM-ADAPTER-002` mismatchとして拒否する。`payload-media-identities-valid` はmapped parameterized JSONのexpanded representationと、ASCII、multibyte、embedded `: `を含むcanonical replacement identityを固定し、四つのmutationでleading zero、UTF-8 byte mismatch、invalid media type、duplicate decoded identityをそれぞれ単一`DM-MSG-004` / `DM-MSG-006` concernにする。REDではsource-aware validator不在を確認し、続いてruntime validatorがdirect adapter eligibilityをJSON example grammarにも適用してmapped parameterized JSONを拒否することを確認した。GREENでは既存adapter evaluatorのemitted valueから四用途を導出してcase indexごとにexact comparisonし、JSON representation grammarをdirect adapter判定から分離した。fixture作成時のroot identity trailer不足は既存task-scoped digest形式へ訂正し、identity以外のREDと分離して確認した。影響としてCore manifestは243 cases / 177 invalid / 66 valid、one-invalidity auditは177 / 177となる。公開document grammar、rule catalog、direct adapter eligibility、既存のnormalization digest要件は変更せず、正当にmappedされたparameterized JSONだけがexpanded runtime representationとして検証可能になる。
+
+> **Review hardening (`R8-CORE-040`):** 独立reviewで、generation failureには`resolution`が存在しないのに新evaluatorがown property `resolution: undefined`を出力し、JSONで表現可能な正しいprojected identityとexact一致できないgapを確認した。追加REDではinvalid media typeの`{ caseId, outcome, reason }`投影が`DM-ADAPTER-002`になることを再現し、GREENでは`resolution`と`reason`を存在時だけ出力するJSON-safeなoutcome shapeへ修正した。あわせて同一`caseId`を持つpreserve / normalize entriesがMapで上書きされず、source-case indexで別々のreplacement identityへ対応する回帰testを追加した。manifest件数、one-invalidity件数、公開grammar、rule catalogへの影響はない。
+
 - [x] Metadata、extension name/order/escape、unknown non-`x-` key、sentence grammar。
 - [x] Identity trailer、set/projection digest、closed root、mixed set、task-scoped identity check。
 - [x] Direct/sharded Sources、unknown API identity/version、Revision none、overlap、fixed-point、cycle。
@@ -928,7 +932,7 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
   - [x] `R8-CORE-037`（source/API identity resolution、forbidden derivation、missing identity/version markers）をsource-aware scenarioとversioned marker matrixで対応付ける。
   - [x] `R8-CORE-038`（selected channelのrouting-provenance closureとtask-scoped source resolution）をsource-aware contribution scenarioとversioned document setで対応付ける。
   - [x] `R8-CORE-039`（source media-typeのoctet parsing、initial canonical target、invalid-source generation failure）をversioned adapter-source scenarioで対応付ける。
-  - [ ] `R8-CORE-040`（post-adapter emitted media typeの一貫性とpayload-representation replacement identity）をversioned evidenceで対応付ける。
+  - [x] `R8-CORE-040`（post-adapter emitted media typeの一貫性とpayload-representation replacement identity）をversioned evidenceで対応付ける。
   - [ ] 残る Core corpus clause を `R8-CORE-*` row に分解して対応付け、`R8-CORE-001` を `covered` にする。
 
 #### Partial Collection / Parameters Unknown / Failure Root-Row Implementation Plan

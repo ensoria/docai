@@ -1,0 +1,9 @@
+{
+  "id": "payload-media-identity-duplicate-invalid",
+  "base": "../valid/payload-media-identities-valid",
+  "path": "channels/media-identities.md",
+  "replace": {
+    "from": "identity-message 30:application/json;title=\"雪é\": multibyte representation",
+    "to": "identity-message 16:application/json: multibyte representation"
+  }
+}

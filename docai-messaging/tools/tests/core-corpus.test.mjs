@@ -293,6 +293,16 @@ const mediaTypeCanonicalizationCaseIds = [
   "media-type-canonicalization-valid"
 ];
 
+const payloadMediaIdentityCaseIds = [
+  "payload-media-identities-valid",
+  "payload-media-identity-byte-mismatch-invalid",
+  "payload-media-identity-duplicate-invalid",
+  "payload-media-identity-leading-zero-invalid",
+  "payload-media-identity-media-type-invalid",
+  "payload-media-identity-projection-invalid",
+  "payload-media-identity-valid"
+];
+
 const replyContractCaseIds = [
   "reply-correlation-none-invalid",
   "reply-dynamic-channel-parameters-invalid",
@@ -504,6 +514,13 @@ function validateCase(fixturePath, fixtureCase) {
   if (fixtureCase.kind === "adapter-source-scenario") {
     const scenario = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
     return coreValidator.validateAdapterSourceExpectations(
+      scenario,
+      { file: fixtureCase.path }
+    );
+  }
+  if (fixtureCase.kind === "payload-media-identity-source-scenario") {
+    const scenario = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
+    return coreValidator.validatePayloadMediaIdentityExpectations(
       scenario,
       { file: fixtureCase.path }
     );
@@ -2842,6 +2859,128 @@ test("executes the Task 9 pre-adapter media-type canonicalization corpus", () =>
   assert.equal(Buffer.byteLength(decomposed.effectiveTarget, "utf8"), 28);
 });
 
+test("executes the Task 9 post-adapter media-type identity corpus", () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
+  const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
+
+  assert.deepEqual(payloadMediaIdentityCaseIds.filter((id) => !byId.has(id)), []);
+  for (const id of payloadMediaIdentityCaseIds) {
+    const fixtureCase = byId.get(id);
+    assert.equal(
+      fixtureCase.expected === "valid" || fixtureCase.expected_rule_ids.length === 1,
+      true,
+      id
+    );
+  }
+
+  const result = runFixtureCorpus(corpusPath, validateCase);
+  assert.equal(result.failed, 0, result.report);
+
+  const sourceCase = byId.get("payload-media-identity-valid");
+  const source = validateCase(path.join(corpusPath, sourceCase.path), sourceCase);
+  assert.deepEqual(source.diagnostics, []);
+  assert.deepEqual(source.facts.payloadMediaIdentityExpectations, [
+    {
+      caseId: "parameterized-media-type-preserved",
+      outcome: "supported",
+      resolution: "publication-mapping",
+      effectiveTarget: "application/json;charset=utf-8",
+      emittedMediaType: "application/json;charset=utf-8",
+      mediaTypeResolution: "preserved",
+      ruleId: "json-charset-preserving-wire",
+      ruleVersion: "1.0.0",
+      normalizationProjectionDigestCovered: null,
+      identityUses: {
+        mediaMarkerValue: "application/json;charset=utf-8",
+        sameAsComparisonKey: "application/json;charset=utf-8",
+        uniquenessKey: "application/json;charset=utf-8",
+        replacementUnitIdentity: "30:application/json;charset=utf-8"
+      }
+    },
+    {
+      caseId: "parameterized-media-type-normalized",
+      outcome: "supported",
+      resolution: "publication-mapping",
+      effectiveTarget: "application/json;charset=utf-8",
+      emittedMediaType: "application/json",
+      mediaTypeResolution: "adapter-normalized",
+      ruleId: "json-charset-normalizing-wire",
+      ruleVersion: "1.1.0",
+      normalizationProjectionDigestCovered: true,
+      identityUses: {
+        mediaMarkerValue: "application/json",
+        sameAsComparisonKey: "application/json",
+        uniquenessKey: "application/json",
+        replacementUnitIdentity: "16:application/json"
+      }
+    }
+  ]);
+
+  const documentCase = byId.get("payload-media-identities-valid");
+  const document = validateCase(path.join(corpusPath, documentCase.path), documentCase);
+  assert.deepEqual(document.diagnostics, []);
+
+  for (const [id, ruleId] of [
+    ["payload-media-identity-byte-mismatch-invalid", "DM-MSG-004"],
+    ["payload-media-identity-duplicate-invalid", "DM-MSG-006"],
+    ["payload-media-identity-leading-zero-invalid", "DM-MSG-004"],
+    ["payload-media-identity-media-type-invalid", "DM-MSG-004"],
+    ["payload-media-identity-projection-invalid", "DM-ADAPTER-002"]
+  ]) {
+    const fixtureCase = byId.get(id);
+    const invalid = validateCase(path.join(corpusPath, fixtureCase.path), fixtureCase);
+    const primary = invalid.diagnostics.filter((entry) => entry.severity === "error" && !entry.cascade);
+    assert.deepEqual(primary.map((entry) => entry.ruleId), [ruleId], id);
+  }
+});
+
+test("represents a payload media identity generation failure as exact JSON data", () => {
+  const scenario = {
+    docaiMessagingVersion: "0.17.1",
+    cases: [{
+      caseId: "invalid-media-type",
+      adapterClass: "payload-wire",
+      mediaType: "application/json;charset =utf-8",
+      publicationMappings: [],
+      projectedIdentity: {
+        caseId: "invalid-media-type",
+        outcome: "generation-failure",
+        reason: "invalid-media-type"
+      }
+    }]
+  };
+
+  const result = coreValidator.validatePayloadMediaIdentityExpectations(scenario);
+  assert.deepEqual(result.diagnostics, []);
+  assert.deepEqual(result.facts.payloadMediaIdentityExpectations, [
+    {
+      caseId: "invalid-media-type",
+      outcome: "generation-failure",
+      reason: "invalid-media-type"
+    }
+  ]);
+});
+
+test("associates duplicate payload media identity IDs by source-case index", () => {
+  const scenario = JSON.parse(fs.readFileSync(
+    path.join(corpusPath, "source/focused/payload-media-identity-valid.json"),
+    "utf8"
+  ));
+  for (const entry of scenario.cases) {
+    entry.caseId = "duplicate-case-id";
+    entry.projectedIdentity.caseId = "duplicate-case-id";
+  }
+
+  const result = coreValidator.validatePayloadMediaIdentityExpectations(scenario);
+  assert.deepEqual(result.diagnostics, []);
+  assert.deepEqual(
+    result.facts.payloadMediaIdentityExpectations.map((entry) => (
+      entry.identityUses.replacementUnitIdentity
+    )),
+    ["30:application/json;charset=utf-8", "16:application/json"]
+  );
+});
+
 test("executes the Task 9 DM-REPLY-001 DM-REPLY-002 DM-REPLY-003 channel state and routing corpus", () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
   const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
@@ -3477,7 +3616,7 @@ test("executes the Task 9 DM-INC-003 implementation-readiness capability matrix"
 
 test("audits every Task 9 invalid fixture as one primary concern", () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
-  assert.equal(manifest.cases.length, 236);
+  assert.equal(manifest.cases.length, 243);
   const result = runFixtureCorpus(corpusPath, validateCase);
   assert.equal(result.failed, 0, result.report);
   const audit = auditFixtureOneInvalidity({
@@ -3485,5 +3624,5 @@ test("audits every Task 9 invalid fixture as one primary concern", () => {
     corpusCases: result.cases
   });
 
-  assert.deepEqual(audit, { passed: true, audited: 172, errors: [] });
+  assert.deepEqual(audit, { passed: true, audited: 177, errors: [] });
 });

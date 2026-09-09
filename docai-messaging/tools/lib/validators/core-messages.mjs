@@ -798,19 +798,17 @@ function canonicalMediaType(value) {
   }
 }
 
-function directJsonMediaType(mediaType) {
+function jsonRepresentationMediaType(mediaType) {
   const base = mediaType.split(";", 1)[0];
   const slash = base.indexOf("/");
-  return !mediaType.includes(";")
-    && (base === "application/json" || (slash !== -1 && base.slice(slash + 1).endsWith("+json")));
+  return base === "application/json"
+    || (slash !== -1 && base.slice(slash + 1).endsWith("+json"));
 }
 
 function structuredRepresentationMediaType(mediaType) {
   const base = mediaType.split(";", 1)[0];
   const subtype = base.slice(base.indexOf("/") + 1);
-  return directJsonMediaType(mediaType)
-    || base === "application/json"
-    || subtype.endsWith("+json")
+  return jsonRepresentationMediaType(mediaType)
     || base.startsWith("text/")
     || subtype.endsWith("+xml")
     || subtype.endsWith("+yaml")
@@ -996,7 +994,7 @@ function validateExpandedRepresentation(file, markdown, region, direction, opera
   if (fence === null
     || remaining[0]?.line !== fence.startLine
     || fence.info !== "json"
-    || !directJsonMediaType(mediaType)
+    || !jsonRepresentationMediaType(mediaType)
     || table === null) {
     diagnostics.push(...payloadDiagnostic("DM-MSG-004", file, nullableLine.line, "A complete structured representation requires one adapter-correct concrete example followed by its field table."));
     return { diagnostics, mediaType };

@@ -836,6 +836,41 @@
       "expected_rule_ids": ["DM-CONV-003"]
     },
     {
+      "id": "payload-media-identities-valid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/valid/payload-media-identities-valid",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
+      "id": "payload-media-identity-byte-mismatch-invalid",
+      "kind": "task-scoped-document-set-mutation",
+      "path": "focused/invalid/payload-media-identity-byte-mismatch-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-MSG-004"]
+    },
+    {
+      "id": "payload-media-identity-duplicate-invalid",
+      "kind": "task-scoped-document-set-mutation",
+      "path": "focused/invalid/payload-media-identity-duplicate-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-MSG-006"]
+    },
+    {
+      "id": "payload-media-identity-leading-zero-invalid",
+      "kind": "task-scoped-document-set-mutation",
+      "path": "focused/invalid/payload-media-identity-leading-zero-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-MSG-004"]
+    },
+    {
+      "id": "payload-media-identity-media-type-invalid",
+      "kind": "task-scoped-document-set-mutation",
+      "path": "focused/invalid/payload-media-identity-media-type-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-MSG-004"]
+    },
+    {
       "id": "payload-parameterized-json-as-raw-invalid",
       "kind": "task-scoped-document-set",
       "path": "focused/invalid/payload-parameterized-json-as-raw-invalid",
@@ -1301,6 +1336,20 @@
       "id": "media-type-canonicalization-valid",
       "kind": "adapter-source-scenario",
       "path": "source/focused/media-type-canonicalization-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
+      "id": "payload-media-identity-projection-invalid",
+      "kind": "payload-media-identity-source-scenario",
+      "path": "source/focused/payload-media-identity-projection-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-ADAPTER-002"]
+    },
+    {
+      "id": "payload-media-identity-valid",
+      "kind": "payload-media-identity-source-scenario",
+      "path": "source/focused/payload-media-identity-valid.json",
       "expected": "valid",
       "expected_rule_ids": []
     },

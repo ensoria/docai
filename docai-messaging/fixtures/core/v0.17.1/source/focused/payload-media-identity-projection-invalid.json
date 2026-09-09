@@ -1,0 +1,41 @@
+{
+  "docaiMessagingVersion": "0.17.1",
+  "cases": [
+    {
+      "caseId": "normalized-replacement-uses-initial-target",
+      "adapterClass": "payload-wire",
+      "mediaType": "application/json;charset=utf-8",
+      "publicationMappings": [
+        {
+          "sourceId": "adapter-catalog",
+          "docaiMessagingVersion": "0.17.1",
+          "adapterClass": "payload-wire",
+          "target": "application/json;charset=utf-8",
+          "ruleId": "json-charset-normalizing-wire",
+          "ruleVersion": "1.1.0",
+          "defines": ["byte-encoding", "canonical-comparison", "character-encoding", "compact-example", "decoded-value-model", "full-example", "parameter-semantics", "schema-composition"],
+          "emittedMediaType": "application/json",
+          "parameterHandling": "normalize-proven",
+          "projectionDigestCovered": true
+        }
+      ],
+      "projectedIdentity": {
+        "caseId": "normalized-replacement-uses-initial-target",
+        "outcome": "supported",
+        "resolution": "publication-mapping",
+        "effectiveTarget": "application/json;charset=utf-8",
+        "emittedMediaType": "application/json",
+        "mediaTypeResolution": "adapter-normalized",
+        "ruleId": "json-charset-normalizing-wire",
+        "ruleVersion": "1.1.0",
+        "normalizationProjectionDigestCovered": true,
+        "identityUses": {
+          "mediaMarkerValue": "application/json",
+          "sameAsComparisonKey": "application/json",
+          "uniquenessKey": "application/json",
+          "replacementUnitIdentity": "30:application/json;charset=utf-8"
+        }
+      }
+    }
+  ]
+}
