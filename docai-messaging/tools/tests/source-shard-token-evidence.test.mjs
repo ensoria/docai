@@ -40,6 +40,22 @@ function replaceRootProjection(temporaryEvidenceRoot, evidence, runName, project
   rootDocument.sha256 = sha256(root);
 }
 
+function validateEvidenceMutation(t, prefix, mutate) {
+  const temporaryParent = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
+  t.after(() => fs.rmSync(temporaryParent, { recursive: true, force: true }));
+  const temporaryEvidenceRoot = path.join(temporaryParent, "source-shards");
+  fs.cpSync(evidenceRoot, temporaryEvidenceRoot, { recursive: true });
+  const temporaryEvidencePath = path.join(temporaryEvidenceRoot, "retrieval-runs.json");
+  const evidence = JSON.parse(fs.readFileSync(temporaryEvidencePath, "utf8"));
+  mutate(evidence);
+  fs.writeFileSync(temporaryEvidencePath, `${JSON.stringify(evidence, null, 2)}\n`);
+  return spawnSync(
+    "python3",
+    [builderPath, "--validate", path.join(temporaryEvidenceRoot, "measurement-input.json")],
+    { cwd: repositoryRoot, encoding: "utf8" }
+  );
+}
+
 function sourceRows(validation) {
   return validation.facts.core.sources.rows.map((row) => ({
     id: row.id,
@@ -282,3 +298,76 @@ test("validates source-shard evidence with the declared minimum Python 3.9", (t)
   );
   assert.equal(validation.status, 0, validation.stderr || validation.stdout);
 });
+
+for (const [name, mutate, errorPattern] of [
+  [
+    "canonical envelope digest",
+    (evidence) => {
+      evidence.tasks[0].runs.sharded.measurement.envelopeSha256 = `sha256:${"0".repeat(64)}`;
+    },
+    /recorded canonical envelope is stale/
+  ],
+  [
+    "loaded-document token metadata",
+    (evidence) => {
+      evidence.tasks[0].runs.sharded.loadedDocuments[0].tokens = -1;
+    },
+    /recorded document token metadata is invalid/
+  ],
+  [
+    "component token sum",
+    (evidence) => {
+      evidence.tasks[0].runs.sharded.measurement.componentTokenSum += 1;
+    },
+    /recorded component token arithmetic is invalid/
+  ],
+  [
+    "boundary token delta",
+    (evidence) => {
+      evidence.tasks[0].runs.sharded.measurement.boundaryTokenDelta += 1;
+    },
+    /recorded total token arithmetic is invalid/
+  ],
+  [
+    "builder metadata",
+    (evidence) => {
+      evidence.generatedBy.version = "9.9.9";
+    },
+    /recorded evidence metadata is stale/
+  ],
+  [
+    "unexpected top-level metadata",
+    (evidence) => {
+      evidence.unexpected = true;
+    },
+    /recorded evidence metadata is stale/
+  ],
+  [
+    "unexpected run metadata",
+    (evidence) => {
+      evidence.tasks[0].runs.sharded.unexpected = true;
+    },
+    /recorded run metadata is stale/
+  ],
+  [
+    "malformed task runs",
+    (evidence) => {
+      evidence.tasks[0].runs = [];
+    },
+    /recorded task identity is stale/
+  ],
+  [
+    "derived savings claim",
+    (evidence) => {
+      evidence.claim.absoluteTokensSavedAtMaximum += 1;
+    },
+    /recorded claim arithmetic is stale/
+  ]
+]) {
+  test(`rejects tampered ${name} without loading the tokenizer`, (t) => {
+    const validation = validateEvidenceMutation(t, "docai-source-shard-tamper-", mutate);
+    assert.notEqual(validation.status, 0);
+    assert.match(validation.stderr, errorPattern);
+    assert.doesNotMatch(validation.stderr, /Traceback/);
+  });
+}

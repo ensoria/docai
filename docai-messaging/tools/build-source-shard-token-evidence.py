@@ -373,14 +373,13 @@ def token_count(encoding, value: bytes) -> int:
     return len(encoding.encode(text, disallowed_special=()))
 
 
-def measure_run(
+def assemble_run(
     evidence_root: Path,
     shared_context: dict[str, Any],
     task: dict[str, Any],
     run_name: str,
     run: dict[str, Any],
-    encoding,
-) -> dict[str, Any]:
+) -> tuple[dict[str, Any], dict[str, bytes], bytes]:
     document_set = resolve_inside(evidence_root, run["documentSet"], "documentSet")
     if not document_set.is_dir():
         raise EvidenceError(f"documentSet is not a directory: {run['documentSet']}")
@@ -400,17 +399,39 @@ def measure_run(
     }
     framed = {name: frame(name, payload) for name, payload in component_payloads.items()}
     envelope = b"".join(framed.values())
-    for document in loaded_documents:
-        raw, _ = read_utf8(resolve_inside(document_set, document["path"], "loaded document"))
-        document["tokens"] = token_count(encoding, raw)
-    component_tokens = {name: token_count(encoding, value) for name, value in framed.items()}
-    total_tokens = token_count(encoding, envelope)
-    return {
+    run_record = {
         "documentSet": run["documentSet"],
         "baseline": run["baseline"],
         "identity": identity,
         **{field: run[field] for field in TRACE_FIELDS},
         "loadedDocuments": loaded_documents,
+    }
+    return run_record, framed, envelope
+
+
+def measure_run(
+    evidence_root: Path,
+    shared_context: dict[str, Any],
+    task: dict[str, Any],
+    run_name: str,
+    run: dict[str, Any],
+    encoding,
+) -> dict[str, Any]:
+    run_record, framed, envelope = assemble_run(
+        evidence_root,
+        shared_context,
+        task,
+        run_name,
+        run,
+    )
+    document_set = resolve_inside(evidence_root, run["documentSet"], "documentSet")
+    for document in run_record["loadedDocuments"]:
+        raw, _ = read_utf8(resolve_inside(document_set, document["path"], "loaded document"))
+        document["tokens"] = token_count(encoding, raw)
+    component_tokens = {name: token_count(encoding, value) for name, value in framed.items()}
+    total_tokens = token_count(encoding, envelope)
+    return {
+        **run_record,
         "measurement": {
             "envelopeBytes": len(envelope),
             "envelopeSha256": sha256_bytes(envelope),
@@ -594,10 +615,44 @@ def validate_recorded(input_path: Path, raw_input: bytes, value: dict[str, Any])
     validate_input(input_path, value)
     evidence_path = input_path.parent / EVIDENCE_NAME
     _, evidence = read_json(evidence_path)
+    expected_top_level_fields = {
+        "schemaVersion",
+        "generatedBy",
+        "measurementInput",
+        "docaiMessaging",
+        "projection",
+        "evaluatedProfiles",
+        "tokenizer",
+        "targetModel",
+        "tokenBudget",
+        "retrievalUnitPolicy",
+        "normalizationBoundary",
+        "readerAccountingBoundary",
+        "tasks",
+        "aggregates",
+        "claim",
+    }
+    if set(evidence) != expected_top_level_fields:
+        raise EvidenceError("recorded evidence metadata is stale")
     if evidence.get("schemaVersion") != value["schemaVersion"]:
         raise EvidenceError("recorded schemaVersion disagrees with measurement input")
     if evidence.get("tokenizer") != value["tokenizer"]:
         raise EvidenceError("recorded tokenizer disagrees with measurement input")
+    expected_metadata = {
+        "generatedBy": {
+            "tool": "build-source-shard-token-evidence.py",
+            "version": BUILDER_VERSION,
+        },
+        "docaiMessaging": value["docaiMessaging"],
+        "evaluatedProfiles": value["evaluatedProfiles"],
+        "targetModel": value["targetModel"],
+        "tokenBudget": value["tokenBudget"],
+        "retrievalUnitPolicy": value["retrievalUnitPolicy"],
+        "normalizationBoundary": value["normalizationBoundary"],
+        "readerAccountingBoundary": value["readerAccountingBoundary"],
+    }
+    if any(evidence.get(key) != expected for key, expected in expected_metadata.items()):
+        raise EvidenceError("recorded evidence metadata is stale")
     if evidence.get("measurementInput") != {
         "path": input_path.name,
         "sha256": sha256_bytes(raw_input),
@@ -618,42 +673,100 @@ def validate_recorded(input_path: Path, raw_input: bytes, value: dict[str, Any])
             raise EvidenceError(
                 f"task {task['id']} contributions disagree with authoritative inputs"
             )
-        if recorded_task.get("id") != task["id"] \
+        recorded_runs = recorded_task.get("runs") if isinstance(recorded_task, dict) else None
+        if not isinstance(recorded_task, dict) \
+                or set(recorded_task) != {
+                    "id", "selectionInput", "catalogCellContributions", "runs"
+                } \
+                or not isinstance(recorded_runs, dict) \
+                or set(recorded_runs) != {"sharded", "direct"} \
+                or recorded_task.get("id") != task["id"] \
                 or recorded_task.get("selectionInput") != task["selectionInput"] \
                 or recorded_task.get("catalogCellContributions") \
                 != task["catalogCellContributions"]:
             raise EvidenceError(f"recorded task identity is stale: {task['id']}")
         for run_name in ("sharded", "direct"):
             run = task["runs"][run_name]
-            recorded_run = recorded_task.get("runs", {}).get(run_name, {})
-            if recorded_run.get("documentSet") != run["documentSet"] \
-                    or recorded_run.get("baseline") != run["baseline"]:
+            recorded_run = recorded_runs[run_name]
+            expected_run, _, envelope = assemble_run(
+                input_path.parent,
+                value["sharedContext"],
+                task,
+                run_name,
+                run,
+            )
+            if not isinstance(recorded_run, dict) \
+                    or set(recorded_run) != {*expected_run, "measurement", "totalTaskInputTokens"}:
+                raise EvidenceError(f"recorded run metadata is stale: {task['id']} {run_name}")
+            if recorded_run.get("documentSet") != expected_run["documentSet"] \
+                    or recorded_run.get("baseline") != expected_run["baseline"]:
                 raise EvidenceError(f"recorded run identity is stale: {task['id']} {run_name}")
-            document_set = resolve_inside(input_path.parent, run["documentSet"], "documentSet")
-            document_identity = root_identity(document_set)
+            document_identity = expected_run["identity"]
             if recorded_run.get("identity") != document_identity:
                 raise EvidenceError(
                     f"recorded document-set identity is stale: {task['id']} {run_name}"
                 )
+            validate_projection_identities(projection, [document_identity])
             projection_identities.append(document_identity)
             for field in TRACE_FIELDS:
                 if recorded_run.get(field) != run[field]:
                     raise EvidenceError(f"recorded {field} is stale: {task['id']} {run_name}")
-            expected_documents = []
-            for relative in run["loadedDocumentPaths"]:
-                raw, _ = read_utf8(resolve_inside(document_set, relative, "loaded document"))
-                expected_documents.append({
-                    "path": relative,
-                    "bytes": len(raw),
-                    "sha256": sha256_bytes(raw),
-                })
+            expected_documents = expected_run["loadedDocuments"]
             recorded_documents = recorded_run.get("loadedDocuments")
             if not isinstance(recorded_documents, list) \
                     or len(recorded_documents) != len(expected_documents):
                 raise EvidenceError(f"recorded loaded documents are stale: {task['id']} {run_name}")
             for expected, recorded in zip(expected_documents, recorded_documents):
-                if any(recorded.get(key) != expected[key] for key in expected):
+                if not isinstance(recorded, dict) \
+                        or set(recorded) != {*expected, "tokens"} \
+                        or any(recorded.get(key) != expected[key] for key in expected):
                     raise EvidenceError(f"recorded document digest is stale: {expected['path']}")
+                if type(recorded["tokens"]) is not int or recorded["tokens"] < 0:
+                    raise EvidenceError(
+                        f"recorded document token metadata is invalid: {expected['path']}"
+                    )
+
+            measurement = recorded_run.get("measurement")
+            measurement_fields = {
+                "envelopeBytes",
+                "envelopeSha256",
+                "sharedContextTokens",
+                "formatSpecificInstructionTokens",
+                "toolResultContextTokens",
+                "documentTokens",
+                "componentTokenSum",
+                "boundaryTokenDelta",
+            }
+            if not isinstance(measurement, dict) or set(measurement) != measurement_fields \
+                    or measurement.get("envelopeBytes") != len(envelope) \
+                    or measurement.get("envelopeSha256") != sha256_bytes(envelope):
+                raise EvidenceError(
+                    f"recorded canonical envelope is stale: {task['id']} {run_name}"
+                )
+            component_fields = (
+                "sharedContextTokens",
+                "formatSpecificInstructionTokens",
+                "toolResultContextTokens",
+                "documentTokens",
+            )
+            if any(
+                type(measurement.get(field)) is not int or measurement[field] < 0
+                for field in component_fields
+            ) or type(measurement.get("componentTokenSum")) is not int \
+                    or measurement["componentTokenSum"] != sum(
+                        measurement[field] for field in component_fields
+                    ):
+                raise EvidenceError(
+                    f"recorded component token arithmetic is invalid: {task['id']} {run_name}"
+                )
+            total_tokens = recorded_run.get("totalTaskInputTokens")
+            boundary_delta = measurement.get("boundaryTokenDelta")
+            if type(total_tokens) is not int or total_tokens <= 0 \
+                    or type(boundary_delta) is not int \
+                    or total_tokens != measurement["componentTokenSum"] + boundary_delta:
+                raise EvidenceError(
+                    f"recorded total token arithmetic is invalid: {task['id']} {run_name}"
+                )
 
     validate_projection_identities(projection, projection_identities)
 
@@ -668,10 +781,17 @@ def validate_recorded(input_path: Path, raw_input: bytes, value: dict[str, Any])
         expected_aggregates["sharded"][key] < expected_aggregates["direct"][key]
         for key in ("p50", "p95", "maximum")
     )
-    if claim.get("scope") != value["claim"]["scope"] \
-            or claim.get("cacheOrBilledTokenSavings") is not False \
-            or claim.get("shardedLowerThanDirect") is not expected_lower:
-        raise EvidenceError("recorded claim boundary is stale")
+    sharded_total = expected_aggregates["sharded"]["maximum"]
+    direct_total = expected_aggregates["direct"]["maximum"]
+    saved = direct_total - sharded_total
+    expected_claim = {
+        **value["claim"],
+        "shardedLowerThanDirect": expected_lower,
+        "absoluteTokensSavedAtMaximum": saved,
+        "relativeSavingsPercentAtMaximum": round(saved * 100 / direct_total, 3),
+    }
+    if claim != expected_claim:
+        raise EvidenceError("recorded claim arithmetic is stale")
     _, recorded_markdown = read_utf8(input_path.parent / RESULTS_NAME)
     if recorded_markdown.encode("utf-8") != render_markdown(evidence):
         raise EvidenceError("RESULTS.md is stale")
