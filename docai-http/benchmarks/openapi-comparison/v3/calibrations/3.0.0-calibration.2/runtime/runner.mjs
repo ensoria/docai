@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 
 import { readTaskPacket } from "./contract.mjs";
 import { deriveCanonicalRun, reconcileCalibrationEvidence, requireReconciliation, verifyCalibrationEvidence } from "./evidence-verifier.mjs";
+import { validateCostEstimate, validateModelResolutions } from "./estimate-cost.mjs";
 import { buildCalibrationSchedule, PRIVATE_DIR, readPlan } from "./paths.mjs";
 import { buildCalibrationPrompts, validatePromptRecord } from "./prompt.mjs";
 import { isExceptionalRun } from "./record.mjs";
@@ -38,6 +39,7 @@ export const CALIBRATION_RUNNER_REVISION_FILES = [
   "docai-http/benchmarks/openapi-comparison/v3/calibrations/3.0.0-calibration.2/runtime/paths.mjs",
   "docai-http/benchmarks/openapi-comparison/v3/calibrations/3.0.0-calibration.2/runtime/strict-json.mjs",
   "docai-http/benchmarks/openapi-comparison/v3/calibrations/3.0.0-calibration.2/runtime/check-plan.mjs",
+  "docai-http/benchmarks/openapi-comparison/v3/calibrations/3.0.0-calibration.2/runtime/estimate-cost.mjs",
   "docai-http/benchmarks/openapi-comparison/v3/calibrations/3.0.0-calibration.2/runtime/build-prompts.mjs",
   "docai-http/benchmarks/openapi-comparison/v3/calibrations/3.0.0-calibration.2/runtime/check-runs.mjs",
   "docai-http/benchmarks/openapi-comparison/v3/calibrations/3.0.0-calibration.2/runtime/run-calibration.mjs",
@@ -127,22 +129,22 @@ export function selectCalibrationPrompts(input) {
 }
 
 export function validateLivePreflight(input) {
-  requirePlainOptions(input, "Live preflight input", ["plan", "prompts", "adapters", "modelResolutions", "costEstimate", "freezeManifest", "validateFreezeArtifacts", "runnerRevision"]);
-  const { plan, prompts, adapters, modelResolutions, costEstimate, freezeManifest, validateFreezeArtifacts, runnerRevision } = input;
+  requirePlainOptions(input, "Live preflight input", ["plan", "prompts", "adapters", "modelResolutions", "costEstimate", "metricsPacket", "freezeManifest", "validateFreezeArtifacts", "runnerRevision"]);
+  const { plan, prompts, adapters, modelResolutions, costEstimate, metricsPacket, freezeManifest, validateFreezeArtifacts, runnerRevision } = input;
   const selected = selectCalibrationPrompts({ plan, prompts });
   validateFrozenPlan(plan);
   const boundAdapters = validateAdapters(plan, adapters, true); requireRevision(runnerRevision);
-  assertPlainJson(modelResolutions, "model resolutions"); assertPlainJson(costEstimate, "cost estimate"); assertPlainJson(freezeManifest, "freeze manifest");
+  assertPlainJson(modelResolutions, "model resolutions"); assertPlainJson(costEstimate, "cost estimate"); assertPlainJson(metricsPacket, "cost metrics"); assertPlainJson(freezeManifest, "freeze manifest");
   if (typeof validateFreezeArtifacts !== "function" || types.isProxy(validateFreezeArtifacts)) throw new TypeError("validateFreezeArtifacts must be a non-Proxy function");
   if (freezeManifest.benchmark_id !== plan.benchmark_id || freezeManifest.plan_version !== plan.plan_version || freezeManifest.status !== "frozen") throw new Error("freeze manifest does not match frozen calibration.2 plan");
-  if (costEstimate.benchmark_id !== plan.benchmark_id || costEstimate.plan_version !== plan.plan_version || costEstimate.calibration?.requests !== REQUEST_COUNT || !Number.isFinite(costEstimate.calibration?.total_tokens_ceiling) || costEstimate.calibration.total_tokens_ceiling < 0 || !Number.isFinite(costEstimate.calibration?.cost_ceiling_usd) || costEstimate.calibration.cost_ceiling_usd < 0) throw new Error("cost estimate requires nonnegative numeric token and cost ceilings for the frozen 24-request calibration");
   validateModelResolutions(plan, modelResolutions);
-  if (validateFreezeArtifacts({ plan, prompts: selected, modelResolutions, costEstimate, freezeManifest, runnerRevision }) !== true) throw new Error("freeze artifact validation failed");
+  validateCostEstimate(readPlan(), costEstimate, modelResolutions, metricsPacket);
+  if (validateFreezeArtifacts({ plan, prompts: selected, modelResolutions, costEstimate, metricsPacket, freezeManifest, runnerRevision }) !== true) throw new Error("freeze artifact validation failed");
   const capability = Object.freeze({ preflight_version: "1", benchmark_id: plan.benchmark_id, plan_version: plan.plan_version, runner_revision: runnerRevision });
   LIVE_PREFLIGHTS.set(capability, Object.freeze({
     plan: clonePlainJson(plan, "frozen preflight plan"),
     prompts: clonePlainJson(selected, "frozen preflight prompts"),
-    models: clonePlainJson(modelResolutions, "frozen preflight models"),
+    models: deepFreeze(clonePlainJson(modelResolutions, "frozen preflight models")),
     adapters: boundAdapters,
     tokenCeiling: costEstimate.calibration.total_tokens_ceiling,
     costCeiling: costEstimate.calibration.cost_ceiling_usd,
@@ -184,13 +186,13 @@ export async function runApprovedCalibration(input) {
     writeCheckpoint(plan, store, state.attempts, state.runs, runnerRevision, clock, null, intentRecord(plan, prompt, number, startedAt, runnerRevision), startedAt);
     let terminal;
     try {
-      const adapterResponse = await preflight.adapters[prompt.target.provider].execute({ prompt, modelResolution: modelResolutions[prompt.target.id] });
+      const adapterResponse = await preflight.adapters[prompt.target.provider].execute({ prompt, modelResolution: modelResolutionForTarget(preflight.models, prompt.target.id) });
       terminal = responseAttempt(plan, prompt, number, startedAt, timestamp(clock), adapterResponse, runnerRevision);
     }
     catch (error) { terminal = error instanceof ProviderTransportError ? errorAttempt(plan, prompt, number, startedAt, timestamp(clock), "transport-error", true, error, runnerRevision) : error instanceof ProviderResponseError ? errorAttempt(plan, prompt, number, startedAt, timestamp(clock), "provider-error", true, error, runnerRevision) : errorAttempt(plan, prompt, number, startedAt, timestamp(clock), "implementation-defect", true, error, runnerRevision); }
     let budgetStop = null;
     if (terminal.status === "response") {
-      const resolution = preflight.models[prompt.target.id];
+      const resolution = modelResolutionForTarget(preflight.models, prompt.target.id);
       if (terminal.response.resolved_model !== resolution.resolved_model) terminal = errorAttempt(plan, prompt, number, startedAt, terminal.ended_at, "implementation-defect", true, new Error("provider resolved model does not match frozen model"), runnerRevision);
       else budgetStop = budgetStopReason([...state.attempts, terminal], preflight);
     }
@@ -307,8 +309,17 @@ function ownDataValue(value, key, name) {
   if (!descriptor || !("value" in descriptor)) throw new TypeError(`${name}.${key} must be own data`);
   return descriptor.value;
 }
-function validateModelResolutions(plan, resolutions) { assertPlainJson(resolutions, "model resolutions"); if (!resolutions || typeof resolutions !== "object" || Array.isArray(resolutions)) throw new TypeError("model resolutions must be a plain object"); for (const target of plan.targets) { const resolution = resolutions[target.id]; const pricing = resolution?.pricing_usd_per_million_tokens; if (!resolution || resolution.target_id !== target.id || resolution.provider !== target.provider || resolution.requested_model !== target.model_id || resolution.resolved_model !== target.model_id || !pricing || !Number.isFinite(pricing.input) || pricing.input < 0 || !Number.isFinite(pricing.output) || pricing.output < 0) throw new Error(`missing exact priced model resolution for target ${target.id}`); } }
-function budgetStopReason(attempts, preflight) { let tokens = 0; let cost = 0; for (const attempt of attempts) { if (attempt.status !== "response") continue; const usage = attempt.response.usage; const pricing = preflight.models[attempt.target_id].pricing_usd_per_million_tokens; tokens += usage.total_tokens; cost += (usage.input_tokens * pricing.input + usage.output_tokens * pricing.output) / 1_000_000; } return tokens >= preflight.tokenCeiling ? "token-ceiling" : cost >= preflight.costCeiling ? "cost-ceiling" : null; }
+function modelResolutionForTarget(modelResolutions, targetId) {
+  const matches = modelResolutions.targets.filter((target) => target.target_id === targetId);
+  if (matches.length !== 1) throw new Error(`missing exact model resolution for target ${targetId}`);
+  return matches[0];
+}
+function budgetStopReason(attempts, preflight) { let tokens = 0; let cost = 0; for (const attempt of attempts) { if (attempt.status !== "response") continue; const usage = attempt.response.usage; const pricing = modelResolutionForTarget(preflight.models, attempt.target_id).pricing_usd_per_million_tokens; tokens += usage.total_tokens; cost += (usage.input_tokens * pricing.input + usage.output_tokens * pricing.output) / 1_000_000; } return tokens >= preflight.tokenCeiling ? "token-ceiling" : cost >= preflight.costCeiling ? "cost-ceiling" : null; }
+function deepFreeze(value) {
+  if (Array.isArray(value)) value.forEach((entry) => deepFreeze(entry));
+  else if (value !== null && typeof value === "object") Object.values(value).forEach((entry) => deepFreeze(entry));
+  return Object.freeze(value);
+}
 function responseAttempt(plan, prompt, number, startedAt, endedAt, response, revision) { try { assertPlainJson(response, "adapter response"); validateResponse(response); return attemptRecord(plan, prompt, number, startedAt, endedAt, "response", true, response, null, revision); } catch (error) { return errorAttempt(plan, prompt, number, startedAt, endedAt, "implementation-defect", true, error, revision); } }
 function errorAttempt(plan, prompt, number, startedAt, endedAt, status, providerCall, error, revision) { return attemptRecord(plan, prompt, number, startedAt, endedAt, status, providerCall, null, safeError(error, status), revision); }
 function attemptRecord(plan, prompt, number, startedAt, endedAt, status, providerCall, response, error, revision) { return clonePlainJson({ record_version: "1", benchmark_id: plan.benchmark_id, plan_version: plan.plan_version, batch_id: BATCH_ID, run_id: prompt.run_id, api_id: prompt.api_id, task_id: prompt.task_id, target_id: prompt.target.id, provider: prompt.target.provider, condition: prompt.condition, repetition: prompt.repetition, attempt_number: number, started_at: startedAt, ended_at: endedAt, status, provider_call: providerCall, response, error, runner_revision: revision }, "attempt record"); }

@@ -30,6 +30,9 @@ const tasks = packet.tasks.filter((task) => plan.calibration.task_ids.includes(t
 const runnerRevision = "sha256:calibration2-runner-test";
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const CLI = path.resolve(scriptDir, "../../benchmarks/openapi-comparison/v3/calibrations/3.0.0-calibration.2/runtime/run-calibration.mjs");
+const checkedInModelResolutions = readJson(path.join(PACKAGE_DIR, "model-resolutions.json"));
+const checkedInCostEstimate = readJson(path.join(PACKAGE_DIR, "cost-estimate.json"));
+const checkedInMetrics = readJson(path.join(PRIVATE_DIR, "contexts", "calibration-metrics.json"));
 
 test("dry run reports the 24 request matrix and does not create store state or call a provider", async () => {
   let calls = 0;
@@ -42,6 +45,23 @@ test("dry run reports the 24 request matrix and does not create store state or c
   assert.equal(result.report.counts.planned, 24);
   assert.equal(result.report.provider_calls, 0);
   assert.equal(result.report.counts.completed, 0);
+  assert.equal(calls, 0);
+});
+
+test("Live preflight binds the checked-in ordered model and cost packets without provider calls", () => {
+  let calls = 0;
+  const capability = validateLivePreflight({
+    plan: frozenPlan(),
+    prompts,
+    adapters: adapters(async () => { calls += 1; throw new Error("provider calls are forbidden"); }),
+    modelResolutions: checkedInModelResolutions,
+    costEstimate: checkedInCostEstimate,
+    metricsPacket: checkedInMetrics,
+    freezeManifest: { benchmark_id: plan.benchmark_id, plan_version: plan.plan_version, status: "frozen" },
+    validateFreezeArtifacts: () => true,
+    runnerRevision,
+  });
+  assert.ok(capability);
   assert.equal(calls, 0);
 });
 
@@ -239,17 +259,13 @@ test("rejected Live preflight leaves an uninitialized FileRunStore absent", asyn
 test("Live preflight rejects any absent API key before minting a capability", () => {
   const adapterSet = adapters(async () => successfulResponse(prompts[0]));
   adapterSet.openai.api_key_status = "absent";
-  const frozenPlan = {
-    ...plan,
-    status: "calibration-frozen",
-    targets: plan.targets.map((target) => ({ ...target, model_id: `${target.id}-model` })),
-  };
   assert.throws(() => validateLivePreflight({
-    plan: frozenPlan,
+    plan: frozenPlan(),
     prompts,
     adapters: adapterSet,
     modelResolutions: resolutions(),
-    costEstimate: { benchmark_id: plan.benchmark_id, plan_version: plan.plan_version, calibration: { requests: 24, total_tokens_ceiling: 1_000_000, cost_ceiling_usd: 1_000_000 } },
+    costEstimate: checkedInCostEstimate,
+    metricsPacket: checkedInMetrics,
     freezeManifest: { benchmark_id: plan.benchmark_id, plan_version: plan.plan_version, status: "frozen" },
     validateFreezeArtifacts: () => true,
     runnerRevision,
@@ -272,11 +288,10 @@ test("Live execution uses the execute function bound when the capability was min
 });
 
 test("a retained budget at its token ceiling stops before a new provider call", async () => {
-  const store = seededOpenStore(3);
+  const store = seededOpenStore({ inputTokens: checkedInCostEstimate.calibration.total_tokens_ceiling });
   let calls = 0;
   const result = await runApprovedCalibration(execution({
     store,
-    tokenCeiling: 3,
     adapters: adapters(async () => { calls += 1; return successfulResponse(prompts[1]); }),
   }));
   assert.equal(calls, 0);
@@ -285,11 +300,10 @@ test("a retained budget at its token ceiling stops before a new provider call", 
 });
 
 test("a retained budget at its cost ceiling stops before a new provider call", async () => {
-  const store = seededOpenStore(3);
+  const store = seededOpenStore({ outputTokens: 130_000 });
   let calls = 0;
   const result = await runApprovedCalibration(execution({
     store,
-    costCeiling: 0.000003,
     adapters: adapters(async () => { calls += 1; return successfulResponse(prompts[1]); }),
   }));
   assert.equal(calls, 0);
@@ -301,8 +315,17 @@ test("a response that reaches its token ceiling stops before another provider ca
   let calls = 0;
   const result = await runApprovedCalibration(execution({
     store,
-    tokenCeiling: 3,
-    adapters: adapters(async ({ prompt }) => { calls += 1; return successfulResponse(prompt); }),
+    adapters: adapters(async ({ prompt }) => {
+      calls += 1;
+      return {
+        ...successfulResponse(prompt),
+        usage: {
+          input_tokens: checkedInCostEstimate.calibration.total_tokens_ceiling,
+          output_tokens: 0,
+          total_tokens: checkedInCostEstimate.calibration.total_tokens_ceiling,
+        },
+      };
+    }),
   }));
   assert.equal(calls, 1);
   assert.equal(result.checkpoint.stop_reason, "token-ceiling");
@@ -579,25 +602,22 @@ test("the versioned CLI reports API-key presence without logging configured valu
   assert.equal(`${result.stdout}${result.stderr}`.includes(secret), false);
 });
 
-function execution({ store, adapters: adapterSet, tokenCeiling = 1_000_000, costCeiling = 1_000_000, clock = () => "2026-09-08T00:00:00.000Z" }) {
-  const frozenPlan = {
-    ...plan,
-    status: "calibration-frozen",
-    targets: plan.targets.map((target) => ({ ...target, model_id: `${target.id}-model` })),
-  };
+function execution({ store, adapters: adapterSet, clock = () => "2026-09-08T00:00:00.000Z" }) {
+  const frozen = frozenPlan();
   const modelResolutions = resolutions();
   const preflight = validateLivePreflight({
-    plan: frozenPlan,
+    plan: frozen,
     prompts,
     adapters: adapterSet,
     modelResolutions,
-    costEstimate: { benchmark_id: plan.benchmark_id, plan_version: plan.plan_version, calibration: { requests: 24, total_tokens_ceiling: tokenCeiling, cost_ceiling_usd: costCeiling } },
+    costEstimate: checkedInCostEstimate,
+    metricsPacket: checkedInMetrics,
     freezeManifest: { benchmark_id: plan.benchmark_id, plan_version: plan.plan_version, status: "frozen" },
     validateFreezeArtifacts: () => true,
     runnerRevision,
   });
   return {
-    plan: frozenPlan,
+    plan: frozen,
     prompts,
     execute: true,
     approval: "3.0.0-calibration.2",
@@ -620,18 +640,7 @@ function adapters(execute) {
 }
 
 function resolutions() {
-  return Object.fromEntries(plan.targets.map((target) => [target.id, {
-    target_id: target.id,
-    provider: target.provider,
-    requested_model: `${target.id}-model`,
-    resolved_model: `${target.id}-model`,
-    pricing_usd_per_million_tokens: { input: 1, output: 1 },
-    request_settings: { json_output_mode: "prompt-only", sampling_parameters: "omitted", max_output_tokens: 8192, tools: false,
-      ...(target.provider === "openai" ? { reasoning_effort: "medium" } : {}),
-      ...(target.provider === "anthropic" ? { thinking: "adaptive" } : {}),
-      ...(target.provider === "google" ? { thinking_level: "medium", grounding: false } : {}),
-    },
-  }]));
+  return structuredClone(checkedInModelResolutions);
 }
 
 function successfulResponse(prompt) {
@@ -639,10 +648,28 @@ function successfulResponse(prompt) {
     content_text: JSON.stringify(taskFor(prompt).private.expected_outcome),
     completion: { complete: true, category: "completed", provider_status: null, stop_reason: "end_turn" },
     usage: { input_tokens: 1, output_tokens: 2, total_tokens: 3 },
-    resolved_model: `${prompt.target.id}-model`,
+    resolved_model: resolutionFor(prompt.target.id).resolved_model,
     provider_request_id: `request-${prompt.calibration_ordinal}`,
     raw_response: { id: `response-${prompt.calibration_ordinal}` },
   };
+}
+
+function frozenPlan() {
+  return {
+    ...plan,
+    status: "calibration-frozen",
+    targets: plan.targets.map((target) => ({ ...target, model_id: resolutionFor(target.id).resolved_model })),
+  };
+}
+
+function resolutionFor(targetId) {
+  const resolution = checkedInModelResolutions.targets.find((target) => target.target_id === targetId);
+  if (!resolution) throw new Error(`missing checked-in resolution for ${targetId}`);
+  return resolution;
+}
+
+function readJson(file) {
+  return JSON.parse(fs.readFileSync(file, "utf8"));
 }
 
 function responseAttempt(prompt) {
@@ -665,10 +692,10 @@ function seededCompleteStore() {
   return store;
 }
 
-function seededOpenStore(totalTokens) {
+function seededOpenStore({ inputTokens = 0, outputTokens = 0 }) {
   const store = new MemoryRunStore();
   const attempt = responseAttempt(prompts[0]);
-  attempt.response.usage = { input_tokens: totalTokens, output_tokens: 0, total_tokens: totalTokens };
+  attempt.response.usage = { input_tokens: inputTokens, output_tokens: outputTokens, total_tokens: inputTokens + outputTokens };
   const run = deriveCanonicalRun({ plan, prompt: prompts[0], task: taskFor(prompts[0]), attempts: [attempt], runnerRevision });
   store.appendAttempt(attempt);
   store.appendRun(run);

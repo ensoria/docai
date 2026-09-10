@@ -35,10 +35,11 @@ async function main() {
   }
   const modelResolutions = readRequiredJson("model-resolutions.json");
   const costEstimate = readRequiredJson("cost-estimate.json");
+  const metricsPacket = readRequiredJson(path.join("private", "contexts", "calibration-metrics.json"));
   const freezeManifest = readRequiredJson("freeze-manifest.json");
   const runnerRevision = buildRunnerRevision();
   const preflight = validateLivePreflight({
-    plan, prompts, adapters, modelResolutions, costEstimate, freezeManifest, runnerRevision,
+    plan, prompts, adapters, modelResolutions, costEstimate, metricsPacket, freezeManifest, runnerRevision,
     validateFreezeArtifacts: () => false,
   });
   const store = new FileRunStore({
@@ -67,9 +68,9 @@ function printPreflight(plan, adapters) {
   console.log(`API key presence: openai=${adapters.openai.api_key_status}, anthropic=${adapters.anthropic.api_key_status}, google=${adapters.google.api_key_status}`);
 }
 
-function readRequiredJson(name) {
-  const file = path.join(PACKAGE_DIR, name);
-  if (!fs.existsSync(file)) throw new Error(`Live calibration requires frozen ${name}`);
+function readRequiredJson(...segments) {
+  const file = path.join(PACKAGE_DIR, ...segments);
+  if (!fs.existsSync(file)) throw new Error(`Live calibration requires ${segments.join("/")}`);
   return JSON.parse(fs.readFileSync(file, "utf8"));
 }
 
