@@ -14,9 +14,13 @@ import sys
 from typing import Any
 
 
-BUILDER_VERSION = "1.0.0"
+BUILDER_VERSION = "1.1.0"
 EVIDENCE_NAME = "retrieval-runs.json"
 RESULTS_NAME = "RESULTS.md"
+EMISSION_DECISIONS = {
+    "positive": "emit-source-shards",
+    "negative": "retain-direct-sources",
+}
 TRACE_FIELDS = (
     "catalogForms",
     "consideredRootRows",
@@ -29,6 +33,7 @@ TRACE_FIELDS = (
     "requiredContextPaths",
     "consideredSupplementalContextPaths",
     "loadedSupplementalContextPaths",
+    "loadAllSources",
     "loadAllFallback",
     "fullProfileFallback",
     "wholeConventionsFallback",
@@ -105,8 +110,8 @@ def validate_input(input_path: Path, value: dict[str, Any]) -> None:
         "version": "0.13.0",
         "encoding": "o200k_base",
     }
-    if value.get("schemaVersion") != "1.0.0":
-        raise EvidenceError("schemaVersion must be 1.0.0")
+    if value.get("schemaVersion") != "1.1.0":
+        raise EvidenceError("schemaVersion must be 1.1.0")
     if value.get("docaiMessaging") != "0.17.1":
         raise EvidenceError("docaiMessaging must be 0.17.1")
     if value.get("tokenizer") != expected_tokenizer:
@@ -121,12 +126,25 @@ def validate_input(input_path: Path, value: dict[str, Any]) -> None:
     if not isinstance(tasks, list) or len(tasks) == 0:
         raise EvidenceError("tasks must contain at least one task")
     task_ids: set[str] = set()
+    task_control_kinds: dict[str, str] = {}
     for task in tasks:
         if not isinstance(task, dict) or not isinstance(task.get("id"), str):
             raise EvidenceError("every task must have a string id")
         if task["id"] in task_ids:
             raise EvidenceError(f"duplicate task id: {task['id']}")
         task_ids.add(task["id"])
+        control = task.get("control")
+        if not isinstance(control, dict) or set(control) != {
+            "kind", "expectedEmissionDecision"
+        }:
+            raise EvidenceError(f"task {task['id']} control metadata is invalid")
+        control_kind = control.get("kind")
+        if control_kind not in EMISSION_DECISIONS \
+                or control.get("expectedEmissionDecision") != EMISSION_DECISIONS[control_kind]:
+            raise EvidenceError(f"task {task['id']} control expectation is invalid")
+        if control_kind in task_control_kinds:
+            raise EvidenceError(f"duplicate {control_kind} control task")
+        task_control_kinds[control_kind] = task["id"]
         if not isinstance(task.get("selectionInput"), dict):
             raise EvidenceError(f"task {task['id']} selectionInput must be an object")
         contributions = task.get("catalogCellContributions")
@@ -152,6 +170,22 @@ def validate_input(input_path: Path, value: dict[str, Any]) -> None:
             for field in TRACE_FIELDS:
                 if field not in run:
                     raise EvidenceError(f"task {task['id']} run {run_name} omits {field}")
+
+    if set(task_control_kinds) != set(EMISSION_DECISIONS):
+        raise EvidenceError("tasks must contain exactly one positive and one negative control")
+    claim = value.get("claim")
+    if not isinstance(claim, dict) or set(claim) != {
+        "scope", "taskIds", "cacheOrBilledTokenSavings"
+    } or not isinstance(claim.get("scope"), str) or claim["scope"] == "" \
+            or claim.get("cacheOrBilledTokenSavings") is not False:
+        raise EvidenceError("claim metadata is invalid")
+    claim_task_ids = claim.get("taskIds")
+    positive_task_ids = [
+        task["id"] for task in tasks if task["control"]["kind"] == "positive"
+    ]
+    if not isinstance(claim_task_ids, list) \
+            or claim_task_ids != positive_task_ids:
+        raise EvidenceError("claim taskIds must name every positive control in task order")
 
     requirements_path = input_path.parent / "requirements.txt"
     _, requirements = read_utf8(requirements_path)
@@ -460,6 +494,63 @@ def aggregate(tasks: list[dict[str, Any]], run_name: str) -> dict[str, int]:
     }
 
 
+def emission_decision(runs: dict[str, dict[str, Any]]) -> str:
+    if runs["sharded"]["totalTaskInputTokens"] < runs["direct"]["totalTaskInputTokens"]:
+        return "emit-source-shards"
+    return "retain-direct-sources"
+
+
+def build_claim(
+    input_claim: dict[str, Any],
+    tasks: list[dict[str, Any]],
+    aggregates: dict[str, dict[str, int]],
+) -> dict[str, Any]:
+    tasks_by_id = {task["id"]: task for task in tasks}
+    claim_tasks = [tasks_by_id[task_id] for task_id in input_claim["taskIds"]]
+    claim_aggregates = {
+        run_name: aggregate(claim_tasks, run_name)
+        for run_name in ("sharded", "direct")
+    }
+    sharded_total = claim_aggregates["sharded"]["maximum"]
+    direct_total = claim_aggregates["direct"]["maximum"]
+    saved = direct_total - sharded_total
+    task_regressions = []
+    for task in tasks:
+        sharded = task["runs"]["sharded"]["totalTaskInputTokens"]
+        direct = task["runs"]["direct"]["totalTaskInputTokens"]
+        if sharded >= direct:
+            task_regressions.append({
+                "taskId": task["id"],
+                "shardedTotalTaskInputTokens": sharded,
+                "directTotalTaskInputTokens": direct,
+                "tokenDelta": sharded - direct,
+            })
+    aggregate_regressions = []
+    for statistic in ("p50", "p95", "maximum"):
+        sharded = aggregates["sharded"][statistic]
+        direct = aggregates["direct"][statistic]
+        if sharded >= direct:
+            aggregate_regressions.append({
+                "statistic": statistic,
+                "shardedTotalTaskInputTokens": sharded,
+                "directTotalTaskInputTokens": direct,
+                "tokenDelta": sharded - direct,
+            })
+    scoped_lower = all(
+        claim_aggregates["sharded"][key] < claim_aggregates["direct"][key]
+        for key in ("p50", "p95", "maximum")
+    )
+    return {
+        **input_claim,
+        "shardedLowerThanDirect": scoped_lower,
+        "absoluteTokensSavedAtMaximum": saved,
+        "relativeSavingsPercentAtMaximum": round(saved * 100 / direct_total, 3),
+        "unqualifiedSavingsSupported": not task_regressions and not aggregate_regressions,
+        "disclosedTaskRegressions": task_regressions,
+        "disclosedAggregateRegressions": aggregate_regressions,
+    }
+
+
 def build_evidence(input_path: Path, raw_input: bytes, value: dict[str, Any]) -> dict[str, Any]:
     validate_input(input_path, value)
     encoding = tokenizer_for(value["tokenizer"])
@@ -482,9 +573,19 @@ def build_evidence(input_path: Path, raw_input: bytes, value: dict[str, Any]) ->
             )
             for run_name in ("sharded", "direct")
         }
+        observed_decision = emission_decision(runs)
+        expected_decision = task["control"]["expectedEmissionDecision"]
+        if observed_decision != expected_decision:
+            raise EvidenceError(
+                f"task {task['id']} expected {expected_decision} but observed {observed_decision}"
+            )
         projection_identities.extend(run["identity"] for run in runs.values())
         measured_tasks.append({
             "id": task["id"],
+            "control": {
+                **task["control"],
+                "observedEmissionDecision": observed_decision,
+            },
             "selectionInput": task["selectionInput"],
             "catalogCellContributions": task["catalogCellContributions"],
             "runs": runs,
@@ -495,18 +596,7 @@ def build_evidence(input_path: Path, raw_input: bytes, value: dict[str, Any]) ->
         run_name: aggregate(measured_tasks, run_name)
         for run_name in ("sharded", "direct")
     }
-    sharded_total = aggregates["sharded"]["maximum"]
-    direct_total = aggregates["direct"]["maximum"]
-    saved = direct_total - sharded_total
-    claim = {
-        **value["claim"],
-        "shardedLowerThanDirect": all(
-            aggregates["sharded"][key] < aggregates["direct"][key]
-            for key in ("p50", "p95", "maximum")
-        ),
-        "absoluteTokensSavedAtMaximum": saved,
-        "relativeSavingsPercentAtMaximum": round(saved * 100 / direct_total, 3),
-    }
+    claim = build_claim(value["claim"], measured_tasks, aggregates)
     return {
         "schemaVersion": value["schemaVersion"],
         "generatedBy": {
@@ -548,21 +638,27 @@ def render_markdown(value: dict[str, Any]) -> bytes:
         f"- DocAI Messaging: `{value['docaiMessaging']}`",
         f"- Projection ID: `{value['projection']['projectionId']}`",
         f"- Projection digest: `{value['projection']['manifestDigest']}`",
+        f"- Evidence classification: `{value['projection']['classification']}`",
         f"- Tokenizer: `{tokenizer['library']}=={tokenizer['version']}` / `{tokenizer['encoding']}`",
         f"- Evaluated profiles: `{', '.join(value['evaluatedProfiles'])}`",
         f"- Token budget: `{value['tokenBudget']}`",
         f"- Claim scope: `{claim['scope']}`",
+        f"- Claim task IDs: `{', '.join(claim['taskIds'])}`",
         "- Cache or billed-token savings claim: `no`",
         "",
         "## Per-task totals",
         "",
-        "| Task | Sharded | Direct | Difference |",
-        "|---|---:|---:|---:|",
+        "| Task | Control | Emission decision | Sharded | Direct | Difference |",
+        "|---|---|---|---:|---:|---:|",
     ]
     for task in value["tasks"]:
         sharded = task["runs"]["sharded"]["totalTaskInputTokens"]
         direct = task["runs"]["direct"]["totalTaskInputTokens"]
-        lines.append(f"| `{task['id']}` | {sharded} | {direct} | {sharded - direct} |")
+        lines.append(
+            f"| `{task['id']}` | {task['control']['kind']} | "
+            f"`{task['control']['observedEmissionDecision']}` | "
+            f"{sharded} | {direct} | {sharded - direct} |"
+        )
     lines.extend([
         "",
         "## Nearest-rank aggregates",
@@ -591,16 +687,34 @@ def render_markdown(value: dict[str, Any]) -> bytes:
             f"- Transitive shards: `{', '.join(run['transitiveSourceShards'])}`",
             f"- Unloaded shards: `{', '.join(run['unloadedSourceShards'])}`",
             f"- Fixed point resolved IDs: `{', '.join(run['fixedPoint']['resolvedIds'])}`",
-            "- Load-all, full-profile, and whole-CONVENTIONS fallbacks: `no`",
+            f"- Load all sources: `{'yes' if run['loadAllSources'] else 'no'}`",
+            f"- Load-all fallback: `{'yes' if run['loadAllFallback'] else 'no'}`",
+            f"- Full-profile fallback: `{'yes' if run['fullProfileFallback'] else 'no'}`",
+            "- Whole-CONVENTIONS fallback: "
+            f"`{'yes' if run['wholeConventionsFallback'] else 'no'}`",
             "",
         ])
     outcome = "supported" if claim["shardedLowerThanDirect"] else "not supported"
+    unqualified = "yes" if claim["unqualifiedSavingsSupported"] else "no"
     lines.extend([
         "## Claim boundary",
         "",
         f"The scoped Source Shards emission claim is **{outcome}**: maximum savings are "
         f"{claim['absoluteTokensSavedAtMaximum']} tokens "
         f"({claim['relativeSavingsPercentAtMaximum']:.3f}%).",
+        f"- Unqualified savings supported across all controls: `{unqualified}`",
+        "- Disclosed task regressions: " + (
+            ", ".join(
+                f"`{item['taskId']}` ({item['tokenDelta']:+d} tokens)"
+                for item in claim["disclosedTaskRegressions"]
+            ) or "`none`"
+        ),
+        "- Disclosed aggregate regressions: " + (
+            ", ".join(
+                f"`{item['statistic']}` ({item['tokenDelta']:+d} tokens)"
+                for item in claim["disclosedAggregateRegressions"]
+            ) or "`none`"
+        ),
         "This is not an unqualified DocAI, cache, billed-token, compact-profile, or complete-surface savings claim.",
         "",
         "The measurement counts the canonical UTF-8 envelope described in `measurement-input.json`. "
@@ -676,7 +790,7 @@ def validate_recorded(input_path: Path, raw_input: bytes, value: dict[str, Any])
         recorded_runs = recorded_task.get("runs") if isinstance(recorded_task, dict) else None
         if not isinstance(recorded_task, dict) \
                 or set(recorded_task) != {
-                    "id", "selectionInput", "catalogCellContributions", "runs"
+                    "id", "control", "selectionInput", "catalogCellContributions", "runs"
                 } \
                 or not isinstance(recorded_runs, dict) \
                 or set(recorded_runs) != {"sharded", "direct"} \
@@ -767,6 +881,14 @@ def validate_recorded(input_path: Path, raw_input: bytes, value: dict[str, Any])
                 raise EvidenceError(
                     f"recorded total token arithmetic is invalid: {task['id']} {run_name}"
                 )
+        expected_control = {
+            **task["control"],
+            "observedEmissionDecision": emission_decision(recorded_runs),
+        }
+        if recorded_task.get("control") != expected_control \
+                or expected_control["observedEmissionDecision"] \
+                != expected_control["expectedEmissionDecision"]:
+            raise EvidenceError(f"recorded control outcome is stale: {task['id']}")
 
     validate_projection_identities(projection, projection_identities)
 
@@ -776,21 +898,9 @@ def validate_recorded(input_path: Path, raw_input: bytes, value: dict[str, Any])
     }
     if evidence.get("aggregates") != expected_aggregates:
         raise EvidenceError("recorded aggregates are stale")
-    claim = evidence.get("claim", {})
-    expected_lower = all(
-        expected_aggregates["sharded"][key] < expected_aggregates["direct"][key]
-        for key in ("p50", "p95", "maximum")
-    )
-    sharded_total = expected_aggregates["sharded"]["maximum"]
-    direct_total = expected_aggregates["direct"]["maximum"]
-    saved = direct_total - sharded_total
-    expected_claim = {
-        **value["claim"],
-        "shardedLowerThanDirect": expected_lower,
-        "absoluteTokensSavedAtMaximum": saved,
-        "relativeSavingsPercentAtMaximum": round(saved * 100 / direct_total, 3),
-    }
-    if claim != expected_claim:
+    if evidence.get("claim") != build_claim(
+        value["claim"], recorded_tasks, expected_aggregates
+    ):
         raise EvidenceError("recorded claim arithmetic is stale")
     _, recorded_markdown = read_utf8(input_path.parent / RESULTS_NAME)
     if recorded_markdown.encode("utf-8") != render_markdown(evidence):

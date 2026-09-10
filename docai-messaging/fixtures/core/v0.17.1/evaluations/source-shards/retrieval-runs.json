@@ -1,12 +1,12 @@
 {
-  "schemaVersion": "1.0.0",
+  "schemaVersion": "1.1.0",
   "generatedBy": {
     "tool": "build-source-shard-token-evidence.py",
-    "version": "1.0.0"
+    "version": "1.1.0"
   },
   "measurementInput": {
     "path": "measurement-input.json",
-    "sha256": "sha256:97ccecab21064839f44de36f205d91ce75866d261f2b25bf2b320120a62ab0ec"
+    "sha256": "sha256:65c912a6cdfbcb0d5d0a3f7cfd105d89f3576127dc5aebdc7692f4346fe0899f"
   },
   "docaiMessaging": "0.17.1",
   "projection": {
@@ -53,6 +53,11 @@
   "tasks": [
     {
       "id": "resolve-source-b-provenance",
+      "control": {
+        "kind": "positive",
+        "expectedEmissionDecision": "emit-source-shards",
+        "observedEmissionDecision": "emit-source-shards"
+      },
       "selectionInput": {
         "documentPath": "CONVENTIONS.md",
         "sourceRefs": [
@@ -126,6 +131,7 @@
           "requiredContextPaths": [],
           "consideredSupplementalContextPaths": [],
           "loadedSupplementalContextPaths": [],
+          "loadAllSources": false,
           "loadAllFallback": false,
           "fullProfileFallback": false,
           "wholeConventionsFallback": false,
@@ -162,16 +168,16 @@
             }
           ],
           "measurement": {
-            "envelopeBytes": 5736,
-            "envelopeSha256": "sha256:a92f4ffc861473d4d8c5500223c78bca292d5ca12543cdb5091bae55bce8df0b",
-            "sharedContextTokens": 42,
+            "envelopeBytes": 5740,
+            "envelopeSha256": "sha256:142630d0ea49e36de52ff6cc7bc9abfb5ba20810a6ea7a32f4c9b198f99ab9d7",
+            "sharedContextTokens": 38,
             "formatSpecificInstructionTokens": 69,
-            "toolResultContextTokens": 304,
+            "toolResultContextTokens": 310,
             "documentTokens": 1257,
-            "componentTokenSum": 1672,
+            "componentTokenSum": 1674,
             "boundaryTokenDelta": 0
           },
-          "totalTaskInputTokens": 1672
+          "totalTaskInputTokens": 1674
         },
         "direct": {
           "documentSet": "document-sets/direct",
@@ -208,6 +214,7 @@
           "requiredContextPaths": [],
           "consideredSupplementalContextPaths": [],
           "loadedSupplementalContextPaths": [],
+          "loadAllSources": false,
           "loadAllFallback": false,
           "fullProfileFallback": false,
           "wholeConventionsFallback": false,
@@ -226,37 +233,351 @@
             }
           ],
           "measurement": {
-            "envelopeBytes": 7692,
-            "envelopeSha256": "sha256:3bdc66217fe4497e6ca41563380a7868705e7f6245f27c9336115c58b387738f",
-            "sharedContextTokens": 42,
+            "envelopeBytes": 7696,
+            "envelopeSha256": "sha256:535dcc1ee6b9325572cb0e4bb6b138439ef131b31bb8985afba26b8e1ed60c4c",
+            "sharedContextTokens": 38,
             "formatSpecificInstructionTokens": 43,
-            "toolResultContextTokens": 201,
+            "toolResultContextTokens": 207,
             "documentTokens": 1509,
-            "componentTokenSum": 1795,
+            "componentTokenSum": 1797,
             "boundaryTokenDelta": 0
           },
-          "totalTaskInputTokens": 1795
+          "totalTaskInputTokens": 1797
+        }
+      }
+    },
+    {
+      "id": "resolve-all-source-provenance",
+      "control": {
+        "kind": "negative",
+        "expectedEmissionDecision": "retain-direct-sources",
+        "observedEmissionDecision": "retain-direct-sources"
+      },
+      "selectionInput": {
+        "documentPath": "INDEX.md",
+        "sourceRefs": "all"
+      },
+      "catalogCellContributions": [
+        {
+          "providerSourceId": "z",
+          "targetSourceId": "b",
+          "column": "Location",
+          "value": "sources/b-authoritative-messaging-contract-reference.json"
+        }
+      ],
+      "runs": {
+        "sharded": {
+          "documentSet": "document-sets/sharded",
+          "baseline": false,
+          "identity": {
+            "setId": "b32:qswwnrmbo3s6ke5stvknx6qzya",
+            "setDigest": "sha256:84ad66c58176e5e513b29d54dbfa19c069fb77d136cbcf324fd42d13230885f8",
+            "projectionId": "b32:472fl7j3appoqc7pslwez2wwlq",
+            "projectionDigest": "sha256:e7f455fd3b03dee80bef92ec4cead65c8ad9d7a784ad216dd531495aa6ee860e"
+          },
+          "catalogForms": {
+            "Sources": "sharded",
+            "Operations": "direct",
+            "Workflows": "direct",
+            "Unprojected Operations": "absent"
+          },
+          "consideredRootRows": [
+            "indexes/sources-a-c.md",
+            "indexes/sources-b.md",
+            "indexes/sources-d-y.md",
+            "indexes/sources-z.md"
+          ],
+          "loadedSourceShards": [
+            "indexes/sources-a-c.md",
+            "indexes/sources-b.md",
+            "indexes/sources-d-y.md",
+            "indexes/sources-z.md"
+          ],
+          "matchingSourceShards": [
+            "indexes/sources-a-c.md",
+            "indexes/sources-b.md",
+            "indexes/sources-d-y.md",
+            "indexes/sources-z.md"
+          ],
+          "falsePositiveSourceShards": [],
+          "transitiveSourceShards": [],
+          "unloadedSourceShards": [],
+          "fixedPoint": {
+            "requestedIds": [
+              "a",
+              "b",
+              "c",
+              "d",
+              "e",
+              "f",
+              "g",
+              "h",
+              "i",
+              "j",
+              "k",
+              "l",
+              "m",
+              "n",
+              "o",
+              "p",
+              "q",
+              "r",
+              "s",
+              "t",
+              "u",
+              "v",
+              "w",
+              "x",
+              "y",
+              "z"
+            ],
+            "resolvedIds": [
+              "a",
+              "b",
+              "c",
+              "d",
+              "e",
+              "f",
+              "g",
+              "h",
+              "i",
+              "j",
+              "k",
+              "l",
+              "m",
+              "n",
+              "o",
+              "p",
+              "q",
+              "r",
+              "s",
+              "t",
+              "u",
+              "v",
+              "w",
+              "x",
+              "y",
+              "z"
+            ],
+            "loadedPaths": [
+              "indexes/sources-a-c.md",
+              "indexes/sources-b.md",
+              "indexes/sources-d-y.md",
+              "indexes/sources-z.md"
+            ]
+          },
+          "requiredContextPaths": [],
+          "consideredSupplementalContextPaths": [],
+          "loadedSupplementalContextPaths": [],
+          "loadAllSources": true,
+          "loadAllFallback": false,
+          "fullProfileFallback": false,
+          "wholeConventionsFallback": false,
+          "loadedDocuments": [
+            {
+              "path": "INDEX.md",
+              "bytes": 896,
+              "sha256": "sha256:04e97e59e77dc8d5c6db4a4285f299d03c77a3b6045d882337bcbbf219964830",
+              "tokens": 292
+            },
+            {
+              "path": "indexes/sources-a-c.md",
+              "bytes": 603,
+              "sha256": "sha256:4164d4cd84144538ac8e7de1be64249b8e8c9b7723ac18f73e26f6291c440109",
+              "tokens": 173
+            },
+            {
+              "path": "indexes/sources-b.md",
+              "bytes": 490,
+              "sha256": "sha256:2599d41ab67188dc5445586d1a60d78ff9772e38e4135c82d84ca8b08bcfd516",
+              "tokens": 150
+            },
+            {
+              "path": "indexes/sources-d-y.md",
+              "bytes": 4755,
+              "sha256": "sha256:c48f4f3dd57a07a4d011c95db9bc1a5e58704a105e9a9d4241ee00c4c81c5138",
+              "tokens": 1047
+            },
+            {
+              "path": "indexes/sources-z.md",
+              "bytes": 493,
+              "sha256": "sha256:24e5b6dc96623df53021cc3f5bcab045594367aa218251711b358e2752853d55",
+              "tokens": 150
+            }
+          ],
+          "measurement": {
+            "envelopeBytes": 9897,
+            "envelopeSha256": "sha256:66f7170865333450bdda58073fd707d4e1ac121707814b09138362caecc1cabd",
+            "sharedContextTokens": 38,
+            "formatSpecificInstructionTokens": 45,
+            "toolResultContextTokens": 409,
+            "documentTokens": 2116,
+            "componentTokenSum": 2608,
+            "boundaryTokenDelta": 0
+          },
+          "totalTaskInputTokens": 2608
+        },
+        "direct": {
+          "documentSet": "document-sets/direct",
+          "baseline": true,
+          "identity": {
+            "setId": "b32:xkwky57kd5774at3xig4cngdxy",
+            "setDigest": "sha256:baacac77ea1f7ffe027bba0dc134c3beb3711ec2f6d9e284c644872872696ffd",
+            "projectionId": "b32:472fl7j3appoqc7pslwez2wwlq",
+            "projectionDigest": "sha256:e7f455fd3b03dee80bef92ec4cead65c8ad9d7a784ad216dd531495aa6ee860e"
+          },
+          "catalogForms": {
+            "Sources": "direct",
+            "Operations": "direct",
+            "Workflows": "direct",
+            "Unprojected Operations": "absent"
+          },
+          "consideredRootRows": [],
+          "loadedSourceShards": [],
+          "matchingSourceShards": [],
+          "falsePositiveSourceShards": [],
+          "transitiveSourceShards": [],
+          "unloadedSourceShards": [],
+          "fixedPoint": {
+            "requestedIds": [
+              "a",
+              "b",
+              "c",
+              "d",
+              "e",
+              "f",
+              "g",
+              "h",
+              "i",
+              "j",
+              "k",
+              "l",
+              "m",
+              "n",
+              "o",
+              "p",
+              "q",
+              "r",
+              "s",
+              "t",
+              "u",
+              "v",
+              "w",
+              "x",
+              "y",
+              "z"
+            ],
+            "resolvedIds": [
+              "a",
+              "b",
+              "c",
+              "d",
+              "e",
+              "f",
+              "g",
+              "h",
+              "i",
+              "j",
+              "k",
+              "l",
+              "m",
+              "n",
+              "o",
+              "p",
+              "q",
+              "r",
+              "s",
+              "t",
+              "u",
+              "v",
+              "w",
+              "x",
+              "y",
+              "z"
+            ],
+            "loadedPaths": [
+              "INDEX.md"
+            ]
+          },
+          "requiredContextPaths": [],
+          "consideredSupplementalContextPaths": [],
+          "loadedSupplementalContextPaths": [],
+          "loadAllSources": true,
+          "loadAllFallback": false,
+          "fullProfileFallback": false,
+          "wholeConventionsFallback": false,
+          "loadedDocuments": [
+            {
+              "path": "INDEX.md",
+              "bytes": 5344,
+              "sha256": "sha256:0a57afadd825d8fc7c3ff92933be9fbd545cdb299b9690665a1625c58925c5ee",
+              "tokens": 1187
+            }
+          ],
+          "measurement": {
+            "envelopeBytes": 7040,
+            "envelopeSha256": "sha256:fb1d0c2fb84deedcf826b67421d7dcba99b2ec671d3f3544ec40a3ba55942225",
+            "sharedContextTokens": 38,
+            "formatSpecificInstructionTokens": 40,
+            "toolResultContextTokens": 306,
+            "documentTokens": 1259,
+            "componentTokenSum": 1643,
+            "boundaryTokenDelta": 0
+          },
+          "totalTaskInputTokens": 1643
         }
       }
     }
   ],
   "aggregates": {
     "sharded": {
-      "p50": 1672,
-      "p95": 1672,
-      "maximum": 1672
+      "p50": 1674,
+      "p95": 2608,
+      "maximum": 2608
     },
     "direct": {
-      "p50": 1795,
-      "p95": 1795,
-      "maximum": 1795
+      "p50": 1643,
+      "p95": 1797,
+      "maximum": 1797
     }
   },
   "claim": {
     "scope": "exact source b resolution",
+    "taskIds": [
+      "resolve-source-b-provenance"
+    ],
     "cacheOrBilledTokenSavings": false,
     "shardedLowerThanDirect": true,
     "absoluteTokensSavedAtMaximum": 123,
-    "relativeSavingsPercentAtMaximum": 6.852
+    "relativeSavingsPercentAtMaximum": 6.845,
+    "unqualifiedSavingsSupported": false,
+    "disclosedTaskRegressions": [
+      {
+        "taskId": "resolve-all-source-provenance",
+        "shardedTotalTaskInputTokens": 2608,
+        "directTotalTaskInputTokens": 1643,
+        "tokenDelta": 965
+      }
+    ],
+    "disclosedAggregateRegressions": [
+      {
+        "statistic": "p50",
+        "shardedTotalTaskInputTokens": 1674,
+        "directTotalTaskInputTokens": 1643,
+        "tokenDelta": 31
+      },
+      {
+        "statistic": "p95",
+        "shardedTotalTaskInputTokens": 2608,
+        "directTotalTaskInputTokens": 1797,
+        "tokenDelta": 811
+      },
+      {
+        "statistic": "maximum",
+        "shardedTotalTaskInputTokens": 2608,
+        "directTotalTaskInputTokens": 1797,
+        "tokenDelta": 811
+      }
+    ]
   }
 }

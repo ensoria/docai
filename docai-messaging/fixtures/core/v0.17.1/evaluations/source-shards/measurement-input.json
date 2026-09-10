@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "1.0.0",
+  "schemaVersion": "1.1.0",
   "docaiMessaging": "0.17.1",
   "projectionManifest": "projection-input-manifest.json",
   "evaluatedProfiles": ["full"],
@@ -14,16 +14,21 @@
   "normalizationBoundary": "No document bytes are normalized. Envelope labels and JSON tool-result context use UTF-8, LF, sorted keys, compact separators, and ensure_ascii=false.",
   "readerAccountingBoundary": "No preinstalled DocAI or baseline reader is excluded. Representation-specific instructions and selection/resolution tool-result context are counted in their respective runs.",
   "sharedContext": {
-    "taskPrompt": "Resolve the authoritative source provenance needed to interpret the selected CONVENTIONS.md contract.",
+    "taskPrompt": "Resolve the authoritative source provenance requested by the task selection input.",
     "expectedCodeContext": ""
   },
   "claim": {
     "scope": "exact source b resolution",
+    "taskIds": ["resolve-source-b-provenance"],
     "cacheOrBilledTokenSavings": false
   },
   "tasks": [
     {
       "id": "resolve-source-b-provenance",
+      "control": {
+        "kind": "positive",
+        "expectedEmissionDecision": "emit-source-shards"
+      },
       "selectionInput": {
         "documentPath": "CONVENTIONS.md",
         "sourceRefs": ["b"]
@@ -84,6 +89,7 @@
           "requiredContextPaths": [],
           "consideredSupplementalContextPaths": [],
           "loadedSupplementalContextPaths": [],
+          "loadAllSources": false,
           "loadAllFallback": false,
           "fullProfileFallback": false,
           "wholeConventionsFallback": false
@@ -113,6 +119,126 @@
           "requiredContextPaths": [],
           "consideredSupplementalContextPaths": [],
           "loadedSupplementalContextPaths": [],
+          "loadAllSources": false,
+          "loadAllFallback": false,
+          "fullProfileFallback": false,
+          "wholeConventionsFallback": false
+        }
+      }
+    },
+    {
+      "id": "resolve-all-source-provenance",
+      "control": {
+        "kind": "negative",
+        "expectedEmissionDecision": "retain-direct-sources"
+      },
+      "selectionInput": {
+        "documentPath": "INDEX.md",
+        "sourceRefs": "all"
+      },
+      "catalogCellContributions": [
+        {
+          "providerSourceId": "z",
+          "targetSourceId": "b",
+          "column": "Location",
+          "value": "sources/b-authoritative-messaging-contract-reference.json"
+        }
+      ],
+      "runs": {
+        "sharded": {
+          "documentSet": "document-sets/sharded",
+          "baseline": false,
+          "catalogForms": {
+            "Sources": "sharded",
+            "Operations": "direct",
+            "Workflows": "direct",
+            "Unprojected Operations": "absent"
+          },
+          "formatSpecificInstructions": "For source_refs: all, load every Source Shards Details path exactly once and resolve every source row without reloading contributor cycles.",
+          "consideredRootRows": [
+            "indexes/sources-a-c.md",
+            "indexes/sources-b.md",
+            "indexes/sources-d-y.md",
+            "indexes/sources-z.md"
+          ],
+          "loadedDocumentPaths": [
+            "INDEX.md",
+            "indexes/sources-a-c.md",
+            "indexes/sources-b.md",
+            "indexes/sources-d-y.md",
+            "indexes/sources-z.md"
+          ],
+          "loadedSourceShards": [
+            "indexes/sources-a-c.md",
+            "indexes/sources-b.md",
+            "indexes/sources-d-y.md",
+            "indexes/sources-z.md"
+          ],
+          "matchingSourceShards": [
+            "indexes/sources-a-c.md",
+            "indexes/sources-b.md",
+            "indexes/sources-d-y.md",
+            "indexes/sources-z.md"
+          ],
+          "falsePositiveSourceShards": [],
+          "transitiveSourceShards": [],
+          "unloadedSourceShards": [],
+          "fixedPoint": {
+            "requestedIds": [
+              "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m",
+              "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"
+            ],
+            "resolvedIds": [
+              "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m",
+              "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"
+            ],
+            "loadedPaths": [
+              "indexes/sources-a-c.md",
+              "indexes/sources-b.md",
+              "indexes/sources-d-y.md",
+              "indexes/sources-z.md"
+            ]
+          },
+          "requiredContextPaths": [],
+          "consideredSupplementalContextPaths": [],
+          "loadedSupplementalContextPaths": [],
+          "loadAllSources": true,
+          "loadAllFallback": false,
+          "fullProfileFallback": false,
+          "wholeConventionsFallback": false
+        },
+        "direct": {
+          "documentSet": "document-sets/direct",
+          "baseline": true,
+          "catalogForms": {
+            "Sources": "direct",
+            "Operations": "direct",
+            "Workflows": "direct",
+            "Unprojected Operations": "absent"
+          },
+          "formatSpecificInstructions": "For source_refs: all, resolve every source ID from the direct Sources table already loaded in INDEX.md.",
+          "consideredRootRows": [],
+          "loadedDocumentPaths": ["INDEX.md"],
+          "loadedSourceShards": [],
+          "matchingSourceShards": [],
+          "falsePositiveSourceShards": [],
+          "transitiveSourceShards": [],
+          "unloadedSourceShards": [],
+          "fixedPoint": {
+            "requestedIds": [
+              "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m",
+              "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"
+            ],
+            "resolvedIds": [
+              "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m",
+              "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"
+            ],
+            "loadedPaths": ["INDEX.md"]
+          },
+          "requiredContextPaths": [],
+          "consideredSupplementalContextPaths": [],
+          "loadedSupplementalContextPaths": [],
+          "loadAllSources": true,
           "loadAllFallback": false,
           "fullProfileFallback": false,
           "wholeConventionsFallback": false

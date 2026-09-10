@@ -144,7 +144,7 @@ test("covers source-shard token measurement with exact transitive and false-posi
     }]
   );
 
-  assert.equal(input.schemaVersion, "1.0.0");
+  assert.equal(input.schemaVersion, "1.1.0");
   assert.equal(input.docaiMessaging, "0.17.1");
   assert.deepEqual(input.tokenizer, {
     library: "tiktoken",
@@ -156,7 +156,7 @@ test("covers source-shard token measurement with exact transitive and false-posi
 
   assert.equal(evidence.schemaVersion, input.schemaVersion);
   assert.deepEqual(evidence.tokenizer, input.tokenizer);
-  assert.equal(evidence.tasks.length, 1);
+  assert.equal(evidence.tasks.length, 2);
   const measuredTask = evidence.tasks[0];
   assert.equal(measuredTask.id, task.id);
   assert.deepEqual(
@@ -172,9 +172,10 @@ test("covers source-shard token measurement with exact transitive and false-posi
   assert.equal(measuredTask.runs.direct.totalTaskInputTokens <= input.tokenBudget, true);
   assert.equal(evidence.claim.shardedLowerThanDirect, true);
   assert.equal(evidence.claim.cacheOrBilledTokenSavings, false);
-  assert.equal(evidence.aggregates.sharded.p50, measuredTask.runs.sharded.totalTaskInputTokens);
-  assert.equal(evidence.aggregates.sharded.p95, measuredTask.runs.sharded.totalTaskInputTokens);
-  assert.equal(evidence.aggregates.sharded.maximum, measuredTask.runs.sharded.totalTaskInputTokens);
+  assert.deepEqual(evidence.aggregates, {
+    sharded: { p50: 1674, p95: 2608, maximum: 2608 },
+    direct: { p50: 1643, p95: 1797, maximum: 1797 }
+  });
 
   const validation = spawnSync(
     "python3",
@@ -182,6 +183,141 @@ test("covers source-shard token measurement with exact transitive and false-posi
     { cwd: repositoryRoot, encoding: "utf8" }
   );
   assert.equal(validation.status, 0, validation.stderr || validation.stdout);
+});
+
+test("records favorable and unfavorable controls with qualified emission decisions", () => {
+  const input = JSON.parse(fs.readFileSync(inputPath, "utf8"));
+  const evidence = JSON.parse(fs.readFileSync(evidencePath, "utf8"));
+  const shardedSet = loadDocumentSet(path.join(
+    evidenceRoot,
+    input.tasks[1].runs.sharded.documentSet
+  ));
+  const shardedValidation = validateDocumentSet(shardedSet, { wholeSet: true });
+
+  assert.deepEqual(
+    input.tasks.map(({ id, control }) => ({ id, control })),
+    [
+      {
+        id: "resolve-source-b-provenance",
+        control: {
+          kind: "positive",
+          expectedEmissionDecision: "emit-source-shards"
+        }
+      },
+      {
+        id: "resolve-all-source-provenance",
+        control: {
+          kind: "negative",
+          expectedEmissionDecision: "retain-direct-sources"
+        }
+      }
+    ]
+  );
+  assert.deepEqual(
+    evidence.tasks.map(({ id, control }) => ({ id, control })),
+    [
+      {
+        id: "resolve-source-b-provenance",
+        control: {
+          kind: "positive",
+          expectedEmissionDecision: "emit-source-shards",
+          observedEmissionDecision: "emit-source-shards"
+        }
+      },
+      {
+        id: "resolve-all-source-provenance",
+        control: {
+          kind: "negative",
+          expectedEmissionDecision: "retain-direct-sources",
+          observedEmissionDecision: "retain-direct-sources"
+        }
+      }
+    ]
+  );
+
+  const positive = evidence.tasks[0].runs;
+  const negative = evidence.tasks[1].runs;
+  assert.deepEqual(shardedValidation.diagnostics, []);
+  assert.deepEqual(
+    input.tasks[1].runs.sharded.fixedPoint,
+    shardedValidation.facts.core.sourceResolutions["INDEX.md"]
+  );
+  assert.deepEqual(
+    input.tasks.map(({ runs }) => ({
+      sharded: runs.sharded.loadAllSources,
+      direct: runs.direct.loadAllSources
+    })),
+    [
+      { sharded: false, direct: false },
+      { sharded: true, direct: true }
+    ]
+  );
+  assert.deepEqual(
+    evidence.tasks.map(({ runs }) => ({
+      sharded: runs.sharded.loadAllSources,
+      direct: runs.direct.loadAllSources
+    })),
+    [
+      { sharded: false, direct: false },
+      { sharded: true, direct: true }
+    ]
+  );
+  assert.deepEqual(evidence.tasks[1].selectionInput, {
+    documentPath: "INDEX.md",
+    sourceRefs: "all"
+  });
+  assert.deepEqual(negative.sharded.loadedSourceShards, [
+    "indexes/sources-a-c.md",
+    "indexes/sources-b.md",
+    "indexes/sources-d-y.md",
+    "indexes/sources-z.md"
+  ]);
+  assert.deepEqual(negative.sharded.unloadedSourceShards, []);
+  assert.deepEqual(negative.sharded.fixedPoint.resolvedIds, [
+    "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m",
+    "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"
+  ]);
+  assert.equal(
+    positive.sharded.totalTaskInputTokens < positive.direct.totalTaskInputTokens,
+    true
+  );
+  assert.equal(
+    negative.sharded.totalTaskInputTokens >= negative.direct.totalTaskInputTokens,
+    true
+  );
+  assert.deepEqual(evidence.claim.taskIds, ["resolve-source-b-provenance"]);
+  assert.equal(evidence.claim.shardedLowerThanDirect, true);
+  assert.equal(evidence.claim.absoluteTokensSavedAtMaximum, 123);
+  assert.equal(evidence.claim.relativeSavingsPercentAtMaximum, 6.845);
+  assert.equal(evidence.claim.unqualifiedSavingsSupported, false);
+  assert.deepEqual(evidence.claim.disclosedTaskRegressions, [
+    {
+      taskId: "resolve-all-source-provenance",
+      shardedTotalTaskInputTokens: 2608,
+      directTotalTaskInputTokens: 1643,
+      tokenDelta: 965
+    }
+  ]);
+  assert.deepEqual(evidence.claim.disclosedAggregateRegressions, [
+    {
+      statistic: "p50",
+      shardedTotalTaskInputTokens: 1674,
+      directTotalTaskInputTokens: 1643,
+      tokenDelta: 31
+    },
+    {
+      statistic: "p95",
+      shardedTotalTaskInputTokens: 2608,
+      directTotalTaskInputTokens: 1797,
+      tokenDelta: 811
+    },
+    {
+      statistic: "maximum",
+      shardedTotalTaskInputTokens: 2608,
+      directTotalTaskInputTokens: 1797,
+      tokenDelta: 811
+    }
+  ]);
 });
 
 test("rejects recorded source-shard evidence whose projection identity is stale", (t) => {
@@ -348,6 +484,20 @@ for (const [name, mutate, errorPattern] of [
       evidence.tasks[0].runs.sharded.unexpected = true;
     },
     /recorded run metadata is stale/
+  ],
+  [
+    "load-all source disclosure",
+    (evidence) => {
+      evidence.tasks[1].runs.sharded.loadAllSources = false;
+    },
+    /recorded loadAllSources is stale/
+  ],
+  [
+    "observed control emission decision",
+    (evidence) => {
+      evidence.tasks[0].control.observedEmissionDecision = "retain-direct-sources";
+    },
+    /recorded control outcome is stale/
   ],
   [
     "malformed task runs",
