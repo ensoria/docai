@@ -49,6 +49,49 @@ none
 
 SEND requests.static (static-request)
 
+## SEND requests.channel-unknown (channel-unknown-reply)
+
+Sends a request while retaining an unresolved reply-channel boundary.
+
+### Behavior
+
+- side_effects: dispatches the channel-unknown request
+- idempotency: reuse the request identifier when resending
+- preconditions: the request is ready to dispatch
+- authorization: producer credentials permit request publishing
+- delivery: at-least-once -- retry ambiguous publishes with the same request identifier
+- ordering: preserve order per request identifier
+
+### Operation Bindings
+
+none
+
+### Channel
+
+- Parameters: none
+- Bindings: none
+
+### Message channel-unknown-request-message
+
+- Headers: none
+- Bindings: none
+#### Payload
+
+none
+
+### Reply
+
+unknown
+**unknown**: reply channel requires an authoritative static address or dynamic derivation at source-a
+
+### Failure Handling
+
+none
+
+### Related
+
+none
+
 ## SEND requests.dynamic (dynamic-request)
 
 Sends a request whose reply channel is carried by the request.

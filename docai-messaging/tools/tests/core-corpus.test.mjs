@@ -311,13 +311,15 @@ const payloadMediaIdentityCaseIds = [
 ];
 
 const replyContractCaseIds = [
+  "reply-channel-unknown-invalid",
   "reply-correlation-none-invalid",
   "reply-dynamic-channel-parameters-invalid",
   "reply-send-timeout-none-invalid",
   "reply-static-channel-parameters-invalid",
   "reply-states-routing-valid",
   "reply-whole-fallback-coexists-expanded-invalid",
-  "reply-whole-fallback-index-invalid"
+  "reply-whole-fallback-index-invalid",
+  "reply-whole-fallback-subsection-invalid"
 ];
 
 const failureContractCaseIds = [
@@ -3208,8 +3210,33 @@ test("executes the Task 9 DM-REPLY-001 DM-REPLY-002 DM-REPLY-003 channel state a
   const validCase = byId.get("reply-states-routing-valid");
   const valid = validateCase(path.join(corpusPath, validCase.path), validCase);
   assert.deepEqual(valid.diagnostics, []);
+  const validRoot = fs.readFileSync(path.join(corpusPath, validCase.path, "INDEX.md"), "utf8");
+  const validChannels = fs.readFileSync(
+    path.join(corpusPath, validCase.path, "channels/replies.md"),
+    "utf8"
+  );
+  const channelUnknownStart = validChannels.indexOf(
+    "## SEND requests.channel-unknown (channel-unknown-reply)\n"
+  );
+  const channelUnknownEnd = validChannels.indexOf("\n## ", channelUnknownStart + 1);
+  const channelUnknownOperation = validChannels.slice(channelUnknownStart, channelUnknownEnd);
+  assert.equal(channelUnknownOperation.includes([
+    "### Reply",
+    "",
+    "unknown",
+    "**unknown**: reply channel requires an authoritative static address or dynamic derivation at source-a",
+    "",
+    "### Failure Handling"
+  ].join("\n")), true);
+  assert.deepEqual(
+    validRoot.split("\n").filter((line) => line.includes("| channel-unknown-reply |")),
+    [
+      "| SEND | requests.channel-unknown | channel-unknown-reply | channel-unknown-request-message | send channel-unknown request | Retains the primary operation while the reply channel needs authoritative input | none | none |"
+    ]
+  );
   assert.deepEqual(Object.keys(valid.facts.core.operationDefinitions.byName), [
     "consume-static-reply",
+    "channel-unknown-reply",
     "dynamic-request",
     "no-reply",
     "receive-request",
@@ -3228,6 +3255,9 @@ test("executes the Task 9 DM-REPLY-001 DM-REPLY-002 DM-REPLY-003 channel state a
     {
       "consume-static-reply": [
         { direction: "RECEIVE", name: "static-reply", reply: false }
+      ],
+      "channel-unknown-reply": [
+        { direction: "SEND", name: "channel-unknown-request-message", reply: false }
       ],
       "dynamic-request": [
         { direction: "SEND", name: "dynamic-request-message", reply: false },
@@ -3254,12 +3284,14 @@ test("executes the Task 9 DM-REPLY-001 DM-REPLY-002 DM-REPLY-003 channel state a
   );
 
   for (const [id, expectedRuleId] of [
+    ["reply-channel-unknown-invalid", "DM-REPLY-002"],
     ["reply-correlation-none-invalid", "DM-REPLY-002"],
     ["reply-dynamic-channel-parameters-invalid", "DM-REPLY-002"],
     ["reply-send-timeout-none-invalid", "DM-REPLY-002"],
     ["reply-static-channel-parameters-invalid", "DM-REPLY-002"],
     ["reply-whole-fallback-coexists-expanded-invalid", "DM-REPLY-001"],
-    ["reply-whole-fallback-index-invalid", "DM-REPLY-003"]
+    ["reply-whole-fallback-index-invalid", "DM-REPLY-003"],
+    ["reply-whole-fallback-subsection-invalid", "DM-REPLY-001"]
   ]) {
     const fixtureCase = byId.get(id);
     const invalid = validateCase(path.join(corpusPath, fixtureCase.path), fixtureCase);
@@ -3879,7 +3911,7 @@ test("executes the Task 9 DM-INC-003 implementation-readiness capability matrix"
 
 test("audits every Task 9 invalid fixture as one primary concern", () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
-  assert.equal(manifest.cases.length, 248);
+  assert.equal(manifest.cases.length, 250);
   const result = runFixtureCorpus(corpusPath, validateCase);
   assert.equal(result.failed, 0, result.report);
   const audit = auditFixtureOneInvalidity({
@@ -3887,5 +3919,5 @@ test("audits every Task 9 invalid fixture as one primary concern", () => {
     corpusCases: result.cases
   });
 
-  assert.deepEqual(audit, { passed: true, audited: 181, errors: [] });
+  assert.deepEqual(audit, { passed: true, audited: 183, errors: [] });
 });

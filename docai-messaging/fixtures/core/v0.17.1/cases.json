@@ -934,6 +934,13 @@
       "expected_rule_ids": []
     },
     {
+      "id": "reply-channel-unknown-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/reply-channel-unknown-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-REPLY-002"]
+    },
+    {
       "id": "reply-correlation-none-invalid",
       "kind": "task-scoped-document-set",
       "path": "focused/invalid/reply-correlation-none-invalid",
@@ -981,6 +988,13 @@
       "path": "focused/invalid/reply-whole-fallback-index-invalid",
       "expected": "invalid",
       "expected_rule_ids": ["DM-REPLY-003"]
+    },
+    {
+      "id": "reply-whole-fallback-subsection-invalid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/invalid/reply-whole-fallback-subsection-invalid",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-REPLY-001"]
     },
     {
       "id": "failure-action-recovery-invalid",

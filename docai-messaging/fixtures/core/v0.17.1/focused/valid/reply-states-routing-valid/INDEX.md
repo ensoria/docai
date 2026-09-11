@@ -15,6 +15,7 @@
 | Action | Channel | Operation | Message | Task | Summary | Required context | Supplemental context |
 |---|---|---|---|---|---|---|---|
 | RECEIVE | replies.static.{tenant} | consume-static-reply | static-reply | consume reply | Independently consumes the same channel message used by an embedded reply | none | none |
+| SEND | requests.channel-unknown | channel-unknown-reply | channel-unknown-request-message | send channel-unknown request | Retains the primary operation while the reply channel needs authoritative input | none | none |
 | SEND | requests.dynamic | dynamic-request | dynamic-request-message; reply:dynamic-reply | send dynamic request | Receives a correlated response on a request-selected dynamic channel | none | none |
 | SEND | requests.none | no-reply | no-reply-message | send one-way request | Sends a request with an authoritatively absent reply contract | none | none |
 | RECEIVE | requests.receive | receive-request | receive-request-message; reply:receive-reply | receive request | Sends a correlated response whose deadline follows conventions | none | none |
