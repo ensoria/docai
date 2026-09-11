@@ -1,0 +1,9 @@
+{
+  "id": "message-primary-replacement-subsection-invalid",
+  "base": "../valid/message-replacements-valid",
+  "path": "channels/messages.md",
+  "replace": {
+    "from": "**unsupported**: replaces Message alpha-request: encoded alpha envelope at source-a#/messages/alpha-request",
+    "to": "**unsupported**: replaces Message alpha-request: encoded alpha envelope at source-a#/messages/alpha-request\n\n- Headers: none\n- Bindings: none\n#### Payload\n\nnone"
+  }
+}

@@ -155,6 +155,14 @@ const sentenceGrammarCaseIds = [
   "sentence-operation-unterminated-invalid"
 ];
 
+const messageReplacementCaseIds = [
+  "message-primary-replacement-name-invalid",
+  "message-primary-replacement-subsection-invalid",
+  "message-replacements-valid",
+  "message-reply-replacement-name-invalid",
+  "message-reply-replacement-subsection-invalid"
+];
+
 const tableExtensionCaseIds = [
   "table-extension-column-before-invalid",
   "table-extension-column-between-invalid",
@@ -1477,6 +1485,125 @@ test("executes the Task 9 operation and message-selection sentence grammar corpu
       entry.severity === "error" && !entry.cascade
     ));
     assert.deepEqual(primary.map((entry) => entry.ruleId), fixtureCase.expected_rule_ids, id);
+  }
+});
+
+test("executes the Task 9 primary and reply Message replacement grammar corpus", () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
+  const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
+
+  assert.deepEqual(messageReplacementCaseIds.filter((id) => !byId.has(id)), []);
+  for (const id of messageReplacementCaseIds) {
+    const fixtureCase = byId.get(id);
+    assert.equal(
+      fixtureCase.expected === "valid" || fixtureCase.expected_rule_ids.length === 1,
+      true,
+      id
+    );
+  }
+
+  const result = runFixtureCorpus(corpusPath, validateCase);
+  assert.equal(result.failed, 0, result.report);
+
+  const validCase = byId.get("message-replacements-valid");
+  const valid = validateCase(path.join(corpusPath, validCase.path), validCase);
+  assert.deepEqual(valid.diagnostics, []);
+  const validRoot = fs.readFileSync(path.join(corpusPath, validCase.path, "INDEX.md"), "utf8");
+  const validChannels = fs.readFileSync(
+    path.join(corpusPath, validCase.path, "channels/messages.md"),
+    "utf8"
+  );
+  const replacementBlocks = [
+    [
+      "### Message alpha-request",
+      "",
+      "Use when the request `kind` header is `alpha`.",
+      "**unsupported**: replaces Message alpha-request: encoded alpha envelope at source-a#/messages/alpha-request",
+      "",
+      "### Message zeta-request"
+    ],
+    [
+      "#### Message accepted-reply",
+      "",
+      "Use when the reply `status` header is `accepted`.",
+      "**unsupported**: replaces reply Message accepted-reply: encoded accepted envelope at source-a#/messages/accepted-reply",
+      "",
+      "#### Message rejected-reply"
+    ],
+    [
+      "### Message single-request",
+      "",
+      "**unsupported**: replaces Message single-request: encoded request envelope at source-a#/messages/single-request",
+      "",
+      "### Reply"
+    ],
+    [
+      "#### Message single-reply",
+      "",
+      "**unsupported**: replaces reply Message single-reply: encoded reply envelope at source-a#/messages/single-reply",
+      "",
+      "### Failure Handling"
+    ]
+  ];
+  for (const block of replacementBlocks) {
+    assert.equal(validChannels.includes(block.join("\n")), true, block[0]);
+  }
+  for (const block of [
+    [
+      "### Message zeta-request",
+      "",
+      "Use when the request `kind` header is `zeta`.",
+      "",
+      "#### Headers"
+    ],
+    [
+      "#### Message rejected-reply",
+      "",
+      "Use when the reply `status` header is `rejected`.",
+      "",
+      "##### Headers"
+    ]
+  ]) {
+    assert.equal(validChannels.includes(block.join("\n")), true, block[0]);
+  }
+  assert.deepEqual(
+    validRoot.split("\n").filter((line) => (
+      line.includes("| multiple-messages |") || line.includes("| single-message |")
+    )),
+    [
+      "| SEND | requests.multiple | multiple-messages | alpha-request; zeta-request; reply:accepted-reply; reply:rejected-reply | send multiple messages | Selects primary and reply messages while retaining replacement routing prose | none | none |",
+      "| SEND | requests.single | single-message | single-request; reply:single-reply | send single message | Uses complete primary and reply Message replacements without selection prose | none | none |"
+    ]
+  );
+  assert.deepEqual(
+    Object.fromEntries(Object.entries(valid.facts.core.messageDefinitions.byOperation).map(
+      ([operation, definitions]) => [operation, definitions.map((entry) => ({
+        direction: entry.direction,
+        name: entry.name,
+        reply: entry.reply
+      }))]
+    )),
+    {
+      "multiple-messages": [
+        { direction: "SEND", name: "alpha-request", reply: false },
+        { direction: "SEND", name: "zeta-request", reply: false },
+        { direction: "RECEIVE", name: "accepted-reply", reply: true },
+        { direction: "RECEIVE", name: "rejected-reply", reply: true }
+      ],
+      "single-message": [
+        { direction: "SEND", name: "single-request", reply: false },
+        { direction: "RECEIVE", name: "single-reply", reply: true }
+      ]
+    }
+  );
+
+  for (const id of messageReplacementCaseIds.filter((caseId) => caseId !== validCase.id)) {
+    const fixtureCase = byId.get(id);
+    const invalid = validateCase(path.join(corpusPath, fixtureCase.path), fixtureCase);
+    const primary = invalid.diagnostics.filter((entry) => (
+      entry.severity === "error" && !entry.cascade
+    ));
+    assert.deepEqual(primary.map((entry) => entry.ruleId), ["DM-MSG-003"], id);
   }
 });
 
@@ -3911,7 +4038,7 @@ test("executes the Task 9 DM-INC-003 implementation-readiness capability matrix"
 
 test("audits every Task 9 invalid fixture as one primary concern", () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
-  assert.equal(manifest.cases.length, 250);
+  assert.equal(manifest.cases.length, 255);
   const result = runFixtureCorpus(corpusPath, validateCase);
   assert.equal(result.failed, 0, result.report);
   const audit = auditFixtureOneInvalidity({
@@ -3919,5 +4046,5 @@ test("audits every Task 9 invalid fixture as one primary concern", () => {
     corpusCases: result.cases
   });
 
-  assert.deepEqual(audit, { passed: true, audited: 183, errors: [] });
+  assert.deepEqual(audit, { passed: true, audited: 187, errors: [] });
 });

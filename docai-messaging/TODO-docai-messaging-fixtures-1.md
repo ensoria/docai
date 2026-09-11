@@ -891,6 +891,10 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 
 > **Approved review hardening (`R8-CORE-043` exact channel-knowledge evidence):** 独立reviewで、operation / message factsだけではwhole-Reply markerを別の許可済み種別へ差し替えても同じfactsになり、channel-knowledge evidenceの退行を検出できないことを確認した。ユーザー承認により、valid documentの`channel-unknown-reply` operation範囲で隣接する`unknown`、exact `reply channel requires ...` marker、直後の`Failure Handling`境界をliteral assertionし、対応INDEX rowがprimary messageだけを持つこともexact比較する。markerを`reply message set requires ...`へ一時変更したmutationでfocused testが失敗し、復元後に通ることを確認した。影響はCore corpus regression assertionに限定し、production parser / validator / facts interface、fixture bytes、coverage ownershipは変更しない。
 
+> **Approved plan split (`R8-CORE-044` Message replacement checkpoints):** README §8のprimary / reply Message replacement clauseを、生成済みdocumentのreplacement grammarと、missing / unrepresentable selection ruleに対するsource-aware generator outcomeへ分割する。第一checkpointはsingle / multi-message contextのprimary / reply replacement、retained selection prose、exact unit name、禁止normal subsectionをversioned document setとmutationsで固定してrowを`partial`にする。第二checkpointはprimary failureをUnprojected Operations、reply failureをprimary operationを保持するwhole-Reply fallbackへ投影するsource-aware evidenceを追加して`covered`にする。影響としてREADMEのclause順とnormative semanticsは維持し、document parser責務とgenerator decision責務を別のcommit境界で検証する。
+
+> **Implementation note (`R8-CORE-044` Message replacement document-grammar checkpoint):** `message-replacements-valid`は二operationでsingle / multi-messageのprimary / reply Message replacementを固定する。multi contextではreplacementとexpanded counterpartの双方がobservable selection proseを保持し、primary / reply namesをlexical orderでINDEX routingと一致させる。四mutationはprimary / replyそれぞれのreplacement unit名不一致と、exact marker後への完全な通常subsection追加を各単一`DM-MSG-003`として拒否する。REDでは五case不在を確認し、初回GREENでRECEIVE HeadersにSEND列名を使った`DM-MSG-001`と、不完全subsection mutation由来の`DM-MSG-002` cascadeを分離した。正しい`Meaning`列と、それ自体は完全なHeaders / Bindings / Payloadをmarker後へ置くmutationへ直してreplacement境界だけを検証した。影響としてCore manifestは255 cases / 187 invalid / 68 valid、one-invalidity auditは187 / 187となる。production validator、公開document grammar、rule catalogは変更せず、selection-rule source outcomeが次checkpointに残るため`R8-CORE-044`は`partial`とする。
+
 - [x] Metadata、extension name/order/escape、unknown non-`x-` key、sentence grammar。
 - [x] Identity trailer、set/projection digest、closed root、mixed set、task-scoped identity check。
 - [x] Direct/sharded Sources、unknown API identity/version、Revision none、overlap、fixed-point、cycle。
@@ -970,6 +974,9 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
     - [x] cross-shard catalog-cell contribution、transitive chain / cycle、重複のないfixed-point resolutionをsource-aware scenarioで固定する。
     - [x] transitive / false-positive shardを全て含むtokenizer-versioned synthetic conformance evidenceを正例・負例と改変耐性付きで固定し、rowを`covered`にする。
   - [x] `R8-CORE-043`（whole-Reply channel-knowledge fallback、禁止key / subsection、INDEX omission、`channel: unknown`拒否、static / dynamic channel）をversioned evidenceで対応付ける。
+  - [ ] `R8-CORE-044`（primary / reply Message replacement、retained selection prose、exact unit name、禁止subsection、selection failure fallback）をversioned evidenceへ対応付ける。
+    - [x] single / multi-messageのprimary / reply replacement document grammarをvalid setとone-invalidity mutationsで固定する。
+    - [ ] missing / unrepresentable primary selectionをUnprojected Operations、reply selectionをwhole-Reply fallbackへ投影するsource-aware evidenceを固定し、rowを`covered`にする。
   - [ ] 残る Core corpus clause を `R8-CORE-*` row に分解して対応付け、`R8-CORE-001` を `covered` にする。
 
 #### Partial Collection / Parameters Unknown / Failure Root-Row Implementation Plan

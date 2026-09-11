@@ -1,0 +1,9 @@
+{
+  "id": "message-reply-replacement-name-invalid",
+  "base": "../valid/message-replacements-valid",
+  "path": "channels/messages.md",
+  "replace": {
+    "from": "**unsupported**: replaces reply Message single-reply: encoded reply envelope at source-a#/messages/single-reply",
+    "to": "**unsupported**: replaces reply Message other-reply: encoded reply envelope at source-a#/messages/single-reply"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "id": "message-primary-replacement-name-invalid",
+  "base": "../valid/message-replacements-valid",
+  "path": "channels/messages.md",
+  "replace": {
+    "from": "**unsupported**: replaces Message single-request: encoded request envelope at source-a#/messages/single-request",
+    "to": "**unsupported**: replaces Message other-request: encoded request envelope at source-a#/messages/single-request"
+  }
+}

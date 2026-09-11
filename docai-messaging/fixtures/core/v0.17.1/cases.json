@@ -731,6 +731,41 @@
       "expected_rule_ids": []
     },
     {
+      "id": "message-primary-replacement-name-invalid",
+      "kind": "task-scoped-document-set-mutation",
+      "path": "focused/invalid/message-primary-replacement-name-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-MSG-003"]
+    },
+    {
+      "id": "message-primary-replacement-subsection-invalid",
+      "kind": "task-scoped-document-set-mutation",
+      "path": "focused/invalid/message-primary-replacement-subsection-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-MSG-003"]
+    },
+    {
+      "id": "message-replacements-valid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/valid/message-replacements-valid",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
+      "id": "message-reply-replacement-name-invalid",
+      "kind": "task-scoped-document-set-mutation",
+      "path": "focused/invalid/message-reply-replacement-name-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-MSG-003"]
+    },
+    {
+      "id": "message-reply-replacement-subsection-invalid",
+      "kind": "task-scoped-document-set-mutation",
+      "path": "focused/invalid/message-reply-replacement-subsection-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-MSG-003"]
+    },
+    {
       "id": "message-direction-nullable-invalid",
       "kind": "task-scoped-document-set",
       "path": "focused/invalid/message-direction-nullable-invalid",
