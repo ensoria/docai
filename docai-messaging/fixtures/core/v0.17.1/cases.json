@@ -766,6 +766,27 @@
       "expected_rule_ids": ["DM-MSG-003"]
     },
     {
+      "id": "message-selection-primary-projection-invalid",
+      "kind": "message-selection-source-scenario",
+      "path": "source/focused/message-selection-primary-projection-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-IDX-008"]
+    },
+    {
+      "id": "message-selection-reply-projection-invalid",
+      "kind": "message-selection-source-scenario",
+      "path": "source/focused/message-selection-reply-projection-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-REPLY-001"]
+    },
+    {
+      "id": "message-selection-source-outcomes-valid",
+      "kind": "message-selection-source-scenario",
+      "path": "source/focused/message-selection-source-outcomes-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
       "id": "message-direction-nullable-invalid",
       "kind": "task-scoped-document-set",
       "path": "focused/invalid/message-direction-nullable-invalid",

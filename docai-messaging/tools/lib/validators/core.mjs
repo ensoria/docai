@@ -441,6 +441,242 @@ export function validatePartialCollectionSourceExpectations(
   };
 }
 
+function messageSetFact(operation, property) {
+  if (!Object.hasOwn(operation, property)) return { state: "missing", messages: [] };
+  if (!Array.isArray(operation[property])) return { state: "invalid", messages: [] };
+  return { state: "known", messages: [...operation[property]].sort() };
+}
+
+function messageSelectionProjectionConcern(entry) {
+  if (entry?.target === "reply") {
+    const primarySet = messageSetFact(entry.operation ?? {}, "primaryMessages");
+    if (primarySet.state !== "known") return "primary";
+  }
+  return entry?.target;
+}
+
+export function evaluateMessageSelectionSourceExpectations({ cases }) {
+  return cases.map((entry) => {
+    const operation = entry.operation ?? {};
+    if (entry.target !== "primary" && entry.target !== "reply") {
+      return {
+        caseId: entry.caseId,
+        outcome: "generation-failure",
+        reason: "invalid-selection-target"
+      };
+    }
+
+    const primarySet = messageSetFact(operation, "primaryMessages");
+    const replySet = messageSetFact(operation, "replyMessages");
+    if (primarySet.state === "invalid") {
+      return {
+        caseId: entry.caseId,
+        outcome: "generation-failure",
+        reason: "invalid-message-set"
+      };
+    }
+
+    const primaryMessages = primarySet.messages;
+    const replyMessages = replySet.messages;
+    const sourceId = operation.sourceId;
+    const identity = operation.sourceIdentity;
+    const identityByteLength = Buffer.byteLength(String(identity), "utf8");
+    if (primarySet.state === "missing") {
+      const reason = `primary message set requires ${entry.expectedMessageSetInput}`;
+      return {
+        caseId: entry.caseId,
+        outcome: "emit-unprojected-unknown",
+        projectedOperationIds: [],
+        projectedPrimaryMessages: [],
+        projectedReplyMessages: [],
+        indexMessageEntries: [],
+        unprojected: {
+          form: "unknown",
+          sourceId,
+          identity,
+          marker: `**unknown**: source operation ${sourceId} ${identityByteLength}:${identity}: ${reason}`
+        },
+        coverage: "complete",
+        knowledge: "requires-input"
+      };
+    }
+
+    const selectedSet = entry.target === "primary" ? primarySet : replySet;
+    if (selectedSet.state === "invalid") {
+      return {
+        caseId: entry.caseId,
+        outcome: "generation-failure",
+        reason: "invalid-message-set"
+      };
+    }
+    if (selectedSet.state === "missing") {
+      return {
+        caseId: entry.caseId,
+        outcome: "emit-whole-reply-unknown",
+        projectedOperationIds: [operation.projectedOperationId],
+        projectedPrimaryMessages: primaryMessages,
+        projectedReplyMessages: [],
+        indexMessageEntries: primaryMessages,
+        replyFallback: {
+          form: "whole-section-unknown",
+          value: "unknown",
+          marker: `**unknown**: reply message set requires ${entry.expectedMessageSetInput}`
+        },
+        coverage: "complete",
+        knowledge: "requires-input"
+      };
+    }
+
+    if (selectedSet.messages.length === 0) {
+      if (entry.target === "primary") {
+        const sourceLocation = operation.sourceLocation;
+        if (typeof sourceLocation !== "string" || sourceLocation.length === 0) {
+          return {
+            caseId: entry.caseId,
+            outcome: "generation-failure",
+            reason: "publication-safe-source-location-unavailable"
+          };
+        }
+        return {
+          caseId: entry.caseId,
+          outcome: "emit-unprojected-unsupported",
+          projectedOperationIds: [],
+          projectedPrimaryMessages: [],
+          projectedReplyMessages: [],
+          indexMessageEntries: [],
+          unprojected: {
+            form: "localized-unsupported",
+            sourceId,
+            identity,
+            marker: `**unsupported**: localized: source operation ${sourceId} ${identityByteLength}:${identity}: zero-message operation at ${sourceLocation}`
+          },
+          coverage: "requires-source",
+          knowledge: "complete"
+        };
+      }
+
+      const replySourceLocation = operation.replySourceLocation;
+      if (typeof replySourceLocation !== "string" || replySourceLocation.length === 0) {
+        return {
+          caseId: entry.caseId,
+          outcome: "generation-failure",
+          reason: "publication-safe-source-location-unavailable"
+        };
+      }
+      return {
+        caseId: entry.caseId,
+        outcome: "emit-whole-reply-unsupported",
+        projectedOperationIds: [operation.projectedOperationId],
+        projectedPrimaryMessages: primaryMessages,
+        projectedReplyMessages: [],
+        indexMessageEntries: primaryMessages,
+        replyFallback: {
+          form: "replacement-unsupported",
+          marker: `**unsupported**: replaces Reply: zero-message reply ${replySourceLocation}`
+        },
+        coverage: "requires-source",
+        knowledge: "complete"
+      };
+    }
+
+    if (selectedSet.messages.length === 1) {
+      return {
+        caseId: entry.caseId,
+        outcome: entry.target === "primary" ? "emit-operation" : "emit-expanded-reply",
+        projectedOperationIds: [operation.projectedOperationId],
+        projectedPrimaryMessages: primaryMessages,
+        projectedReplyMessages: entry.target === "reply" ? replyMessages : [],
+        indexMessageEntries: [
+          ...primaryMessages,
+          ...(entry.target === "reply" ? replyMessages.map((name) => `reply:${name}`) : [])
+        ],
+        coverage: "complete",
+        knowledge: "complete"
+      };
+    }
+
+    const selectionRule = entry.unrepresentableSelectionRule;
+    const missing = selectionRule === undefined;
+
+    if (entry.target === "primary") {
+      const reason = missing
+        ? `primary message selection rules require ${entry.expectedSelectionInput}`
+        : `primary message selection rules at ${selectionRule.sourceLocation}`;
+      const form = missing ? "unknown" : "localized-unsupported";
+      return {
+        caseId: entry.caseId,
+        outcome: missing
+          ? "emit-unprojected-unknown"
+          : "emit-unprojected-localized-unsupported",
+        projectedOperationIds: [],
+        projectedPrimaryMessages: [],
+        projectedReplyMessages: [],
+        indexMessageEntries: [],
+        unprojected: {
+          form,
+          sourceId,
+          identity,
+          marker: missing
+            ? `**unknown**: source operation ${sourceId} ${identityByteLength}:${identity}: ${reason}`
+            : `**unsupported**: localized: source operation ${sourceId} ${identityByteLength}:${identity}: ${reason}`
+        },
+        coverage: missing ? "complete" : "requires-source",
+        knowledge: missing ? "requires-input" : "complete"
+      };
+    }
+
+    return {
+      caseId: entry.caseId,
+      outcome: missing
+        ? "emit-whole-reply-unknown"
+        : "emit-whole-reply-replacement-unsupported",
+      projectedOperationIds: [operation.projectedOperationId],
+      projectedPrimaryMessages: primaryMessages,
+      projectedReplyMessages: [],
+      indexMessageEntries: primaryMessages,
+      replyFallback: missing
+        ? {
+          form: "whole-section-unknown",
+          value: "unknown",
+          marker: `**unknown**: reply message selection rules require ${entry.expectedSelectionInput}`
+        }
+        : {
+          form: "replacement-unsupported",
+          marker: `**unsupported**: replaces Reply: reply message selection rules at ${selectionRule.sourceLocation}`
+        },
+      coverage: missing ? "complete" : "requires-source",
+      knowledge: missing ? "requires-input" : "complete"
+    };
+  });
+}
+
+export function validateMessageSelectionSourceExpectations(
+  scenario,
+  { file = "source-input.json" } = {}
+) {
+  const cases = scenario.cases ?? [];
+  const expectations = evaluateMessageSelectionSourceExpectations(scenario);
+  const mismatches = expectations.flatMap((expected, index) => (
+    isDeepStrictEqual(expected, cases[index]?.projected)
+      ? []
+      : [{ concern: messageSelectionProjectionConcern(cases[index]) }]
+  ));
+  const diagnosticCounts = new Map();
+  for (const mismatch of mismatches) {
+    const ruleId = mismatch.concern === "primary" ? "DM-IDX-008" : "DM-REPLY-001";
+    diagnosticCounts.set(ruleId, (diagnosticCounts.get(ruleId) ?? 0) + 1);
+  }
+  return {
+    diagnostics: [...diagnosticCounts].map(([ruleId, count]) => diagnostic(
+      ruleId,
+      file,
+      1,
+      `${ruleId === "DM-IDX-008" ? "Primary" : "Reply"} message-selection projection disagrees with ${count} exact source expectation(s).`
+    )),
+    facts: { messageSelectionSourceExpectations: expectations }
+  };
+}
+
 const JSON_SCHEMA_DRAFT_07_FORMATS = new Set([
   "date-time", "date", "time", "email", "idn-email", "hostname", "idn-hostname",
   "ipv4", "ipv6", "uri", "uri-reference", "iri", "iri-reference", "uri-template",

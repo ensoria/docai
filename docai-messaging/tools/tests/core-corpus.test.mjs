@@ -163,6 +163,12 @@ const messageReplacementCaseIds = [
   "message-reply-replacement-subsection-invalid"
 ];
 
+const messageSelectionSourceOutcomeCaseIds = [
+  "message-selection-primary-projection-invalid",
+  "message-selection-reply-projection-invalid",
+  "message-selection-source-outcomes-valid"
+];
+
 const tableExtensionCaseIds = [
   "table-extension-column-before-invalid",
   "table-extension-column-between-invalid",
@@ -584,6 +590,13 @@ function validateCase(fixturePath, fixtureCase) {
   if (fixtureCase.kind === "partial-collection-source-scenario") {
     const scenario = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
     return coreValidator.validatePartialCollectionSourceExpectations(
+      scenario,
+      { file: fixtureCase.path }
+    );
+  }
+  if (fixtureCase.kind === "message-selection-source-scenario") {
+    const scenario = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
+    return coreValidator.validateMessageSelectionSourceExpectations(
       scenario,
       { file: fixtureCase.path }
     );
@@ -1605,6 +1618,463 @@ test("executes the Task 9 primary and reply Message replacement grammar corpus",
     ));
     assert.deepEqual(primary.map((entry) => entry.ruleId), ["DM-MSG-003"], id);
   }
+});
+
+test("executes the Task 9 primary and reply Message selection source-outcome corpus", () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
+  const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
+
+  assert.deepEqual(
+    messageSelectionSourceOutcomeCaseIds.filter((id) => !byId.has(id)),
+    []
+  );
+  assert.equal(
+    typeof coreValidator.validateMessageSelectionSourceExpectations,
+    "function",
+    "Message selection fallback requires a source-aware validator"
+  );
+  for (const id of messageSelectionSourceOutcomeCaseIds) {
+    const fixtureCase = byId.get(id);
+    assert.equal(
+      fixtureCase.expected === "valid" || fixtureCase.expected_rule_ids.length === 1,
+      true,
+      id
+    );
+  }
+
+  const result = runFixtureCorpus(corpusPath, validateCase);
+  assert.equal(result.failed, 0, result.report);
+
+  const validCase = byId.get("message-selection-source-outcomes-valid");
+  const valid = validateCase(path.join(corpusPath, validCase.path), validCase);
+  assert.deepEqual(valid.diagnostics, []);
+  assert.deepEqual(valid.facts.messageSelectionSourceExpectations, [
+    {
+      caseId: "primary-missing-selection-rule",
+      outcome: "emit-unprojected-unknown",
+      projectedOperationIds: [],
+      projectedPrimaryMessages: [],
+      projectedReplyMessages: [],
+      indexMessageEntries: [],
+      unprojected: {
+        form: "unknown",
+        sourceId: "source-a",
+        identity: "sendAlpha",
+        marker: "**unknown**: source operation source-a 9:sendAlpha: primary message selection rules require authoritative selection input"
+      },
+      coverage: "complete",
+      knowledge: "requires-input"
+    },
+    {
+      caseId: "primary-unrepresentable-selection-rule",
+      outcome: "emit-unprojected-localized-unsupported",
+      projectedOperationIds: [],
+      projectedPrimaryMessages: [],
+      projectedReplyMessages: [],
+      indexMessageEntries: [],
+      unprojected: {
+        form: "localized-unsupported",
+        sourceId: "source-a",
+        identity: "sendBeta",
+        marker: "**unsupported**: localized: source operation source-a 8:sendBeta: primary message selection rules at source-a#/operations/sendBeta"
+      },
+      coverage: "requires-source",
+      knowledge: "complete"
+    },
+    {
+      caseId: "reply-missing-selection-rule",
+      outcome: "emit-whole-reply-unknown",
+      projectedOperationIds: ["request-gamma"],
+      projectedPrimaryMessages: ["gamma-request"],
+      projectedReplyMessages: [],
+      indexMessageEntries: ["gamma-request"],
+      replyFallback: {
+        form: "whole-section-unknown",
+        value: "unknown",
+        marker: "**unknown**: reply message selection rules require authoritative reply selection input"
+      },
+      coverage: "complete",
+      knowledge: "requires-input"
+    },
+    {
+      caseId: "reply-unrepresentable-selection-rule",
+      outcome: "emit-whole-reply-replacement-unsupported",
+      projectedOperationIds: ["request-delta"],
+      projectedPrimaryMessages: ["delta-request"],
+      projectedReplyMessages: [],
+      indexMessageEntries: ["delta-request"],
+      replyFallback: {
+        form: "replacement-unsupported",
+        marker: "**unsupported**: replaces Reply: reply message selection rules at source-a#/operations/requestDelta/reply"
+      },
+      coverage: "requires-source",
+      knowledge: "complete"
+    }
+  ]);
+
+  for (const [id, ruleId] of [
+    ["message-selection-primary-projection-invalid", "DM-IDX-008"],
+    ["message-selection-reply-projection-invalid", "DM-REPLY-001"]
+  ]) {
+    const fixtureCase = byId.get(id);
+    const invalid = validateCase(path.join(corpusPath, fixtureCase.path), fixtureCase);
+    const primary = invalid.diagnostics.filter((entry) => (
+      entry.severity === "error" && !entry.cascade
+    ));
+    assert.deepEqual(primary.map((entry) => entry.ruleId), [ruleId], id);
+    for (const sensitive of ["source-a", "sendAlpha", "requestGamma", "#/operations/"]) {
+      assert.equal(primary[0].message.includes(sensitive), false, `${id}: ${sensitive}`);
+    }
+  }
+
+  const primarySingleCase = byId.get("message-selection-primary-projection-invalid");
+  const primarySingle = validateCase(
+    path.join(corpusPath, primarySingleCase.path),
+    primarySingleCase
+  );
+  assert.deepEqual(primarySingle.facts.messageSelectionSourceExpectations, [{
+    caseId: "primary-missing-selection-rule-misprojected",
+    outcome: "emit-operation",
+    projectedOperationIds: ["send-alpha"],
+    projectedPrimaryMessages: ["alpha-request"],
+    projectedReplyMessages: [],
+    indexMessageEntries: ["alpha-request"],
+    coverage: "complete",
+    knowledge: "complete"
+  }]);
+
+  const replySingleCase = byId.get("message-selection-reply-projection-invalid");
+  const replySingle = validateCase(
+    path.join(corpusPath, replySingleCase.path),
+    replySingleCase
+  );
+  assert.deepEqual(replySingle.facts.messageSelectionSourceExpectations, [{
+    caseId: "reply-missing-selection-rule-misprojected",
+    outcome: "emit-expanded-reply",
+    projectedOperationIds: ["request-gamma"],
+    projectedPrimaryMessages: ["gamma-request"],
+    projectedReplyMessages: ["accepted-reply"],
+    indexMessageEntries: ["gamma-request", "reply:accepted-reply"],
+    coverage: "complete",
+    knowledge: "complete"
+  }]);
+
+  const primaryZeroScenario = JSON.parse(fs.readFileSync(
+    path.join(corpusPath, primarySingleCase.path),
+    "utf8"
+  ));
+  primaryZeroScenario.cases[0].operation.primaryMessages = [];
+  const primaryZero = coreValidator.validateMessageSelectionSourceExpectations(
+    primaryZeroScenario,
+    { file: primarySingleCase.path }
+  );
+
+  const replyZeroScenario = JSON.parse(fs.readFileSync(
+    path.join(corpusPath, replySingleCase.path),
+    "utf8"
+  ));
+  replyZeroScenario.cases[0].operation.replyMessages = [];
+  const replyZero = coreValidator.validateMessageSelectionSourceExpectations(
+    replyZeroScenario,
+    { file: replySingleCase.path }
+  );
+
+  const primaryMissingLocationScenario = JSON.parse(JSON.stringify(primaryZeroScenario));
+  delete primaryMissingLocationScenario.cases[0].operation.sourceLocation;
+  const primaryMissingLocation = coreValidator.validateMessageSelectionSourceExpectations(
+    primaryMissingLocationScenario,
+    { file: primarySingleCase.path }
+  );
+  const replyMissingLocationScenario = JSON.parse(JSON.stringify(replyZeroScenario));
+  delete replyMissingLocationScenario.cases[0].operation.replySourceLocation;
+  const replyMissingLocation = coreValidator.validateMessageSelectionSourceExpectations(
+    replyMissingLocationScenario,
+    { file: replySingleCase.path }
+  );
+
+  const primaryMissingSetScenario = JSON.parse(fs.readFileSync(
+    path.join(corpusPath, primarySingleCase.path),
+    "utf8"
+  ));
+  delete primaryMissingSetScenario.cases[0].operation.primaryMessages;
+  const primaryMissingSet = coreValidator.validateMessageSelectionSourceExpectations(
+    primaryMissingSetScenario,
+    { file: primarySingleCase.path }
+  );
+  const replyMissingSetScenario = JSON.parse(fs.readFileSync(
+    path.join(corpusPath, replySingleCase.path),
+    "utf8"
+  ));
+  delete replyMissingSetScenario.cases[0].operation.replyMessages;
+  const replyMissingSet = coreValidator.validateMessageSelectionSourceExpectations(
+    replyMissingSetScenario,
+    { file: replySingleCase.path }
+  );
+
+  const primaryInvalidSetScenario = JSON.parse(JSON.stringify(primaryMissingSetScenario));
+  primaryInvalidSetScenario.cases[0].operation.primaryMessages = "alpha-request";
+  const primaryInvalidSet = coreValidator.validateMessageSelectionSourceExpectations(
+    primaryInvalidSetScenario,
+    { file: primarySingleCase.path }
+  );
+  const replyInvalidSetScenario = JSON.parse(JSON.stringify(replyMissingSetScenario));
+  replyInvalidSetScenario.cases[0].operation.replyMessages = { message: "accepted-reply" };
+  const replyInvalidSet = coreValidator.validateMessageSelectionSourceExpectations(
+    replyInvalidSetScenario,
+    { file: replySingleCase.path }
+  );
+
+  const boundaryResults = [
+    primaryZero,
+    replyZero,
+    primaryMissingLocation,
+    replyMissingLocation,
+    primaryMissingSet,
+    replyMissingSet,
+    primaryInvalidSet,
+    replyInvalidSet
+  ];
+  assert.deepEqual(
+    boundaryResults.map((result) => {
+      const fact = result.facts.messageSelectionSourceExpectations[0];
+      return [
+        fact.outcome,
+        fact.reason ?? null,
+        fact.unprojected?.marker ?? fact.replyFallback?.marker ?? null
+      ];
+    }),
+    [
+      [
+        "emit-unprojected-unsupported",
+        null,
+        "**unsupported**: localized: source operation source-a 9:sendAlpha: zero-message operation at source-a#/normalized/primary-zero-location"
+      ],
+      [
+        "emit-whole-reply-unsupported",
+        null,
+        "**unsupported**: replaces Reply: zero-message reply source-a#/normalized/reply-zero-location"
+      ],
+      ["generation-failure", "publication-safe-source-location-unavailable", null],
+      ["generation-failure", "publication-safe-source-location-unavailable", null],
+      [
+        "emit-unprojected-unknown",
+        null,
+        "**unknown**: source operation source-a 9:sendAlpha: primary message set requires authoritative primary message-set input"
+      ],
+      [
+        "emit-whole-reply-unknown",
+        null,
+        "**unknown**: reply message set requires authoritative reply message-set input"
+      ],
+      ["generation-failure", "invalid-message-set", null],
+      ["generation-failure", "invalid-message-set", null]
+    ]
+  );
+  assert.deepEqual(
+    boundaryResults.map((result) => (
+      result.diagnostics.map((entry) => entry.ruleId)
+    )),
+    [
+      ["DM-IDX-008"],
+      ["DM-REPLY-001"],
+      ["DM-IDX-008"],
+      ["DM-REPLY-001"],
+      ["DM-IDX-008"],
+      ["DM-REPLY-001"],
+      ["DM-IDX-008"],
+      ["DM-REPLY-001"]
+    ]
+  );
+  for (const result of boundaryResults) {
+    for (const sensitive of ["source-a", "sendAlpha", "requestGamma", "#/normalized/"]) {
+      assert.equal(result.diagnostics[0].message.includes(sensitive), false, sensitive);
+    }
+  }
+  assert.deepEqual(primaryZero.facts.messageSelectionSourceExpectations, [{
+    caseId: "primary-missing-selection-rule-misprojected",
+    outcome: "emit-unprojected-unsupported",
+    projectedOperationIds: [],
+    projectedPrimaryMessages: [],
+    projectedReplyMessages: [],
+    indexMessageEntries: [],
+    unprojected: {
+      form: "localized-unsupported",
+      sourceId: "source-a",
+      identity: "sendAlpha",
+      marker: "**unsupported**: localized: source operation source-a 9:sendAlpha: zero-message operation at source-a#/normalized/primary-zero-location"
+    },
+    coverage: "requires-source",
+    knowledge: "complete"
+  }]);
+
+  assert.deepEqual(replyZero.facts.messageSelectionSourceExpectations, [{
+    caseId: "reply-missing-selection-rule-misprojected",
+    outcome: "emit-whole-reply-unsupported",
+    projectedOperationIds: ["request-gamma"],
+    projectedPrimaryMessages: ["gamma-request"],
+    projectedReplyMessages: [],
+    indexMessageEntries: ["gamma-request"],
+    replyFallback: {
+      form: "replacement-unsupported",
+      marker: "**unsupported**: replaces Reply: zero-message reply source-a#/normalized/reply-zero-location"
+    },
+    coverage: "requires-source",
+    knowledge: "complete"
+  }]);
+
+  assert.deepEqual(
+    [primaryMissingLocation, replyMissingLocation].map((result) => (
+      result.facts.messageSelectionSourceExpectations[0]
+    )),
+    [
+      {
+        caseId: "primary-missing-selection-rule-misprojected",
+        outcome: "generation-failure",
+        reason: "publication-safe-source-location-unavailable"
+      },
+      {
+        caseId: "reply-missing-selection-rule-misprojected",
+        outcome: "generation-failure",
+        reason: "publication-safe-source-location-unavailable"
+      }
+    ]
+  );
+
+  assert.deepEqual(primaryMissingSet.facts.messageSelectionSourceExpectations, [{
+    caseId: "primary-missing-selection-rule-misprojected",
+    outcome: "emit-unprojected-unknown",
+    projectedOperationIds: [],
+    projectedPrimaryMessages: [],
+    projectedReplyMessages: [],
+    indexMessageEntries: [],
+    unprojected: {
+      form: "unknown",
+      sourceId: "source-a",
+      identity: "sendAlpha",
+      marker: "**unknown**: source operation source-a 9:sendAlpha: primary message set requires authoritative primary message-set input"
+    },
+    coverage: "complete",
+    knowledge: "requires-input"
+  }]);
+
+  assert.deepEqual(replyMissingSet.facts.messageSelectionSourceExpectations, [{
+    caseId: "reply-missing-selection-rule-misprojected",
+    outcome: "emit-whole-reply-unknown",
+    projectedOperationIds: ["request-gamma"],
+    projectedPrimaryMessages: ["gamma-request"],
+    projectedReplyMessages: [],
+    indexMessageEntries: ["gamma-request"],
+    replyFallback: {
+      form: "whole-section-unknown",
+      value: "unknown",
+      marker: "**unknown**: reply message set requires authoritative reply message-set input"
+    },
+    coverage: "complete",
+    knowledge: "requires-input"
+  }]);
+
+  assert.deepEqual(
+    [primaryInvalidSet, replyInvalidSet].map((result) => (
+      result.facts.messageSelectionSourceExpectations[0]
+    )),
+    [
+      {
+        caseId: "primary-missing-selection-rule-misprojected",
+        outcome: "generation-failure",
+        reason: "invalid-message-set"
+      },
+      {
+        caseId: "reply-missing-selection-rule-misprojected",
+        outcome: "generation-failure",
+        reason: "invalid-message-set"
+      }
+    ]
+  );
+
+  const replyMissingPrimarySetScenario = JSON.parse(fs.readFileSync(
+    path.join(corpusPath, replySingleCase.path),
+    "utf8"
+  ));
+  delete replyMissingPrimarySetScenario.cases[0].operation.primaryMessages;
+  replyMissingPrimarySetScenario.cases[0].expectedMessageSetInput =
+    "authoritative primary message-set input";
+  replyMissingPrimarySetScenario.cases[0].projected = {
+    caseId: "reply-missing-selection-rule-misprojected",
+    outcome: "emit-expanded-reply",
+    projectedOperationIds: ["request-gamma"],
+    projectedPrimaryMessages: [],
+    projectedReplyMessages: ["accepted-reply"],
+    indexMessageEntries: ["reply:accepted-reply"],
+    coverage: "complete",
+    knowledge: "complete"
+  };
+  const replyMissingPrimarySet = coreValidator.validateMessageSelectionSourceExpectations(
+    replyMissingPrimarySetScenario,
+    { file: replySingleCase.path }
+  );
+
+  const replyInvalidPrimarySetScenario = JSON.parse(JSON.stringify(
+    replyMissingPrimarySetScenario
+  ));
+  replyInvalidPrimarySetScenario.cases[0].operation.primaryMessages = {
+    message: "gamma-request"
+  };
+  const replyInvalidPrimarySet = coreValidator.validateMessageSelectionSourceExpectations(
+    replyInvalidPrimarySetScenario,
+    { file: replySingleCase.path }
+  );
+
+  assert.deepEqual(
+    [replyMissingPrimarySet, replyInvalidPrimarySet].map((result) => ({
+      diagnosticRuleIds: result.diagnostics.map((entry) => entry.ruleId),
+      fact: result.facts.messageSelectionSourceExpectations[0]
+    })),
+    [
+      {
+        diagnosticRuleIds: ["DM-IDX-008"],
+        fact: {
+          caseId: "reply-missing-selection-rule-misprojected",
+          outcome: "emit-unprojected-unknown",
+          projectedOperationIds: [],
+          projectedPrimaryMessages: [],
+          projectedReplyMessages: [],
+          indexMessageEntries: [],
+          unprojected: {
+            form: "unknown",
+            sourceId: "source-a",
+            identity: "requestGamma",
+            marker: "**unknown**: source operation source-a 12:requestGamma: primary message set requires authoritative primary message-set input"
+          },
+          coverage: "complete",
+          knowledge: "requires-input"
+        }
+      },
+      {
+        diagnosticRuleIds: ["DM-IDX-008"],
+        fact: {
+          caseId: "reply-missing-selection-rule-misprojected",
+          outcome: "generation-failure",
+          reason: "invalid-message-set"
+        }
+      }
+    ]
+  );
+  for (const result of [replyMissingPrimarySet, replyInvalidPrimarySet]) {
+    for (const sensitive of ["source-a", "requestGamma", "#/normalized/"]) {
+      assert.equal(result.diagnostics[0].message.includes(sensitive), false, sensitive);
+    }
+  }
+
+  assert.deepEqual(
+    coreValidator.evaluateMessageSelectionSourceExpectations({
+      cases: [{ caseId: "invalid-target", target: "primary-or-reply" }]
+    }),
+    [{
+      caseId: "invalid-target",
+      outcome: "generation-failure",
+      reason: "invalid-selection-target"
+    }]
+  );
 });
 
 test("executes the Task 9 exact-column table extension-suffix corpus", () => {
@@ -4038,7 +4508,7 @@ test("executes the Task 9 DM-INC-003 implementation-readiness capability matrix"
 
 test("audits every Task 9 invalid fixture as one primary concern", () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
-  assert.equal(manifest.cases.length, 255);
+  assert.equal(manifest.cases.length, 258);
   const result = runFixtureCorpus(corpusPath, validateCase);
   assert.equal(result.failed, 0, result.report);
   const audit = auditFixtureOneInvalidity({
@@ -4046,5 +4516,5 @@ test("audits every Task 9 invalid fixture as one primary concern", () => {
     corpusCases: result.cases
   });
 
-  assert.deepEqual(audit, { passed: true, audited: 187, errors: [] });
+  assert.deepEqual(audit, { passed: true, audited: 189, errors: [] });
 });

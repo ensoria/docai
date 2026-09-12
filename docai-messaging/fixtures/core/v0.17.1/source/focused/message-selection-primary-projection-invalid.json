@@ -1,0 +1,34 @@
+{
+  "docaiMessagingVersion": "0.17.1",
+  "cases": [
+    {
+      "caseId": "primary-missing-selection-rule-misprojected",
+      "target": "primary",
+      "operation": {
+        "sourceId": "source-a",
+        "sourceIdentity": "sendAlpha",
+        "sourceLocation": "source-a#/normalized/primary-zero-location",
+        "projectedOperationId": "send-alpha",
+        "primaryMessages": ["alpha-request"]
+      },
+      "expectedMessageSetInput": "authoritative primary message-set input",
+      "expectedSelectionInput": "authoritative selection input",
+      "projected": {
+        "caseId": "primary-missing-selection-rule-misprojected",
+        "outcome": "emit-unprojected-unknown",
+        "projectedOperationIds": [],
+        "projectedPrimaryMessages": [],
+        "projectedReplyMessages": [],
+        "indexMessageEntries": [],
+        "unprojected": {
+          "form": "unknown",
+          "sourceId": "source-a",
+          "identity": "sendAlpha",
+          "marker": "**unknown**: source operation source-a 9:sendAlpha: primary message selection rules require authoritative selection input"
+        },
+        "coverage": "complete",
+        "knowledge": "requires-input"
+      }
+    }
+  ]
+}

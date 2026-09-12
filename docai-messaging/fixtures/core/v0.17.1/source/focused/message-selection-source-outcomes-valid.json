@@ -1,0 +1,116 @@
+{
+  "docaiMessagingVersion": "0.17.1",
+  "cases": [
+    {
+      "caseId": "primary-missing-selection-rule",
+      "target": "primary",
+      "operation": {
+        "sourceId": "source-a",
+        "sourceIdentity": "sendAlpha",
+        "projectedOperationId": "send-alpha",
+        "primaryMessages": ["zeta-request", "alpha-request"]
+      },
+      "expectedSelectionInput": "authoritative selection input",
+      "projected": {
+        "caseId": "primary-missing-selection-rule",
+        "outcome": "emit-unprojected-unknown",
+        "projectedOperationIds": [],
+        "projectedPrimaryMessages": [],
+        "projectedReplyMessages": [],
+        "indexMessageEntries": [],
+        "unprojected": {
+          "form": "unknown",
+          "sourceId": "source-a",
+          "identity": "sendAlpha",
+          "marker": "**unknown**: source operation source-a 9:sendAlpha: primary message selection rules require authoritative selection input"
+        },
+        "coverage": "complete",
+        "knowledge": "requires-input"
+      }
+    },
+    {
+      "caseId": "primary-unrepresentable-selection-rule",
+      "target": "primary",
+      "operation": {
+        "sourceId": "source-a",
+        "sourceIdentity": "sendBeta",
+        "projectedOperationId": "send-beta",
+        "primaryMessages": ["omega-request", "beta-request"]
+      },
+      "unrepresentableSelectionRule": {
+        "sourceLocation": "source-a#/operations/sendBeta"
+      },
+      "projected": {
+        "caseId": "primary-unrepresentable-selection-rule",
+        "outcome": "emit-unprojected-localized-unsupported",
+        "projectedOperationIds": [],
+        "projectedPrimaryMessages": [],
+        "projectedReplyMessages": [],
+        "indexMessageEntries": [],
+        "unprojected": {
+          "form": "localized-unsupported",
+          "sourceId": "source-a",
+          "identity": "sendBeta",
+          "marker": "**unsupported**: localized: source operation source-a 8:sendBeta: primary message selection rules at source-a#/operations/sendBeta"
+        },
+        "coverage": "requires-source",
+        "knowledge": "complete"
+      }
+    },
+    {
+      "caseId": "reply-missing-selection-rule",
+      "target": "reply",
+      "operation": {
+        "sourceId": "source-a",
+        "sourceIdentity": "requestGamma",
+        "projectedOperationId": "request-gamma",
+        "primaryMessages": ["gamma-request"],
+        "replyMessages": ["rejected-reply", "accepted-reply"]
+      },
+      "expectedSelectionInput": "authoritative reply selection input",
+      "projected": {
+        "caseId": "reply-missing-selection-rule",
+        "outcome": "emit-whole-reply-unknown",
+        "projectedOperationIds": ["request-gamma"],
+        "projectedPrimaryMessages": ["gamma-request"],
+        "projectedReplyMessages": [],
+        "indexMessageEntries": ["gamma-request"],
+        "replyFallback": {
+          "form": "whole-section-unknown",
+          "value": "unknown",
+          "marker": "**unknown**: reply message selection rules require authoritative reply selection input"
+        },
+        "coverage": "complete",
+        "knowledge": "requires-input"
+      }
+    },
+    {
+      "caseId": "reply-unrepresentable-selection-rule",
+      "target": "reply",
+      "operation": {
+        "sourceId": "source-a",
+        "sourceIdentity": "requestDelta",
+        "projectedOperationId": "request-delta",
+        "primaryMessages": ["delta-request"],
+        "replyMessages": ["ok-reply", "error-reply"]
+      },
+      "unrepresentableSelectionRule": {
+        "sourceLocation": "source-a#/operations/requestDelta/reply"
+      },
+      "projected": {
+        "caseId": "reply-unrepresentable-selection-rule",
+        "outcome": "emit-whole-reply-replacement-unsupported",
+        "projectedOperationIds": ["request-delta"],
+        "projectedPrimaryMessages": ["delta-request"],
+        "projectedReplyMessages": [],
+        "indexMessageEntries": ["delta-request"],
+        "replyFallback": {
+          "form": "replacement-unsupported",
+          "marker": "**unsupported**: replaces Reply: reply message selection rules at source-a#/operations/requestDelta/reply"
+        },
+        "coverage": "requires-source",
+        "knowledge": "complete"
+      }
+    }
+  ]
+}

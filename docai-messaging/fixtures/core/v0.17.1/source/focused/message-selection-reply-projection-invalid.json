@@ -1,0 +1,34 @@
+{
+  "docaiMessagingVersion": "0.17.1",
+  "cases": [
+    {
+      "caseId": "reply-missing-selection-rule-misprojected",
+      "target": "reply",
+      "operation": {
+        "sourceId": "source-a",
+        "sourceIdentity": "requestGamma",
+        "replySourceLocation": "source-a#/normalized/reply-zero-location",
+        "projectedOperationId": "request-gamma",
+        "primaryMessages": ["gamma-request"],
+        "replyMessages": ["accepted-reply"]
+      },
+      "expectedMessageSetInput": "authoritative reply message-set input",
+      "expectedSelectionInput": "authoritative reply selection input",
+      "projected": {
+        "caseId": "reply-missing-selection-rule-misprojected",
+        "outcome": "emit-whole-reply-unknown",
+        "projectedOperationIds": ["request-gamma"],
+        "projectedPrimaryMessages": ["gamma-request"],
+        "projectedReplyMessages": [],
+        "indexMessageEntries": ["gamma-request"],
+        "replyFallback": {
+          "form": "whole-section-unknown",
+          "value": "unknown",
+          "marker": "**unknown**: reply message selection rules require authoritative reply selection input"
+        },
+        "coverage": "complete",
+        "knowledge": "requires-input"
+      }
+    }
+  ]
+}
