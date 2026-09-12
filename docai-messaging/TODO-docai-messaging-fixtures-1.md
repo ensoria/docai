@@ -907,6 +907,8 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 
 > **Review hardening (`R8-CORE-044` projection-concern diagnostics, fix round 5):** final reviewで、Fix Round 4のevaluatorはReply targetのprimary set欠落・非arrayを正しくprimary unprojection / generation failureへ解決する一方、validatorがdiagnostic ruleを宣言targetだけから選び、両primary-scope disagreementを`DM-REPLY-001`へ誤分類するgapを確認した。REDでは既存二mutationのliteral期待ruleを`DM-IDX-008`へ変更し、actual `DM-REPLY-001`との差分だけでfocused testが失敗した。GREENではprivate concern classifierがevaluatorと同じprimary-state precedenceからscopeを再導出し、public factsへbookkeepingを追加せず、両primary-state mismatchを`DM-IDX-008`へ、genuine Reply-state mismatchを`DM-REPLY-001`へ維持した。focused testとone-invalidity auditの成功後も`R8-CORE-044`は`covered`、fixture件数は258 cases / 189 invalid / 69 validのまま変更しない。
 
+> **Approved design and implementation note (`R8-CORE-045` single-language / English-structure coverage checkpoint):** README §8の残存clause順に従い、既存`language-structure-source-valid`、`language-mixed-prose-invalid`、`language-localized-structure-invalid`、`DM-LANG-001`、および`executes the Task 9 DM-LANG-001 canonical marker deviation deprecation language and English-structure corpus`を、新しいcoverage rowへ対応付ける。これらはcommit `0e69c7a`で、projection configurationが宣言する一つのprose language、各segmentのexact language、translation count 1、validator-owned structural kindから導出するcanonical English `Behavior` / `Payload`、mixed prose languageとlocalized structureの単一primary concernを既に固定しているため、fixture、validator、ruleを再実装しない。初期案のcoverage-row文字列を直接assertするREDは、実動作ではなく人手review artifactの文言を固定するchange detectorになるため実行前reviewで撤回し、ユーザー承認の文書-only TDD例外としてmatrixとinventoryだけを更新した。影響として`R8-CORE-045`を`covered`にし、次候補をdeviations clauseへ進める一方、公開grammar、production semantics、case manifestは変更しない。検証結果はlanguage-focused test 1 / 1成功、全test 635中634成功 / 1 skip（Python 3.9未導入の既存環境skip）/ 0失敗、Core corpus 258 cases（189 invalid / 69 valid）、one-invalidity audit 189 / 189成功。
+
 - [x] Metadata、extension name/order/escape、unknown non-`x-` key、sentence grammar。
 - [x] Identity trailer、set/projection digest、closed root、mixed set、task-scoped identity check。
 - [x] Direct/sharded Sources、unknown API identity/version、Revision none、overlap、fixed-point、cycle。
@@ -989,6 +991,7 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
   - [x] `R8-CORE-044`（primary / reply Message replacement、retained selection prose、exact unit name、禁止subsection、selection failure fallback）をversioned evidenceへ対応付ける。
     - [x] single / multi-messageのprimary / reply replacement document grammarをvalid setとone-invalidity mutationsで固定する。
     - [x] missing / unrepresentable primary selectionをUnprojected Operations、reply selectionをwhole-Reply fallbackへ投影するsource-aware evidenceを固定し、rowを`covered`にする。
+  - [x] `R8-CORE-045`（single prose language、translation count 1、canonical English structural text）を既存source-aware evidenceへ対応付ける。
   - [ ] 残る Core corpus clause を `R8-CORE-*` row に分解して対応付け、`R8-CORE-001` を `covered` にする。
 
 #### Partial Collection / Parameters Unknown / Failure Root-Row Implementation Plan
