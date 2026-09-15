@@ -292,6 +292,126 @@ test("publication refuses an identity whose exclusive lock is already held", () 
   });
 });
 
+test("lock-file fsync failure closes and removes the owned publication lock", () => {
+  withFreezeFixture(({ root, plan, artifacts, models, runtimeIdentity }) => {
+    const planFile = path.join(root, "package", "plan.json");
+    const manifestFile = path.join(root, "package", "freeze-manifest.json");
+    const lockFile = `${manifestFile}.lock`;
+    const originalPlanBytes = fs.readFileSync(planFile);
+    const frozen = buildCalibrationFreeze({
+      plan, modelResolutions: models, artifacts, rootDir: root,
+      frozenAt: "2026-09-15T00:00:00Z", planArtifactPath: "package/plan.json", runtimeIdentity,
+    });
+    let lockDescriptor;
+    let lockClosed = false;
+    const failingFs = tracingFs([], {
+      openSync(file, ...args) {
+        const descriptor = fs.openSync(file, ...args);
+        if (file === lockFile) lockDescriptor = descriptor;
+        return descriptor;
+      },
+      fsyncSync(descriptor) {
+        if (descriptor === lockDescriptor) throw new Error("injected lock-file fsync failure");
+        return fs.fsyncSync(descriptor);
+      },
+      closeSync(descriptor) {
+        if (descriptor === lockDescriptor) lockClosed = true;
+        return fs.closeSync(descriptor);
+      },
+    });
+
+    let failure;
+    try {
+      publishFreezePair({
+        planFile, manifestFile, plan: frozen.plan, manifest: frozen.manifest, fsOps: failingFs,
+        validatePrepared: () => true,
+        validatePublished: () => true,
+      });
+    } catch (error) {
+      failure = error;
+    }
+    const observed = {
+      lockClosed,
+      lockExists: fs.existsSync(lockFile),
+      planBytes: fs.readFileSync(planFile),
+      manifestExists: fs.existsSync(manifestFile),
+    };
+    if (!lockClosed && Number.isInteger(lockDescriptor)) fs.closeSync(lockDescriptor);
+    if (fs.existsSync(lockFile)) fs.unlinkSync(lockFile);
+
+    assert.match(failure?.message ?? "", /injected lock-file fsync failure/);
+    assert.equal(observed.lockClosed, true);
+    assert.equal(observed.lockExists, false);
+    assert.deepEqual(observed.planBytes, originalPlanBytes);
+    assert.equal(observed.manifestExists, false);
+  });
+});
+
+test("initial lock-directory sync failure removes the owned lock and durably syncs its removal", () => {
+  withFreezeFixture(({ root, plan, artifacts, models, runtimeIdentity }) => {
+    const packageDirectory = path.join(root, "package");
+    const planFile = path.join(packageDirectory, "plan.json");
+    const manifestFile = path.join(packageDirectory, "freeze-manifest.json");
+    const lockFile = `${manifestFile}.lock`;
+    const originalPlanBytes = fs.readFileSync(planFile);
+    const frozen = buildCalibrationFreeze({
+      plan, modelResolutions: models, artifacts, rootDir: root,
+      frozenAt: "2026-09-15T00:00:00Z", planArtifactPath: "package/plan.json", runtimeIdentity,
+    });
+    let lockDescriptor;
+    let lockClosed = false;
+    let directoryFsyncs = 0;
+    const directoryDescriptors = new Set();
+    const failingFs = tracingFs([], {
+      openSync(file, ...args) {
+        const descriptor = fs.openSync(file, ...args);
+        if (file === lockFile) lockDescriptor = descriptor;
+        if (file === packageDirectory) directoryDescriptors.add(descriptor);
+        return descriptor;
+      },
+      fsyncSync(descriptor) {
+        if (directoryDescriptors.has(descriptor)) {
+          directoryFsyncs += 1;
+          if (directoryFsyncs === 1) throw new Error("injected lock-directory sync failure");
+        }
+        return fs.fsyncSync(descriptor);
+      },
+      closeSync(descriptor) {
+        if (descriptor === lockDescriptor) lockClosed = true;
+        directoryDescriptors.delete(descriptor);
+        return fs.closeSync(descriptor);
+      },
+    });
+
+    let failure;
+    try {
+      publishFreezePair({
+        planFile, manifestFile, plan: frozen.plan, manifest: frozen.manifest, fsOps: failingFs,
+        validatePrepared: () => true,
+        validatePublished: () => true,
+      });
+    } catch (error) {
+      failure = error;
+    }
+    const observed = {
+      lockClosed,
+      lockExists: fs.existsSync(lockFile),
+      directoryFsyncs,
+      planBytes: fs.readFileSync(planFile),
+      manifestExists: fs.existsSync(manifestFile),
+    };
+    if (!lockClosed && Number.isInteger(lockDescriptor)) fs.closeSync(lockDescriptor);
+    if (fs.existsSync(lockFile)) fs.unlinkSync(lockFile);
+
+    assert.match(failure?.message ?? "", /injected lock-directory sync failure/);
+    assert.equal(observed.lockClosed, true);
+    assert.equal(observed.lockExists, false);
+    assert.equal(observed.directoryFsyncs, 2);
+    assert.deepEqual(observed.planBytes, originalPlanBytes);
+    assert.equal(observed.manifestExists, false);
+  });
+});
+
 test("publication cannot replace a competing manifest injected at installation", () => {
   withFreezeFixture(({ root, plan, artifacts, models, runtimeIdentity }) => {
     const planFile = path.join(root, "package", "plan.json");

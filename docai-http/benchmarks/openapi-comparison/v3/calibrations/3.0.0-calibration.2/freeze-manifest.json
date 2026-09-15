@@ -150,7 +150,7 @@
       "class": "calibration-inputs",
       "path": "docai-http/benchmarks/openapi-comparison/v3/calibrations/3.0.0-calibration.2/plan.json",
       "visibility": "public",
-      "sha256": "bc0fca42bf1f8e384e559a3d66a8a858253effd8398883fd522809600e3e5541"
+      "sha256": "e0b5115b49703a6cc089c3cc9882a411ac0274600d43df9ffa22ca4fda8c95d0"
     },
     {
       "class": "calibration-tests",
@@ -180,7 +180,7 @@
       "class": "calibration-tests",
       "path": "docai-http/tools/tests/openapi-comparison-v3-calibration2-freeze.test.mjs",
       "visibility": "public",
-      "sha256": "15cbe88540ab47c5eb35bf249f78e640a3a0ace7e7c8daad2d372f550a8758dd"
+      "sha256": "00a9bab96e94ec76e962cfafb2c8da75fe49a870ccca8918b0f555bc9256e9b3"
     },
     {
       "class": "calibration-tests",
@@ -348,7 +348,7 @@
       "class": "runtime",
       "path": "docai-http/benchmarks/openapi-comparison/v3/calibrations/3.0.0-calibration.2/runtime/freeze.mjs",
       "visibility": "public",
-      "sha256": "64372835c80abece585512affb1dd6a1b93416fb26e242cb64f7afe7edbb30fb"
+      "sha256": "eec23e1ee2602ad735e69c79c665118930c8cfda6450beade18e20757651f1cd"
     },
     {
       "class": "runtime",

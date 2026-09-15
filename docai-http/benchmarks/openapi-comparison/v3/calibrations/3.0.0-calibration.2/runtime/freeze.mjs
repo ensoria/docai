@@ -303,13 +303,13 @@ export function publishFreezePair({
   let planInstalled = false;
   try {
     lockDescriptor = fsOps.openSync(lockFile, "wx", 0o600);
-    fsOps.fsyncSync(lockDescriptor);
-    syncPath(fsOps, path.dirname(lockFile));
   } catch (error) {
     if (error?.code === "EEXIST") throw new Error(`exclusive freeze publication lock is already in progress: ${lockFile}`, { cause: error });
     throw error;
   }
   try {
+    fsOps.fsyncSync(lockDescriptor);
+    syncPath(fsOps, path.dirname(lockFile));
     originalPlan = fsOps.readFileSync(planFile);
     const currentPlan = JSON.parse(originalPlan.toString("utf8"));
     if (currentPlan.status === "calibration-frozen") {

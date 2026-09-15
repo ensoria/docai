@@ -54,7 +54,7 @@
   "freeze": {
     "manifest": "freeze-manifest.json",
     "frozen_at": "2026-09-15T00:00:00Z",
-    "artifact_set_sha256": "273d39c782fe32d4ab3335888c1e74693193ee49def3c0017cab31500724d441",
+    "artifact_set_sha256": "e80d9e242af096b2d75c00388e1b3ace7866fb3fac04c72b32c555934846cdf9",
     "required_artifact_classes": [
       "package-documentation",
       "calibration-inputs",
