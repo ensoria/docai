@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 
 import { readTaskPacket } from "../../benchmarks/openapi-comparison/v3/calibrations/3.0.0-calibration.2/runtime/contract.mjs";
 import { deriveCanonicalRun } from "../../benchmarks/openapi-comparison/v3/calibrations/3.0.0-calibration.2/runtime/evidence-verifier.mjs";
+import { validateFrozenPackage } from "../../benchmarks/openapi-comparison/v3/calibrations/3.0.0-calibration.2/runtime/freeze.mjs";
 import { readPlan } from "../../benchmarks/openapi-comparison/v3/calibrations/3.0.0-calibration.2/runtime/paths.mjs";
 import { buildCalibrationPrompts } from "../../benchmarks/openapi-comparison/v3/calibrations/3.0.0-calibration.2/runtime/prompt.mjs";
 import { checkCalibrationRunState } from "../../benchmarks/openapi-comparison/v3/calibrations/3.0.0-calibration.2/runtime/check-runs.mjs";
@@ -33,6 +34,7 @@ const CLI = path.resolve(scriptDir, "../../benchmarks/openapi-comparison/v3/cali
 const checkedInModelResolutions = readJson(path.join(PACKAGE_DIR, "model-resolutions.json"));
 const checkedInCostEstimate = readJson(path.join(PACKAGE_DIR, "cost-estimate.json"));
 const checkedInMetrics = readJson(path.join(PRIVATE_DIR, "contexts", "calibration-metrics.json"));
+const checkedInFreezeManifest = readJson(path.join(PACKAGE_DIR, "freeze-manifest.json"));
 
 test("dry run reports the 24 request matrix and does not create store state or call a provider", async () => {
   let calls = 0;
@@ -57,7 +59,7 @@ test("Live preflight binds the checked-in ordered model and cost packets without
     modelResolutions: checkedInModelResolutions,
     costEstimate: checkedInCostEstimate,
     metricsPacket: checkedInMetrics,
-    freezeManifest: { benchmark_id: plan.benchmark_id, plan_version: plan.plan_version, status: "frozen" },
+    freezeManifest: structuredClone(checkedInFreezeManifest),
     validateFreezeArtifacts: () => true,
     runnerRevision,
   });
@@ -266,7 +268,7 @@ test("Live preflight rejects any absent API key before minting a capability", ()
     modelResolutions: resolutions(),
     costEstimate: checkedInCostEstimate,
     metricsPacket: checkedInMetrics,
-    freezeManifest: { benchmark_id: plan.benchmark_id, plan_version: plan.plan_version, status: "frozen" },
+    freezeManifest: structuredClone(checkedInFreezeManifest),
     validateFreezeArtifacts: () => true,
     runnerRevision,
   }), /API key.*present/);
@@ -560,17 +562,43 @@ test("tampered FileRunStore resume preserves retained bytes and modes", async ()
   }
 });
 
-test("live preflight declares missing calibration.2 freeze readiness without calling providers", () => {
-  assert.throws(() => validateLivePreflight({
+test("live preflight validates the real calibration.2 freeze without calling providers", () => {
+  let calls = 0;
+  const capability = validateLivePreflight({
     plan,
     prompts,
-    adapters: adapters(async () => { throw new Error("network forbidden"); }),
-    modelResolutions: {},
-    costEstimate: null,
-    freezeManifest: null,
-    validateFreezeArtifacts: () => true,
+    adapters: adapters(async () => { calls += 1; throw new Error("network forbidden"); }),
+    modelResolutions: checkedInModelResolutions,
+    costEstimate: checkedInCostEstimate,
+    metricsPacket: checkedInMetrics,
+    freezeManifest: readJson(path.join(PACKAGE_DIR, "freeze-manifest.json")),
+    validateFreezeArtifacts: () => validateFrozenPackage({ privateRequired: true }),
     runnerRevision,
-  }), /calibration-frozen|frozen/);
+  });
+  assert.ok(capability);
+  assert.equal(calls, 0);
+});
+
+test("Live preflight rejects a regenerated prompt packet that differs from the frozen private packet", () => {
+  const manifest = readJson(path.join(PACKAGE_DIR, "freeze-manifest.json"));
+  let calls = 0;
+
+  withHostilePathRuby(manifest.runtime_environment.ruby.executable, () => {
+    const regenerated = buildCalibrationPrompts({ plan, packet });
+    assert.notDeepEqual(regenerated, prompts);
+    assert.throws(() => validateLivePreflight({
+      plan,
+      prompts: regenerated,
+      adapters: adapters(async () => { calls += 1; throw new Error("network forbidden"); }),
+      modelResolutions: checkedInModelResolutions,
+      costEstimate: checkedInCostEstimate,
+      metricsPacket: checkedInMetrics,
+      freezeManifest: manifest,
+      validateFreezeArtifacts: () => true,
+      runnerRevision,
+    }), /frozen private prompt packet/);
+  });
+  assert.equal(calls, 0);
 });
 
 test("runner public inputs reject Proxy values before traps", async () => {
@@ -612,7 +640,7 @@ function execution({ store, adapters: adapterSet, clock = () => "2026-09-08T00:0
     modelResolutions,
     costEstimate: checkedInCostEstimate,
     metricsPacket: checkedInMetrics,
-    freezeManifest: { benchmark_id: plan.benchmark_id, plan_version: plan.plan_version, status: "frozen" },
+    freezeManifest: structuredClone(checkedInFreezeManifest),
     validateFreezeArtifacts: () => true,
     runnerRevision,
   });
@@ -753,6 +781,28 @@ function fileMode(file) { return fs.statSync(file).mode & 0o777; }
 function temporaryDirectory() {
   fs.mkdirSync(PRIVATE_DIR, { recursive: true, mode: 0o700 });
   return fs.mkdtempSync(path.join(PRIVATE_DIR, ".calibration2-store-"));
+}
+
+function withHostilePathRuby(realRuby, operation) {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "calibration2-hostile-ruby-"));
+  const wrapper = path.join(root, "ruby");
+  const originalPath = process.env.PATH;
+  fs.writeFileSync(wrapper, [
+    "#!/bin/sh",
+    "case \"$*\" in",
+    `  *RUBY_DESCRIPTION*) exec \"${realRuby}\" \"$@\" ;;`,
+    "esac",
+    `\"${realRuby}\" \"$@\" | sed 's/\"3\\.1\\.1\"/\"9.9.9\"/g'`,
+    "",
+  ].join("\n"), { mode: 0o700 });
+  process.env.PATH = `${root}${path.delimiter}${originalPath ?? ""}`;
+  try {
+    return operation();
+  } finally {
+    if (originalPath === undefined) delete process.env.PATH;
+    else process.env.PATH = originalPath;
+    fs.rmSync(root, { recursive: true, force: true });
+  }
 }
 
 function runtimeClosure(entrypoints) {

@@ -1,7 +1,7 @@
 {
   "benchmark_id": "docai-http-openapi-comparison-v3",
   "plan_version": "3.0.0-calibration.2",
-  "status": "calibration-draft",
+  "status": "calibration-frozen",
   "conditions": [
     "openapi-raw",
     "openapi-sliced",
@@ -12,17 +12,17 @@
     {
       "id": "openai-frontier",
       "provider": "openai",
-      "model_id": null
+      "model_id": "gpt-5.6-sol"
     },
     {
       "id": "anthropic-balanced",
       "provider": "anthropic",
-      "model_id": null
+      "model_id": "claude-sonnet-5"
     },
     {
       "id": "google-stable-agentic",
       "provider": "google",
-      "model_id": null
+      "model_id": "gemini-3.7-flash"
     }
   ],
   "calibration": {
@@ -50,5 +50,21 @@
     "planned_requests": 648,
     "batch_count": 9,
     "requests_per_batch": 72
+  },
+  "freeze": {
+    "manifest": "freeze-manifest.json",
+    "frozen_at": "2026-09-15T00:00:00Z",
+    "artifact_set_sha256": "273d39c782fe32d4ab3335888c1e74693193ee49def3c0017cab31500724d441",
+    "required_artifact_classes": [
+      "package-documentation",
+      "calibration-inputs",
+      "private-calibration-inputs",
+      "runtime",
+      "calibration-tests",
+      "authoritative-stable-sources",
+      "authoritative-stable-projections",
+      "model-resolutions",
+      "cost-estimate"
+    ]
   }
 }

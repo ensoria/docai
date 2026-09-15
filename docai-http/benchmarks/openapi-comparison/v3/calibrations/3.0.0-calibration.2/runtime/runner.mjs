@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 import { readTaskPacket } from "./contract.mjs";
 import { deriveCanonicalRun, reconcileCalibrationEvidence, requireReconciliation, verifyCalibrationEvidence } from "./evidence-verifier.mjs";
 import { validateCostEstimate, validateModelResolutions } from "./estimate-cost.mjs";
+import { validateFrozenPromptPacket } from "./freeze.mjs";
 import { buildCalibrationSchedule, PRIVATE_DIR, readPlan } from "./paths.mjs";
 import { buildCalibrationPrompts, validatePromptRecord } from "./prompt.mjs";
 import { isExceptionalRun } from "./record.mjs";
@@ -40,6 +41,7 @@ export const CALIBRATION_RUNNER_REVISION_FILES = [
   "docai-http/benchmarks/openapi-comparison/v3/calibrations/3.0.0-calibration.2/runtime/strict-json.mjs",
   "docai-http/benchmarks/openapi-comparison/v3/calibrations/3.0.0-calibration.2/runtime/check-plan.mjs",
   "docai-http/benchmarks/openapi-comparison/v3/calibrations/3.0.0-calibration.2/runtime/estimate-cost.mjs",
+  "docai-http/benchmarks/openapi-comparison/v3/calibrations/3.0.0-calibration.2/runtime/freeze.mjs",
   "docai-http/benchmarks/openapi-comparison/v3/calibrations/3.0.0-calibration.2/runtime/build-prompts.mjs",
   "docai-http/benchmarks/openapi-comparison/v3/calibrations/3.0.0-calibration.2/runtime/check-runs.mjs",
   "docai-http/benchmarks/openapi-comparison/v3/calibrations/3.0.0-calibration.2/runtime/run-calibration.mjs",
@@ -114,12 +116,13 @@ export function readApprovedPrivateUtf8File(input) {
 }
 
 export function selectCalibrationPrompts(input) {
-  requirePlainOptions(input, "prompt selection input", ["plan", "prompts"]);
-  const { plan, prompts } = input;
+  requirePlainOptions(input, "prompt selection input", ["plan", "prompts", "rubyExecutable"]);
+  const { plan, prompts, rubyExecutable = "ruby" } = input;
   assertPlainJson(plan, "plan"); assertPlainJson(prompts, "prompts");
   const expected = buildCalibrationSchedule(plan);
   if (prompts.length !== REQUEST_COUNT) throw new Error(`calibration requires exactly ${REQUEST_COUNT} prompts`);
-  const selected = prompts.map((prompt) => validatePromptRecord(prompt)).sort((a, b) => a.calibration_ordinal - b.calibration_ordinal);
+  const packet = readTaskPacket(plan);
+  const selected = prompts.map((prompt) => validatePromptRecord(prompt, { plan, packet, rubyExecutable })).sort((a, b) => a.calibration_ordinal - b.calibration_ordinal);
   if (new Set(selected.map((prompt) => prompt.run_id)).size !== REQUEST_COUNT) throw new Error("calibration prompts must have unique run identities");
   selected.forEach((prompt, index) => {
     const identity = { run_id: prompt.run_id, calibration_ordinal: prompt.calibration_ordinal, batch_id: prompt.batch_id, repetition: prompt.repetition, api_id: prompt.api_id, task_id: prompt.task_id, target_id: prompt.target.id, provider: prompt.target.provider, condition: prompt.condition };
@@ -131,10 +134,13 @@ export function selectCalibrationPrompts(input) {
 export function validateLivePreflight(input) {
   requirePlainOptions(input, "Live preflight input", ["plan", "prompts", "adapters", "modelResolutions", "costEstimate", "metricsPacket", "freezeManifest", "validateFreezeArtifacts", "runnerRevision"]);
   const { plan, prompts, adapters, modelResolutions, costEstimate, metricsPacket, freezeManifest, validateFreezeArtifacts, runnerRevision } = input;
-  const selected = selectCalibrationPrompts({ plan, prompts });
   validateFrozenPlan(plan);
-  const boundAdapters = validateAdapters(plan, adapters, true); requireRevision(runnerRevision);
   assertPlainJson(modelResolutions, "model resolutions"); assertPlainJson(costEstimate, "cost estimate"); assertPlainJson(metricsPacket, "cost metrics"); assertPlainJson(freezeManifest, "freeze manifest");
+  const rubyExecutable = freezeManifest?.runtime_environment?.ruby?.executable;
+  if (typeof rubyExecutable !== "string" || !path.isAbsolute(rubyExecutable)) throw new Error("freeze manifest must bind an absolute Ruby executable");
+  validateFrozenPromptPacket({ prompts });
+  const selected = selectCalibrationPrompts({ plan, prompts, rubyExecutable });
+  const boundAdapters = validateAdapters(plan, adapters, true); requireRevision(runnerRevision);
   if (typeof validateFreezeArtifacts !== "function" || types.isProxy(validateFreezeArtifacts)) throw new TypeError("validateFreezeArtifacts must be a non-Proxy function");
   if (freezeManifest.benchmark_id !== plan.benchmark_id || freezeManifest.plan_version !== plan.plan_version || freezeManifest.status !== "frozen") throw new Error("freeze manifest does not match frozen calibration.2 plan");
   validateModelResolutions(plan, modelResolutions);

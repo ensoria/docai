@@ -104,7 +104,7 @@ test("defines the calibration.2 package boundary and canonical 24-run identity",
   });
 });
 
-test("accepts only the closed calibration.2 draft plan shape", () => {
+test("accepts only the closed calibration.2 plan shape", () => {
   assert.doesNotThrow(() => validatePlan(clonedPlan()));
 
   [

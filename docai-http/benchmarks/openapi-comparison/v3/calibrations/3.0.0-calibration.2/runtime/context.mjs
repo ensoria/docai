@@ -11,13 +11,13 @@ const CONFORMANCE_DIR = path.resolve(PACKAGE_DIR, "..", "..", "..", "..", "..", 
 
 export function buildTaskContext(input) {
   assertPlainJson(input, "context input");
-  const { api, task, condition } = input;
+  const { api, task, condition, rubyExecutable = "ruby" } = input;
   const plan = readPlan();
   const resolvedTask = canonicalTask(plan, api, task);
   if (!plan.conditions.includes(condition)) {
     throw new Error(`context condition must be one of ${plan.conditions.join(", ")}`);
   }
-  return observeBuiltContext(plan, resolvedTask, condition).public_context;
+  return observeBuiltContext(plan, resolvedTask, condition, (context) => context, rubyExecutable).public_context;
 }
 
 export function buildParityReport(options = {}) {
@@ -96,9 +96,9 @@ function parityTask(plan, api, task, transformBuiltContext) {
   };
 }
 
-function observeBuiltContext(plan, task, condition, transformBuiltContext = (context) => context) {
+function observeBuiltContext(plan, task, condition, transformBuiltContext = (context) => context, rubyExecutable = "ruby") {
   const built = transformBuiltContext(
-    buildStableContext({ id: plan.calibration.api_id }, task, condition),
+    buildStableContext({ id: plan.calibration.api_id }, task, condition, rubyExecutable),
     { api_id: plan.calibration.api_id, task, condition },
   );
   assertPlainJson(built, "stable context");
@@ -124,7 +124,7 @@ function observeBuiltContext(plan, task, condition, transformBuiltContext = (con
   };
 }
 
-function buildStableContext(api, task, condition) {
+function buildStableContext(api, task, condition, rubyExecutable = "ruby") {
   const artifacts = resolveStableArtifacts(api);
   const missingFactIds = condition === "openapi-raw" ? [...task.private.fact_inventory.raw_missing]
     : condition === "openapi-sliced" ? [...task.private.fact_inventory.sliced_missing] : [];
@@ -139,7 +139,7 @@ function buildStableContext(api, task, condition) {
     ...common, media_type: "application/yaml", source_files: [logicalPath(artifacts.openapi)], content: readUtf8(artifacts.openapi),
   };
   if (condition === "openapi-sliced") {
-    const sliced = sliceOpenApiDocument(parseYamlFile(artifacts.openapi), task.public.retrieval.openapi_roots);
+    const sliced = sliceOpenApiDocument(parseYamlFile(artifacts.openapi, rubyExecutable), task.public.retrieval.openapi_roots);
     return { ...common, media_type: "application/json", source_files: [logicalPath(artifacts.openapi)], content: `${JSON.stringify(sliced, null, 2)}\n` };
   }
   if (condition === "openapi-enriched") {
@@ -177,8 +177,9 @@ function canonicalTask(plan, api, task) {
   return expected;
 }
 
-export function parseYamlFile(file) {
+export function parseYamlFile(file, rubyExecutable = "ruby") {
   if (typeof file !== "string" || file.length === 0) throw new TypeError("YAML file path must be a non-empty string");
+  if (typeof rubyExecutable !== "string" || rubyExecutable.trim() === "") throw new TypeError("rubyExecutable must be a non-empty string");
   const script = [
     "file = ARGV.fetch(0)",
     "source = File.binread(file)",
@@ -187,7 +188,7 @@ export function parseYamlFile(file) {
     "value = Psych.safe_load(source, permitted_classes: [], permitted_symbols: [], aliases: false, filename: file)",
     "STDOUT.write(JSON.generate(value))",
   ].join("; ");
-  const result = spawnSync("ruby", ["-rpsych", "-rjson", "-e", script, file], { encoding: "utf8", maxBuffer: 32 * 1024 * 1024 });
+  const result = spawnSync(rubyExecutable, ["-rpsych", "-rjson", "-e", script, file], { encoding: "utf8", maxBuffer: 32 * 1024 * 1024 });
   if (result.error) throw new Error(`Unable to run Ruby YAML parser for ${file}: ${result.error.message}`);
   if (result.status !== 0) throw new Error(`Unable to parse YAML ${file}: ${result.stderr.trim()}`);
   return JSON.parse(result.stdout);

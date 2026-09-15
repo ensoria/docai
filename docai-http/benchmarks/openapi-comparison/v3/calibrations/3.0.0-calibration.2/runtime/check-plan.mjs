@@ -10,6 +10,20 @@ const TOP_LEVEL_DRAFT_KEYS = [
   "future_primary_design",
 ];
 
+const TOP_LEVEL_FROZEN_KEYS = [...TOP_LEVEL_DRAFT_KEYS, "freeze"];
+
+export const FROZEN_ARTIFACT_CLASSES = Object.freeze([
+  "package-documentation",
+  "calibration-inputs",
+  "private-calibration-inputs",
+  "runtime",
+  "calibration-tests",
+  "authoritative-stable-sources",
+  "authoritative-stable-projections",
+  "model-resolutions",
+  "cost-estimate",
+]);
+
 const EXPECTED_CONDITIONS = [
   "openapi-raw",
   "openapi-sliced",
@@ -18,9 +32,9 @@ const EXPECTED_CONDITIONS = [
 ];
 
 const EXPECTED_TARGETS = [
-  ["openai-frontier", "openai"],
-  ["anthropic-balanced", "anthropic"],
-  ["google-stable-agentic", "google"],
+  ["openai-frontier", "openai", "gpt-5.6-sol"],
+  ["anthropic-balanced", "anthropic", "claude-sonnet-5"],
+  ["google-stable-agentic", "google", "gemini-3.7-flash"],
 ];
 
 const EXPECTED_TASK_IDS = [
@@ -50,13 +64,12 @@ export function validatePlan(plan, { requireFrozen = false } = {}) {
     if (!condition) failures.push(`${area}: ${message}`);
   };
 
-  assertExactKeys(plan, TOP_LEVEL_DRAFT_KEYS, "plan", failures);
+  const frozen = plan.status === "calibration-frozen";
+  assertExactKeys(plan, frozen ? TOP_LEVEL_FROZEN_KEYS : TOP_LEVEL_DRAFT_KEYS, "plan", failures);
   assert(plan.benchmark_id === "docai-http-openapi-comparison-v3", "identity", "unexpected benchmark_id");
   assert(plan.plan_version === "3.0.0-calibration.2", "identity", "unexpected plan_version");
-  assert(plan.status === "calibration-draft", "identity", "status must be calibration-draft");
-  if (requireFrozen) {
-    assert(false, "freeze", "status must be calibration-frozen");
-  }
+  assert(["calibration-draft", "calibration-frozen"].includes(plan.status), "identity", "status must be calibration-draft or calibration-frozen");
+  if (requireFrozen) assert(frozen, "freeze", "status must be calibration-frozen");
 
   assertExactSequence(plan.conditions, EXPECTED_CONDITIONS, "conditions", failures);
   assert(Array.isArray(plan.targets) && plan.targets.length === 3, "targets", "exactly three targets are required");
@@ -65,7 +78,12 @@ export function validatePlan(plan, { requireFrozen = false } = {}) {
     plan.targets.forEach((target, index) => {
       assertExactKeys(target, ["id", "provider", "model_id"], `targets[${index}]`, failures);
       targetPairs.push(`${target.id}/${target.provider}`);
-      assert(target.model_id === null, `target:${target.id ?? "<unknown>"}`, "model_id must remain null until catalog verification");
+      const expectedModel = EXPECTED_TARGETS[index]?.[2];
+      if (frozen) {
+        assert(target.model_id === expectedModel, `target:${target.id ?? "<unknown>"}`, `model_id must be ${expectedModel}`);
+      } else {
+        assert(target.model_id === null, `target:${target.id ?? "<unknown>"}`, "model_id must remain null until catalog verification");
+      }
     });
     assertExactSequence(targetPairs, EXPECTED_TARGETS.map(([id, provider]) => `${id}/${provider}`), "targets", failures);
   }
@@ -109,6 +127,32 @@ export function validatePlan(plan, { requireFrozen = false } = {}) {
     "matrix must calculate 648 requests",
   );
   assert(primary.batch_count * primary.requests_per_batch === 648, "future primary", "batches must calculate 648 requests");
+
+  if (frozen) {
+    assertExactKeys(plan.freeze, [
+      "manifest",
+      "frozen_at",
+      "artifact_set_sha256",
+      "required_artifact_classes",
+    ], "freeze", failures);
+    assert(plan.freeze.manifest === "freeze-manifest.json", "freeze", "manifest must be freeze-manifest.json");
+    assert(
+      typeof plan.freeze.frozen_at === "string" && !Number.isNaN(Date.parse(plan.freeze.frozen_at)),
+      "freeze",
+      "frozen_at must be an ISO-compatible timestamp",
+    );
+    assert(
+      /^[a-f0-9]{64}$/.test(plan.freeze.artifact_set_sha256 ?? ""),
+      "freeze",
+      "artifact_set_sha256 must be a SHA-256 digest",
+    );
+    assertExactSequence(
+      plan.freeze.required_artifact_classes,
+      FROZEN_ARTIFACT_CLASSES,
+      "freeze required artifact classes",
+      failures,
+    );
+  }
 
   if (failures.length > 0) {
     throw new Error(`OpenAPI comparison v3 calibration.2 plan check failed:\n${failures.map((failure) => `- ${failure}`).join("\n")}`);

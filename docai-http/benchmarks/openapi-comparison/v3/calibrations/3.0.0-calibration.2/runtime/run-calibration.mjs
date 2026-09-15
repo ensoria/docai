@@ -7,6 +7,7 @@ import process from "node:process";
 import { createAnthropicAdapter } from "./anthropic-adapter.mjs";
 import { readTaskPacket } from "./contract.mjs";
 import { createGoogleAdapter } from "./google-adapter.mjs";
+import { validateFrozenPackage } from "./freeze.mjs";
 import { PACKAGE_DIR, PRIVATE_DIR, readPlan } from "./paths.mjs";
 import { createOpenAIAdapter } from "./openai-adapter.mjs";
 import { buildCalibrationPrompts } from "./prompt.mjs";
@@ -17,8 +18,6 @@ const APPROVAL = "3.0.0-calibration.2";
 async function main() {
   const mode = parseMode(process.argv.slice(2));
   const plan = readPlan();
-  const packet = readTaskPacket(plan);
-  const prompts = buildCalibrationPrompts({ plan, packet });
   const adapters = {
     openai: createOpenAIAdapter({ apiKey: process.env.OPENAI_API_KEY }),
     anthropic: createAnthropicAdapter({ apiKey: process.env.ANTHROPIC_API_KEY }),
@@ -26,6 +25,8 @@ async function main() {
   };
   printPreflight(plan, adapters);
   if (mode === "dry-run") {
+    const packet = readTaskPacket(plan);
+    const prompts = buildCalibrationPrompts({ plan, packet });
     const result = await runApprovedCalibration({ plan, prompts, execute: false, adapters });
     console.log(`Provider calls: ${result.report.provider_calls}`);
     return;
@@ -37,10 +38,14 @@ async function main() {
   const costEstimate = readRequiredJson("cost-estimate.json");
   const metricsPacket = readRequiredJson(path.join("private", "contexts", "calibration-metrics.json"));
   const freezeManifest = readRequiredJson("freeze-manifest.json");
+  validateFrozenPackage({ privateRequired: true });
+  const rubyExecutable = freezeManifest.runtime_environment.ruby.executable;
+  const packet = readTaskPacket(plan);
+  const prompts = buildCalibrationPrompts({ plan, packet, rubyExecutable });
   const runnerRevision = buildRunnerRevision();
   const preflight = validateLivePreflight({
     plan, prompts, adapters, modelResolutions, costEstimate, metricsPacket, freezeManifest, runnerRevision,
-    validateFreezeArtifacts: () => false,
+    validateFreezeArtifacts: () => validateFrozenPackage({ privateRequired: true }),
   });
   const store = new FileRunStore({
     runsDir: path.join(PRIVATE_DIR, "runs", plan.plan_version),

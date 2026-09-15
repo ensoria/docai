@@ -100,6 +100,20 @@ test("reproduces the exact canonical 24-record private prompt packet", () => {
   });
 });
 
+test("prompt slicing uses the exact Ruby executable recorded by the frozen package", () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(PACKAGE_DIR, "freeze-manifest.json"), "utf8"));
+  const promptFile = path.join(PACKAGE_DIR, "private", "prompts", "calibration.jsonl");
+
+  withHostilePathRuby(manifest.runtime_environment.ruby.executable, () => {
+    const actual = buildCalibrationPrompts({
+      plan,
+      packet,
+      rubyExecutable: manifest.runtime_environment.ruby.executable,
+    });
+    assert.deepEqual(actual, readJsonl(promptFile));
+  });
+});
+
 test("rejects Proxy and non-plain API inputs before reading their properties", () => {
   const run = buildCalibrationSchedule(plan)[0];
   const task = taskById(run.task_id);
@@ -333,4 +347,26 @@ function runCopiedGenerator(copy) {
 
 function readJsonl(file) {
   return fs.readFileSync(file, "utf8").trim().split("\n").map((line) => JSON.parse(line));
+}
+
+function withHostilePathRuby(realRuby, operation) {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "calibration2-hostile-ruby-"));
+  const wrapper = path.join(root, "ruby");
+  const originalPath = process.env.PATH;
+  fs.writeFileSync(wrapper, [
+    "#!/bin/sh",
+    "case \"$*\" in",
+    `  *RUBY_DESCRIPTION*) exec \"${realRuby}\" \"$@\" ;;`,
+    "esac",
+    `\"${realRuby}\" \"$@\" | sed 's/\"3\\.1\\.1\"/\"9.9.9\"/g'`,
+    "",
+  ].join("\n"), { mode: 0o700 });
+  process.env.PATH = `${root}${path.delimiter}${originalPath ?? ""}`;
+  try {
+    return operation();
+  } finally {
+    if (originalPath === undefined) delete process.env.PATH;
+    else process.env.PATH = originalPath;
+    fs.rmSync(root, { recursive: true, force: true });
+  }
 }

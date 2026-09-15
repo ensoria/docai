@@ -44,6 +44,7 @@ export function buildPromptRecord(input) {
     api,
     task,
     context = undefined,
+    rubyExecutable = "ruby",
   } = input;
   validatePlanIdentity(plan);
   const resolvedPacket = packet ?? readTaskPacket(plan);
@@ -52,7 +53,7 @@ export function buildPromptRecord(input) {
   if (resolvedRun.task_id !== resolvedTask.id) {
     throw new Error("prompt run task_id must match the canonical task");
   }
-  const canonicalContext = buildTaskContext({ api, task: resolvedTask, condition: resolvedRun.condition });
+  const canonicalContext = buildTaskContext({ api, task: resolvedTask, condition: resolvedRun.condition, rubyExecutable });
   if (context !== undefined && !isDeepStrictEqual(context, canonicalContext)) {
     throw new Error("prompt context identity must match the canonical calibration context");
   }
@@ -62,7 +63,7 @@ export function buildPromptRecord(input) {
     resolvedRun,
     resolvedTask,
     canonicalContext,
-  ), { plan, packet: resolvedPacket });
+  ), { plan, packet: resolvedPacket, rubyExecutable });
 }
 
 function buildCanonicalPromptRecord(plan, run, task, context) {
@@ -100,7 +101,7 @@ function buildCanonicalPromptRecord(plan, run, task, context) {
 
 export function buildCalibrationPrompts(input = {}) {
   assertPlainJson(input, "calibration prompt input");
-  const { plan = readPlan(), packet = undefined } = input;
+  const { plan = readPlan(), packet = undefined, rubyExecutable = "ruby" } = input;
   validatePlanIdentity(plan);
   const resolvedPacket = packet ?? readTaskPacket(plan);
   assertPlainJson(resolvedPacket, "task packet");
@@ -114,8 +115,8 @@ export function buildCalibrationPrompts(input = {}) {
     const task = tasks.get(run.task_id);
     if (!task) throw new Error(`scheduled task not found: ${run.api_id}/${run.task_id}`);
     const key = [run.api_id, run.task_id, run.condition].join("\0");
-    if (!contexts.has(key)) contexts.set(key, buildTaskContext({ api, task, condition: run.condition }));
-    return buildPromptRecord({ plan, packet: resolvedPacket, run, api, task, context: contexts.get(key) });
+    if (!contexts.has(key)) contexts.set(key, buildTaskContext({ api, task, condition: run.condition, rubyExecutable }));
+    return buildPromptRecord({ plan, packet: resolvedPacket, run, api, task, context: contexts.get(key), rubyExecutable });
   });
   if (records.length !== plan.calibration.planned_requests) {
     throw new Error(`calibration prompt records must contain ${plan.calibration.planned_requests} rows`);
@@ -162,7 +163,7 @@ export function renderedPromptText(record, input = {}) {
 export function validatePromptRecord(record, input = {}) {
   assertPlainJson(record, "prompt record");
   assertPlainJson(input, "prompt validation input");
-  const { plan = readPlan(), packet = undefined } = input;
+  const { plan = readPlan(), packet = undefined, rubyExecutable = "ruby" } = input;
   validatePlanIdentity(plan);
   const resolvedPacket = packet ?? readTaskPacket(plan);
   requireFiniteJsonValue(record, "prompt record");
@@ -220,7 +221,7 @@ export function validatePromptRecord(record, input = {}) {
     requireNonemptyString(record.prompt[field], `prompt record prompt.${field}`);
   }
 
-  const canonical = canonicalPromptRecord(record, plan, resolvedPacket);
+  const canonical = canonicalPromptRecord(record, plan, resolvedPacket, rubyExecutable);
   for (const field of Object.keys(canonical)) {
     if (field !== "prompt_sha256" && !isDeepStrictEqual(record[field], canonical[field])) {
       throw new Error(`prompt record must match canonical calibration field ${field}`);
@@ -303,12 +304,12 @@ function canonicalTask(plan, packet, task) {
   return expected;
 }
 
-function canonicalPromptRecord(record, plan, packet) {
+function canonicalPromptRecord(record, plan, packet, rubyExecutable = "ruby") {
   const run = buildCalibrationSchedule(plan).find((candidate) => candidate.run_id === record.run_id);
   if (!run) throw new Error("prompt record must match a canonical calibration run");
   const task = packet.tasks.find((candidate) => candidate.id === run.task_id);
   if (!task) throw new Error("prompt record must match a canonical calibration task");
-  const context = buildTaskContext({ api: { id: run.api_id }, task, condition: run.condition });
+  const context = buildTaskContext({ api: { id: run.api_id }, task, condition: run.condition, rubyExecutable });
   return buildCanonicalPromptRecord(plan, run, task, context);
 }
 
