@@ -193,15 +193,35 @@ Implementation plan:
 - [x] Add frozen v3 plan, freeze, and parity checks to ordinary release
   readiness, and record the preflight and calibration status
   in `OPENAPI-COMPARISON-V3-CALIBRATION-RUNBOOK.md`.
-- [ ] Supersede `3.0.0-calibration.1` without modifying its frozen artifacts:
+- [x] Supersede `3.0.0-calibration.1` without modifying its frozen artifacts:
   recompute retained run results from provider responses and canonical tasks,
   reject response/run mismatches, add tamper regressions, and freeze a new
   calibration identity before any provider request.
-- [ ] Send the replacement v3 calibration requests only after explicit
-  approval for its exact frozen envelope;
+- [x] Freeze `3.0.0-calibration.2` with its package-local verified-evidence
+  runtime, exact model panel, 24-request matrix, 322,770-token ceiling, and USD
+  2.4957045 cost ceiling.
+- [x] Add frozen `3.0.0-calibration.2` plan, public freeze, and parity checks
+  to ordinary release readiness without requiring private provider responses
+  or granting Live authorization.
+- [ ] Execute `3.0.0-calibration.2` Live only after separate explicit approval
+  for its exact frozen envelope;
   do not create or execute any primary schedule before calibration review.
-- [ ] Evaluate calibration results against the 23 automated-decision and
-  1 exceptional-run gate before proposing any primary benchmark work.
+- [ ] Record the verified `3.0.0-calibration.2` gate result against the 23
+  automated-decision and 1 exceptional-run thresholds before proposing any
+  primary benchmark work.
+- [ ] Record any conditional `3.0.0-calibration.2` adjudication result as
+  secondary evidence without replacing automatic results.
+- [ ] Design and freeze `3.0.0-frozen.1` only after a passing verified
+  calibration gate and a new reviewed plan.
+- [ ] Execute primary batch `b01` only after its own explicit approval.
+- [ ] Execute primary batch `b02` only after its own explicit approval.
+- [ ] Execute primary batch `b03` only after its own explicit approval.
+- [ ] Execute primary batch `b04` only after its own explicit approval.
+- [ ] Execute primary batch `b05` only after its own explicit approval.
+- [ ] Execute primary batch `b06` only after its own explicit approval.
+- [ ] Execute primary batch `b07` only after its own explicit approval.
+- [ ] Execute primary batch `b08` only after its own explicit approval.
+- [ ] Execute primary batch `b09` only after its own explicit approval.
 
 ## P2: Additional Adoption Evidence
 
