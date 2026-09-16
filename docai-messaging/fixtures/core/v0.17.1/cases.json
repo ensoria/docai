@@ -1704,6 +1704,13 @@
       "expected_rule_ids": []
     },
     {
+      "id": "operation-deviation-incomplete-states-valid",
+      "kind": "task-scoped-document-set",
+      "path": "focused/valid/operation-deviation-incomplete-states-valid",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
       "id": "deprecated-summary-mismatch-invalid",
       "kind": "task-scoped-document-set-mutation",
       "path": "focused/invalid/deprecated-summary-mismatch-invalid.json",
@@ -1739,11 +1746,32 @@
       "expected_rule_ids": ["DM-OP-001"]
     },
     {
+      "id": "deviation-split-example-invalid",
+      "kind": "task-scoped-document-set-mutation",
+      "path": "focused/invalid/deviation-split-example-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-MSG-004"]
+    },
+    {
       "id": "deviation-split-payload-sequence-invalid",
       "kind": "task-scoped-document-set-mutation",
       "path": "focused/invalid/deviation-split-payload-sequence-invalid.json",
       "expected": "invalid",
       "expected_rule_ids": ["DM-MSG-004"]
+    },
+    {
+      "id": "deviation-split-post-table-invalid",
+      "kind": "task-scoped-document-set-mutation",
+      "path": "focused/invalid/deviation-split-post-table-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-MSG-004"]
+    },
+    {
+      "id": "deviation-split-table-invalid",
+      "kind": "task-scoped-document-set-mutation",
+      "path": "focused/invalid/deviation-split-table-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-OP-004"]
     },
     {
       "id": "language-localized-structure-invalid",

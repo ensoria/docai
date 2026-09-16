@@ -1,0 +1,9 @@
+{
+  "id": "deviation-split-post-table-invalid",
+  "base": "../valid/operation-deviation-incomplete-states-valid",
+  "path": "channels/incomplete-deviations.md",
+  "replace": {
+    "from": "| $ | string | yes | no | Stable synthetic command identifier |\n**unknown**: valid example values require authoritative business examples at source-a",
+    "to": "| $ | string | yes | no | Stable synthetic command identifier |\n**deviation**: the inherited business-value evidence is replaced after the table\n**unknown**: valid example values require authoritative business examples at source-a"
+  }
+}

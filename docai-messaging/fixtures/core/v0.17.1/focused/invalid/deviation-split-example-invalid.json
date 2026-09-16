@@ -1,0 +1,9 @@
+{
+  "id": "deviation-split-example-invalid",
+  "base": "../valid/operation-deviation-incomplete-states-valid",
+  "path": "channels/incomplete-deviations.md",
+  "replace": {
+    "from": "```json\n\"cmd_01HXYZ\"\n```\n| Field | Type | Required | Nullable | Constraints / Meaning |",
+    "to": "```json\n\"cmd_01HXYZ\"\n```\n**deviation**: the inherited field table is replaced after the example\n| Field | Type | Required | Nullable | Constraints / Meaning |"
+  }
+}

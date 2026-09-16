@@ -390,6 +390,13 @@ const canonicalStructureCaseIds = [
   "language-structure-source-valid"
 ];
 
+const operationDeviationStateCaseIds = [
+  "deviation-split-example-invalid",
+  "deviation-split-post-table-invalid",
+  "deviation-split-table-invalid",
+  "operation-deviation-incomplete-states-valid"
+];
+
 const implementationReadinessCaseIds = [
   "implementation-readiness-capability-matrix-valid",
   "implementation-readiness-projection-invalid",
@@ -4405,6 +4412,74 @@ test("executes the Task 9 DM-LANG-001 canonical marker deviation deprecation lan
   }
 });
 
+test("executes the Task 9 operation deviation incomplete-state and immediate-sequence corpus", () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
+  const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
+
+  assert.deepEqual(operationDeviationStateCaseIds.filter((id) => !byId.has(id)), []);
+  for (const id of operationDeviationStateCaseIds) {
+    const fixtureCase = byId.get(id);
+    assert.equal(
+      fixtureCase.expected === "valid" || fixtureCase.expected_rule_ids.length === 1,
+      true,
+      id
+    );
+  }
+
+  const result = runFixtureCorpus(corpusPath, validateCase);
+  assert.equal(result.failed, 0, result.report);
+
+  const validCase = byId.get("operation-deviation-incomplete-states-valid");
+  const valid = validateCase(path.join(corpusPath, validCase.path), validCase);
+  assert.deepEqual(valid.diagnostics, []);
+  assert.deepEqual(Object.keys(valid.facts.core.operationDefinitions.byName), [
+    "publish-with-incomplete-deviations"
+  ]);
+  assert.deepEqual(
+    valid.facts.core.messageDefinitions.byOperation["publish-with-incomplete-deviations"].map((entry) => ({
+      direction: entry.direction,
+      name: entry.name,
+      reply: entry.reply
+    })),
+    [
+      { direction: "SEND", name: "incomplete-command", reply: false },
+      { direction: "RECEIVE", name: "incomplete-reply", reply: true }
+    ]
+  );
+  const operationDocument = fs.readFileSync(
+    path.join(corpusPath, validCase.path, "channels/incomplete-deviations.md"),
+    "utf8"
+  );
+  assert.equal(operationDocument.match(/^\*\*deviation\*\*: /gmu)?.length, 17);
+  for (const fragment of [
+    "**deviation**: the inherited acknowledgement rule is replaced by deployment-specific acknowledgement\nunknown\n**unknown**: operation binding rules require the deployment broker configuration at source-a",
+    "**deviation**: the inherited tenant source is replaced by authenticated tenant context\n**unsupported**: replaces channel Parameters: encoded tenant routing rules at source-a#/channel/parameters",
+    "**deviation**: the inherited command envelope is replaced by deployment headers\nunknown\n**unknown**: message header collection requires the complete envelope declaration at source-a",
+    "**deviation**: the inherited partition rule is replaced by deployment partitioning\n**unsupported**: replaces message Bindings incomplete-command: encoded partition binding at source-a#/messages/incomplete-command/bindings",
+    "**deviation**: the inherited reply tenant source is replaced by authenticated tenant context\nunknown\n**unknown**: reply channel parameter rules require the complete reply channel declaration at source-a",
+    "**deviation**: the inherited reply topic rule is replaced by deployment routing\n**unsupported**: replaces reply channel Bindings: encoded reply binding at source-a#/reply/channel/bindings",
+    "**deviation**: the inherited reply envelope is replaced by deployment headers\nunknown\n**unknown**: reply message header collection requires the complete envelope declaration at source-a",
+    "**deviation**: the inherited reply partition rule is replaced by deployment partitioning\n**unsupported**: replaces reply message Bindings incomplete-reply: encoded reply partition binding at source-a#/reply/messages/incomplete-reply/bindings",
+    "**deviation**: the inherited reply payload rule is retained beside unresolved wire identity\n**payload_presence**: optional\nunknown\n**unknown**: payload representation set requires the complete reply wire identity at source-a",
+    "**deviation**: the inherited retry rule is replaced by explicit escalation\n**unsupported**: replaces Failure Handling: encoded recovery rules at source-a#/failures"
+  ]) {
+    assert.equal(operationDocument.includes(fragment), true, fragment);
+  }
+
+  for (const [id, expectedRuleId] of [
+    ["deviation-split-example-invalid", "DM-MSG-004"],
+    ["deviation-split-post-table-invalid", "DM-MSG-004"],
+    ["deviation-split-table-invalid", "DM-OP-004"]
+  ]) {
+    const fixtureCase = byId.get(id);
+    const invalid = validateCase(path.join(corpusPath, fixtureCase.path), fixtureCase);
+    const primary = invalid.diagnostics.filter((entry) => (
+      entry.severity === "error" && !entry.cascade
+    ));
+    assert.deepEqual(primary.map((entry) => entry.ruleId), [expectedRuleId], id);
+  }
+});
+
 test("executes the Task 9 DM-INC-003 implementation-readiness capability matrix", () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
   const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
@@ -4508,7 +4583,7 @@ test("executes the Task 9 DM-INC-003 implementation-readiness capability matrix"
 
 test("audits every Task 9 invalid fixture as one primary concern", () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
-  assert.equal(manifest.cases.length, 258);
+  assert.equal(manifest.cases.length, 262);
   const result = runFixtureCorpus(corpusPath, validateCase);
   assert.equal(result.failed, 0, result.report);
   const audit = auditFixtureOneInvalidity({
@@ -4516,5 +4591,5 @@ test("audits every Task 9 invalid fixture as one primary concern", () => {
     corpusCases: result.cases
   });
 
-  assert.deepEqual(audit, { passed: true, audited: 189, errors: [] });
+  assert.deepEqual(audit, { passed: true, audited: 192, errors: [] });
 });

@@ -1036,7 +1036,20 @@ function validatePayload(file, markdown, message, direction, endLine, reply, ope
   const visible = lines.filter((line) => !line.inFence && line.text !== "");
   let cursor = 0;
   while (visible[cursor]?.text.startsWith("**deviation**: ")) cursor += 1;
+  const deviations = visible.slice(0, cursor);
   const core = visible.slice(cursor);
+  const misplacedDeviation = core.find((line) => line.text.startsWith("**deviation**:"));
+  if (!validLeadingDeviations(deviations) || misplacedDeviation !== undefined) {
+    return {
+      diagnostics: payloadDiagnostic(
+        "DM-MSG-004",
+        file,
+        misplacedDeviation?.line ?? deviations[0]?.line ?? payload.line,
+        "Payload deviations must be non-empty, sorted, and grouped before the whole-payload core state."
+      ),
+      formatUses: []
+    };
+  }
   if (core.length === 1 && core[0].text === "none") return { diagnostics: [], formatUses: [] };
   const expectedMarker = direction === "SEND" ? "**payload_required**: " : "**payload_presence**: ";
   const first = core[0];

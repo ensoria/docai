@@ -1,0 +1,9 @@
+{
+  "id": "deviation-split-table-invalid",
+  "base": "../valid/operation-deviation-incomplete-states-valid",
+  "path": "channels/incomplete-deviations.md",
+  "replace": {
+    "from": "| Protocol | Property | Value / Rule |\n|---|---|---|\n| kafka | topic | `deviations.incomplete.{tenant}` |",
+    "to": "| Protocol | Property | Value / Rule |\n|---|---|---|\n**deviation**: the inherited topic row is replaced inside the table\n| kafka | topic | `deviations.incomplete.{tenant}` |"
+  }
+}
