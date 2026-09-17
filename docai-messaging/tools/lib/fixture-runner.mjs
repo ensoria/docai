@@ -9,7 +9,7 @@ function primaryErrorDiagnostics(diagnostics) {
   return errorDiagnostics(diagnostics).filter((entry) => !entry.cascade);
 }
 
-function findRulesPath(corpusDir) {
+export function findRulesPath(corpusDir) {
   let directory = path.resolve(corpusDir);
   while (true) {
     const candidate = path.join(directory, "rules.json");
@@ -20,7 +20,7 @@ function findRulesPath(corpusDir) {
   }
 }
 
-function loadCatalog(corpusDir) {
+export function loadFixtureRuleCatalog(corpusDir) {
   const catalog = JSON.parse(fs.readFileSync(findRulesPath(corpusDir), "utf8"));
   return new Set(catalog.rules.map((entry) => entry.rule_id));
 }
@@ -109,6 +109,78 @@ export function auditFixtureOneInvalidity({ manifestCases, corpusCases }) {
   return { passed: errors.length === 0, audited: invalidCases.length, errors };
 }
 
+export function auditCoreReleaseCoverage({ catalogRuleIds, manifestCases, coverageText }) {
+  const catalogCounts = new Map();
+  for (const ruleId of catalogRuleIds) {
+    catalogCounts.set(ruleId, (catalogCounts.get(ruleId) ?? 0) + 1);
+  }
+  const catalog = new Set(catalogRuleIds);
+  const manifestRuleIds = manifestCases.flatMap((entry) => entry.expected_rule_ids ?? []);
+  const coverageRowMatches = [...coverageText.matchAll(
+    /^\| `R8-CORE-([0-9]{3})` \|.*\| `(covered|partial|pending)` \|$/gm
+  )];
+  const coverageRuleIds = coverageRowMatches.flatMap(
+    (match) => match[0].match(/\bDM-[A-Z]+-[0-9]{3}\b/g) ?? []
+  );
+  const referencedRuleIds = new Set([...manifestRuleIds, ...coverageRuleIds]);
+  const duplicateCatalogRules = [...catalogCounts]
+    .filter(([, count]) => count > 1)
+    .map(([ruleId]) => ruleId)
+    .sort();
+  const unknownRuleReferences = [...referencedRuleIds]
+    .filter((ruleId) => !catalog.has(ruleId))
+    .sort();
+  const unusedCatalogRules = [...catalog]
+    .filter((ruleId) => !referencedRuleIds.has(ruleId))
+    .sort();
+
+  const coverageRows = coverageRowMatches.map(
+    (match) => ({ number: Number(match[1]), status: match[2] })
+  );
+  const coverageErrors = [];
+  if (coverageRows.length === 0) {
+    coverageErrors.push("missing-coverage-rows");
+  } else {
+    const rowCounts = new Map();
+    for (const row of coverageRows) {
+      rowCounts.set(row.number, (rowCounts.get(row.number) ?? 0) + 1);
+    }
+    const rowNumbers = new Set(rowCounts.keys());
+    const maximum = Math.max(...rowNumbers);
+    for (let number = 1; number <= maximum; number += 1) {
+      if (!rowNumbers.has(number)) {
+        coverageErrors.push(`missing-coverage-row:R8-CORE-${String(number).padStart(3, "0")}`);
+      }
+    }
+    for (const [number, count] of rowCounts) {
+      if (count > 1) {
+        coverageErrors.push(
+          `duplicate-coverage-row:R8-CORE-${String(number).padStart(3, "0")}`
+        );
+      }
+    }
+    for (const row of coverageRows) {
+      if (row.status !== "covered") {
+        coverageErrors.push(
+          `incomplete-coverage-row:R8-CORE-${String(row.number).padStart(3, "0")}:${row.status}`
+        );
+      }
+    }
+  }
+
+  const ruleErrors = [
+    ...duplicateCatalogRules.map((ruleId) => `duplicate-catalog-rule:${ruleId}`),
+    ...unknownRuleReferences.map((ruleId) => `unknown-rule-reference:${ruleId}`),
+    ...unusedCatalogRules.map((ruleId) => `unused-catalog-rule:${ruleId}`)
+  ];
+  return {
+    passed: ruleErrors.length === 0 && coverageErrors.length === 0,
+    unusedCatalogRules,
+    ruleErrors,
+    coverageErrors
+  };
+}
+
 function caseResult(testCase, diagnostics, catalog) {
   const errors = errorDiagnostics(diagnostics);
   const primaryErrors = primaryErrorDiagnostics(diagnostics);
@@ -146,7 +218,7 @@ function caseResult(testCase, diagnostics, catalog) {
 export function runFixtureCorpus(corpusDir, validator) {
   const manifestPath = path.join(corpusDir, "cases.json");
   const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
-  const catalog = loadCatalog(corpusDir);
+  const catalog = loadFixtureRuleCatalog(corpusDir);
   const cases = manifest.cases.map((testCase) => {
     const fixturePath = path.join(corpusDir, testCase.path);
     const { diagnostics = [] } = validator(fixturePath, testCase);

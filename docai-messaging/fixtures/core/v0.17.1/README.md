@@ -31,3 +31,19 @@ The command is a non-mutating dry-run unless `--write` is supplied. A current se
 ## Source traceability
 
 `SOURCE-TRACEABILITY.md` maps opening metadata, INDEX rows, every CONVENTIONS section, operation units, message and payload representations, known-absence states, and the absence of incomplete markers to exact source locations or projection-manifest decisions. It also records the checker boundary: source fixtures are versioned evidence, not a public AsyncAPI-to-DocAI converter interface.
+
+## Read-only Core checker
+
+From the repository root, validate this default corpus with:
+
+```sh
+node docai-messaging/tools/check-core-fixtures.mjs
+```
+
+Pass another corpus directory as the single positional argument to review a candidate copy:
+
+```sh
+node docai-messaging/tools/check-core-fixtures.mjs path/to/candidate/core/v0.17.1
+```
+
+The checker runs every manifest case, audits one primary concern for every invalid case, requires every Core rule to be cited by a manifest expectation or coverage-matrix row, and requires a contiguous matrix whose rows are all `covered`. It never restamps or otherwise modifies the corpus. Identity refresh remains an explicit `restamp-document-set.mjs` operation.

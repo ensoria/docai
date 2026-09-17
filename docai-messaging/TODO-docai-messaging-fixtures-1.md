@@ -1618,22 +1618,27 @@ Final review の Important finding 対応により、この checkpoint は当初
 **Files:**
 
 - Create: `docai-messaging/tools/check-core-fixtures.mjs`
+- Create: `docai-messaging/tools/lib/core-fixture-validator.mjs`
+- Create: `docai-messaging/tools/tests/check-core-fixtures.test.mjs`
 - Modify: `fixture-runner.mjs`
+- Modify: `core-corpus.test.mjs`
 - Modify: Core `README.md` and `COVERAGE.md`
 
-- [ ] **Step 1: read-only CLI を実装する**
+- [x] **Step 1: read-only CLI を実装する**
   - default corpus は `fixtures/core/v0.17.1`。
   - optional positional path で candidate corpus を検証できる。
   - restamp は Task 4 の専用 helper に限定し、この CLI は file を変更しない。
 
-- [ ] **Step 2: checker self-tests を追加する**
+- [x] **Step 2: checker self-tests を追加する**
   - valid corpus の mutation copy を tmp directory に作り、metadata、digest、INDEX row、marker propagation を一箐所ずつ壊して拒否を確認する。
 
-- [ ] **Step 3: full Core command を実行する**
+- [x] **Step 3: full Core command を実行する**
   - Run: `node --test docai-messaging/tools/tests/*.test.mjs`
   - Expected: 全 test PASS。
   - Run: `node docai-messaging/tools/check-core-fixtures.mjs`
   - Expected: 全 cases PASS、未使用 rule 0、coverage gap 0。
+
+> **Approved design and implementation note (Task 10 read-only Core checker checkpoint):** test-onlyだったfixture-kind dispatchを`core-fixture-validator.mjs`へ切り出し、既存Core corpus testとCLIが同じvalidator entry pointを使用する。CLIは既定`fixtures/core/v0.17.1`または単一のcandidate pathを検証し、manifest全case、invalid fixtureのone-primary-concern、Core catalog ruleのmanifest / coverage matrix使用証跡、連番かつ全行`covered`の`R8-CORE-*` matrixをread-onlyでgateする。catalog auditで未参照だった`DM-IDX-001` / `DM-IDX-002`をroot INDEXの`R8-CORE-007`へ、`DM-PARSE-001` / `DM-PARSE-002`を全Core構造を所有する`R8-CORE-001`へ明示対応付けした。self-testは実corpus copyのmetadata、digest、INDEX row、marker propagationを一箇所ずつ破損して拒否を確認し、candidate path正常系、coverage partial、未使用ruleも含めて検査前後のbytesが不変であることを固定する。実測は全648 tests中647成功 / 1 skip（Python 3.9未導入の既存環境skip）/ 0失敗、Core checkerは264 cases / 193 invalid、one-invalidity 193 / 193、未使用rule 0、coverage gap 0。影響はcheckerとrelease evidenceに限定し、fixture expectation、normative meaning、document validator semantics、identity restamp責務は変更しない。Step 4の人手publication reviewとimplementation-targetへのREADME昇格は別change setに残す。
 
 - [ ] **Step 4: Core publication review を記録する**
   - format compliance、contract completeness、reader-relative readiness を別々に判定する。
