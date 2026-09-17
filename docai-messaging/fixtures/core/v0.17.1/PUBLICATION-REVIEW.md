@@ -2,7 +2,7 @@
 
 Review date: 2026-09-17
 
-This review evaluates the DocAI Messaging `0.17.1` Compatibility Core corpus as a publication candidate. It does not promote the repository publication label by itself and does not claim compatibility for the complete generator surface.
+This review evaluates the DocAI Messaging `0.17.1` Compatibility Core corpus as a publication candidate. The repository publication label is promoted only by the separate root-README change made after the stop-rule reassessment below; this review does not claim compatibility for the complete generator surface.
 
 ## Review Boundary
 
@@ -80,6 +80,18 @@ This is not a universal readiness claim and does not cover `compact`, selective 
 - [x] Publication-scope and adapter mapping identities and versions are recorded out of band and checker-bound to the projection manifest.
 - [x] No Compatibility Core publication blocker was found within this review boundary.
 - [x] Complete-surface compatibility is not claimed.
-- [x] Repository publication-label promotion remains a separate change set.
+- [x] Repository publication-label promotion is authorized only by the separate root-README change after the stop-rule reassessment below.
+
+## Stop-Rule Reassessment and Promotion Decision
+
+Publication was stopped when the review checkpoint added a checker rule that binds `PUBLICATION.json` to the projection manifest. The review was then reassessed before changing the repository publication label:
+
+| Reassessment subject | Result | Version effect |
+|---|---|---|
+| Normative meaning | Unchanged. No README format rule or document-validator semantic changed. | No DocAI Messaging version change. |
+| Fixture expectation | Unchanged. The 264-case corpus, its 193 invalid-case outcomes, `valid/full/` bytes, and projection-manifest bytes are unchanged. | No Core fixture-version change. |
+| Checker rule | Changed. The release gate now verifies trusted publication metadata and its exact projection-manifest binding. | No version change because this is a pre-publication distribution-metadata gate, not a document-format, projected-contract, or fixture-expectation change. |
+
+The stop was cleared after the promotion change set passed the full 652-test suite with 651 passes, the existing Python 3.9 environment skip, and no failures; the read-only Core checker passed all 264 cases with 193/193 invalid cases audited, no unused rules, and no coverage gaps; the projection-manifest SHA-256 remained `d4a9e5f64d319e0c107ff04814da99a639d407c15f340ed4a69d46f245e4f480`; and whitespace validation passed. The root README therefore declares only the reviewed Compatibility Core implementation target. The complete generator surface remains outside the publication scope.
 
 Any change to normative meaning, fixture expectation, checker rule, publication metadata, projection-manifest bytes, or a client-visible `valid/full/` fact invalidates this review and requires the release to stop pending version and fixture-version reassessment.
