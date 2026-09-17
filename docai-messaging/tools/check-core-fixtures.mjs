@@ -5,6 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { validateCoreFixtureCase } from "./lib/core-fixture-validator.mjs";
 import {
+  auditCorePublicationMetadata,
   auditCoreReleaseCoverage,
   auditFixtureOneInvalidity,
   findRulesPath,
@@ -21,29 +22,48 @@ function fail(lines) {
 }
 
 function checkCoreFixtures(corpusPath) {
-  const manifestPath = path.join(corpusPath, "cases.json");
+  const casesPath = path.join(corpusPath, "cases.json");
   const coveragePath = path.join(corpusPath, "COVERAGE.md");
-  const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+  const publicationPath = path.join(corpusPath, "PUBLICATION.json");
+  const projectionManifestPath = path.join(
+    corpusPath,
+    "source",
+    "projection-input-manifest.json"
+  );
+  if (!fs.existsSync(publicationPath)) {
+    throw new Error("missing-publication-metadata:PUBLICATION.json");
+  }
+  const casesManifest = JSON.parse(fs.readFileSync(casesPath, "utf8"));
   const catalog = JSON.parse(fs.readFileSync(findRulesPath(corpusPath), "utf8"));
   const coverageText = fs.readFileSync(coveragePath, "utf8");
+  const publication = JSON.parse(fs.readFileSync(publicationPath, "utf8"));
+  const projectionManifestBytes = fs.readFileSync(projectionManifestPath);
+  const projectionManifest = JSON.parse(projectionManifestBytes.toString("utf8"));
   const corpus = runFixtureCorpus(corpusPath, validateCoreFixtureCase);
   const oneInvalidity = auditFixtureOneInvalidity({
-    manifestCases: manifest.cases,
+    manifestCases: casesManifest.cases,
     corpusCases: corpus.cases
   });
   const releaseCoverage = auditCoreReleaseCoverage({
     catalogRuleIds: catalog.rules
       .filter((entry) => entry.scope === "core")
       .map((entry) => entry.rule_id),
-    manifestCases: manifest.cases,
+    manifestCases: casesManifest.cases,
     coverageText
   });
-  const invalidCount = manifest.cases.filter((entry) => entry.expected === "invalid").length;
+  const publicationAudit = auditCorePublicationMetadata({
+    publication,
+    projectionManifest,
+    projectionManifestBytes
+  });
+  const invalidCount = casesManifest.cases
+    .filter((entry) => entry.expected === "invalid").length;
   const errors = [
     ...(corpus.failed === 0 ? [] : [corpus.report]),
     ...oneInvalidity.errors,
     ...releaseCoverage.ruleErrors,
-    ...releaseCoverage.coverageErrors
+    ...releaseCoverage.coverageErrors,
+    ...publicationAudit.errors
   ];
   if (errors.length > 0) {
     fail(errors);
@@ -51,7 +71,7 @@ function checkCoreFixtures(corpusPath) {
   }
 
   process.stdout.write(
-    `Core fixture check passed: ${manifest.cases.length} cases, ${invalidCount} invalid, `
+    `Core fixture check passed: ${casesManifest.cases.length} cases, ${invalidCount} invalid, `
       + `one-invalidity ${oneInvalidity.audited}/${invalidCount}, `
       + `${releaseCoverage.unusedCatalogRules.length} unused rules, `
       + `${releaseCoverage.coverageErrors.length} coverage gaps.\n`

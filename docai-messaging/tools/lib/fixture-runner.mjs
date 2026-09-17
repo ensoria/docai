@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { createHash } from "node:crypto";
 
 function errorDiagnostics(diagnostics) {
   return diagnostics.filter((entry) => entry.severity === "error");
@@ -179,6 +180,90 @@ export function auditCoreReleaseCoverage({ catalogRuleIds, manifestCases, covera
     ruleErrors,
     coverageErrors
   };
+}
+
+export function auditCorePublicationMetadata({
+  publication,
+  projectionManifest,
+  projectionManifestBytes
+}) {
+  const errors = [];
+  const scope = publication?.publicationScope ?? {};
+  const manifestBinding = publication?.projectionManifest ?? {};
+  const expectedScope = {
+    identity: projectionManifest?.publicationPolicy?.id,
+    version: projectionManifest?.publicationPolicy?.version,
+    compatibilityScope: "compatibility-core",
+    docaiMessagingVersion: projectionManifest?.docaiMessaging,
+    profiles: ["full"]
+  };
+  for (const [field, expected] of Object.entries(expectedScope)) {
+    const actual = scope[field];
+    const matches = Array.isArray(expected)
+      ? JSON.stringify(actual) === JSON.stringify(expected)
+      : actual === expected;
+    if (!matches) {
+      errors.push(
+        `publication-scope-${field.replaceAll(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)}-mismatch:`
+          + `expected=${Array.isArray(expected) ? expected.join(",") : expected}:`
+          + `actual=${Array.isArray(actual) ? actual.join(",") : actual ?? "missing"}`
+      );
+    }
+  }
+
+  const expectedManifestPath = "source/projection-input-manifest.json";
+  if (manifestBinding.path !== expectedManifestPath) {
+    errors.push(
+      `publication-manifest-path-mismatch:expected=${expectedManifestPath}:`
+        + `actual=${manifestBinding.path ?? "missing"}`
+    );
+  }
+  const expectedManifestSha256 = `sha256:${createHash("sha256")
+    .update(projectionManifestBytes)
+    .digest("hex")}`;
+  if (manifestBinding.sha256 !== expectedManifestSha256) {
+    errors.push(
+      `publication-manifest-digest-mismatch:expected=${expectedManifestSha256}:`
+        + `actual=${manifestBinding.sha256 ?? "missing"}`
+    );
+  }
+
+  const expectedMappings = Array.isArray(projectionManifest?.adapters)
+    ? projectionManifest.adapters
+    : [];
+  const actualMappings = Array.isArray(publication?.adapterMappings)
+    ? publication.adapterMappings
+    : [];
+  const keyFor = (entry) => `${entry?.class ?? "missing"}:${entry?.target ?? "missing"}`;
+  const actualByKey = new Map();
+  for (const mapping of actualMappings) {
+    const key = keyFor(mapping);
+    if (actualByKey.has(key)) {
+      errors.push(`duplicate-publication-adapter-mapping:${key}`);
+    } else {
+      actualByKey.set(key, mapping);
+    }
+  }
+  const expectedKeys = new Set(expectedMappings.map(keyFor));
+  for (const expected of expectedMappings) {
+    const key = keyFor(expected);
+    const actual = actualByKey.get(key);
+    if (actual === undefined) {
+      errors.push(`missing-publication-adapter-mapping:${key}`);
+    } else if (actual.ruleVersion !== expected.ruleVersion) {
+      errors.push(
+        `adapter-mapping-version-mismatch:${key}:expected=${expected.ruleVersion}:`
+          + `actual=${actual.ruleVersion ?? "missing"}`
+      );
+    }
+  }
+  for (const key of actualByKey.keys()) {
+    if (!expectedKeys.has(key)) {
+      errors.push(`unexpected-publication-adapter-mapping:${key}`);
+    }
+  }
+
+  return { passed: errors.length === 0, errors };
 }
 
 function caseResult(testCase, diagnostics, catalog) {

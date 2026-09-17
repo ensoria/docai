@@ -47,3 +47,5 @@ node docai-messaging/tools/check-core-fixtures.mjs path/to/candidate/core/v0.17.
 ```
 
 The checker runs every manifest case, audits one primary concern for every invalid case, requires every Core rule to be cited by a manifest expectation or coverage-matrix row, and requires a contiguous matrix whose rows are all `covered`. It never restamps or otherwise modifies the corpus. Identity refresh remains an explicit `restamp-document-set.mjs` operation.
+
+`PUBLICATION.json` records the trusted out-of-band Compatibility Core scope, exact projection-manifest digest, and adapter mapping identities and versions. `PUBLICATION-REVIEW.md` records the separate format-compliance, contract-completeness, and reader-relative-readiness judgments. Passing the checker validates the metadata binding; it does not replace the human review or promote the repository publication label.

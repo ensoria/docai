@@ -37,6 +37,13 @@ function replaceExactlyOnce(filePath, from, to) {
   fs.writeFileSync(filePath, source.replace(from, to));
 }
 
+function mutatePublication(candidatePath, mutate) {
+  const publicationPath = path.join(candidatePath, "PUBLICATION.json");
+  const publication = JSON.parse(fs.readFileSync(publicationPath, "utf8"));
+  mutate(publication);
+  fs.writeFileSync(publicationPath, `${JSON.stringify(publication, null, 2)}\n`);
+}
+
 function directorySnapshot(directory, relative = "") {
   const snapshot = {};
   for (const entry of fs.readdirSync(path.join(directory, relative), { withFileTypes: true })) {
@@ -68,6 +75,67 @@ test("checks an optional candidate corpus path without modifying it", (t) => {
 
   assert.equal(result.status, 0, result.stderr || result.stdout);
   assert.equal(result.stderr, "");
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
+test("rejects a candidate without out-of-band publication metadata", (t) => {
+  const candidatePath = copyCandidate(t);
+  fs.rmSync(path.join(candidatePath, "PUBLICATION.json"), { force: true });
+  const before = directorySnapshot(candidatePath);
+  const result = runChecker([candidatePath]);
+
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /missing-publication-metadata:PUBLICATION\.json/);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
+test("rejects publication scope version drift from the projection manifest", (t) => {
+  const candidatePath = copyCandidate(t);
+  mutatePublication(candidatePath, (publication) => {
+    publication.publicationScope.version = "1.0.1";
+  });
+  const before = directorySnapshot(candidatePath);
+  const result = runChecker([candidatePath]);
+
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(
+    result.stderr,
+    /publication-scope-version-mismatch:expected=1\.0\.0:actual=1\.0\.1/
+  );
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
+test("rejects a stale projection-manifest digest in publication metadata", (t) => {
+  const candidatePath = copyCandidate(t);
+  mutatePublication(candidatePath, (publication) => {
+    publication.projectionManifest.sha256 = `sha256:${"0".repeat(64)}`;
+  });
+  const before = directorySnapshot(candidatePath);
+  const result = runChecker([candidatePath]);
+
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(
+    result.stderr,
+    /publication-manifest-digest-mismatch:expected=sha256:d4a9e5f64d319e0c107ff04814da99a639d407c15f340ed4a69d46f245e4f480:actual=sha256:0{64}/
+  );
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
+test("rejects adapter mapping version drift from the projection manifest", (t) => {
+  const candidatePath = copyCandidate(t);
+  mutatePublication(candidatePath, (publication) => {
+    publication.adapterMappings.find(
+      (entry) => entry.class === "header-encoding"
+    ).ruleVersion = "1.0.1";
+  });
+  const before = directorySnapshot(candidatePath);
+  const result = runChecker([candidatePath]);
+
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(
+    result.stderr,
+    /adapter-mapping-version-mismatch:header-encoding:kafka-record-headers;value-encoding=utf-8:expected=1\.0\.0:actual=1\.0\.1/
+  );
   assert.deepEqual(directorySnapshot(candidatePath), before);
 });
 

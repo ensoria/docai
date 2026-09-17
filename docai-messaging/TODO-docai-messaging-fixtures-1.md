@@ -1620,6 +1620,8 @@ Final review の Important finding 対応により、この checkpoint は当初
 - Create: `docai-messaging/tools/check-core-fixtures.mjs`
 - Create: `docai-messaging/tools/lib/core-fixture-validator.mjs`
 - Create: `docai-messaging/tools/tests/check-core-fixtures.test.mjs`
+- Create: `docai-messaging/fixtures/core/v0.17.1/PUBLICATION.json`
+- Create: `docai-messaging/fixtures/core/v0.17.1/PUBLICATION-REVIEW.md`
 - Modify: `fixture-runner.mjs`
 - Modify: `core-corpus.test.mjs`
 - Modify: Core `README.md` and `COVERAGE.md`
@@ -1640,10 +1642,12 @@ Final review の Important finding 対応により、この checkpoint は当初
 
 > **Approved design and implementation note (Task 10 read-only Core checker checkpoint):** test-onlyだったfixture-kind dispatchを`core-fixture-validator.mjs`へ切り出し、既存Core corpus testとCLIが同じvalidator entry pointを使用する。CLIは既定`fixtures/core/v0.17.1`または単一のcandidate pathを検証し、manifest全case、invalid fixtureのone-primary-concern、Core catalog ruleのmanifest / coverage matrix使用証跡、連番かつ全行`covered`の`R8-CORE-*` matrixをread-onlyでgateする。catalog auditで未参照だった`DM-IDX-001` / `DM-IDX-002`をroot INDEXの`R8-CORE-007`へ、`DM-PARSE-001` / `DM-PARSE-002`を全Core構造を所有する`R8-CORE-001`へ明示対応付けした。self-testは実corpus copyのmetadata、digest、INDEX row、marker propagationを一箇所ずつ破損して拒否を確認し、candidate path正常系、coverage partial、未使用ruleも含めて検査前後のbytesが不変であることを固定する。実測は全648 tests中647成功 / 1 skip（Python 3.9未導入の既存環境skip）/ 0失敗、Core checkerは264 cases / 193 invalid、one-invalidity 193 / 193、未使用rule 0、coverage gap 0。影響はcheckerとrelease evidenceに限定し、fixture expectation、normative meaning、document validator semantics、identity restamp責務は変更しない。Step 4の人手publication reviewとimplementation-targetへのREADME昇格は別change setに残す。
 
-- [ ] **Step 4: Core publication review を記録する**
+- [x] **Step 4: Core publication review を記録する**
   - format compliance、contract completeness、reader-relative readiness を別々に判定する。
   - publication scope identity/version と adapter mapping identity/version を out-of-band metadata に記録する。
   - design-review draft から Compatibility Core implementation target へ変更する README edit は、fixture review 後の別 change set とする。
+
+> **Approved design and implementation note (Task 10 Core publication review checkpoint):** `PUBLICATION.json`をnormalized document set外のtrusted distribution metadataとして追加し、projection manifestの`publicationPolicy`をscope identity / version、`adapters`の各`(class, target)`をmapping identity、`ruleVersion`をmapping versionとして固定する。manifest pathとexact SHA-256も記録し、Core checkerはmetadata欠落、scope field不一致、manifest path / digest不一致、mapping欠落・重複・追加・version不一致を拒否する。TDDではmetadata欠落、scope version drift、stale manifest digest、header-encoding mapping version driftが従来checkerで成功するREDを確認してから照合を実装した。`PUBLICATION-REVIEW.md`はformat complianceを全Core corpus、contract completenessを`valid/full/`、reader-relative readinessをexact scopeとvisible Kafka / JSON runtime能力を満たすreaderへ限定して別々に判定し、producer-side adapter supportをordinary readerへ要求しない。complete surfaceとrepository publication-label昇格は明示的に対象外とする。影響としてrelease gateとout-of-band metadataだけを追加し、normative meaning、fixture expectation、document validator semantics、projection identityは変更しない。検証結果は全652 tests中651成功 / 1 skip（Python 3.9未導入の既存環境skip）/ 0失敗、checker self-tests 12 / 12、Core checkerは264 cases / 193 invalid、one-invalidity 193 / 193、未使用rule 0、coverage gap 0、`git diff --check`成功。Step 5のstop-rule最終判定とREADME昇格は次checkpointに残す。
 
 - [ ] **Step 5: stop rule を適用する**
   - normative meaning、fixture expectation、checker rule のいずれかがレビュー中に変わった場合は公開を止め、仕様バージョンと fixture version を再評価する。

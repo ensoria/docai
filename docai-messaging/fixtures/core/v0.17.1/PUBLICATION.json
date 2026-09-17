@@ -1,0 +1,42 @@
+{
+  "publicationScope": {
+    "identity": "docai-messaging-core-fixture-publication",
+    "version": "1.0.0",
+    "compatibilityScope": "compatibility-core",
+    "docaiMessagingVersion": "0.17.1",
+    "profiles": [
+      "full"
+    ]
+  },
+  "projectionManifest": {
+    "path": "source/projection-input-manifest.json",
+    "sha256": "sha256:d4a9e5f64d319e0c107ff04814da99a639d407c15f340ed4a69d46f245e4f480"
+  },
+  "adapterMappings": [
+    {
+      "class": "behavior-source",
+      "target": "behavior-configuration@fixture-1",
+      "ruleVersion": "1.0.0"
+    },
+    {
+      "class": "header-encoding",
+      "target": "kafka-record-headers;value-encoding=utf-8",
+      "ruleVersion": "1.0.0"
+    },
+    {
+      "class": "payload-wire",
+      "target": "application/json",
+      "ruleVersion": "docai-messaging-0.17.1"
+    },
+    {
+      "class": "schema",
+      "target": "application/vnd.aai.asyncapi+json;version=3.1.0",
+      "ruleVersion": "docai-messaging-0.17.1"
+    },
+    {
+      "class": "source",
+      "target": "AsyncAPI 3.1.0",
+      "ruleVersion": "1.0.0"
+    }
+  ]
+}
