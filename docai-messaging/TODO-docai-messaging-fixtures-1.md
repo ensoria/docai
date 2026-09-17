@@ -1677,6 +1677,8 @@ Final review の Important finding 対応により、この checkpoint は当初
 - [ ] Run: `node --test docai-messaging/tools/tests/*.test.mjs`
 - [ ] Expected: 全 test PASS。
 
+> **Approved design and implementation note (Task 11 complete workflow routing checkpoint):** Task 11を一括実装せず、最初のcommit-sized checkpointとしてcomplete-scopeのWorkflow catalog routingを分離した。`validators/complete.mjs`は既存Core document-set検証を再利用し、その結果にdirect `Workflows`、canonical `none`、`Workflow Shards`の検証とretrieval factsを合成する。`DM-WF-001`はroot Workflows state、`DM-WF-002`はUnicode scalar順のrouting name、summary、workflow Detailsのset-wide uniqueness / coverage、`DM-WF-003`はworkflow-index structure、exact inclusive bounds、未登録・欠落・空shard、exact selectionのfalse-positive loadとsemantic load-allを所有し、三ruleは`rules.json`で`complete` scopeとしてCore publication gateから分離する。TDDでは新validator未実装のRED、4 workflow behavior failuresのRED、direct routingに未登録workflow-index shardが混在しても従来成功するRED、duplicate shard routeがworkflow rowの重複診断まで誘発するREDを確認してから実装し、focused 9 / 9をGREENにした。実測は全661 tests中660成功 / 1 skip（Python 3.9未導入の既存環境skip）/ 0失敗、既存Core checkerは264 cases / 193 invalid、one-invalidity 193 / 193、未使用Core rule 0、coverage gap 0。影響はcomplete-scope workflow routingとretrieval factsに限定し、Core validator、Core fixture expectation、公開済みCompatibility Coreの意味は変更しない。Workflow file本文grammar、Reference Material、selective conventions、full/compact parityとexpanded equivalence、`field_defaults`、`same_as`、complete checker CLIは後続Task 11 checkpointに残すため、上のTask 11項目はまだ完了扱いにしない。
+
 **Review gate:** compact checker 自身が full projection の contract を推測せず、paired full set の exact canonical view とだけ比較する。
 
 **Suggested commit message:** `feat(messaging): validate complete full and compact surfaces`

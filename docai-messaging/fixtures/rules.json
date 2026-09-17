@@ -401,6 +401,24 @@
       "readme_section": "§3.1 Compatibility",
       "description": "Required one-line prose uses the literal source-level sentence-terminator grammar.",
       "scope": "core"
+    },
+    {
+      "rule_id": "DM-WF-001",
+      "readme_section": "§3.2 INDEX.md(required)",
+      "description": "The root Workflows section uses exactly none, one non-empty direct Name | Summary | Details table, or the canonical Workflow Shards form without trailing content.",
+      "scope": "complete"
+    },
+    {
+      "rule_id": "DM-WF-002",
+      "readme_section": "§3.2 INDEX.md(required)",
+      "description": "Workflow rows use non-empty scalar-ordered names and summaries, unique normalized names and Details paths across the set, and route every existing workflow file exactly once.",
+      "scope": "complete"
+    },
+    {
+      "rule_id": "DM-WF-003",
+      "readme_section": "§3.2 INDEX.md(required) / §6.1 Recommended Retrieval Recipe",
+      "description": "Workflow Shards routes unique non-empty workflow-index files with exact inclusive name bounds; exact retrieval records matching and false-positive shards, while semantic uncertainty loads every workflow shard.",
+      "scope": "complete"
     }
   ]
 }
