@@ -915,6 +915,8 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
 
 > **Approved design and implementation note (`R8-CORE-048` CONVENTIONS heading-state coverage checkpoint):** README §8の次clauseを、既存`conventions-states-format-failures-valid`、`core-valid-full-set`、`conventions-state-mixed-invalid`、`DM-CONV-001` / `DM-CONV-002`、およびTask 6 / Task 8 checkerへ対応付ける。focused valid setは共有state grammarの`none`、whole-section `unknown`、replacement `unsupported`、expandedをexact factsで固定し、full setは全15 fixed headingsのcanonical orderと14 expanded + 1 `none`を固定する。invalid document-set matrixはheading欠落・逆順・重複・未知headingとempty / malformed / mixed / wrong-unit stateを拒否し、versioned invalid fixtureはmixed stateを単一`DM-CONV-002` concernとして固定する。全headingは同一validator pathを共有するため15 headings × 4 statesの直積fixtureを重複追加せず、coverage文言だけのREDも実動作を検証しないため、ユーザー承認の文書-only TDD例外としてmatrixとinventoryだけを更新した。影響としてCore corpusは262 cases / 192 invalid / 70 validのまま、format catalogは`R8-CORE-025`、failure shapesは`R8-CORE-041`の所有を維持し、公開grammar、production semantics、rule catalogを変更せず`R8-CORE-048`を`covered`にする。残るCore inventoryはall-class adapter selectionだけである。検証結果はCONVENTIONS-focused tests 3 / 3成功、全test 636中635成功 / 1 skip（既存環境skip）/ 0失敗、`git diff --check`成功。
 
+> **Approved design and implementation note (`R8-CORE-049` all-class adapter-selection checkpoint):** README §3.6 / §8の最終Core clauseについて、既存schema / payload-wire / header-encodingのversioned mapping evidenceを維持し、新規`adapter-publication-scope-valid`で全4 classのmissing-target `unknown`、protocol-bindingのestablished targetに対するabsent / unique / duplicate mapping、publication-scope identity / version欠落、selected rule変更時のpublication-scope version更新、canonical behavior変更時のDocAI Messaging version更新、resolved adapter identity / rule version / emitted-media-type normalizationの`projection_digest`入力、producer / source-aware-validatorのexact scope / rule support、およびordinary readerのnormalized contract / visible runtime requirementだけによるreadinessを固定した。paired invalid scenarioはprotocol-binding rule変更を同一scope versionで`compliant`と誤投影する一件だけを`DM-ADAPTER-004`とする。REDではschema / header-encoding / protocol-bindingのmissing targetがabsent mappingの`unsupported`へ誤分類され、新しいpublication / actor evaluatorとversioned scenario validatorが未実装であることを確認した。GREENではmissing-target分岐を各classへ追加し、selection、publication version / digest、actor outcomeを独立したpure evaluatorで導出してexact projected objectと比較する。ordinary-reader経路はsource adapter一覧を参照せず、publication scope、normalized contract、visible runtime capabilitiesだけを評価する。影響としてCore corpusは264 cases / 193 invalid / 71 valid、one-invalidity auditは193 / 193となり、公開document grammarとrule catalogを変更せず`R8-CORE-049`および全Core clauseを所有する`R8-CORE-001`を`covered`にする。検証結果はadapter-focused tests 4 / 4成功、Core corpus 44 / 44成功、全test 640中639成功 / 1 skip（Python 3.9未導入の既存環境skip）/ 0失敗。
+
 - [x] Metadata、extension name/order/escape、unknown non-`x-` key、sentence grammar。
 - [x] Identity trailer、set/projection digest、closed root、mixed set、task-scoped identity check。
 - [x] Direct/sharded Sources、unknown API identity/version、Revision none、overlap、fixed-point、cycle。
@@ -943,7 +945,7 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
   - 各 invalid fixture に `expected_rule_ids` が一つの primary concern を示すことを確認する。
   - 複数の独立違反がある fixture は分割する。
 
-- [ ] **Step: Core coverage matrix を完成させる**
+- [x] **Step: Core coverage matrix を完成させる**
   - README §8 の Core corpus 要件を一行ずつ `COVERAGE.md` に写し、source、valid fixture、invalid fixture、rule ID、checker test を対応付ける。
   - [x] Matrix contract と `R8-CORE-001`–`R8-CORE-004`（publication prerequisite、metadata、identity）を対応付ける。
   - [x] `R8-CORE-005`–`R8-CORE-010`（Sources、readiness、Operations、context、sentinel）を対応付ける。
@@ -1001,7 +1003,8 @@ Checkpoint 7 の suggested commit message: `test(messaging): audit Task 6 rule c
   - [x] `R8-CORE-046`（canonical leading deviations、complete / incomplete core states、forbidden placement、immediate sequence split）をversioned evidenceへ対応付ける。
   - [x] `R8-CORE-047`（Failure Handlingの全core state、leading deviations、suppression-only deviation-plus-`none`）を既存versioned evidenceへ対応付ける。
   - [x] `R8-CORE-048`（全CONVENTIONS fixed headingと`none` / `unknown` / replacement / expanded state）を既存versioned evidenceへ対応付ける。
-  - [ ] 残る Core corpus clause を `R8-CORE-*` row に分解して対応付け、`R8-CORE-001` を `covered` にする。
+  - [x] `R8-CORE-049`（全adapter classのselection、publication-scope / rule-version / digest、producer / source-aware-validator / ordinary-reader outcome）をversioned evidenceへ対応付ける。
+  - [x] 残る Core corpus clause を `R8-CORE-*` row に分解して対応付け、`R8-CORE-001` を `covered` にする。
 
 #### Partial Collection / Parameters Unknown / Failure Root-Row Implementation Plan
 

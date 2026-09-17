@@ -1,0 +1,508 @@
+{
+  "docaiMessagingVersion": "0.17.1",
+  "selectionCases": [
+    {
+      "caseId": "schema-target-missing",
+      "adapterClass": "schema",
+      "sourceSpecification": "Unknown schema source",
+      "publicationMappings": [],
+      "projectedSelection": {
+        "caseId": "schema-target-missing",
+        "outcome": "emit-unknown",
+        "resolution": "missing-target",
+        "projection": "emit-schema-target-unknown",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    },
+    {
+      "caseId": "wire-target-missing",
+      "adapterClass": "payload-wire",
+      "publicationMappings": [],
+      "projectedSelection": {
+        "caseId": "wire-target-missing",
+        "outcome": "emit-unknown",
+        "resolution": "missing-target",
+        "projection": "emit-payload-representation-set-unknown",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    },
+    {
+      "caseId": "header-target-missing",
+      "adapterClass": "header-encoding",
+      "publicationMappings": [],
+      "projectedSelection": {
+        "caseId": "header-target-missing",
+        "outcome": "emit-unknown",
+        "resolution": "missing-target",
+        "projection": "emit-header-encoding-unknown",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    },
+    {
+      "caseId": "protocol-target-missing",
+      "adapterClass": "protocol-binding",
+      "publicationMappings": [],
+      "projectedSelection": {
+        "caseId": "protocol-target-missing",
+        "outcome": "emit-unknown",
+        "resolution": "missing-target",
+        "projection": "emit-protocol-binding-unknown",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    },
+    {
+      "caseId": "protocol-mapping-absent",
+      "adapterClass": "protocol-binding",
+      "target": { "protocol": "kafka", "scope": "channel", "bindingVersion": "0.5.0" },
+      "publicationMappings": [],
+      "projectedSelection": {
+        "caseId": "protocol-mapping-absent",
+        "outcome": "emit-unsupported",
+        "resolution": "no-exact-mapping",
+        "projection": "smallest-channel-binding-unsupported",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    },
+    {
+      "caseId": "protocol-mapping-unique",
+      "adapterClass": "protocol-binding",
+      "target": { "protocol": "kafka", "scope": "channel", "bindingVersion": "0.5.0" },
+      "publicationMappings": [
+        {
+          "sourceId": "adapter-catalog",
+          "docaiMessagingVersion": "0.17.1",
+          "adapterClass": "protocol-binding",
+          "target": { "protocol": "kafka", "scope": "channel", "bindingVersion": "0.5.0" },
+          "ruleId": "kafka-channel-binding-map",
+          "ruleVersion": "1.0.0"
+        }
+      ],
+      "projectedSelection": {
+        "caseId": "protocol-mapping-unique",
+        "outcome": "supported",
+        "resolution": "publication-mapping",
+        "ruleId": "kafka-channel-binding-map",
+        "ruleVersion": "1.0.0",
+        "mappingSourceIds": ["adapter-catalog"],
+        "projection": "emit-channel-binding",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    },
+    {
+      "caseId": "protocol-mapping-duplicate",
+      "adapterClass": "protocol-binding",
+      "target": { "protocol": "kafka", "scope": "channel", "bindingVersion": "0.5.0" },
+      "publicationMappings": [
+        {
+          "sourceId": "adapter-catalog-a",
+          "docaiMessagingVersion": "0.17.1",
+          "adapterClass": "protocol-binding",
+          "target": { "protocol": "kafka", "scope": "channel", "bindingVersion": "0.5.0" },
+          "ruleId": "kafka-channel-binding-map-a",
+          "ruleVersion": "1.0.0"
+        },
+        {
+          "sourceId": "adapter-catalog-b",
+          "docaiMessagingVersion": "0.17.1",
+          "adapterClass": "protocol-binding",
+          "target": { "protocol": "kafka", "scope": "channel", "bindingVersion": "0.5.0" },
+          "ruleId": "kafka-channel-binding-map-b",
+          "ruleVersion": "1.1.0"
+        }
+      ],
+      "projectedSelection": {
+        "caseId": "protocol-mapping-duplicate",
+        "outcome": "generation-failure",
+        "reason": "duplicate-publication-mapping",
+        "ordinaryReaderRequirement": "normalized-contract-only"
+      }
+    }
+  ],
+  "publicationCases": [
+    {
+      "caseId": "publication-scope-identity-missing",
+      "adapterClass": "protocol-binding",
+      "current": {
+        "docaiMessagingVersion": "0.17.1",
+        "publicationScopeVersion": "3",
+        "adapterClass": "protocol-binding",
+        "target": { "protocol": "kafka", "scope": "channel", "bindingVersion": "0.5.0" },
+        "ruleId": "kafka-channel-binding-map",
+        "ruleVersion": "1.0.0"
+      },
+      "projectionDigestInputs": [
+        {
+          "kind": "adapter-identity",
+          "value": {
+            "docaiMessagingVersion": "0.17.1",
+            "adapterClass": "protocol-binding",
+            "target": { "protocol": "kafka", "scope": "channel", "bindingVersion": "0.5.0" }
+          }
+        },
+        { "kind": "rule-version", "value": "1.0.0" }
+      ],
+      "projectedPublication": {
+        "caseId": "publication-scope-identity-missing",
+        "publicationScopeAvailability": "missing-identity",
+        "mappingOrRuleChanged": false,
+        "publicationScopeVersionChangeRequired": false,
+        "docaiMessagingVersionChangeRequired": false,
+        "versioningOutcome": "unavailable",
+        "requiredProjectionDigestInputs": [
+          {
+            "kind": "adapter-identity",
+            "value": {
+              "docaiMessagingVersion": "0.17.1",
+              "adapterClass": "protocol-binding",
+              "target": { "protocol": "kafka", "scope": "channel", "bindingVersion": "0.5.0" }
+            }
+          },
+          { "kind": "rule-version", "value": "1.0.0" }
+        ],
+        "missingProjectionDigestInputs": [],
+        "projectionDigestCoverage": "complete"
+      }
+    },
+    {
+      "caseId": "publication-scope-version-missing",
+      "adapterClass": "protocol-binding",
+      "current": {
+        "docaiMessagingVersion": "0.17.1",
+        "publicationScopeIdentity": "core",
+        "adapterClass": "protocol-binding",
+        "target": { "protocol": "kafka", "scope": "channel", "bindingVersion": "0.5.0" },
+        "ruleId": "kafka-channel-binding-map",
+        "ruleVersion": "1.0.0"
+      },
+      "projectionDigestInputs": [
+        {
+          "kind": "adapter-identity",
+          "value": {
+            "docaiMessagingVersion": "0.17.1",
+            "adapterClass": "protocol-binding",
+            "target": { "protocol": "kafka", "scope": "channel", "bindingVersion": "0.5.0" }
+          }
+        },
+        { "kind": "rule-version", "value": "1.0.0" }
+      ],
+      "projectedPublication": {
+        "caseId": "publication-scope-version-missing",
+        "publicationScopeAvailability": "missing-version",
+        "mappingOrRuleChanged": false,
+        "publicationScopeVersionChangeRequired": false,
+        "docaiMessagingVersionChangeRequired": false,
+        "versioningOutcome": "unavailable",
+        "requiredProjectionDigestInputs": [
+          {
+            "kind": "adapter-identity",
+            "value": {
+              "docaiMessagingVersion": "0.17.1",
+              "adapterClass": "protocol-binding",
+              "target": { "protocol": "kafka", "scope": "channel", "bindingVersion": "0.5.0" }
+            }
+          },
+          { "kind": "rule-version", "value": "1.0.0" }
+        ],
+        "missingProjectionDigestInputs": [],
+        "projectionDigestCoverage": "complete"
+      }
+    },
+    {
+      "caseId": "changed-rule-stale-versions-incomplete-digest",
+      "adapterClass": "payload-wire",
+      "previous": {
+        "docaiMessagingVersion": "0.17.1",
+        "publicationScopeIdentity": "core",
+        "publicationScopeVersion": "2",
+        "adapterClass": "payload-wire",
+        "target": "application/json;charset=utf-8",
+        "ruleId": "json-normalizing-wire",
+        "ruleVersion": "1.0.0"
+      },
+      "current": {
+        "docaiMessagingVersion": "0.17.1",
+        "publicationScopeIdentity": "core",
+        "publicationScopeVersion": "2",
+        "adapterClass": "payload-wire",
+        "target": "application/json;charset=utf-8",
+        "ruleId": "json-normalizing-wire",
+        "ruleVersion": "2.0.0",
+        "emittedMediaTypeNormalization": {
+          "sourceMediaType": "application/json;charset=utf-8",
+          "emittedMediaType": "application/json"
+        }
+      },
+      "canonicalBehaviorChanged": true,
+      "projectionDigestInputs": [
+        {
+          "kind": "adapter-identity",
+          "value": {
+            "docaiMessagingVersion": "0.17.1",
+            "adapterClass": "payload-wire",
+            "target": "application/json;charset=utf-8"
+          }
+        }
+      ],
+      "projectedPublication": {
+        "caseId": "changed-rule-stale-versions-incomplete-digest",
+        "publicationScopeAvailability": "available",
+        "mappingOrRuleChanged": true,
+        "publicationScopeVersionChangeRequired": true,
+        "docaiMessagingVersionChangeRequired": true,
+        "versioningOutcome": "invalid-version-change",
+        "requiredProjectionDigestInputs": [
+          {
+            "kind": "adapter-identity",
+            "value": {
+              "docaiMessagingVersion": "0.17.1",
+              "adapterClass": "payload-wire",
+              "target": "application/json;charset=utf-8"
+            }
+          },
+          { "kind": "rule-version", "value": "2.0.0" },
+          {
+            "kind": "emitted-media-type-normalization",
+            "value": {
+              "sourceMediaType": "application/json;charset=utf-8",
+              "emittedMediaType": "application/json"
+            }
+          }
+        ],
+        "missingProjectionDigestInputs": [
+          { "kind": "rule-version", "value": "2.0.0" },
+          {
+            "kind": "emitted-media-type-normalization",
+            "value": {
+              "sourceMediaType": "application/json;charset=utf-8",
+              "emittedMediaType": "application/json"
+            }
+          }
+        ],
+        "projectionDigestCoverage": "incomplete"
+      }
+    },
+    {
+      "caseId": "changed-rule-versioned-complete-digest",
+      "adapterClass": "payload-wire",
+      "previous": {
+        "docaiMessagingVersion": "0.17.1",
+        "publicationScopeIdentity": "core",
+        "publicationScopeVersion": "2",
+        "adapterClass": "payload-wire",
+        "target": "application/json;charset=utf-8",
+        "ruleId": "json-normalizing-wire",
+        "ruleVersion": "1.0.0"
+      },
+      "current": {
+        "docaiMessagingVersion": "0.18.0",
+        "publicationScopeIdentity": "core",
+        "publicationScopeVersion": "3",
+        "adapterClass": "payload-wire",
+        "target": "application/json;charset=utf-8",
+        "ruleId": "json-normalizing-wire",
+        "ruleVersion": "2.0.0",
+        "emittedMediaTypeNormalization": {
+          "sourceMediaType": "application/json;charset=utf-8",
+          "emittedMediaType": "application/json"
+        }
+      },
+      "canonicalBehaviorChanged": true,
+      "projectionDigestInputs": [
+        {
+          "kind": "adapter-identity",
+          "value": {
+            "docaiMessagingVersion": "0.18.0",
+            "adapterClass": "payload-wire",
+            "target": "application/json;charset=utf-8"
+          }
+        },
+        { "kind": "rule-version", "value": "2.0.0" },
+        {
+          "kind": "emitted-media-type-normalization",
+          "value": {
+            "sourceMediaType": "application/json;charset=utf-8",
+            "emittedMediaType": "application/json"
+          }
+        }
+      ],
+      "projectedPublication": {
+        "caseId": "changed-rule-versioned-complete-digest",
+        "publicationScopeAvailability": "available",
+        "mappingOrRuleChanged": true,
+        "publicationScopeVersionChangeRequired": true,
+        "docaiMessagingVersionChangeRequired": true,
+        "versioningOutcome": "compliant",
+        "requiredProjectionDigestInputs": [
+          {
+            "kind": "adapter-identity",
+            "value": {
+              "docaiMessagingVersion": "0.18.0",
+              "adapterClass": "payload-wire",
+              "target": "application/json;charset=utf-8"
+            }
+          },
+          { "kind": "rule-version", "value": "2.0.0" },
+          {
+            "kind": "emitted-media-type-normalization",
+            "value": {
+              "sourceMediaType": "application/json;charset=utf-8",
+              "emittedMediaType": "application/json"
+            }
+          }
+        ],
+        "missingProjectionDigestInputs": [],
+        "projectionDigestCoverage": "complete"
+      }
+    }
+  ],
+  "actorCases": [
+    {
+      "caseId": "actors-exact-support",
+      "adapterClass": "protocol-binding",
+      "publicationScope": { "identity": "core", "version": "3" },
+      "adapterIdentity": {
+        "docaiMessagingVersion": "0.17.1",
+        "adapterClass": "protocol-binding",
+        "target": { "protocol": "kafka", "scope": "channel", "bindingVersion": "0.5.0" }
+      },
+      "ruleVersion": "1.0.0",
+      "producer": {
+        "publicationScopes": [{ "identity": "core", "version": "3" }],
+        "adapterRules": [{
+          "adapterIdentity": {
+            "docaiMessagingVersion": "0.17.1",
+            "adapterClass": "protocol-binding",
+            "target": { "protocol": "kafka", "scope": "channel", "bindingVersion": "0.5.0" }
+          },
+          "ruleVersion": "1.0.0"
+        }]
+      },
+      "sourceAwareValidator": {
+        "publicationScopes": [{ "identity": "core", "version": "3" }],
+        "adapterRules": [{
+          "adapterIdentity": {
+            "docaiMessagingVersion": "0.17.1",
+            "adapterClass": "protocol-binding",
+            "target": { "protocol": "kafka", "scope": "channel", "bindingVersion": "0.5.0" }
+          },
+          "ruleVersion": "1.0.0"
+        }]
+      },
+      "ordinaryReader": {
+        "publicationScopes": [{ "identity": "core", "version": "3" }],
+        "normalizedContractComplete": true,
+        "requiredRuntimeCapabilities": ["kafka-client"],
+        "targetRuntimeCapabilities": ["kafka-client"],
+        "sourceAdapters": []
+      },
+      "projectedActors": {
+        "caseId": "actors-exact-support",
+        "producerOutcome": "projected",
+        "sourceAwareValidatorOutcome": "validated",
+        "ordinaryReaderReady": true,
+        "ordinaryReaderBlockers": []
+      }
+    },
+    {
+      "caseId": "actor-adapter-and-runtime-gaps",
+      "adapterClass": "protocol-binding",
+      "publicationScope": { "identity": "core", "version": "3" },
+      "adapterIdentity": {
+        "docaiMessagingVersion": "0.17.1",
+        "adapterClass": "protocol-binding",
+        "target": { "protocol": "kafka", "scope": "channel", "bindingVersion": "0.5.0" }
+      },
+      "ruleVersion": "1.0.0",
+      "producer": {
+        "publicationScopes": [{ "identity": "core", "version": "3" }],
+        "adapterRules": [{
+          "adapterIdentity": {
+            "docaiMessagingVersion": "0.17.1",
+            "adapterClass": "protocol-binding",
+            "target": { "protocol": "kafka", "scope": "channel", "bindingVersion": "0.5.0" }
+          },
+          "ruleVersion": "0.9.0"
+        }]
+      },
+      "sourceAwareValidator": {
+        "publicationScopes": [{ "identity": "core", "version": "3" }],
+        "adapterRules": [{
+          "adapterIdentity": {
+            "docaiMessagingVersion": "0.17.1",
+            "adapterClass": "protocol-binding",
+            "target": { "protocol": "kafka", "scope": "channel", "bindingVersion": "0.5.0" }
+          },
+          "ruleVersion": "0.9.0"
+        }]
+      },
+      "ordinaryReader": {
+        "publicationScopes": [{ "identity": "core", "version": "3" }],
+        "normalizedContractComplete": true,
+        "requiredRuntimeCapabilities": ["kafka-client"],
+        "targetRuntimeCapabilities": [],
+        "sourceAdapters": [{
+          "adapterIdentity": {
+            "docaiMessagingVersion": "0.17.1",
+            "adapterClass": "protocol-binding",
+            "target": { "protocol": "kafka", "scope": "channel", "bindingVersion": "0.5.0" }
+          },
+          "ruleVersion": "1.0.0"
+        }]
+      },
+      "projectedActors": {
+        "caseId": "actor-adapter-and-runtime-gaps",
+        "producerOutcome": "unsupported-adapter-rule",
+        "sourceAwareValidatorOutcome": "unsupported-adapter-rule",
+        "ordinaryReaderReady": false,
+        "ordinaryReaderBlockers": ["runtime-capability:kafka-client"]
+      }
+    },
+    {
+      "caseId": "actor-publication-scope-version-unavailable",
+      "adapterClass": "protocol-binding",
+      "publicationScope": { "identity": "core", "version": "3" },
+      "adapterIdentity": {
+        "docaiMessagingVersion": "0.17.1",
+        "adapterClass": "protocol-binding",
+        "target": { "protocol": "kafka", "scope": "channel", "bindingVersion": "0.5.0" }
+      },
+      "ruleVersion": "1.0.0",
+      "producer": {
+        "publicationScopes": [{ "identity": "core", "version": "2" }],
+        "adapterRules": [{
+          "adapterIdentity": {
+            "docaiMessagingVersion": "0.17.1",
+            "adapterClass": "protocol-binding",
+            "target": { "protocol": "kafka", "scope": "channel", "bindingVersion": "0.5.0" }
+          },
+          "ruleVersion": "1.0.0"
+        }]
+      },
+      "sourceAwareValidator": {
+        "publicationScopes": [{ "identity": "core", "version": "2" }],
+        "adapterRules": [{
+          "adapterIdentity": {
+            "docaiMessagingVersion": "0.17.1",
+            "adapterClass": "protocol-binding",
+            "target": { "protocol": "kafka", "scope": "channel", "bindingVersion": "0.5.0" }
+          },
+          "ruleVersion": "1.0.0"
+        }]
+      },
+      "ordinaryReader": {
+        "publicationScopes": [{ "identity": "core", "version": "2" }],
+        "normalizedContractComplete": true,
+        "requiredRuntimeCapabilities": ["kafka-client"],
+        "targetRuntimeCapabilities": ["kafka-client"],
+        "sourceAdapters": []
+      },
+      "projectedActors": {
+        "caseId": "actor-publication-scope-version-unavailable",
+        "producerOutcome": "unsupported-publication-scope",
+        "sourceAwareValidatorOutcome": "unsupported-publication-scope",
+        "ordinaryReaderReady": false,
+        "ordinaryReaderBlockers": ["publication-scope"]
+      }
+    }
+  ]
+}

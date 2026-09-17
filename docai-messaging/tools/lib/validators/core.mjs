@@ -1706,6 +1706,15 @@ export function evaluateAdapterSourceExpectations({ docaiMessagingVersion, cases
         ]).get(entry.sourceSpecification)
         : undefined;
       const effectiveTarget = sourceDefault ?? entry.schemaFormat;
+      if (effectiveTarget === undefined || effectiveTarget === null) {
+        return {
+          caseId: entry.caseId,
+          outcome: "emit-unknown",
+          resolution: "missing-target",
+          projection: "emit-schema-target-unknown",
+          ordinaryReaderRequirement: "normalized-contract-only"
+        };
+      }
       const ruleId = DIRECT_SCHEMA_TARGETS.get(effectiveTarget);
       if (ruleId !== undefined) {
         return {
@@ -1817,6 +1826,15 @@ export function evaluateAdapterSourceExpectations({ docaiMessagingVersion, cases
     }
 
     if (entry.adapterClass === "header-encoding") {
+      if (entry.target === undefined || entry.target === null) {
+        return {
+          caseId: entry.caseId,
+          outcome: "emit-unknown",
+          resolution: "missing-target",
+          projection: "emit-header-encoding-unknown",
+          ordinaryReaderRequirement: "normalized-contract-only"
+        };
+      }
       const resolution = resolvePublicationMapping(entry, docaiMessagingVersion, (candidate) => (
         candidate.defines?.includes("encoding")
           && candidate.defines?.includes("exposure")
@@ -1844,6 +1862,16 @@ export function evaluateAdapterSourceExpectations({ docaiMessagingVersion, cases
         : { ...supported, schemaAdapter: schemaAdapter.provenance };
     }
 
+    if (entry.target === undefined || entry.target === null) {
+      return {
+        caseId: entry.caseId,
+        outcome: "emit-unknown",
+        resolution: "missing-target",
+        projection: "emit-protocol-binding-unknown",
+        ordinaryReaderRequirement: "normalized-contract-only"
+      };
+    }
+
     const resolution = resolvePublicationMapping(entry, docaiMessagingVersion);
     if (resolution.status === "duplicate") {
       return duplicatePublicationMappingFailure(entry);
@@ -1860,6 +1888,202 @@ export function evaluateAdapterSourceExpectations({ docaiMessagingVersion, cases
   });
 }
 
+function publicationScopeAvailability(current) {
+  if (typeof current?.publicationScopeIdentity !== "string"
+    || current.publicationScopeIdentity.length === 0) {
+    return "missing-identity";
+  }
+  if (typeof current.publicationScopeVersion !== "string"
+    || current.publicationScopeVersion.length === 0) {
+    return "missing-version";
+  }
+  return "available";
+}
+
+function adapterDigestInputs(current) {
+  const required = [
+    {
+      kind: "adapter-identity",
+      value: {
+        docaiMessagingVersion: current.docaiMessagingVersion,
+        adapterClass: current.adapterClass,
+        target: current.target
+      }
+    },
+    { kind: "rule-version", value: current.ruleVersion }
+  ];
+  if (current.emittedMediaTypeNormalization !== undefined) {
+    required.push({
+      kind: "emitted-media-type-normalization",
+      value: current.emittedMediaTypeNormalization
+    });
+  }
+  return required;
+}
+
+function adapterMappingOrRuleChanged(previous, current) {
+  if (previous === undefined) return false;
+  return previous.ruleId !== current.ruleId
+    || previous.ruleVersion !== current.ruleVersion
+    || !isDeepStrictEqual(
+      previous.emittedMediaTypeNormalization,
+      current.emittedMediaTypeNormalization
+    );
+}
+
+export function evaluateAdapterPublicationExpectations({ cases }) {
+  return (cases ?? []).map((entry) => {
+    const current = entry.current ?? {};
+    const availability = publicationScopeAvailability(current);
+    const changed = adapterMappingOrRuleChanged(entry.previous, current);
+    const publicationScopeVersionChangeRequired = changed;
+    const docaiMessagingVersionChangeRequired = entry.canonicalBehaviorChanged === true;
+    const publicationScopeVersionChanged = entry.previous === undefined
+      || entry.previous.publicationScopeVersion !== current.publicationScopeVersion;
+    const docaiMessagingVersionChanged = entry.previous === undefined
+      || entry.previous.docaiMessagingVersion !== current.docaiMessagingVersion;
+    const versioningValid = (
+      (!publicationScopeVersionChangeRequired || publicationScopeVersionChanged)
+        && (!docaiMessagingVersionChangeRequired || docaiMessagingVersionChanged)
+    );
+    const requiredProjectionDigestInputs = adapterDigestInputs(current);
+    const suppliedProjectionDigestInputs = entry.projectionDigestInputs ?? [];
+    const missingProjectionDigestInputs = requiredProjectionDigestInputs.filter((required) => (
+      !suppliedProjectionDigestInputs.some((supplied) => isDeepStrictEqual(supplied, required))
+    ));
+    return {
+      caseId: entry.caseId,
+      publicationScopeAvailability: availability,
+      mappingOrRuleChanged: changed,
+      publicationScopeVersionChangeRequired,
+      docaiMessagingVersionChangeRequired,
+      versioningOutcome: availability !== "available"
+        ? "unavailable"
+        : versioningValid ? "compliant" : "invalid-version-change",
+      requiredProjectionDigestInputs,
+      missingProjectionDigestInputs,
+      projectionDigestCoverage: missingProjectionDigestInputs.length === 0
+        ? "complete"
+        : "incomplete"
+    };
+  });
+}
+
+function supportsPublicationScope(actor, publicationScope) {
+  return (actor?.publicationScopes ?? []).some((candidate) => (
+    isDeepStrictEqual(candidate, publicationScope)
+  ));
+}
+
+function supportsAdapterRule(actor, adapterIdentity, ruleVersion) {
+  return (actor?.adapterRules ?? []).some((candidate) => (
+    isDeepStrictEqual(candidate?.adapterIdentity, adapterIdentity)
+      && candidate?.ruleVersion === ruleVersion
+  ));
+}
+
+function sourceActorOutcome(actor, publicationScope, adapterIdentity, ruleVersion, success) {
+  if (!supportsPublicationScope(actor, publicationScope)) return "unsupported-publication-scope";
+  if (!supportsAdapterRule(actor, adapterIdentity, ruleVersion)) return "unsupported-adapter-rule";
+  return success;
+}
+
+export function evaluateAdapterActorExpectations({ cases }) {
+  return (cases ?? []).map((entry) => {
+    const ordinaryReader = entry.ordinaryReader ?? {};
+    const blockers = [];
+    if (!supportsPublicationScope(ordinaryReader, entry.publicationScope)) {
+      blockers.push("publication-scope");
+    }
+    if (ordinaryReader.normalizedContractComplete !== true) {
+      blockers.push("normalized-contract");
+    }
+    const runtimeCapabilities = new Set(ordinaryReader.targetRuntimeCapabilities ?? []);
+    for (const required of ordinaryReader.requiredRuntimeCapabilities ?? []) {
+      if (!runtimeCapabilities.has(required)) blockers.push(`runtime-capability:${required}`);
+    }
+    blockers.sort();
+    return {
+      caseId: entry.caseId,
+      producerOutcome: sourceActorOutcome(
+        entry.producer,
+        entry.publicationScope,
+        entry.adapterIdentity,
+        entry.ruleVersion,
+        "projected"
+      ),
+      sourceAwareValidatorOutcome: sourceActorOutcome(
+        entry.sourceAwareValidator,
+        entry.publicationScope,
+        entry.adapterIdentity,
+        entry.ruleVersion,
+        "validated"
+      ),
+      ordinaryReaderReady: blockers.length === 0,
+      ordinaryReaderBlockers: blockers
+    };
+  });
+}
+
+function adapterRuleId(adapterClass) {
+  return adapterClass === "schema"
+    ? "DM-ADAPTER-001"
+    : adapterClass === "header-encoding"
+      ? "DM-ADAPTER-003"
+      : adapterClass === "protocol-binding"
+        ? "DM-ADAPTER-004"
+        : "DM-ADAPTER-002";
+}
+
+export function validateAdapterPublicationExpectations(
+  scenario,
+  { file = "source-input.json" } = {}
+) {
+  const selectionCases = scenario.selectionCases ?? [];
+  const adapterSelectionExpectations = evaluateAdapterSourceExpectations({
+    docaiMessagingVersion: scenario.docaiMessagingVersion,
+    cases: selectionCases
+  });
+  const adapterPublicationExpectations = evaluateAdapterPublicationExpectations({
+    cases: scenario.publicationCases ?? []
+  });
+  const adapterActorExpectations = evaluateAdapterActorExpectations({
+    cases: scenario.actorCases ?? []
+  });
+  const mismatches = [];
+  adapterSelectionExpectations.forEach((expected, index) => {
+    if (!isDeepStrictEqual(expected, selectionCases[index]?.projectedSelection)) {
+      mismatches.push(adapterRuleId(selectionCases[index]?.adapterClass));
+    }
+  });
+  adapterPublicationExpectations.forEach((expected, index) => {
+    const source = scenario.publicationCases?.[index];
+    if (!isDeepStrictEqual(expected, source?.projectedPublication)) {
+      mismatches.push(adapterRuleId(source?.adapterClass));
+    }
+  });
+  adapterActorExpectations.forEach((expected, index) => {
+    const source = scenario.actorCases?.[index];
+    if (!isDeepStrictEqual(expected, source?.projectedActors)) {
+      mismatches.push(adapterRuleId(source?.adapterClass));
+    }
+  });
+  const rules = [...new Set(mismatches)];
+  return {
+    diagnostics: rules.map((ruleId) => diagnostic(
+      ruleId,
+      file,
+      1,
+      `Adapter publication projection disagrees with ${mismatches.filter((entry) => entry === ruleId).length} exact expectation(s).`
+    )),
+    facts: {
+      adapterSelectionExpectations,
+      adapterPublicationExpectations,
+      adapterActorExpectations
+    }
+  };
+}
+
 export function validateAdapterSourceExpectations(scenario, { file = "source-input.json" } = {}) {
   const expectations = evaluateAdapterSourceExpectations(scenario);
   const sources = new Map((scenario.cases ?? []).map((entry) => [entry.caseId, entry]));
@@ -1867,13 +2091,7 @@ export function validateAdapterSourceExpectations(scenario, { file = "source-inp
     const source = sources.get(expected.caseId);
     if (exactTarget(expected, source?.projected)) return [];
     return [{
-      ruleId: source?.adapterClass === "schema"
-        ? "DM-ADAPTER-001"
-        : source?.adapterClass === "header-encoding"
-          ? "DM-ADAPTER-003"
-          : source?.adapterClass === "protocol-binding"
-            ? "DM-ADAPTER-004"
-            : "DM-ADAPTER-002"
+      ruleId: adapterRuleId(source?.adapterClass)
     }];
   });
   const rules = [...new Set(mismatches.map((entry) => entry.ruleId))];

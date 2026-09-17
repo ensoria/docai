@@ -1,0 +1,58 @@
+{
+  "publicationCases": [
+    {
+      "caseId": "changed-protocol-rule-stale-scope-version",
+      "adapterClass": "protocol-binding",
+      "previous": {
+        "docaiMessagingVersion": "0.17.1",
+        "publicationScopeIdentity": "core",
+        "publicationScopeVersion": "2",
+        "adapterClass": "protocol-binding",
+        "target": { "protocol": "kafka", "scope": "channel", "bindingVersion": "0.5.0" },
+        "ruleId": "kafka-channel-binding-map",
+        "ruleVersion": "1.0.0"
+      },
+      "current": {
+        "docaiMessagingVersion": "0.17.1",
+        "publicationScopeIdentity": "core",
+        "publicationScopeVersion": "2",
+        "adapterClass": "protocol-binding",
+        "target": { "protocol": "kafka", "scope": "channel", "bindingVersion": "0.5.0" },
+        "ruleId": "kafka-channel-binding-map",
+        "ruleVersion": "1.1.0"
+      },
+      "projectionDigestInputs": [
+        {
+          "kind": "adapter-identity",
+          "value": {
+            "docaiMessagingVersion": "0.17.1",
+            "adapterClass": "protocol-binding",
+            "target": { "protocol": "kafka", "scope": "channel", "bindingVersion": "0.5.0" }
+          }
+        },
+        { "kind": "rule-version", "value": "1.1.0" }
+      ],
+      "projectedPublication": {
+        "caseId": "changed-protocol-rule-stale-scope-version",
+        "publicationScopeAvailability": "available",
+        "mappingOrRuleChanged": true,
+        "publicationScopeVersionChangeRequired": true,
+        "docaiMessagingVersionChangeRequired": false,
+        "versioningOutcome": "compliant",
+        "requiredProjectionDigestInputs": [
+          {
+            "kind": "adapter-identity",
+            "value": {
+              "docaiMessagingVersion": "0.17.1",
+              "adapterClass": "protocol-binding",
+              "target": { "protocol": "kafka", "scope": "channel", "bindingVersion": "0.5.0" }
+            }
+          },
+          { "kind": "rule-version", "value": "1.1.0" }
+        ],
+        "missingProjectionDigestInputs": [],
+        "projectionDigestCoverage": "complete"
+      }
+    }
+  ]
+}

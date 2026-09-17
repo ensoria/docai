@@ -5794,6 +5794,316 @@ task7Test("DM-ADAPTER-004 records exact protocol binding mapping availability", 
   ]);
 });
 
+task7Test("DM-ADAPTER-001 through DM-ADAPTER-004 keep missing targets distinct from absent mappings", () => {
+  assert.equal(typeof coreValidator.evaluateAdapterSourceExpectations, "function");
+  const result = coreValidator.evaluateAdapterSourceExpectations({
+    docaiMessagingVersion: "0.17.1",
+    cases: [
+      {
+        caseId: "missing-schema-target",
+        adapterClass: "schema",
+        sourceSpecification: "Unknown schema source",
+        publicationMappings: []
+      },
+      {
+        caseId: "missing-wire-target",
+        adapterClass: "payload-wire",
+        publicationMappings: []
+      },
+      {
+        caseId: "missing-header-target",
+        adapterClass: "header-encoding",
+        publicationMappings: []
+      },
+      {
+        caseId: "missing-protocol-binding-target",
+        adapterClass: "protocol-binding",
+        publicationMappings: []
+      }
+    ]
+  });
+
+  assert.deepEqual(result, [
+    {
+      caseId: "missing-schema-target",
+      outcome: "emit-unknown",
+      resolution: "missing-target",
+      projection: "emit-schema-target-unknown",
+      ordinaryReaderRequirement: "normalized-contract-only"
+    },
+    {
+      caseId: "missing-wire-target",
+      outcome: "emit-unknown",
+      resolution: "missing-target",
+      projection: "emit-payload-representation-set-unknown",
+      ordinaryReaderRequirement: "normalized-contract-only"
+    },
+    {
+      caseId: "missing-header-target",
+      outcome: "emit-unknown",
+      resolution: "missing-target",
+      projection: "emit-header-encoding-unknown",
+      ordinaryReaderRequirement: "normalized-contract-only"
+    },
+    {
+      caseId: "missing-protocol-binding-target",
+      outcome: "emit-unknown",
+      resolution: "missing-target",
+      projection: "emit-protocol-binding-unknown",
+      ordinaryReaderRequirement: "normalized-contract-only"
+    }
+  ]);
+});
+
+task7Test("DM-ADAPTER-001 through DM-ADAPTER-004 enforce publication version and digest invariants", () => {
+  assert.equal(typeof coreValidator.evaluateAdapterPublicationExpectations, "function");
+  const adapterIdentity0171 = {
+    docaiMessagingVersion: "0.17.1",
+    adapterClass: "payload-wire",
+    target: "application/json;charset=utf-8"
+  };
+  const adapterIdentity0180 = {
+    docaiMessagingVersion: "0.18.0",
+    adapterClass: "payload-wire",
+    target: "application/json;charset=utf-8"
+  };
+  const normalization = {
+    sourceMediaType: "application/json;charset=utf-8",
+    emittedMediaType: "application/json"
+  };
+  const result = coreValidator.evaluateAdapterPublicationExpectations({
+    cases: [
+      {
+        caseId: "missing-scope-identity",
+        current: {
+          docaiMessagingVersion: "0.17.1",
+          publicationScopeVersion: "3",
+          adapterClass: "payload-wire",
+          target: "application/json;charset=utf-8",
+          ruleId: "json-normalizing-wire",
+          ruleVersion: "2.0.0",
+          emittedMediaTypeNormalization: normalization
+        },
+        projectionDigestInputs: [
+          { kind: "adapter-identity", value: adapterIdentity0171 },
+          { kind: "rule-version", value: "2.0.0" },
+          { kind: "emitted-media-type-normalization", value: normalization }
+        ]
+      },
+      {
+        caseId: "missing-scope-version",
+        current: {
+          docaiMessagingVersion: "0.17.1",
+          publicationScopeIdentity: "core",
+          adapterClass: "payload-wire",
+          target: "application/json;charset=utf-8",
+          ruleId: "json-normalizing-wire",
+          ruleVersion: "2.0.0"
+        },
+        projectionDigestInputs: [
+          { kind: "adapter-identity", value: adapterIdentity0171 },
+          { kind: "rule-version", value: "2.0.0" }
+        ]
+      },
+      {
+        caseId: "stale-versions-and-incomplete-digest",
+        previous: {
+          docaiMessagingVersion: "0.17.1",
+          publicationScopeIdentity: "core",
+          publicationScopeVersion: "2",
+          adapterClass: "payload-wire",
+          target: "application/json;charset=utf-8",
+          ruleId: "json-normalizing-wire",
+          ruleVersion: "1.0.0",
+          emittedMediaTypeNormalization: {
+            sourceMediaType: "application/json;charset=utf-8",
+            emittedMediaType: "application/json;charset=utf-8"
+          }
+        },
+        current: {
+          docaiMessagingVersion: "0.17.1",
+          publicationScopeIdentity: "core",
+          publicationScopeVersion: "2",
+          adapterClass: "payload-wire",
+          target: "application/json;charset=utf-8",
+          ruleId: "json-normalizing-wire",
+          ruleVersion: "2.0.0",
+          emittedMediaTypeNormalization: normalization
+        },
+        canonicalBehaviorChanged: true,
+        projectionDigestInputs: [
+          { kind: "adapter-identity", value: adapterIdentity0171 }
+        ]
+      },
+      {
+        caseId: "versioned-change-with-complete-digest",
+        previous: {
+          docaiMessagingVersion: "0.17.1",
+          publicationScopeIdentity: "core",
+          publicationScopeVersion: "2",
+          adapterClass: "payload-wire",
+          target: "application/json;charset=utf-8",
+          ruleId: "json-normalizing-wire",
+          ruleVersion: "1.0.0"
+        },
+        current: {
+          docaiMessagingVersion: "0.18.0",
+          publicationScopeIdentity: "core",
+          publicationScopeVersion: "3",
+          adapterClass: "payload-wire",
+          target: "application/json;charset=utf-8",
+          ruleId: "json-normalizing-wire",
+          ruleVersion: "2.0.0",
+          emittedMediaTypeNormalization: normalization
+        },
+        canonicalBehaviorChanged: true,
+        projectionDigestInputs: [
+          { kind: "adapter-identity", value: adapterIdentity0180 },
+          { kind: "rule-version", value: "2.0.0" },
+          { kind: "emitted-media-type-normalization", value: normalization }
+        ]
+      }
+    ]
+  });
+
+  assert.deepEqual(result, [
+    {
+      caseId: "missing-scope-identity",
+      publicationScopeAvailability: "missing-identity",
+      mappingOrRuleChanged: false,
+      publicationScopeVersionChangeRequired: false,
+      docaiMessagingVersionChangeRequired: false,
+      versioningOutcome: "unavailable",
+      requiredProjectionDigestInputs: [
+        { kind: "adapter-identity", value: adapterIdentity0171 },
+        { kind: "rule-version", value: "2.0.0" },
+        { kind: "emitted-media-type-normalization", value: normalization }
+      ],
+      missingProjectionDigestInputs: [],
+      projectionDigestCoverage: "complete"
+    },
+    {
+      caseId: "missing-scope-version",
+      publicationScopeAvailability: "missing-version",
+      mappingOrRuleChanged: false,
+      publicationScopeVersionChangeRequired: false,
+      docaiMessagingVersionChangeRequired: false,
+      versioningOutcome: "unavailable",
+      requiredProjectionDigestInputs: [
+        { kind: "adapter-identity", value: adapterIdentity0171 },
+        { kind: "rule-version", value: "2.0.0" }
+      ],
+      missingProjectionDigestInputs: [],
+      projectionDigestCoverage: "complete"
+    },
+    {
+      caseId: "stale-versions-and-incomplete-digest",
+      publicationScopeAvailability: "available",
+      mappingOrRuleChanged: true,
+      publicationScopeVersionChangeRequired: true,
+      docaiMessagingVersionChangeRequired: true,
+      versioningOutcome: "invalid-version-change",
+      requiredProjectionDigestInputs: [
+        { kind: "adapter-identity", value: adapterIdentity0171 },
+        { kind: "rule-version", value: "2.0.0" },
+        { kind: "emitted-media-type-normalization", value: normalization }
+      ],
+      missingProjectionDigestInputs: [
+        { kind: "rule-version", value: "2.0.0" },
+        { kind: "emitted-media-type-normalization", value: normalization }
+      ],
+      projectionDigestCoverage: "incomplete"
+    },
+    {
+      caseId: "versioned-change-with-complete-digest",
+      publicationScopeAvailability: "available",
+      mappingOrRuleChanged: true,
+      publicationScopeVersionChangeRequired: true,
+      docaiMessagingVersionChangeRequired: true,
+      versioningOutcome: "compliant",
+      requiredProjectionDigestInputs: [
+        { kind: "adapter-identity", value: adapterIdentity0180 },
+        { kind: "rule-version", value: "2.0.0" },
+        { kind: "emitted-media-type-normalization", value: normalization }
+      ],
+      missingProjectionDigestInputs: [],
+      projectionDigestCoverage: "complete"
+    }
+  ]);
+});
+
+task7Test("DM-ADAPTER-001 through DM-ADAPTER-004 separate producer source-aware and ordinary-reader outcomes", () => {
+  assert.equal(typeof coreValidator.evaluateAdapterActorExpectations, "function");
+  const adapterIdentity = {
+    docaiMessagingVersion: "0.17.1",
+    adapterClass: "protocol-binding",
+    target: { protocol: "kafka", scope: "channel", bindingVersion: "0.5.0" }
+  };
+  const result = coreValidator.evaluateAdapterActorExpectations({
+    cases: [
+      {
+        caseId: "all-actors-supported",
+        publicationScope: { identity: "core", version: "3" },
+        adapterIdentity,
+        ruleVersion: "1.0.0",
+        producer: {
+          publicationScopes: [{ identity: "core", version: "3" }],
+          adapterRules: [{ adapterIdentity, ruleVersion: "1.0.0" }]
+        },
+        sourceAwareValidator: {
+          publicationScopes: [{ identity: "core", version: "3" }],
+          adapterRules: [{ adapterIdentity, ruleVersion: "1.0.0" }]
+        },
+        ordinaryReader: {
+          publicationScopes: [{ identity: "core", version: "3" }],
+          normalizedContractComplete: true,
+          requiredRuntimeCapabilities: ["kafka-client"],
+          targetRuntimeCapabilities: ["kafka-client"],
+          sourceAdapters: []
+        }
+      },
+      {
+        caseId: "validator-rule-and-visible-runtime-missing",
+        publicationScope: { identity: "core", version: "3" },
+        adapterIdentity,
+        ruleVersion: "1.0.0",
+        producer: {
+          publicationScopes: [{ identity: "core", version: "3" }],
+          adapterRules: [{ adapterIdentity, ruleVersion: "1.0.0" }]
+        },
+        sourceAwareValidator: {
+          publicationScopes: [{ identity: "core", version: "3" }],
+          adapterRules: [{ adapterIdentity, ruleVersion: "0.9.0" }]
+        },
+        ordinaryReader: {
+          publicationScopes: [{ identity: "core", version: "3" }],
+          normalizedContractComplete: true,
+          requiredRuntimeCapabilities: ["kafka-client"],
+          targetRuntimeCapabilities: [],
+          sourceAdapters: [{ adapterIdentity, ruleVersion: "1.0.0" }]
+        }
+      }
+    ]
+  });
+
+  assert.deepEqual(result, [
+    {
+      caseId: "all-actors-supported",
+      producerOutcome: "projected",
+      sourceAwareValidatorOutcome: "validated",
+      ordinaryReaderReady: true,
+      ordinaryReaderBlockers: []
+    },
+    {
+      caseId: "validator-rule-and-visible-runtime-missing",
+      producerOutcome: "projected",
+      sourceAwareValidatorOutcome: "unsupported-adapter-rule",
+      ordinaryReaderReady: false,
+      ordinaryReaderBlockers: ["runtime-capability:kafka-client"]
+    }
+  ]);
+});
+
 task7Test("DM-ADAPTER-001 through DM-ADAPTER-004 are cataloged for Task 7 Step 4", () => {
   const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
   const cataloged = new Set(catalog.rules.map((entry) => entry.rule_id));

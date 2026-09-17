@@ -309,6 +309,11 @@ const wireAndHeaderCaseIds = [
   "payload-wire-and-raw-boundaries-valid"
 ];
 
+const adapterPublicationCaseIds = [
+  "adapter-publication-scope-projection-invalid",
+  "adapter-publication-scope-valid"
+];
+
 const mediaTypeCanonicalizationCaseIds = [
   "media-type-canonicalization-projection-invalid",
   "media-type-canonicalization-valid"
@@ -611,6 +616,13 @@ function validateCase(fixturePath, fixtureCase) {
   if (fixtureCase.kind === "adapter-source-scenario") {
     const scenario = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
     return coreValidator.validateAdapterSourceExpectations(
+      scenario,
+      { file: fixtureCase.path }
+    );
+  }
+  if (fixtureCase.kind === "adapter-publication-source-scenario") {
+    const scenario = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
+    return coreValidator.validateAdapterPublicationExpectations(
       scenario,
       { file: fixtureCase.path }
     );
@@ -3619,6 +3631,82 @@ test("executes the Task 9 DM-ADAPTER-002 DM-ADAPTER-003 DM-MSG-004 wire header a
   }
 });
 
+test("executes the Task 9 all-class adapter publication and actor corpus", () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
+  const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
+
+  assert.deepEqual(adapterPublicationCaseIds.filter((id) => !byId.has(id)), []);
+  assert.equal(
+    typeof coreValidator.validateAdapterPublicationExpectations,
+    "function",
+    "all-class adapter publication coverage requires a versioned scenario validator"
+  );
+
+  const result = runFixtureCorpus(corpusPath, validateCase);
+  assert.equal(result.failed, 0, result.report);
+
+  const validCase = byId.get("adapter-publication-scope-valid");
+  const valid = validateCase(path.join(corpusPath, validCase.path), validCase);
+  assert.deepEqual(valid.diagnostics, []);
+  assert.deepEqual(
+    valid.facts.adapterSelectionExpectations.map((entry) => [
+      entry.caseId,
+      entry.outcome,
+      entry.resolution ?? entry.reason
+    ]),
+    [
+      ["schema-target-missing", "emit-unknown", "missing-target"],
+      ["wire-target-missing", "emit-unknown", "missing-target"],
+      ["header-target-missing", "emit-unknown", "missing-target"],
+      ["protocol-target-missing", "emit-unknown", "missing-target"],
+      ["protocol-mapping-absent", "emit-unsupported", "no-exact-mapping"],
+      ["protocol-mapping-unique", "supported", "publication-mapping"],
+      ["protocol-mapping-duplicate", "generation-failure", "duplicate-publication-mapping"]
+    ]
+  );
+  assert.deepEqual(
+    valid.facts.adapterPublicationExpectations.map((entry) => [
+      entry.caseId,
+      entry.publicationScopeAvailability,
+      entry.versioningOutcome,
+      entry.projectionDigestCoverage
+    ]),
+    [
+      ["publication-scope-identity-missing", "missing-identity", "unavailable", "complete"],
+      ["publication-scope-version-missing", "missing-version", "unavailable", "complete"],
+      ["changed-rule-stale-versions-incomplete-digest", "available", "invalid-version-change", "incomplete"],
+      ["changed-rule-versioned-complete-digest", "available", "compliant", "complete"]
+    ]
+  );
+  assert.deepEqual(valid.facts.adapterActorExpectations, [
+    {
+      caseId: "actors-exact-support",
+      producerOutcome: "projected",
+      sourceAwareValidatorOutcome: "validated",
+      ordinaryReaderReady: true,
+      ordinaryReaderBlockers: []
+    },
+    {
+      caseId: "actor-adapter-and-runtime-gaps",
+      producerOutcome: "unsupported-adapter-rule",
+      sourceAwareValidatorOutcome: "unsupported-adapter-rule",
+      ordinaryReaderReady: false,
+      ordinaryReaderBlockers: ["runtime-capability:kafka-client"]
+    },
+    {
+      caseId: "actor-publication-scope-version-unavailable",
+      producerOutcome: "unsupported-publication-scope",
+      sourceAwareValidatorOutcome: "unsupported-publication-scope",
+      ordinaryReaderReady: false,
+      ordinaryReaderBlockers: ["publication-scope"]
+    }
+  ]);
+
+  const invalidCase = byId.get("adapter-publication-scope-projection-invalid");
+  const invalid = validateCase(path.join(corpusPath, invalidCase.path), invalidCase);
+  assert.deepEqual(invalid.diagnostics.map((entry) => entry.ruleId), ["DM-ADAPTER-004"]);
+});
+
 test("executes the Task 9 pre-adapter media-type canonicalization corpus", () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
   const byId = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
@@ -4583,7 +4671,7 @@ test("executes the Task 9 DM-INC-003 implementation-readiness capability matrix"
 
 test("audits every Task 9 invalid fixture as one primary concern", () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(corpusPath, "cases.json"), "utf8"));
-  assert.equal(manifest.cases.length, 262);
+  assert.equal(manifest.cases.length, 264);
   const result = runFixtureCorpus(corpusPath, validateCase);
   assert.equal(result.failed, 0, result.report);
   const audit = auditFixtureOneInvalidity({
@@ -4591,5 +4679,5 @@ test("audits every Task 9 invalid fixture as one primary concern", () => {
     corpusCases: result.cases
   });
 
-  assert.deepEqual(audit, { passed: true, audited: 192, errors: [] });
+  assert.deepEqual(audit, { passed: true, audited: 193, errors: [] });
 });

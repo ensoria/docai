@@ -1417,6 +1417,20 @@
       "expected_rule_ids": []
     },
     {
+      "id": "adapter-publication-scope-projection-invalid",
+      "kind": "adapter-publication-source-scenario",
+      "path": "source/focused/adapter-publication-scope-projection-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": ["DM-ADAPTER-004"]
+    },
+    {
+      "id": "adapter-publication-scope-valid",
+      "kind": "adapter-publication-source-scenario",
+      "path": "source/focused/adapter-publication-scope-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": []
+    },
+    {
       "id": "media-type-canonicalization-projection-invalid",
       "kind": "adapter-source-scenario",
       "path": "source/focused/media-type-canonicalization-projection-invalid.json",
