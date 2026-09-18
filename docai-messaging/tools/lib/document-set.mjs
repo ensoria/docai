@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { diagnostic } from "./diagnostics.mjs";
+import { scanMarkdown } from "./markdown.mjs";
 import { parseOpeningMetadata } from "./metadata.mjs";
 import { parseDocsPath } from "./paths.mjs";
 import {
@@ -35,6 +36,13 @@ function isDocumentPath(relativePath) {
 function parseDocument(relativePath, absolutePath, bytes) {
   const diagnostics = [];
   const lines = scanUtf8Lines(bytes).lines;
+  const content = decodeUtf8Bytes(bytes);
+  const markdownResult = scanMarkdown({ text: content, file: relativePath });
+  const fencedLines = new Set(
+    markdownResult.value?.lines
+      .filter((line) => line.inFence)
+      .map((line) => line.line) ?? []
+  );
   const metadataResult = parseOpeningMetadata({
     text: lines[0]?.text ?? "",
     file: relativePath,
@@ -44,7 +52,9 @@ function parseDocument(relativePath, absolutePath, bytes) {
 
   const identityIndexes = [];
   for (let index = 0; index < lines.length; index += 1) {
-    if (lines[index].text.startsWith("> docai-identity:")) identityIndexes.push(index);
+    if (!fencedLines.has(index + 1) && lines[index].text.startsWith("> docai-identity:")) {
+      identityIndexes.push(index);
+    }
   }
   let finalNonEmptyIndex = -1;
   for (let index = lines.length - 1; index >= 0; index -= 1) {
@@ -78,7 +88,7 @@ function parseDocument(relativePath, absolutePath, bytes) {
       path: relativePath,
       absolutePath,
       bytes,
-      content: decodeUtf8Bytes(bytes),
+      content,
       metadata: metadataResult.value,
       metadataLine: 1,
       identity,

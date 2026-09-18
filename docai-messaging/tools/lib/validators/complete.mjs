@@ -3,10 +3,19 @@ import { validateDocumentSet } from "../document-set.mjs";
 import { scanMarkdown } from "../markdown.mjs";
 import { parseDocsPath } from "../paths.mjs";
 import { parsePipeTable } from "../tables.mjs";
+import { validateCompleteReferenceMaterials } from "./complete-references.mjs";
 import { validateCompleteWorkflowDefinitions } from "./complete-workflows.mjs";
 
 const WORKFLOW_COLUMNS = ["Name", "Summary", "Details"];
 const WORKFLOW_SHARD_COLUMNS = ["First name", "Last name", "Summary", "Details"];
+const REFERENCE_OWNERSHIP_ROUTING_RULES = new Set([
+  "DM-IDX-001",
+  "DM-IDX-003",
+  "DM-IDX-004",
+  "DM-IDX-005",
+  "DM-IDX-006",
+  "DM-IDX-007"
+]);
 
 function scalarCompare(left, right) {
   const leftScalars = Array.from(left, (value) => value.codePointAt(0));
@@ -471,17 +480,28 @@ export function validateCompleteDocumentSet(documentSet, options = {}) {
       base.facts.core
     )
     : { diagnostics: [], facts: { workflowDefinitions: null } };
+  const referenceMaterials = validateCompleteReferenceMaterials(
+    documentSet,
+    base.facts.core,
+    {
+      enforceOwnership: !base.diagnostics.some((entry) => (
+        REFERENCE_OWNERSHIP_ROUTING_RULES.has(entry.ruleId)
+      ))
+    }
+  );
   return {
     diagnostics: [
       ...base.diagnostics,
       ...workflows.diagnostics,
-      ...workflowDefinitions.diagnostics
+      ...workflowDefinitions.diagnostics,
+      ...referenceMaterials.diagnostics
     ],
     facts: {
       ...base.facts,
       complete: {
         ...workflows.facts,
-        ...workflowDefinitions.facts
+        ...workflowDefinitions.facts,
+        ...referenceMaterials.facts
       }
     }
   };

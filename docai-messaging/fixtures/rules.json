@@ -437,6 +437,24 @@
       "readme_section": "§5 Workflow Definitions",
       "description": "Expanded workflow sections use exact top-level bullet lists, numbered steps, and a non-empty From | Trigger | To table, with written operation references matching defined operation headings.",
       "scope": "complete"
+    },
+    {
+      "rule_id": "DM-REF-001",
+      "readme_section": "§3.7 LLM Trust Boundary and Materialized References",
+      "description": "A Reference Material file contains only its fixed title, instruction-authority marker, Content heading, one fenced content block, and identity trailer.",
+      "scope": "complete"
+    },
+    {
+      "rule_id": "DM-REF-002",
+      "readme_section": "§3.7 LLM Trust Boundary and Materialized References",
+      "description": "Reference Material content is normalized UTF-8 text in exactly one canonical markdown, text, or empty-info backtick fence whose minimal delimiter is at least four and exceeds every embedded backtick run.",
+      "scope": "complete"
+    },
+    {
+      "rule_id": "DM-REF-003",
+      "readme_section": "§3.7 LLM Trust Boundary and Materialized References / §3.2 INDEX.md(required)",
+      "description": "Every Reference Material file is supplemental context for at least one operation; required context and other direct-context target restrictions remain Core routing requirements.",
+      "scope": "complete"
     }
   ]
 }
