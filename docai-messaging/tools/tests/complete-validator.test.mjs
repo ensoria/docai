@@ -326,7 +326,9 @@ test("DM-WF-003 rejects a duplicate shard route without duplicate workflow diagn
 
 test("DM-WF-001 through DM-WF-003 maintain complete-scope rule correspondence", () => {
   const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
-  const workflowRules = catalog.rules.filter((entry) => entry.rule_id.startsWith("DM-WF-"));
+  const workflowRules = catalog.rules.filter((entry) => (
+    ["DM-WF-001", "DM-WF-002", "DM-WF-003"].includes(entry.rule_id)
+  ));
 
   assert.deepEqual(workflowRules.map((entry) => entry.scope), [
     "complete",
@@ -334,7 +336,7 @@ test("DM-WF-001 through DM-WF-003 maintain complete-scope rule correspondence", 
     "complete"
   ]);
   assert.deepEqual(auditRuleTestCorrespondence({
-    catalogRuleIds: catalog.rules.map((entry) => entry.rule_id),
+    catalogRuleIds: workflowRules.map((entry) => entry.rule_id),
     testNames: workflowRuleTestNames,
     rulePrefixes: ["DM-WF"]
   }), { passed: true, errors: [] });

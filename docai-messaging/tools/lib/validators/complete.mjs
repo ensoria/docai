@@ -3,6 +3,7 @@ import { validateDocumentSet } from "../document-set.mjs";
 import { scanMarkdown } from "../markdown.mjs";
 import { parseDocsPath } from "../paths.mjs";
 import { parsePipeTable } from "../tables.mjs";
+import { validateCompleteWorkflowDefinitions } from "./complete-workflows.mjs";
 
 const WORKFLOW_COLUMNS = ["Name", "Summary", "Details"];
 const WORKFLOW_SHARD_COLUMNS = ["First name", "Last name", "Summary", "Details"];
@@ -463,11 +464,25 @@ function validateCompleteWorkflowRouting(documentSet) {
 export function validateCompleteDocumentSet(documentSet, options = {}) {
   const base = validateDocumentSet(documentSet, options);
   const workflows = validateCompleteWorkflowRouting(documentSet);
+  const workflowDefinitions = workflows.diagnostics.length === 0
+    ? validateCompleteWorkflowDefinitions(
+      documentSet,
+      workflows.facts.workflows,
+      base.facts.core
+    )
+    : { diagnostics: [], facts: { workflowDefinitions: null } };
   return {
-    diagnostics: [...base.diagnostics, ...workflows.diagnostics],
+    diagnostics: [
+      ...base.diagnostics,
+      ...workflows.diagnostics,
+      ...workflowDefinitions.diagnostics
+    ],
     facts: {
       ...base.facts,
-      complete: workflows.facts
+      complete: {
+        ...workflows.facts,
+        ...workflowDefinitions.facts
+      }
     }
   };
 }

@@ -419,6 +419,24 @@
       "readme_section": "§3.2 INDEX.md(required) / §6.1 Recommended Retrieval Recipe",
       "description": "Workflow Shards routes unique non-empty workflow-index files with exact inclusive name bounds; exact retrieval records matching and false-positive shards, while semantic uncertainty loads every workflow shard.",
       "scope": "complete"
+    },
+    {
+      "rule_id": "DM-WF-004",
+      "readme_section": "§5 Workflow Definitions",
+      "description": "A workflow file has one non-empty title, one single-line one-or-two-sentence introduction, and the four fixed workflow sections in canonical order.",
+      "scope": "complete"
+    },
+    {
+      "rule_id": "DM-WF-005",
+      "readme_section": "§5 Workflow Definitions / §3.4 Output Profiles and Incomplete Information",
+      "description": "Whole-workflow and section-local deviations are non-empty and Unicode-scalar ordered at their canonical leading positions, and every workflow section has exactly one permitted core state.",
+      "scope": "complete"
+    },
+    {
+      "rule_id": "DM-WF-006",
+      "readme_section": "§5 Workflow Definitions",
+      "description": "Expanded workflow sections use exact top-level bullet lists, numbered steps, and a non-empty From | Trigger | To table, with written operation references matching defined operation headings.",
+      "scope": "complete"
     }
   ]
 }
