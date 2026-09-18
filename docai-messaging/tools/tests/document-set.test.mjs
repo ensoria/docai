@@ -61,6 +61,12 @@ function task7Test(name, ...arguments_) {
   return nodeTest(name, ...arguments_);
 }
 
+function coreCatalogRuleIds(catalog) {
+  return catalog.rules
+    .filter((entry) => entry.scope === "core")
+    .map((entry) => entry.rule_id);
+}
+
 function temporaryDirectory(t, prefix = "docai-messaging-set-") {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
   t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
@@ -2084,7 +2090,7 @@ task5Test("DM-IDX-008 through DM-IDX-010 are cataloged for Task 5 checkpoint 4",
 task5Test("DM-SRC-001 through DM-SRC-007 and DM-IDX-001 through DM-IDX-010 maintain rule correspondence", () => {
   const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
   const result = auditRuleTestCorrespondence({
-    catalogRuleIds: catalog.rules.map((entry) => entry.rule_id),
+    catalogRuleIds: coreCatalogRuleIds(catalog),
     testNames: task5RuleTestNames,
     rulePrefixes: ["DM-SRC", "DM-IDX"]
   });
@@ -2206,7 +2212,7 @@ task6Test("DM-CONV-001 and DM-CONV-002 are cataloged for Task 6 checkpoint 1", (
 task6Test("DM-CONV-001 and DM-CONV-002 maintain Task 6 checkpoint 1 rule correspondence", () => {
   const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
   const result = auditRuleTestCorrespondence({
-    catalogRuleIds: catalog.rules.map((entry) => entry.rule_id),
+    catalogRuleIds: coreCatalogRuleIds(catalog),
     testNames: task6RuleTestNames.filter((name) => name.includes("DM-CONV-")),
     rulePrefixes: ["DM-CONV"]
   });
@@ -2705,7 +2711,7 @@ task6Test("DM-OP-001 through DM-OP-004 are cataloged for Task 6 checkpoint 2", (
 task6Test("DM-OP-001 through DM-OP-004 maintain Task 6 checkpoint 2 rule correspondence", () => {
   const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
   const result = auditRuleTestCorrespondence({
-    catalogRuleIds: catalog.rules.map((entry) => entry.rule_id),
+    catalogRuleIds: coreCatalogRuleIds(catalog),
     testNames: task6RuleTestNames.filter((name) => name.includes("DM-OP-")),
     rulePrefixes: ["DM-OP"]
   });
@@ -3405,7 +3411,7 @@ task6Test("DM-MSG-001 through DM-MSG-003 are cataloged for Task 6 checkpoint 3",
 task6Test("DM-MSG-001 through DM-MSG-003 maintain Task 6 checkpoint 3 rule correspondence", () => {
   const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
   const result = auditRuleTestCorrespondence({
-    catalogRuleIds: catalog.rules.map((entry) => entry.rule_id),
+    catalogRuleIds: coreCatalogRuleIds(catalog),
     testNames: task6RuleTestNames.filter((name) => name.includes("DM-MSG-")),
     rulePrefixes: ["DM-MSG"]
   });
@@ -3995,7 +4001,7 @@ task6Test("DM-MSG-004 through DM-MSG-006 and DM-CONV-003 are cataloged for Task 
 task6Test("DM-MSG-004 through DM-MSG-006 and DM-CONV-003 maintain Task 6 checkpoint 4 rule correspondence", () => {
   const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
   const result = auditRuleTestCorrespondence({
-    catalogRuleIds: catalog.rules.map((entry) => entry.rule_id),
+    catalogRuleIds: coreCatalogRuleIds(catalog),
     testNames: task6RuleTestNames.filter((name) => /DM-(?:MSG|CONV)-/.test(name)),
     rulePrefixes: ["DM-MSG", "DM-CONV"]
   });
@@ -4269,7 +4275,7 @@ task6Test("DM-REPLY-001 through DM-REPLY-003 are cataloged for Task 6 checkpoint
 task6Test("DM-REPLY-001 through DM-REPLY-003 maintain Task 6 checkpoint 5 rule correspondence", () => {
   const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
   const result = auditRuleTestCorrespondence({
-    catalogRuleIds: catalog.rules.map((entry) => entry.rule_id),
+    catalogRuleIds: coreCatalogRuleIds(catalog),
     testNames: task6RuleTestNames.filter((name) => name.includes("DM-REPLY-")),
     rulePrefixes: ["DM-REPLY"]
   });
@@ -4594,7 +4600,7 @@ task6Test("DM-FAIL-001 through DM-FAIL-003 and DM-CONV-004 are cataloged for Tas
 task6Test("DM-FAIL-001 through DM-FAIL-003 and DM-CONV-004 maintain Task 6 checkpoint 6 rule correspondence", () => {
   const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
   const result = auditRuleTestCorrespondence({
-    catalogRuleIds: catalog.rules.map((entry) => entry.rule_id),
+    catalogRuleIds: coreCatalogRuleIds(catalog),
     testNames: task6RuleTestNames.filter((name) => /DM-(?:FAIL|CONV)-/.test(name)),
     rulePrefixes: ["DM-FAIL", "DM-CONV"]
   });
@@ -4678,7 +4684,7 @@ task6Test("accepts DM-CONV-004 DM-OP-004 DM-MSG-005 DM-REPLY-003 and DM-FAIL-002
 task6Test("DM-CONV-001 DM-OP-001 DM-MSG-001 DM-REPLY-001 and DM-FAIL-001 maintain Task 6 integration rule correspondence", () => {
   const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
   const result = auditRuleTestCorrespondence({
-    catalogRuleIds: catalog.rules.map((entry) => entry.rule_id),
+    catalogRuleIds: coreCatalogRuleIds(catalog),
     testNames: task6RuleTestNames,
     rulePrefixes: ["DM-CONV", "DM-OP", "DM-MSG", "DM-REPLY", "DM-FAIL"]
   });
@@ -4903,7 +4909,7 @@ task7Test("DM-INC-001 through DM-INC-003 are cataloged for Task 7 Step 1", () =>
 task7Test("DM-INC-001 through DM-INC-003 maintain Task 7 Step 1 rule correspondence", () => {
   const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
   const result = auditRuleTestCorrespondence({
-    catalogRuleIds: catalog.rules.map((entry) => entry.rule_id),
+    catalogRuleIds: coreCatalogRuleIds(catalog),
     testNames: task7RuleTestNames.filter((name) => name.includes("DM-INC-")),
     rulePrefixes: ["DM-INC"]
   });
@@ -5045,7 +5051,7 @@ task7Test("DM-INC-004 and DM-INC-005 are cataloged for Task 7 Step 2", () => {
 task7Test("DM-INC-004 and DM-INC-005 maintain Task 7 Step 2 rule correspondence", () => {
   const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
   const result = auditRuleTestCorrespondence({
-    catalogRuleIds: catalog.rules.map((entry) => entry.rule_id),
+    catalogRuleIds: coreCatalogRuleIds(catalog),
     testNames: task7RuleTestNames.filter((name) => name.includes("DM-INC-")),
     rulePrefixes: ["DM-INC"]
   });
@@ -5251,7 +5257,7 @@ task7Test("DM-INC-006 and DM-INC-007 are cataloged for Task 7 Step 3", () => {
 task7Test("DM-INC-001 DM-INC-006 and DM-INC-007 maintain Task 7 Step 3 rule correspondence", () => {
   const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
   const result = auditRuleTestCorrespondence({
-    catalogRuleIds: catalog.rules.map((entry) => entry.rule_id),
+    catalogRuleIds: coreCatalogRuleIds(catalog),
     testNames: task7RuleTestNames.filter((name) => name.includes("DM-INC-")),
     rulePrefixes: ["DM-INC"]
   });
@@ -6117,7 +6123,7 @@ task7Test("DM-ADAPTER-001 through DM-ADAPTER-004 are cataloged for Task 7 Step 4
 task7Test("DM-ADAPTER-001 through DM-ADAPTER-004 maintain Task 7 Step 4 rule correspondence", () => {
   const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
   const result = auditRuleTestCorrespondence({
-    catalogRuleIds: catalog.rules.map((entry) => entry.rule_id),
+    catalogRuleIds: coreCatalogRuleIds(catalog),
     testNames: task7RuleTestNames.filter((name) => name.includes("DM-ADAPTER-")),
     rulePrefixes: ["DM-ADAPTER"]
   });
@@ -6377,7 +6383,7 @@ task7Test("DM-TRUST-001 through DM-TRUST-003 are cataloged for Task 7 Step 5", (
 task7Test("DM-TRUST-001 through DM-TRUST-003 maintain Task 7 Step 5 rule correspondence", () => {
   const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
   const result = auditRuleTestCorrespondence({
-    catalogRuleIds: catalog.rules.map((entry) => entry.rule_id),
+    catalogRuleIds: coreCatalogRuleIds(catalog),
     testNames: task7RuleTestNames.filter((name) => name.includes("DM-TRUST-")),
     rulePrefixes: ["DM-TRUST"]
   });

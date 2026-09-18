@@ -3,6 +3,7 @@ import { validateDocumentSet } from "../document-set.mjs";
 import { scanMarkdown } from "../markdown.mjs";
 import { parseDocsPath } from "../paths.mjs";
 import { parsePipeTable } from "../tables.mjs";
+import { validateCompleteConventionRetrieval } from "./complete-conventions.mjs";
 import { validateCompleteReferenceMaterials } from "./complete-references.mjs";
 import { validateCompleteWorkflowDefinitions } from "./complete-workflows.mjs";
 
@@ -15,6 +16,13 @@ const REFERENCE_OWNERSHIP_ROUTING_RULES = new Set([
   "DM-IDX-005",
   "DM-IDX-006",
   "DM-IDX-007"
+]);
+const CONVENTION_RETRIEVAL_PREREQUISITE_RULES = new Set([
+  ...REFERENCE_OWNERSHIP_ROUTING_RULES,
+  "DM-CONV-001",
+  "DM-CONV-002",
+  "DM-CONV-003",
+  "DM-CONV-004"
 ]);
 
 function scalarCompare(left, right) {
@@ -489,19 +497,30 @@ export function validateCompleteDocumentSet(documentSet, options = {}) {
       ))
     }
   );
+  const conventionPrerequisiteFailure = base.diagnostics.some((entry) => (
+    CONVENTION_RETRIEVAL_PREREQUISITE_RULES.has(entry.ruleId)
+  )) || workflows.diagnostics.length > 0 || workflowDefinitions.diagnostics.length > 0;
+  const conventionRetrieval = conventionPrerequisiteFailure
+    ? { diagnostics: [], facts: { conventionRetrieval: null } }
+    : validateCompleteConventionRetrieval(
+      base.facts.core,
+      workflows.facts.workflows
+    );
   return {
     diagnostics: [
       ...base.diagnostics,
       ...workflows.diagnostics,
       ...workflowDefinitions.diagnostics,
-      ...referenceMaterials.diagnostics
+      ...referenceMaterials.diagnostics,
+      ...conventionRetrieval.diagnostics
     ],
     facts: {
       ...base.facts,
       complete: {
         ...workflows.facts,
         ...workflowDefinitions.facts,
-        ...referenceMaterials.facts
+        ...referenceMaterials.facts,
+        ...conventionRetrieval.facts
       }
     }
   };

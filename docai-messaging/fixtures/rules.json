@@ -193,6 +193,12 @@
       "scope": "core"
     },
     {
+      "rule_id": "DM-CONV-005",
+      "readme_section": "§3.2 INDEX.md(required) / §6.1 Recommended Retrieval Recipe",
+      "description": "Complete-surface convention retrieval preserves mechanically visible operation and required-workflow dependencies, exposes whole-file fallback for untrusted selectors, and loads all conventions for supplemental or directly selected workflows when required.",
+      "scope": "complete"
+    },
+    {
       "rule_id": "DM-OP-001",
       "readme_section": "§4 Operation Definition Format",
       "description": "Each routed channel file contains exactly its routed operation definitions, without a file-level wrapper, and every operation uses the fixed required section order.",
