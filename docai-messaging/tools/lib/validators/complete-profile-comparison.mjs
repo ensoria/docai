@@ -2,6 +2,7 @@ import { isDeepStrictEqual } from "node:util";
 import { parseExactJson } from "../json-value.mjs";
 import { scanMarkdown } from "../markdown.mjs";
 import { parsePipeTable } from "../tables.mjs";
+import { expandFieldDefaultsFile } from "./complete-field-defaults.mjs";
 
 const STANDARD_METADATA_KEYS = [
   "docai-messaging",
@@ -117,9 +118,10 @@ function normalizedContent(file) {
 }
 
 export function expandedComparisonView(file) {
+  const expandedFile = expandFieldDefaultsFile(file);
   return {
-    metadata: normalizedMetadata(file),
-    content: normalizedContent(file)
+    metadata: normalizedMetadata(expandedFile),
+    content: normalizedContent(expandedFile)
   };
 }
 

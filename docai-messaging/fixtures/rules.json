@@ -479,6 +479,12 @@
       "readme_section": "§3.4 Output Profiles and Incomplete Information",
       "description": "After excluding profile links, profile-specific identity, and x- extensions, normalizing the opening profile value, tables, and prose, and canonicalizing structured examples, corresponding full and compact files preserve every remaining ordered standard contract structure exactly; field_defaults and same_as expansion are validated separately.",
       "scope": "complete"
+    },
+    {
+      "rule_id": "DM-PROFILE-004",
+      "readme_section": "§3.4 Output Profiles and Incomplete Information",
+      "description": "A compact-only field_defaults marker immediately precedes one Headers or Payload field table, names only applicable uniform columns once in logical left-to-right order, uses permitted values, omits each defaulted column, and reconstructs the direction-correct logical full-profile table; Meaning=none reconstructs empty cells only.",
+      "scope": "complete"
     }
   ]
 }

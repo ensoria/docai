@@ -4,6 +4,7 @@ import { scanMarkdown } from "../markdown.mjs";
 import { parseDocsPath } from "../paths.mjs";
 import { parsePipeTable } from "../tables.mjs";
 import { validateCompleteConventionRetrieval } from "./complete-conventions.mjs";
+import { validateCompleteFieldDefaults } from "./complete-field-defaults.mjs";
 import { validateCompleteReferenceMaterials } from "./complete-references.mjs";
 import { validateCompleteWorkflowDefinitions } from "./complete-workflows.mjs";
 
@@ -479,7 +480,8 @@ function validateCompleteWorkflowRouting(documentSet) {
 }
 
 export function validateCompleteDocumentSet(documentSet, options = {}) {
-  const base = validateDocumentSet(documentSet, options);
+  const fieldDefaults = validateCompleteFieldDefaults(documentSet);
+  const base = validateDocumentSet(fieldDefaults.expandedDocumentSet, options);
   const workflows = validateCompleteWorkflowRouting(documentSet);
   const workflowDefinitions = workflows.diagnostics.length === 0
     ? validateCompleteWorkflowDefinitions(
@@ -508,6 +510,7 @@ export function validateCompleteDocumentSet(documentSet, options = {}) {
     );
   return {
     diagnostics: [
+      ...fieldDefaults.diagnostics,
       ...base.diagnostics,
       ...workflows.diagnostics,
       ...workflowDefinitions.diagnostics,
@@ -517,6 +520,7 @@ export function validateCompleteDocumentSet(documentSet, options = {}) {
     facts: {
       ...base.facts,
       complete: {
+        ...fieldDefaults.facts,
         ...workflows.facts,
         ...workflowDefinitions.facts,
         ...referenceMaterials.facts,

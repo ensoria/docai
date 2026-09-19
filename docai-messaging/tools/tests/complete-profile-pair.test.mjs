@@ -6,6 +6,8 @@ import nodeTest from "node:test";
 import { loadDocumentSet } from "../lib/document-set.mjs";
 import { auditRuleTestCorrespondence } from "../lib/fixture-runner.mjs";
 import { deriveShortId } from "../lib/identity.mjs";
+import { validateCompleteDocumentSet } from "../lib/validators/complete.mjs";
+import { validateCompleteFieldDefaults } from "../lib/validators/complete-field-defaults.mjs";
 
 const validPairPath = fileURLToPath(new URL(
   "../../fixtures/core/v0.17.1/focused/valid/operations-profile-path-parity-valid/",
@@ -98,6 +100,39 @@ function replaceAlphaPayload(documentSet, example) {
     "|---|---|---|---|---|",
     "| count | int | yes | no | Exact item count |",
     "| id | string | yes | no | Stable item identifier |"
+  ].join("\n"));
+  refreshIdentityLine(channel);
+}
+
+function replaceZetaPayload(documentSet, example) {
+  const channel = documentSet.files.find((file) => file.path === "channels/zeta.md");
+  assert.notEqual(channel, undefined);
+  channel.content = channel.content.replace("#### Payload\n\nnone", [
+    "#### Payload",
+    "",
+    "**payload_presence**: optional",
+    "**media_type**: application/json",
+    "**payload_nullable**: no",
+    "```json",
+    example,
+    "```",
+    "| Field | Type | Presence | Nullable | Meaning |",
+    "|---|---|---|---|---|",
+    "| count | int | optional | no |  |",
+    "| id | string | optional | no |  |"
+  ].join("\n"));
+  refreshIdentityLine(channel);
+}
+
+function replaceAlphaHeaders(documentSet) {
+  const channel = documentSet.files.find((file) => file.path === "channels/alpha.md");
+  assert.notEqual(channel, undefined);
+  channel.content = channel.content.replace("#### Headers\n\nnone", [
+    "#### Headers",
+    "",
+    "| Name | Type | Required | Nullable | Constraints / Meaning | x-source |",
+    "|---|---|---|---|---|---|",
+    "| trace-id | string | yes | no | Stable trace identifier | api |"
   ].join("\n"));
   refreshIdentityLine(channel);
 }
@@ -551,6 +586,224 @@ test("DM-PROFILE-003 compares JSON examples by exact decoded value", async (t) =
   });
 });
 
+test("DM-PROFILE-004 reconstructs compact SEND payload field defaults", () => {
+  const pair = loadPair(validPairPath);
+  for (const profile of [pair.full, pair.compact]) {
+    replaceAlphaPayload(profile, "{\"count\":1,\"id\":\"item_01\"}");
+  }
+  const compactChannel = pair.compact.files.find((file) => file.path === "channels/alpha.md");
+  assert.notEqual(compactChannel, undefined);
+  compactChannel.content = compactChannel.content.replace([
+    "| Field | Type | Required | Nullable | Constraints / Meaning |",
+    "|---|---|---|---|---|",
+    "| count | int | yes | no | Exact item count |",
+    "| id | string | yes | no | Stable item identifier |"
+  ].join("\n"), [
+    "**field_defaults**: Required=yes | Nullable=no",
+    "",
+    "| Field | Type | Constraints / Meaning |",
+    "|---|---|---|",
+    "| count | int | Exact item count |",
+    "| id | string | Stable item identifier |"
+  ].join("\n"));
+  refreshIdentityLine(compactChannel);
+
+  const result = validateDocumentSets(pair.full, pair.compact);
+
+  assert.deepEqual(result.diagnostics, []);
+});
+
+test("DM-PROFILE-004 reconstructs RECEIVE Meaning=none as empty cells", () => {
+  const pair = loadPair(validPairPath);
+  for (const profile of [pair.full, pair.compact]) {
+    replaceZetaPayload(profile, "{\"count\":1,\"id\":\"item_01\"}");
+  }
+  const compactChannel = pair.compact.files.find((file) => file.path === "channels/zeta.md");
+  assert.notEqual(compactChannel, undefined);
+  compactChannel.content = compactChannel.content.replace([
+    "| Field | Type | Presence | Nullable | Meaning |",
+    "|---|---|---|---|---|",
+    "| count | int | optional | no |  |",
+    "| id | string | optional | no |  |"
+  ].join("\n"), [
+    "**field_defaults**: Presence=optional | Nullable=no | Meaning=none",
+    "",
+    "| Field | Type |",
+    "|---|---|",
+    "| count | int |",
+    "| id | string |"
+  ].join("\n"));
+  refreshIdentityLine(compactChannel);
+
+  const singleResult = validateCompleteDocumentSet(pair.compact, { wholeSet: false });
+  const pairResult = validateDocumentSets(pair.full, pair.compact);
+
+  assert.deepEqual(singleResult.diagnostics, []);
+  assert.deepEqual(singleResult.facts.complete.fieldDefaults.map((entry) => ({
+    path: entry.path,
+    columns: entry.columns,
+    logicalHeader: entry.logicalHeader
+  })), [{
+    path: "channels/zeta.md",
+    columns: [
+      { column: "Presence", value: "optional" },
+      { column: "Nullable", value: "no" },
+      { column: "Meaning", value: "none" }
+    ],
+    logicalHeader: ["Field", "Type", "Presence", "Nullable", "Meaning"]
+  }]);
+  assert.deepEqual(pairResult.diagnostics, []);
+});
+
+test("DM-PROFILE-004 reconstructs Headers while preserving trailing x- columns", () => {
+  const pair = loadPair(validPairPath);
+  for (const profile of [pair.full, pair.compact]) replaceAlphaHeaders(profile);
+  const compactChannel = pair.compact.files.find((file) => file.path === "channels/alpha.md");
+  assert.notEqual(compactChannel, undefined);
+  compactChannel.content = compactChannel.content.replace([
+    "| Name | Type | Required | Nullable | Constraints / Meaning | x-source |",
+    "|---|---|---|---|---|---|",
+    "| trace-id | string | yes | no | Stable trace identifier | api |"
+  ].join("\n"), [
+    "**field_defaults**: Required=yes | Nullable=no",
+    "",
+    "| Name | Type | Constraints / Meaning | x-source |",
+    "|---|---|---|---|",
+    "| trace-id | string | Stable trace identifier | api |"
+  ].join("\n"));
+  refreshIdentityLine(compactChannel);
+
+  const result = validateDocumentSets(pair.full, pair.compact);
+
+  assert.deepEqual(result.diagnostics, []);
+});
+
+test("DM-PROFILE-004 accepts nested Reply Headers and Payload tables", () => {
+  const content = [
+    "##### Payload",
+    "",
+    "**field_defaults**: Presence=always | Nullable=no | Meaning=none",
+    "",
+    "| Field | Type |",
+    "|---|---|",
+    "| id | string |"
+  ].join("\n");
+  const result = validateCompleteFieldDefaults({
+    files: [{
+      path: "channels/reply.md",
+      content,
+      metadata: { profile: "compact" }
+    }]
+  });
+
+  assert.deepEqual(result.diagnostics, []);
+  assert.equal(result.expandedDocumentSet.files[0].content.includes(
+    "| Field | Type | Presence | Nullable | Meaning |\n"
+      + "|---|---|---|---|---|\n"
+      + "| id | string | always | no |  |"
+  ), true);
+});
+
+test("DM-PROFILE-004 rejects invalid field default grammar and placement", async (t) => {
+  const cases = [
+    {
+      name: "duplicate column",
+      marker: "Required=yes | Required=yes | Nullable=no",
+      compactHeader: ["Field", "Type", "Constraints / Meaning"]
+    },
+    {
+      name: "out-of-order columns",
+      marker: "Nullable=no | Required=yes",
+      compactHeader: ["Field", "Type", "Constraints / Meaning"]
+    },
+    { name: "unknown column", marker: "Unknown=yes" },
+    { name: "inapplicable direction column", marker: "Presence=optional" },
+    {
+      name: "prohibited default value",
+      marker: "Required=conditional | Nullable=no",
+      compactHeader: ["Field", "Type", "Constraints / Meaning"]
+    },
+    { name: "defaulted column remains in table", marker: "Required=yes" }
+  ];
+
+  for (const fixtureCase of cases) {
+    await t.test(fixtureCase.name, () => {
+      const pair = loadPair(validPairPath);
+      for (const profile of [pair.full, pair.compact]) {
+        replaceAlphaPayload(profile, "{\"count\":1,\"id\":\"item_01\"}");
+      }
+      const compactChannel = pair.compact.files.find((file) => file.path === "channels/alpha.md");
+      assert.notEqual(compactChannel, undefined);
+      const fullTable = [
+        "| Field | Type | Required | Nullable | Constraints / Meaning |",
+        "|---|---|---|---|---|",
+        "| count | int | yes | no | Exact item count |",
+        "| id | string | yes | no | Stable item identifier |"
+      ];
+      const table = fixtureCase.compactHeader === undefined
+        ? fullTable
+        : [
+          `| ${fixtureCase.compactHeader.join(" | ")} |`,
+          `|${fixtureCase.compactHeader.map(() => "---").join("|")}|`,
+          "| count | int | Exact item count |",
+          "| id | string | Stable item identifier |"
+        ];
+      compactChannel.content = compactChannel.content.replace(
+        fullTable.join("\n"),
+        [`**field_defaults**: ${fixtureCase.marker}`, "", ...table].join("\n")
+      );
+      refreshIdentityLine(compactChannel);
+
+      const result = validateDocumentSets(pair.full, pair.compact);
+
+      assert.equal(result.diagnostics.length > 0, true);
+      assert.deepEqual(
+        [...new Set(result.diagnostics.map((entry) => entry.ruleId))],
+        ["DM-PROFILE-004"]
+      );
+    });
+  }
+
+  await t.test("marker in full profile", () => {
+    const pair = loadPair(validPairPath);
+    for (const profile of [pair.full, pair.compact]) {
+      replaceAlphaPayload(profile, "{\"count\":1,\"id\":\"item_01\"}");
+    }
+    const fullChannel = pair.full.files.find((file) => file.path === "channels/alpha.md");
+    assert.notEqual(fullChannel, undefined);
+    fullChannel.content = fullChannel.content.replace(
+      "| Field | Type | Required | Nullable | Constraints / Meaning |",
+      "**field_defaults**: Required=yes\n\n| Field | Type | Required | Nullable | Constraints / Meaning |"
+    );
+    refreshIdentityLine(fullChannel);
+
+    const result = validateDocumentSets(pair.full, pair.compact);
+
+    assert.deepEqual(
+      [...new Set(result.diagnostics.map((entry) => entry.ruleId))],
+      ["DM-PROFILE-004"]
+    );
+  });
+
+  await t.test("marker not before a field table", () => {
+    const pair = loadPair(validPairPath);
+    const compactChannel = pair.compact.files.find((file) => file.path === "channels/alpha.md");
+    assert.notEqual(compactChannel, undefined);
+    compactChannel.content = compactChannel.content.replace(
+      "#### Payload\n\nnone",
+      "#### Payload\n\n**field_defaults**: Required=yes\n\nnone"
+    );
+    refreshIdentityLine(compactChannel);
+
+    const result = validateDocumentSets(pair.full, pair.compact);
+
+    assert.deepEqual(
+      [...new Set(result.diagnostics.map((entry) => entry.ruleId))],
+      ["DM-PROFILE-004"]
+    );
+  });
+});
+
 test("DM-PROFILE-003 compares normalized standard structures in source order", async (t) => {
   const cases = [
     {
@@ -729,15 +982,18 @@ test("DM-PROFILE-001 and DM-PROFILE-002 defer pair diagnostics after constituent
   assert.equal(result.facts.completeProfilePair, null);
 });
 
-test("DM-PROFILE-001 through DM-PROFILE-003 maintain complete-scope rule correspondence", () => {
+test("DM-PROFILE-001 through DM-PROFILE-004 maintain complete-scope rule correspondence", () => {
   const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
   const profileRules = catalog.rules.filter((entry) => entry.rule_id.startsWith("DM-PROFILE-"));
 
   assert.deepEqual(
     profileRules.map((entry) => entry.rule_id),
-    ["DM-PROFILE-001", "DM-PROFILE-002", "DM-PROFILE-003"]
+    ["DM-PROFILE-001", "DM-PROFILE-002", "DM-PROFILE-003", "DM-PROFILE-004"]
   );
-  assert.deepEqual(profileRules.map((entry) => entry.scope), ["complete", "complete", "complete"]);
+  assert.deepEqual(
+    profileRules.map((entry) => entry.scope),
+    ["complete", "complete", "complete", "complete"]
+  );
   assert.deepEqual(auditRuleTestCorrespondence({
     catalogRuleIds: profileRules.map((entry) => entry.rule_id),
     testNames: profileRuleTestNames,
