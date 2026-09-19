@@ -82,6 +82,26 @@ function validatePair(pairPath, options = { wholeSet: false }) {
   return validateDocumentSets(pair.full, pair.compact, options);
 }
 
+function replaceAlphaPayload(documentSet, example) {
+  const channel = documentSet.files.find((file) => file.path === "channels/alpha.md");
+  assert.notEqual(channel, undefined);
+  channel.content = channel.content.replace("#### Payload\n\nnone", [
+    "#### Payload",
+    "",
+    "**payload_required**: yes",
+    "**media_type**: application/json",
+    "**payload_nullable**: no",
+    "```json",
+    example,
+    "```",
+    "| Field | Type | Required | Nullable | Constraints / Meaning |",
+    "|---|---|---|---|---|",
+    "| count | int | yes | no | Exact item count |",
+    "| id | string | yes | no | Stable item identifier |"
+  ].join("\n"));
+  refreshIdentityLine(channel);
+}
+
 test("DM-PROFILE-001 and DM-PROFILE-002 accept one matching full and compact pair", () => {
   const result = validatePair(validPairPath);
 
@@ -399,6 +419,304 @@ test("DM-PROFILE-001 rejects corresponding-file metadata drift", async (t) => {
   }
 });
 
+test("DM-PROFILE-003 rejects a normalized prose mismatch in a corresponding file", () => {
+  const pair = loadPair(validPairPath);
+  const channel = pair.compact.files.find((file) => file.path === "channels/alpha.md");
+  assert.notEqual(channel, undefined);
+  channel.content = channel.content.replace(
+    "Documents the selected messaging operation.",
+    "Documents a different selected messaging operation."
+  );
+
+  const result = validateDocumentSets(pair.full, pair.compact);
+
+  assert.deepEqual(result.diagnostics.map((entry) => entry.ruleId), ["DM-PROFILE-003"]);
+  assert.equal(result.diagnostics[0].file, "compact/channels/alpha.md");
+  assert.equal(result.facts.completeProfilePair, null);
+});
+
+test("DM-PROFILE-003 normalizes prose trailing spaces but preserves fixed structural text", async (t) => {
+  await t.test("accepts trailing ASCII spaces on prose", () => {
+    const pair = loadPair(validPairPath);
+    const fullChannel = pair.full.files.find((file) => file.path === "channels/alpha.md");
+    const compactChannel = pair.compact.files.find((file) => file.path === "channels/alpha.md");
+    assert.notEqual(fullChannel, undefined);
+    assert.notEqual(compactChannel, undefined);
+    fullChannel.content = fullChannel.content.replace(
+      "### Related\n\nnone",
+      "### Related\n\nSee the operation guide."
+    );
+    compactChannel.content = compactChannel.content.replace(
+      "### Related\n\nnone",
+      "### Related\n\nSee the operation guide.  "
+    );
+
+    const result = validateDocumentSets(pair.full, pair.compact);
+
+    assert.deepEqual(result.diagnostics, []);
+  });
+
+  await t.test("rejects trailing ASCII spaces on a fixed value", () => {
+    const pair = loadPair(validPairPath);
+    const compactChannel = pair.compact.files.find((file) => file.path === "channels/alpha.md");
+    assert.notEqual(compactChannel, undefined);
+    compactChannel.content = compactChannel.content.replace(
+      "### Related\n\nnone",
+      "### Related\n\nnone  "
+    );
+
+    const result = validateDocumentSets(pair.full, pair.compact);
+
+    assert.deepEqual(result.diagnostics.map((entry) => entry.ruleId), ["DM-PROFILE-003"]);
+  });
+});
+
+test("DM-PROFILE-003 excludes profile-specific x- extension structures", () => {
+  const pair = loadPair(validPairPath);
+  const fullRoot = pair.full.files.find((file) => file.path === "INDEX.md");
+  const compactRoot = pair.compact.files.find((file) => file.path === "INDEX.md");
+  const fullChannel = pair.full.files.find((file) => file.path === "channels/alpha.md");
+  const compactChannel = pair.compact.files.find((file) => file.path === "channels/alpha.md");
+  assert.notEqual(fullRoot, undefined);
+  assert.notEqual(compactRoot, undefined);
+  assert.notEqual(fullChannel, undefined);
+  assert.notEqual(compactChannel, undefined);
+
+  fullRoot.metadata["x-profile-note"] = "full-only";
+  fullRoot.content = fullRoot.content.replace(
+    "source_refs: all",
+    "source_refs: all | x-profile-note: full-only"
+  ).replace(
+    "| ID | Kind | Specification | API | Contract version | Location | Revision |\n|---|---|---|---|---|---|---|\n| source-a | pass-through | none | none | none | source.md | none |",
+    "| ID | Kind | Specification | API | Contract version | Location | Revision | x-full |\n|---|---|---|---|---|---|---|---|\n| source-a | pass-through | none | none | none | source.md | none | full-only |"
+  );
+  compactRoot.metadata["x-retrieval-unit"] = "root";
+  compactRoot.content = compactRoot.content.replace(
+    "source_refs: all",
+    "source_refs: all | x-retrieval-unit: root"
+  ).replace(
+    "| ID | Kind | Specification | API | Contract version | Location | Revision |\n|---|---|---|---|---|---|---|\n| source-a | pass-through | none | none | none | source.md | none |",
+    "| ID | Kind | Specification | API | Contract version | Location | Revision | x-compact |\n|---|---|---|---|---|---|---|---|\n| source-a | pass-through | none | none | none | source.md | none | compact-only |"
+  );
+  fullChannel.content = fullChannel.content.replace(
+    "### Related\n\nnone",
+    "### Related\n\nnone\n\n**x-full-note**: ignored"
+  );
+  fullChannel.identityLine += 2;
+  compactChannel.content = compactChannel.content.replace(
+    "### Related\n\nnone",
+    "### Related\n\nnone\n\n#### x-Retrieval\n\nRuntime-only compact retrieval note."
+  );
+  compactChannel.identityLine += 4;
+
+  const result = validateDocumentSets(pair.full, pair.compact);
+
+  assert.deepEqual(result.diagnostics, []);
+});
+
+test("DM-PROFILE-003 compares JSON examples by exact decoded value", async (t) => {
+  await t.test("accepts object-order formatting and exact number-spelling differences", () => {
+    const pair = loadPair(validPairPath);
+    replaceAlphaPayload(pair.full, [
+      "{",
+      "  \"count\": 9007199254740993,",
+      "  \"id\": \"item_01\"",
+      "}"
+    ].join("\n"));
+    replaceAlphaPayload(
+      pair.compact,
+      "{\"id\":\"item_01\",\"count\":9007199254740993.0}"
+    );
+
+    const result = validateDocumentSets(pair.full, pair.compact);
+
+    assert.deepEqual(result.diagnostics, []);
+  });
+
+  await t.test("rejects unequal values beyond IEEE 754 precision", () => {
+    const pair = loadPair(validPairPath);
+    replaceAlphaPayload(
+      pair.full,
+      "{\"count\":9007199254740993,\"id\":\"item_01\"}"
+    );
+    replaceAlphaPayload(
+      pair.compact,
+      "{\"count\":9007199254740992,\"id\":\"item_01\"}"
+    );
+
+    const result = validateDocumentSets(pair.full, pair.compact);
+
+    assert.deepEqual(result.diagnostics.map((entry) => entry.ruleId), ["DM-PROFILE-003"]);
+    assert.equal(result.facts.completeProfilePair, null);
+  });
+});
+
+test("DM-PROFILE-003 compares normalized standard structures in source order", async (t) => {
+  const cases = [
+    {
+      name: "fixed-key marker value",
+      mutate(pair) {
+        const channel = pair.compact.files.find((file) => file.path === "channels/alpha.md");
+        channel.content = channel.content.replace(
+          "- side_effects: none",
+          "- side_effects: publishes the selected event"
+        );
+      }
+    },
+    {
+      name: "logical table cell",
+      mutate(pair) {
+        const root = pair.compact.files.find((file) => file.path === "INDEX.md");
+        root.content = root.content.replace(
+          "| source-a | pass-through | none | none | none | source.md | none |",
+          "| source-a | pass-through | none | none | none | source.md | revision-a |"
+        );
+      }
+    },
+    {
+      name: "added standard prose",
+      mutate(pair) {
+        const channel = pair.compact.files.find((file) => file.path === "channels/alpha.md");
+        channel.content = channel.content.replace(
+          "### Related\n\nnone",
+          "### Related\n\nnone\n\nSee the additional operation guide."
+        );
+        channel.identityLine += 2;
+      }
+    },
+    {
+      name: "standard prose ordering",
+      mutate(pair) {
+        for (const profile of [pair.full, pair.compact]) {
+          const channel = profile.files.find((file) => file.path === "channels/alpha.md");
+          channel.content = channel.content.replace(
+            "### Related\n\nnone",
+            profile === pair.full
+              ? "### Related\n\nRead the alpha guide.\nRead the beta guide."
+              : "### Related\n\nRead the beta guide.\nRead the alpha guide."
+          );
+          channel.identityLine += 1;
+        }
+      }
+    },
+    {
+      name: "workflow display heading",
+      mutate(pair) {
+        for (const [profile, title] of [
+          [pair.full, "Order flow"],
+          [pair.compact, "Order handling"]
+        ]) {
+          const root = profile.files.find((file) => file.path === "INDEX.md");
+          root.content = root.content.replace("## Workflows\n\nnone", [
+            "## Workflows",
+            "",
+            "| Name | Summary | Details |",
+            "|---|---|---|",
+            "| Order flow | Coordinate order handling | workflows/order-flow.md |"
+          ].join("\n"));
+          refreshIdentityLine(root);
+          addDocument(profile, "workflows/order-flow.md", [
+            `# ${title}`,
+            "",
+            "Order flow coordinates the selected messaging operations.",
+            "",
+            "## Preconditions",
+            "",
+            "none",
+            "",
+            "## Steps",
+            "",
+            "none",
+            "",
+            "## State Transitions",
+            "",
+            "none",
+            "",
+            "## Failure and Recovery",
+            "",
+            "none"
+          ].join("\n"));
+        }
+      }
+    }
+  ];
+
+  for (const fixtureCase of cases) {
+    await t.test(fixtureCase.name, () => {
+      const pair = loadPair(validPairPath);
+      fixtureCase.mutate(pair);
+
+      const result = validateDocumentSets(pair.full, pair.compact);
+
+      assert.deepEqual(result.diagnostics.map((entry) => entry.ruleId), ["DM-PROFILE-003"]);
+      assert.equal(result.facts.completeProfilePair, null);
+    });
+  }
+});
+
+test("DM-PROFILE-003 compares parsed table cells instead of Markdown spacing", () => {
+  const pair = loadPair(validPairPath);
+  const root = pair.compact.files.find((file) => file.path === "INDEX.md");
+  assert.notEqual(root, undefined);
+  root.content = root.content.replace(
+    "| ID | Kind | Specification | API | Contract version | Location | Revision |\n|---|---|---|---|---|---|---|",
+    "  |ID| Kind |Specification| API |Contract version| Location |Revision|  \n  |---|---|---|---|---|---|---|  "
+  );
+
+  const result = validateDocumentSets(pair.full, pair.compact);
+
+  assert.deepEqual(result.diagnostics, []);
+});
+
+test("DM-PROFILE-003 preserves non-example fenced content exactly", () => {
+  const pair = loadPair(validPairPath);
+  for (const [profile, contentLine] of [
+    [pair.full, "Supplemental order guidance.  "],
+    [pair.compact, "Supplemental order guidance."]
+  ]) {
+    const operationIndex = profile.files.find((file) => (
+      file.path === "indexes/operations-broad.md"
+    ));
+    assert.notEqual(operationIndex, undefined);
+    operationIndex.content = operationIndex.content.replace(
+      "| SEND | a.events | a-operation | a-message | alpha task | Handles the alpha event range | none | none |",
+      "| SEND | a.events | a-operation | a-message | alpha task | Handles the alpha event range | none | references/guide.md |"
+    );
+    addDocument(profile, "references/guide.md", [
+      "# Reference Material",
+      "",
+      "**instruction_authority**: none",
+      "",
+      "## Content",
+      "",
+      "````text",
+      contentLine,
+      "````"
+    ].join("\n"));
+  }
+
+  const result = validateDocumentSets(pair.full, pair.compact);
+
+  assert.deepEqual(result.diagnostics.map((entry) => entry.ruleId), ["DM-PROFILE-003"]);
+  assert.equal(result.diagnostics[0].file, "compact/references/guide.md");
+});
+
+test("DM-PROFILE-003 excludes profile-link syntax only from the root INDEX", () => {
+  const pair = loadPair(validPairPath);
+  for (const [profile, content] of [
+    [pair.full, "Full set: full-profile navigation text"],
+    [pair.compact, "Compact set: compact-profile navigation text"]
+  ]) {
+    const channel = profile.files.find((file) => file.path === "channels/alpha.md");
+    assert.notEqual(channel, undefined);
+    channel.content = channel.content.replace("### Related\n\nnone", `### Related\n\n${content}`);
+  }
+
+  const result = validateDocumentSets(pair.full, pair.compact);
+
+  assert.deepEqual(result.diagnostics.map((entry) => entry.ruleId), ["DM-PROFILE-003"]);
+});
+
 test("DM-PROFILE-001 and DM-PROFILE-002 defer pair diagnostics after constituent failure", () => {
   const pair = loadPair(validPairPath);
   const root = pair.compact.files.find((file) => file.path === "INDEX.md");
@@ -411,17 +729,15 @@ test("DM-PROFILE-001 and DM-PROFILE-002 defer pair diagnostics after constituent
   assert.equal(result.facts.completeProfilePair, null);
 });
 
-test("DM-PROFILE-001 and DM-PROFILE-002 maintain complete-scope rule correspondence", () => {
+test("DM-PROFILE-001 through DM-PROFILE-003 maintain complete-scope rule correspondence", () => {
   const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
-  const profileRules = catalog.rules.filter((entry) => (
-    entry.rule_id === "DM-PROFILE-001" || entry.rule_id === "DM-PROFILE-002"
-  ));
+  const profileRules = catalog.rules.filter((entry) => entry.rule_id.startsWith("DM-PROFILE-"));
 
   assert.deepEqual(
     profileRules.map((entry) => entry.rule_id),
-    ["DM-PROFILE-001", "DM-PROFILE-002"]
+    ["DM-PROFILE-001", "DM-PROFILE-002", "DM-PROFILE-003"]
   );
-  assert.deepEqual(profileRules.map((entry) => entry.scope), ["complete", "complete"]);
+  assert.deepEqual(profileRules.map((entry) => entry.scope), ["complete", "complete", "complete"]);
   assert.deepEqual(auditRuleTestCorrespondence({
     catalogRuleIds: profileRules.map((entry) => entry.rule_id),
     testNames: profileRuleTestNames,

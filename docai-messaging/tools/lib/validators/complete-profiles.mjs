@@ -2,6 +2,7 @@ import path from "node:path";
 import { isDeepStrictEqual } from "node:util";
 import { diagnostic } from "../diagnostics.mjs";
 import { validateCompleteDocumentSet } from "./complete.mjs";
+import { compareExpandedProfileFiles } from "./complete-profile-comparison.mjs";
 
 function shardPaths(catalog) {
   return (catalog?.shards ?? [])
@@ -113,6 +114,20 @@ export function validateCompleteProfilePair(
       "compact/INDEX.md",
       1,
       "Matching full and compact roots require the same catalog forms, shard paths, and workflow routing names and Details paths."
+    ));
+  }
+  const comparisonMismatch = diagnostics.length === 0
+    ? fullDocumentSet.files.find((fullFile) => {
+      const compactFile = compactDocumentSet.files.find((file) => file.path === fullFile.path);
+      return compactFile === undefined || !compareExpandedProfileFiles(fullFile, compactFile);
+    })
+    : undefined;
+  if (comparisonMismatch !== undefined) {
+    diagnostics.push(diagnostic(
+      "DM-PROFILE-003",
+      `compact/${comparisonMismatch.path}`,
+      1,
+      "Expanded full and compact comparison views must preserve every ordered standard contract structure."
     ));
   }
   if (diagnostics.length > 0) {
