@@ -461,6 +461,18 @@
       "readme_section": "§3.7 LLM Trust Boundary and Materialized References / §3.2 INDEX.md(required)",
       "description": "Every Reference Material file is supplemental context for at least one operation; required context and other direct-context target restrictions remain Core routing requirements.",
       "scope": "complete"
+    },
+    {
+      "rule_id": "DM-PROFILE-001",
+      "readme_section": "§3.4 Output Profiles and Incomplete Information",
+      "description": "A matching full and compact pair has reciprocal profile links, identical document paths, DocAI Messaging version, perspective, projection identity, and corresponding-file coverage, knowledge, and source_refs while retaining profile-specific set identity.",
+      "scope": "complete"
+    },
+    {
+      "rule_id": "DM-PROFILE-002",
+      "readme_section": "§3.2 INDEX.md(required) / §3.4 Output Profiles and Incomplete Information",
+      "description": "Matching full and compact sets preserve the direct-or-sharded form and shard paths of every catalog plus normalized workflow routing names and Details paths.",
+      "scope": "complete"
     }
   ]
 }
