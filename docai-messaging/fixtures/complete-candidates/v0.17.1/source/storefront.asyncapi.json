@@ -1,0 +1,321 @@
+{
+  "asyncapi": "3.1.0",
+  "id": "urn:example:storefront-order-messaging",
+  "info": {
+    "title": "Synthetic Storefront Order Messaging API",
+    "version": "1.0.0",
+    "description": "Synthetic authoritative API input for the DocAI Messaging Compatibility Core corpus."
+  },
+  "defaultContentType": "application/json",
+  "servers": {
+    "production": {
+      "host": "broker.example.invalid:9092",
+      "protocol": "kafka",
+      "protocolVersion": "3.6.0",
+      "description": "Synthetic production-like broker endpoint used only as contract data."
+    }
+  },
+  "channels": {
+    "orderCommands": {
+      "address": "orders.commands",
+      "messages": {
+        "createOrder": {
+          "$ref": "#/components/messages/CreateOrder"
+        }
+      }
+    },
+    "orderEvents": {
+      "address": "orders.events",
+      "messages": {
+        "orderCreated": {
+          "$ref": "#/components/messages/OrderCreated"
+        }
+      }
+    },
+    "orderReplies": {
+      "address": "orders.replies",
+      "messages": {
+        "orderAccepted": {
+          "$ref": "#/components/messages/OrderAccepted"
+        }
+      }
+    }
+  },
+  "operations": {
+    "sendCreateOrder": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/orderCommands"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/orderCommands/messages/createOrder"
+        }
+      ],
+      "reply": {
+        "channel": {
+          "$ref": "#/channels/orderReplies"
+        },
+        "messages": [
+          {
+            "$ref": "#/channels/orderReplies/messages/orderAccepted"
+          }
+        ]
+      },
+      "security": [
+        {
+          "type": "oauth2",
+          "flows": {
+            "clientCredentials": {
+              "tokenUrl": "https://auth.example.invalid/oauth/token",
+              "availableScopes": {
+                "orders:read": "Receive order events.",
+                "orders:write": "Send order commands."
+              }
+            }
+          },
+          "scopes": [
+            "orders:write"
+          ]
+        }
+      ],
+      "summary": "Submit an order and receive its acceptance reply."
+    },
+    "receiveOrderCreated": {
+      "action": "receive",
+      "channel": {
+        "$ref": "#/channels/orderEvents"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/orderEvents/messages/orderCreated"
+        }
+      ],
+      "security": [
+        {
+          "type": "oauth2",
+          "flows": {
+            "clientCredentials": {
+              "tokenUrl": "https://auth.example.invalid/oauth/token",
+              "availableScopes": {
+                "orders:read": "Receive order events.",
+                "orders:write": "Send order commands."
+              }
+            }
+          },
+          "scopes": [
+            "orders:read"
+          ]
+        }
+      ],
+      "summary": "Update storefront state after an order is created."
+    }
+  },
+  "components": {
+    "messages": {
+      "CreateOrder": {
+        "name": "CreateOrder",
+        "title": "Create order command",
+        "contentType": "application/json",
+        "headers": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "correlation-id",
+            "message-id",
+            "reply-to"
+          ],
+          "properties": {
+            "correlation-id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "message-id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "reply-to": {
+              "type": "string",
+              "const": "orders.replies"
+            }
+          }
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "items",
+            "orderId",
+            "tenantId"
+          ],
+          "properties": {
+            "items": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "quantity",
+                  "sku"
+                ],
+                "properties": {
+                  "quantity": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "sku": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              }
+            },
+            "orderId": {
+              "type": "string",
+              "pattern": "^ord_[A-Za-z0-9]+$"
+            },
+            "tenantId": {
+              "type": "string",
+              "pattern": "^tenant_[A-Za-z0-9]+$"
+            }
+          }
+        },
+        "examples": [
+          {
+            "name": "synthetic-create-order",
+            "headers": {
+              "correlation-id": "cor_01HXYZ",
+              "message-id": "msg_01HXYZ",
+              "reply-to": "orders.replies"
+            },
+            "payload": {
+              "items": [
+                {
+                  "quantity": 2,
+                  "sku": "sku_demo_01"
+                }
+              ],
+              "orderId": "ord_01HXYZ",
+              "tenantId": "tenant_demo"
+            }
+          }
+        ]
+      },
+      "OrderAccepted": {
+        "name": "OrderAccepted",
+        "title": "Order acceptance reply",
+        "contentType": "application/json",
+        "headers": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "correlation-id",
+            "message-id"
+          ],
+          "properties": {
+            "correlation-id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "message-id": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "acceptedAt",
+            "orderId",
+            "status"
+          ],
+          "properties": {
+            "acceptedAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "orderId": {
+              "type": "string",
+              "pattern": "^ord_[A-Za-z0-9]+$"
+            },
+            "status": {
+              "type": "string",
+              "const": "accepted"
+            }
+          }
+        },
+        "examples": [
+          {
+            "name": "synthetic-order-accepted",
+            "headers": {
+              "correlation-id": "cor_01HXYZ",
+              "message-id": "msg_01HXYR"
+            },
+            "payload": {
+              "acceptedAt": "2026-01-02T03:04:05Z",
+              "orderId": "ord_01HXYZ",
+              "status": "accepted"
+            }
+          }
+        ]
+      },
+      "OrderCreated": {
+        "name": "OrderCreated",
+        "title": "Order created event",
+        "contentType": "application/json",
+        "headers": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "message-id"
+          ],
+          "properties": {
+            "message-id": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "createdAt",
+            "orderId",
+            "status"
+          ],
+          "properties": {
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "orderId": {
+              "type": "string",
+              "pattern": "^ord_[A-Za-z0-9]+$"
+            },
+            "status": {
+              "type": "string",
+              "const": "created"
+            }
+          }
+        },
+        "examples": [
+          {
+            "name": "synthetic-order-created",
+            "headers": {
+              "message-id": "msg_01HXYE"
+            },
+            "payload": {
+              "createdAt": "2026-01-02T03:05:00Z",
+              "orderId": "ord_01HXYZ",
+              "status": "created"
+            }
+          }
+        ]
+      }
+    }
+  }
+}

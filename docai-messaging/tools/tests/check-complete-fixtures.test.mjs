@@ -17,6 +17,10 @@ const sourceManifestPath = fileURLToPath(new URL(
   "../../fixtures/core/v0.17.1/source/projection-input-manifest.json",
   import.meta.url
 ));
+const defaultCandidatePath = fileURLToPath(new URL(
+  "../../fixtures/complete-candidates/v0.17.1/",
+  import.meta.url
+));
 
 function runChecker(arguments_ = []) {
   return spawnSync(process.execPath, [checkerPath, ...arguments_], {
@@ -70,6 +74,23 @@ test("checks one whole-set complete full and compact pair without modifying it",
     "Complete fixture check passed: 7 paths, full/compact pair equivalent.\n"
   );
   assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
+test("checks the versioned complete candidate by default without modifying it", () => {
+  const before = fs.existsSync(defaultCandidatePath)
+    ? directorySnapshot(defaultCandidatePath)
+    : null;
+
+  const result = runChecker();
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  assert.equal(result.stderr, "");
+  assert.match(
+    result.stdout,
+    /^Complete fixture check passed: \d+ paths, full\/compact pair equivalent\.\n$/
+  );
+  assert.notEqual(before, null, "the versioned complete candidate exists");
+  assert.deepEqual(directorySnapshot(defaultCandidatePath), before);
 });
 
 test("rejects a restamped complete pair with a compact contract mismatch", (t) => {

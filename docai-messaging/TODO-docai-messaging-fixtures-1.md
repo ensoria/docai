@@ -1720,6 +1720,8 @@ Final review の Important finding 対応により、この checkpoint は当初
 - [ ] Run: `node docai-messaging/tools/check-complete-fixtures.mjs`
 - [ ] Expected: valid full/compact pair と既存 Core cases が全 PASS。
 
+> **Implementation note (Task 12 versioned complete-candidate baseline checkpoint):** Task 12のadvanced structure追加に先立つ最初のcommit-sized checkpointとして、既存のwhole-set-validなfull/compact path-parity pairを`fixtures/complete-candidates/v0.17.1/`へ配置し、Core source inputsと同一内容のcandidate-local `source/projection-input-manifest.json`を明示指定して両profileを個別にrestampした。引数なし`check-complete-fixtures.mjs`がこのversioned candidateを選択して成功し、実行前後のcandidate bytesを変更しない回帰testをRED（candidate root欠落）からGREENへ進めた。default candidateは今後path数が増えるため、このtestは一時的な7-path countではなく成功出力の形式を固定する。root `README.md`は現状をwork-in-progress candidateと明示し、release artifactまたはimplementation-target publicationとは扱わない。実測ではfocused checker test 5 / 5、全763 tests中762成功 / 1 skip（Python 3.9未導入の既存環境skip）/ 0失敗、Core checkerは264 cases / 193 invalid、one-invalidity 193 / 193、未使用Core rule 0、coverage gap 0、両profileの同一explicit manifestによるdry-run再実行は`restamp required: no`となった。このcheckpointはbaseline作成だけを所有し、required / supplemental Workflow、Reference Material、multiple source / operation index shards、variants、non-JSON / raw representations、compact-specific forms、source traceabilityは後続Task 12 checkpointに残すため、上のTask 12各項目はまだ完了扱いにしない。
+
 **Review gate:** advanced structure を使わない selected operation が unrelated advanced marker のために blocked にならないことを確認する。
 
 **Suggested commit message:** `test(messaging): add complete full and compact candidate sets`

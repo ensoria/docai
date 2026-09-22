@@ -1,0 +1,146 @@
+{
+  "sourceId": "storefront-behavior",
+  "kind": "behavior-configuration",
+  "revision": "fixture-1",
+  "perspective": "storefront-service",
+  "environments": {
+    "production": {
+      "server": "production",
+      "selection": "Use the production server for this corpus scenario."
+    }
+  },
+  "protocolsAndBindings": {
+    "protocol": "kafka",
+    "protocolVersion": "3.6.0",
+    "headerEncoding": "Kafka record headers encode each logical header as one UTF-8 value.",
+    "clientExposure": "Expose logical headers by their documented names."
+  },
+  "authentication": {
+    "scheme": "storefrontOAuth",
+    "credentialAcquisition": "Obtain a client-credentials token from the configured synthetic authorization service.",
+    "credentialRotation": "Acquire a replacement token before the current token expires."
+  },
+  "connectionAndSession": {
+    "reconnect": "Reconnect with bounded exponential backoff from 100 milliseconds to 10 seconds.",
+    "sessionFailure": "Stop publishing while no authenticated broker session is available."
+  },
+  "serialization": {
+    "wireMediaType": "application/json",
+    "encoding": "UTF-8 JSON",
+    "schemaResolution": "Schemas are fully projected inline; the client does not perform runtime schema lookup."
+  },
+  "messageEnvelope": {
+    "messageIdHeader": "message-id",
+    "correlationIdHeader": "correlation-id",
+    "replyAddressHeader": "reply-to"
+  },
+  "delivery": {
+    "guarantee": "at-least-once",
+    "redeliveryVisibility": "A redelivery retains the original message-id."
+  },
+  "acknowledgement": {
+    "nack": "Negative-acknowledge a delivery after a retryable handler failure.",
+    "positive": "Acknowledge only after durable processing commits.",
+    "timeout": "Unacknowledged deliveries become eligible for redelivery after 30 seconds."
+  },
+  "deduplication": {
+    "key": "header.message-id",
+    "retention": "24 hours",
+    "scope": "per storefront tenant"
+  },
+  "ordering": {
+    "guarantee": "Messages sharing payload.orderId are processed in publish order.",
+    "negativeGuarantee": "There is no ordering guarantee across distinct orderId values."
+  },
+  "failureRecovery": {
+    "deadLetterChannel": "orders.dead-letter",
+    "maxDeliveryAttempts": 5,
+    "retryAction": "Negative-acknowledge retryable failures; reject non-retryable failures.",
+    "terminalAction": "Publish the failed envelope and diagnostic code to the dead-letter channel."
+  },
+  "requestReply": {
+    "replyChannel": "orders.replies",
+    "correlation": "The reply correlation-id equals the command correlation-id.",
+    "timeout": "5 seconds",
+    "timeoutMeaning": "No acceptance reply arrived before the deadline; command outcome is unknown to the caller."
+  },
+  "schemaEvolution": {
+    "compatibility": "Additive optional fields are backward compatible; removing or changing a required field requires a new contract version.",
+    "logicalApi": "urn:example:storefront-order-messaging",
+    "contractVersion": "1.0.0"
+  },
+  "dataRepresentation": {
+    "date-time": {
+      "role": "constraint",
+      "meaning": "An RFC 3339 date-time string with an explicit offset."
+    }
+  },
+  "emptyAndOmittedValues": {
+    "nullability": "All documented payload and header values are non-null.",
+    "omission": "Only fields not listed as required may be omitted."
+  },
+  "rateLimitsAndQuotas": {
+    "applies": false
+  },
+  "authorization": {
+    "receiveOrderCreated": [
+      "orders:read"
+    ],
+    "scheme": "storefrontOAuth",
+    "sendCreateOrder": [
+      "orders:write"
+    ]
+  },
+  "operationBehavior": {
+    "receiveOrderCreated": {
+      "authorization": "OAuth2 scope orders:read is required.",
+      "delivery": "at-least-once -- Acknowledge after durable processing; negative-acknowledge retryable failures.",
+      "idempotency": "Deduplicate redeliveries by header.message-id and preserve the prior durable result.",
+      "ordering": "Preserve publish order for messages with the same payload.orderId.",
+      "preconditions": "The storefront is subscribed to orders.events.",
+      "sideEffects": "Update the storefront order state to created.",
+      "noReply": true,
+      "purpose": "Update storefront order state from the created event."
+    },
+    "sendCreateOrder": {
+      "authorization": "OAuth2 scope orders:write is required.",
+      "delivery": "at-least-once -- Broker acknowledgement makes publish durable; timeout leaves outcome ambiguous.",
+      "idempotency": "Resend with the same header.message-id; consumers deduplicate for 24 hours.",
+      "ordering": "Publish commands sharing payload.orderId in order.",
+      "preconditions": "The referenced tenant and every SKU already exist.",
+      "sideEffects": "Ask the order service to create the submitted order.",
+      "purpose": "Submit one order command and await its acceptance reply.",
+      "reply": "The orderAccepted reply confirms command acceptance, not final fulfillment."
+    }
+  },
+  "operationFailures": {
+    "receiveOrderCreated": [
+      {
+        "failure": "retryable handler failure",
+        "signal": "handler returns a retryable error",
+        "condition": "Durable processing did not commit and another attempt may succeed.",
+        "action": "Negative-acknowledge and re-process; after five attempts publish the failed envelope and diagnostic code to orders.dead-letter."
+      },
+      {
+        "failure": "non-retryable handler failure",
+        "signal": "handler returns a non-retryable error",
+        "condition": "The message cannot succeed without a contract or configuration change.",
+        "action": "Reject without re-processing and publish the failed envelope and diagnostic code to orders.dead-letter."
+      }
+    ],
+    "sendCreateOrder": [
+      {
+        "failure": "publish rejected",
+        "signal": "broker publish error",
+        "condition": "Authorization or channel configuration rejects the publish.",
+        "action": "Do not retry with the same configuration; correct authorization or channel configuration before resending."
+      },
+      {
+        "failure": "reply timeout",
+        "signal": "no correlated reply within 5 seconds",
+        "condition": "The command publish may have succeeded but no acceptance reply arrived.",
+        "action": "Resend with the same message-id when retrying so consumers deduplicate; escalate after five attempts."
+      }
+    ]
+  }
+}
