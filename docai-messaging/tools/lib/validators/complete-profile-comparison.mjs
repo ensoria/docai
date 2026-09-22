@@ -3,6 +3,7 @@ import { parseExactJson } from "../json-value.mjs";
 import { scanMarkdown } from "../markdown.mjs";
 import { parsePipeTable } from "../tables.mjs";
 import { expandFieldDefaultsFile } from "./complete-field-defaults.mjs";
+import { expandSameAsFile } from "./complete-same-as.mjs";
 
 const STANDARD_METADATA_KEYS = [
   "docai-messaging",
@@ -59,12 +60,15 @@ function normalizedLine(text) {
   return text.replace(/ +$/, "");
 }
 
-function normalizedContent(file) {
+function normalizedContent(file, {
+  afterLine = file.metadataLine,
+  beforeLine = file.identityLine
+} = {}) {
   const scanned = scanMarkdown({ text: file.content, file: file.path });
   if (scanned.value === null) return [];
   const fencesByStart = new Map(scanned.value.fences.map((fence) => [fence.startLine, fence]));
   const lines = scanned.value.lines.filter((line) => (
-    line.line > file.metadataLine && line.line < file.identityLine
+    line.line > afterLine && line.line < beforeLine
   ));
   const content = [];
   let skippedHeadingLevel = null;
@@ -117,8 +121,15 @@ function normalizedContent(file) {
   return content;
 }
 
+export function canonicalRepresentationView(file, startLine, endLine) {
+  return normalizedContent(file, {
+    afterLine: startLine - 1,
+    beforeLine: endLine
+  });
+}
+
 export function expandedComparisonView(file) {
-  const expandedFile = expandFieldDefaultsFile(file);
+  const expandedFile = expandSameAsFile(expandFieldDefaultsFile(file));
   return {
     metadata: normalizedMetadata(expandedFile),
     content: normalizedContent(expandedFile)

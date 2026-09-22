@@ -6,6 +6,7 @@ import { parsePipeTable } from "../tables.mjs";
 import { validateCompleteConventionRetrieval } from "./complete-conventions.mjs";
 import { validateCompleteFieldDefaults } from "./complete-field-defaults.mjs";
 import { validateCompleteReferenceMaterials } from "./complete-references.mjs";
+import { validateCompleteSameAs } from "./complete-same-as.mjs";
 import { validateCompleteWorkflowDefinitions } from "./complete-workflows.mjs";
 
 const WORKFLOW_COLUMNS = ["Name", "Summary", "Details"];
@@ -481,7 +482,8 @@ function validateCompleteWorkflowRouting(documentSet) {
 
 export function validateCompleteDocumentSet(documentSet, options = {}) {
   const fieldDefaults = validateCompleteFieldDefaults(documentSet);
-  const base = validateDocumentSet(fieldDefaults.expandedDocumentSet, options);
+  const sameAs = validateCompleteSameAs(fieldDefaults.expandedDocumentSet);
+  const base = validateDocumentSet(sameAs.expandedDocumentSet, options);
   const workflows = validateCompleteWorkflowRouting(documentSet);
   const workflowDefinitions = workflows.diagnostics.length === 0
     ? validateCompleteWorkflowDefinitions(
@@ -511,6 +513,7 @@ export function validateCompleteDocumentSet(documentSet, options = {}) {
   return {
     diagnostics: [
       ...fieldDefaults.diagnostics,
+      ...sameAs.diagnostics,
       ...base.diagnostics,
       ...workflows.diagnostics,
       ...workflowDefinitions.diagnostics,
@@ -521,6 +524,7 @@ export function validateCompleteDocumentSet(documentSet, options = {}) {
       ...base.facts,
       complete: {
         ...fieldDefaults.facts,
+        ...sameAs.facts,
         ...workflows.facts,
         ...workflowDefinitions.facts,
         ...referenceMaterials.facts,

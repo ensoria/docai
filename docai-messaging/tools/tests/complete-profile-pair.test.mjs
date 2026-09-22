@@ -8,6 +8,7 @@ import { auditRuleTestCorrespondence } from "../lib/fixture-runner.mjs";
 import { deriveShortId } from "../lib/identity.mjs";
 import { validateCompleteDocumentSet } from "../lib/validators/complete.mjs";
 import { validateCompleteFieldDefaults } from "../lib/validators/complete-field-defaults.mjs";
+import { validateCompleteSameAs } from "../lib/validators/complete-same-as.mjs";
 
 const validPairPath = fileURLToPath(new URL(
   "../../fixtures/core/v0.17.1/focused/valid/operations-profile-path-parity-valid/",
@@ -135,6 +136,90 @@ function replaceAlphaHeaders(documentSet) {
     "| trace-id | string | yes | no | Stable trace identifier | api |"
   ].join("\n"));
   refreshIdentityLine(channel);
+}
+
+function addAlphaMessage(documentSet, payload) {
+  const channel = documentSet.files.find((file) => file.path === "channels/alpha.md");
+  const operationIndex = documentSet.files.find((file) => (
+    file.path === "indexes/operations-broad.md"
+  ));
+  assert.notEqual(channel, undefined);
+  assert.notEqual(operationIndex, undefined);
+  channel.content = channel.content.replace(
+    "### Message a-message\n\n#### Headers",
+    "### Message a-message\n\nUse this message when the `kind` field is `a`.\n\n#### Headers"
+  ).replace("### Reply\n\nnone", [
+    "### Message b-message",
+    "",
+    "Use this message when the `kind` field is `b`.",
+    "",
+    "#### Headers",
+    "",
+    "none",
+    "",
+    "#### Bindings",
+    "",
+    "none",
+    "",
+    "#### Payload",
+    "",
+    "**payload_required**: yes",
+    payload,
+    "",
+    "### Reply",
+    "",
+    "none"
+  ].join("\n"));
+  operationIndex.content = operationIndex.content.replace(
+    "| SEND | a.events | a-operation | a-message | alpha task |",
+    "| SEND | a.events | a-operation | a-message; b-message | alpha task |"
+  );
+  refreshIdentityLine(channel);
+}
+
+function alphaSameAsPair() {
+  const pair = loadPair(validPairPath);
+  const example = "{\"count\":1,\"id\":\"item_01\"}";
+  const expandedRepresentation = [
+    "**media_type**: application/json",
+    "**payload_nullable**: no",
+    "```json",
+    example,
+    "```",
+    "| Field | Type | Required | Nullable | Constraints / Meaning |",
+    "|---|---|---|---|---|",
+    "| count | int | yes | no | Exact item count |",
+    "| id | string | yes | no | Stable item identifier |"
+  ].join("\n");
+  for (const profile of [pair.full, pair.compact]) {
+    replaceAlphaPayload(profile, example);
+    addAlphaMessage(profile, expandedRepresentation);
+  }
+  const compactChannel = pair.compact.files.find((file) => file.path === "channels/alpha.md");
+  assert.notEqual(compactChannel, undefined);
+  compactChannel.metadata["x-retrieval-unit"] = "channel-file";
+  compactChannel.content = compactChannel.content.replace(
+    "source_refs: all",
+    "source_refs: all | x-retrieval-unit: channel-file"
+  ).replace(
+    `**payload_required**: yes\n${expandedRepresentation}\n\n### Reply`,
+    "**payload_required**: yes\n"
+      + "**same_as**: Operation a-operation Message a-message Payload application/json\n\n"
+      + "### Reply"
+  );
+  refreshIdentityLine(compactChannel);
+  return pair;
+}
+
+function validateSameAsContent(content, pathName = "channels/same-as.md") {
+  return validateCompleteSameAs({
+    files: [{
+      path: pathName,
+      content,
+      identityLine: content.split("\n").length + 1,
+      metadata: { profile: "compact", "x-retrieval-unit": "channel-file" }
+    }]
+  });
 }
 
 test("DM-PROFILE-001 and DM-PROFILE-002 accept one matching full and compact pair", () => {
@@ -804,6 +889,458 @@ test("DM-PROFILE-004 rejects invalid field default grammar and placement", async
   });
 });
 
+test("DM-PROFILE-005 expands a backward same-file same_as reference", () => {
+  const pair = alphaSameAsPair();
+
+  const compactResult = validateCompleteDocumentSet(pair.compact, { wholeSet: false });
+  const result = validateDocumentSets(pair.full, pair.compact);
+
+  assert.deepEqual(compactResult.diagnostics, []);
+  assert.deepEqual(compactResult.facts.complete.sameAs.map((entry) => ({
+    path: entry.path,
+    reference: entry.reference,
+    target: {
+      operation: entry.target.operation,
+      message: entry.target.message,
+      reply: entry.target.reply,
+      mediaType: entry.target.mediaType
+    }
+  })), [{
+    path: "channels/alpha.md",
+    reference: {
+      operation: "a-operation",
+      message: "b-message",
+      reply: false,
+      mediaType: "application/json"
+    },
+    target: {
+      operation: "a-operation",
+      message: "a-message",
+      reply: false,
+      mediaType: "application/json"
+    }
+  }]);
+  assert.deepEqual(result.diagnostics, []);
+});
+
+test("DM-PROFILE-005 uses canonical JSON equality for paired-full representations", () => {
+  const pair = alphaSameAsPair();
+  const fullChannel = pair.full.files.find((file) => file.path === "channels/alpha.md");
+  assert.notEqual(fullChannel, undefined);
+  const secondMessage = fullChannel.content.indexOf("### Message b-message");
+  fullChannel.content = fullChannel.content.slice(0, secondMessage)
+    + fullChannel.content.slice(secondMessage).replace(
+      "{\"count\":1,\"id\":\"item_01\"}",
+      "{\"id\":\"item_01\",\"count\":1.0}"
+    );
+
+  const result = validateDocumentSets(pair.full, pair.compact);
+
+  assert.deepEqual(result.diagnostics, []);
+});
+
+test("DM-PROFILE-005 expands field_defaults before copying a same_as target", () => {
+  const pair = alphaSameAsPair();
+  const compactChannel = pair.compact.files.find((file) => file.path === "channels/alpha.md");
+  assert.notEqual(compactChannel, undefined);
+  compactChannel.content = compactChannel.content.replace([
+    "| Field | Type | Required | Nullable | Constraints / Meaning |",
+    "|---|---|---|---|---|",
+    "| count | int | yes | no | Exact item count |",
+    "| id | string | yes | no | Stable item identifier |"
+  ].join("\n"), [
+    "**field_defaults**: Required=yes | Nullable=no",
+    "",
+    "| Field | Type | Constraints / Meaning |",
+    "|---|---|---|",
+    "| count | int | Exact item count |",
+    "| id | string | Stable item identifier |"
+  ].join("\n"));
+  refreshIdentityLine(compactChannel);
+
+  const result = validateDocumentSets(pair.full, pair.compact);
+
+  assert.deepEqual(result.diagnostics, []);
+});
+
+test("DM-PROFILE-005 rejects paired-full canonical representation mismatch", () => {
+  const pair = alphaSameAsPair();
+  const fullChannel = pair.full.files.find((file) => file.path === "channels/alpha.md");
+  assert.notEqual(fullChannel, undefined);
+  const secondMessage = fullChannel.content.indexOf("### Message b-message");
+  const before = fullChannel.content.slice(0, secondMessage);
+  const after = fullChannel.content.slice(secondMessage).replace(
+    "Stable item identifier",
+    "Request-local item identifier"
+  );
+  fullChannel.content = before + after;
+
+  const result = validateDocumentSets(pair.full, pair.compact);
+
+  assert.deepEqual(result.diagnostics.map((entry) => entry.ruleId), ["DM-PROFILE-005"]);
+  assert.equal(result.facts.completeProfilePair, null);
+});
+
+test("DM-PROFILE-005 requires channel-file retrieval-unit metadata", () => {
+  const pair = alphaSameAsPair();
+  const compactChannel = pair.compact.files.find((file) => file.path === "channels/alpha.md");
+  assert.notEqual(compactChannel, undefined);
+  delete compactChannel.metadata["x-retrieval-unit"];
+  compactChannel.content = compactChannel.content.replace(
+    " | x-retrieval-unit: channel-file",
+    ""
+  );
+
+  const result = validateDocumentSets(pair.full, pair.compact);
+
+  assert.deepEqual(result.diagnostics.map((entry) => entry.ruleId), ["DM-PROFILE-005"]);
+});
+
+test("DM-PROFILE-005 rejects same_as in a full profile", () => {
+  const pair = alphaSameAsPair();
+  const fullChannel = pair.full.files.find((file) => file.path === "channels/alpha.md");
+  assert.notEqual(fullChannel, undefined);
+  fullChannel.metadata["x-retrieval-unit"] = "channel-file";
+  fullChannel.content = fullChannel.content.replace(
+    "source_refs: all",
+    "source_refs: all | x-retrieval-unit: channel-file"
+  );
+  const secondMessage = fullChannel.content.indexOf("### Message b-message");
+  const reply = fullChannel.content.indexOf("### Reply", secondMessage);
+  const messagePrefix = fullChannel.content.slice(0, secondMessage);
+  const message = fullChannel.content.slice(secondMessage, reply).replace(
+    /\*\*media_type\*\*: application\/json[\s\S]*$/,
+    "**same_as**: Operation a-operation Message a-message Payload application/json\n\n"
+  );
+  fullChannel.content = messagePrefix + message + fullChannel.content.slice(reply);
+  refreshIdentityLine(fullChannel);
+
+  const result = validateCompleteDocumentSet(pair.full, { wholeSet: false });
+
+  assert.deepEqual(result.diagnostics.map((entry) => entry.ruleId), ["DM-PROFILE-005"]);
+});
+
+test("DM-PROFILE-005 rejects a raw binary target", () => {
+  const pair = alphaSameAsPair();
+  const structured = [
+    "**media_type**: application/json",
+    "**payload_nullable**: no",
+    "```json",
+    "{\"count\":1,\"id\":\"item_01\"}",
+    "```",
+    "| Field | Type | Required | Nullable | Constraints / Meaning |",
+    "|---|---|---|---|---|",
+    "| count | int | yes | no | Exact item count |",
+    "| id | string | yes | no | Stable item identifier |"
+  ].join("\n");
+  const raw = [
+    "**media_type**: application/octet-stream",
+    "Carries the opaque item envelope bytes."
+  ].join("\n");
+  for (const profile of [pair.full, pair.compact]) {
+    const channel = profile.files.find((file) => file.path === "channels/alpha.md");
+    assert.notEqual(channel, undefined);
+    channel.content = channel.content.replaceAll(structured, raw).replace(
+      "Payload application/json",
+      "Payload application/octet-stream"
+    );
+    refreshIdentityLine(channel);
+  }
+
+  const result = validateDocumentSets(pair.full, pair.compact);
+
+  assert.deepEqual(result.diagnostics.map((entry) => entry.ruleId), ["DM-PROFILE-005"]);
+});
+
+test("DM-PROFILE-005 rejects malformed, forward, and non-local targets without Core cascades", async (t) => {
+  const structured = [
+    "**media_type**: application/json",
+    "**payload_nullable**: no",
+    "```json",
+    "{\"count\":1,\"id\":\"item_01\"}",
+    "```",
+    "| Field | Type | Required | Nullable | Constraints / Meaning |",
+    "|---|---|---|---|---|",
+    "| count | int | yes | no | Exact item count |",
+    "| id | string | yes | no | Stable item identifier |"
+  ].join("\n");
+  const cases = [
+    {
+      name: "malformed marker",
+      mutate(channel) {
+        channel.content = channel.content.replace(
+          "Operation a-operation Message a-message Payload application/json",
+          "Operation a-operation Messages a-message Payload application/json"
+        );
+      }
+    },
+    {
+      name: "forward target",
+      mutate(channel) {
+        const reference = "**same_as**: Operation a-operation Message a-message Payload application/json";
+        channel.content = channel.content.replace(structured, [
+          "**same_as**: Operation a-operation Message b-message Payload application/json"
+        ].join("\n")).replace(reference, structured);
+      }
+    },
+    {
+      name: "target in another file",
+      mutate(channel) {
+        channel.content = channel.content.replace(
+          "Operation a-operation Message a-message Payload application/json",
+          "Operation z-operation Message z-message Payload application/json"
+        );
+      }
+    }
+  ];
+
+  for (const fixtureCase of cases) {
+    await t.test(fixtureCase.name, () => {
+      const pair = alphaSameAsPair();
+      const compactChannel = pair.compact.files.find((file) => file.path === "channels/alpha.md");
+      assert.notEqual(compactChannel, undefined);
+      fixtureCase.mutate(compactChannel);
+      refreshIdentityLine(compactChannel);
+
+      const result = validateDocumentSets(pair.full, pair.compact);
+
+      assert.deepEqual(
+        [...new Set(result.diagnostics.map((entry) => entry.ruleId))],
+        ["DM-PROFILE-005"]
+      );
+    });
+  }
+});
+
+test("DM-PROFILE-005 rejects same_as outside its exact representation boundary", async (t) => {
+  await t.test("outside a Message Payload", () => {
+    const pair = alphaSameAsPair();
+    const compactChannel = pair.compact.files.find((file) => file.path === "channels/alpha.md");
+    assert.notEqual(compactChannel, undefined);
+    const marker = "**same_as**: Operation a-operation Message a-message Payload application/json";
+    const targetStart = compactChannel.content.indexOf("**media_type**: application/json");
+    const targetEnd = compactChannel.content.indexOf("### Message b-message");
+    const target = compactChannel.content.slice(targetStart, targetEnd).trimEnd();
+    compactChannel.content = compactChannel.content.replace(marker, target).replace(
+      "### Failure Handling\n\nnone",
+      `### Failure Handling\n\n${marker}`
+    );
+    refreshIdentityLine(compactChannel);
+
+    const result = validateDocumentSets(pair.full, pair.compact);
+
+    assert.deepEqual(result.diagnostics.map((entry) => entry.ruleId), ["DM-PROFILE-005"]);
+  });
+
+  await t.test("with adjacent representation content", () => {
+    const pair = alphaSameAsPair();
+    const compactChannel = pair.compact.files.find((file) => file.path === "channels/alpha.md");
+    assert.notEqual(compactChannel, undefined);
+    compactChannel.content = compactChannel.content.replace(
+      "Payload application/json\n\n### Reply",
+      "Payload application/json\nUnexpected representation prose.\n\n### Reply"
+    );
+    refreshIdentityLine(compactChannel);
+
+    const result = validateDocumentSets(pair.full, pair.compact);
+
+    assert.deepEqual(result.diagnostics.map((entry) => entry.ruleId), ["DM-PROFILE-005"]);
+  });
+});
+
+test("DM-PROFILE-005 rejects target and reference direction-semantics mismatch", () => {
+  const content = [
+    "## SEND a.events (send-operation)",
+    "### Message send-message",
+    "#### Payload",
+    "**payload_required**: yes",
+    "**media_type**: application/json",
+    "**payload_nullable**: no",
+    "```json",
+    "{\"id\":\"item_01\"}",
+    "```",
+    "| Field | Type | Required | Nullable | Constraints / Meaning |",
+    "|---|---|---|---|---|",
+    "| id | string | yes | no | Stable identifier |",
+    "## RECEIVE b.events (receive-operation)",
+    "### Message receive-message",
+    "#### Payload",
+    "**payload_presence**: always",
+    "**same_as**: Operation send-operation Message send-message Payload application/json"
+  ].join("\n");
+  const result = validateCompleteSameAs({
+    files: [{
+      path: "channels/directions.md",
+      content,
+      identityLine: content.split("\n").length + 1,
+      metadata: { profile: "compact", "x-retrieval-unit": "channel-file" }
+    }]
+  });
+
+  assert.deepEqual(result.diagnostics.map((entry) => entry.ruleId), ["DM-PROFILE-005"]);
+});
+
+test("DM-PROFILE-005 applies the opposite operation direction to Reply Messages", () => {
+  const content = [
+    "## SEND a.events (send-operation)",
+    "### Message send-message",
+    "#### Payload",
+    "**payload_required**: yes",
+    "**media_type**: application/json",
+    "**payload_nullable**: no",
+    "```json",
+    "{\"id\":\"item_01\"}",
+    "```",
+    "| Field | Type | Required | Nullable | Constraints / Meaning |",
+    "|---|---|---|---|---|",
+    "| id | string | yes | no | Stable identifier |",
+    "### Reply",
+    "#### Message reply-message",
+    "##### Payload",
+    "**payload_presence**: always",
+    "**same_as**: Operation send-operation Message send-message Payload application/json"
+  ].join("\n");
+  const result = validateCompleteSameAs({
+    files: [{
+      path: "channels/reply-direction.md",
+      content,
+      identityLine: content.split("\n").length + 1,
+      metadata: { profile: "compact", "x-retrieval-unit": "channel-file" }
+    }]
+  });
+
+  assert.deepEqual(result.diagnostics.map((entry) => entry.ruleId), ["DM-PROFILE-005"]);
+});
+
+test("DM-PROFILE-005 accepts a backward Reply Message target", () => {
+  const content = [
+    "## SEND a.events (send-operation)",
+    "### Reply",
+    "#### Message a-reply",
+    "##### Payload",
+    "**payload_presence**: always",
+    "**media_type**: application/json",
+    "**payload_nullable**: no",
+    "```json",
+    "{\"id\":\"item_01\"}",
+    "```",
+    "| Field | Type | Presence | Nullable | Meaning |",
+    "|---|---|---|---|---|",
+    "| id | string | always | no | Stable identifier |",
+    "#### Message b-reply",
+    "##### Payload",
+    "**payload_presence**: always",
+    "**same_as**: Operation send-operation Reply Message a-reply Payload application/json"
+  ].join("\n");
+
+  const result = validateSameAsContent(content, "channels/replies.md");
+
+  assert.deepEqual(result.diagnostics, []);
+  assert.equal(result.facts.sameAs[0].reference.reply, true);
+  assert.equal(result.facts.sameAs[0].target.reply, true);
+});
+
+test("DM-PROFILE-005 rejects incomplete, recursive, and failure-shape targets", async (t) => {
+  await t.test("representation-local field unknown", () => {
+    const content = [
+      "## SEND a.events (send-operation)",
+      "### Message a-message",
+      "#### Payload",
+      "**payload_required**: yes",
+      "**media_type**: application/json",
+      "**payload_nullable**: no",
+      "unknown",
+      "**unknown**: payload field collection requires source schema",
+      "### Message b-message",
+      "#### Payload",
+      "**payload_required**: yes",
+      "**same_as**: Operation send-operation Message a-message Payload application/json"
+    ].join("\n");
+
+    const result = validateSameAsContent(content);
+
+    assert.deepEqual(result.diagnostics.map((entry) => entry.ruleId), ["DM-PROFILE-005"]);
+  });
+
+  await t.test("collection-level unknown", () => {
+    const content = [
+      "## SEND a.events (send-operation)",
+      "### Message a-message",
+      "#### Payload",
+      "**payload_required**: yes",
+      "**media_type**: application/json",
+      "**payload_nullable**: no",
+      "| Field | Type | Required | Nullable | Constraints / Meaning |",
+      "|---|---|---|---|---|",
+      "| id | string | yes | no | Stable identifier |",
+      "**unknown**: additional unnamed field requires source schema",
+      "### Message b-message",
+      "#### Payload",
+      "**payload_required**: yes",
+      "**same_as**: Operation send-operation Message a-message Payload application/json"
+    ].join("\n");
+
+    const result = validateSameAsContent(content);
+
+    assert.deepEqual(result.diagnostics.map((entry) => entry.ruleId), ["DM-PROFILE-005"]);
+  });
+
+  await t.test("same_as target", () => {
+    const content = [
+      "## SEND a.events (send-operation)",
+      "### Message a-message",
+      "#### Payload",
+      "**payload_required**: yes",
+      "**media_type**: application/json",
+      "**payload_nullable**: no",
+      "```json",
+      "{\"id\":\"item_01\"}",
+      "```",
+      "| Field | Type | Required | Nullable | Constraints / Meaning |",
+      "|---|---|---|---|---|",
+      "| id | string | yes | no | Stable identifier |",
+      "### Message b-message",
+      "#### Payload",
+      "**payload_required**: yes",
+      "**same_as**: Operation send-operation Message a-message Payload application/json",
+      "### Message c-message",
+      "#### Payload",
+      "**payload_required**: yes",
+      "**same_as**: Operation send-operation Message b-message Payload application/json"
+    ].join("\n");
+
+    const result = validateSameAsContent(content);
+
+    assert.deepEqual(result.diagnostics.map((entry) => entry.ruleId), ["DM-PROFILE-005"]);
+  });
+
+  await t.test("failure-signal message shape", () => {
+    const content = [
+      "## SEND a.events (send-operation)",
+      "### Message a-message",
+      "#### Payload",
+      "**payload_required**: yes",
+      "**media_type**: application/json",
+      "**payload_nullable**: no",
+      "```json",
+      "{\"id\":\"item_01\"}",
+      "```",
+      "| Field | Type | Required | Nullable | Constraints / Meaning |",
+      "|---|---|---|---|---|",
+      "| id | string | yes | no | Stable identifier |",
+      "### Failure Handling",
+      "**message_shape**: failure-code",
+      "#### Payload",
+      "**payload_presence**: always",
+      "**same_as**: Operation send-operation Message a-message Payload application/json"
+    ].join("\n");
+
+    const result = validateSameAsContent(content);
+
+    assert.deepEqual(result.diagnostics.map((entry) => entry.ruleId), ["DM-PROFILE-005"]);
+  });
+});
+
 test("DM-PROFILE-003 compares normalized standard structures in source order", async (t) => {
   const cases = [
     {
@@ -982,17 +1519,23 @@ test("DM-PROFILE-001 and DM-PROFILE-002 defer pair diagnostics after constituent
   assert.equal(result.facts.completeProfilePair, null);
 });
 
-test("DM-PROFILE-001 through DM-PROFILE-004 maintain complete-scope rule correspondence", () => {
+test("DM-PROFILE-001 through DM-PROFILE-005 maintain complete-scope rule correspondence", () => {
   const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
   const profileRules = catalog.rules.filter((entry) => entry.rule_id.startsWith("DM-PROFILE-"));
 
   assert.deepEqual(
     profileRules.map((entry) => entry.rule_id),
-    ["DM-PROFILE-001", "DM-PROFILE-002", "DM-PROFILE-003", "DM-PROFILE-004"]
+    [
+      "DM-PROFILE-001",
+      "DM-PROFILE-002",
+      "DM-PROFILE-003",
+      "DM-PROFILE-004",
+      "DM-PROFILE-005"
+    ]
   );
   assert.deepEqual(
     profileRules.map((entry) => entry.scope),
-    ["complete", "complete", "complete", "complete"]
+    ["complete", "complete", "complete", "complete", "complete"]
   );
   assert.deepEqual(auditRuleTestCorrespondence({
     catalogRuleIds: profileRules.map((entry) => entry.rule_id),

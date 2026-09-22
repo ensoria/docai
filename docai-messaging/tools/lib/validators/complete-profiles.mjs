@@ -2,7 +2,11 @@ import path from "node:path";
 import { isDeepStrictEqual } from "node:util";
 import { diagnostic } from "../diagnostics.mjs";
 import { validateCompleteDocumentSet } from "./complete.mjs";
-import { compareExpandedProfileFiles } from "./complete-profile-comparison.mjs";
+import {
+  canonicalRepresentationView,
+  compareExpandedProfileFiles
+} from "./complete-profile-comparison.mjs";
+import { collectPayloadRepresentations } from "./complete-same-as.mjs";
 
 function shardPaths(catalog) {
   return (catalog?.shards ?? [])
@@ -64,6 +68,47 @@ function correspondingMetadataMatches(fullDocumentSet, compactDocumentSet) {
   });
 }
 
+function representationWithIdentity(representations, identity) {
+  return representations.find((entry) => (
+    entry.kind === "expanded"
+      && entry.operation === identity.operation
+      && entry.message === identity.message
+      && entry.reply === identity.reply
+      && entry.mediaType === identity.mediaType
+  ));
+}
+
+function validatePairedFullSameAs(fullDocumentSet, sameAsFacts) {
+  const diagnostics = [];
+  const representationsByPath = new Map();
+  for (const fact of sameAsFacts) {
+    const fullFile = fullDocumentSet.files.find((file) => file.path === fact.path);
+    if (fullFile === undefined) continue;
+    let representations = representationsByPath.get(fact.path);
+    if (representations === undefined) {
+      representations = collectPayloadRepresentations(fullFile);
+      representationsByPath.set(fact.path, representations);
+    }
+    const target = representationWithIdentity(representations, fact.target);
+    const reference = representationWithIdentity(representations, fact.reference);
+    const canonicalMatch = target !== undefined
+      && reference !== undefined
+      && isDeepStrictEqual(
+        canonicalRepresentationView(fullFile, target.line, target.endLine),
+        canonicalRepresentationView(fullFile, reference.line, reference.endLine)
+      );
+    if (!canonicalMatch) {
+      diagnostics.push(diagnostic(
+        "DM-PROFILE-005",
+        `compact/${fact.path}`,
+        fact.line,
+        "same_as requires canonically identical expanded target and referring representations in the paired full file."
+      ));
+    }
+  }
+  return diagnostics;
+}
+
 export function validateCompleteProfilePair(
   fullDocumentSet,
   compactDocumentSet,
@@ -114,6 +159,12 @@ export function validateCompleteProfilePair(
       "compact/INDEX.md",
       1,
       "Matching full and compact roots require the same catalog forms, shard paths, and workflow routing names and Details paths."
+    ));
+  }
+  if (diagnostics.length === 0) {
+    diagnostics.push(...validatePairedFullSameAs(
+      fullDocumentSet,
+      compactResult.facts.complete.sameAs
     ));
   }
   const comparisonMismatch = diagnostics.length === 0

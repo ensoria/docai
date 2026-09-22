@@ -485,6 +485,12 @@
       "readme_section": "§3.4 Output Profiles and Incomplete Information",
       "description": "A compact-only field_defaults marker immediately precedes one Headers or Payload field table, names only applicable uniform columns once in logical left-to-right order, uses permitted values, omits each defaulted column, and reconstructs the direction-correct logical full-profile table; Meaning=none reconstructs empty cells only.",
       "scope": "complete"
+    },
+    {
+      "rule_id": "DM-PROFILE-005",
+      "readme_section": "§3.4 Output Profiles and Incomplete Information",
+      "description": "A compact-only same_as marker replaces one payload representation, resolves directly backward to a complete expanded structured representation in the same channel file, preserves direction semantics and paired-full canonical equality, and declares a channel-file retrieval unit; full profiles, failure shapes, cross-file or recursive targets, and incomplete or raw representations are ineligible.",
+      "scope": "complete"
     }
   ]
 }
