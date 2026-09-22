@@ -635,7 +635,7 @@ test("DM-PROFILE-003 excludes profile-specific x- extension structures", () => {
 });
 
 test("DM-PROFILE-003 compares JSON examples by exact decoded value", async (t) => {
-  await t.test("accepts object-order formatting and exact number-spelling differences", () => {
+  await t.test("accepts compact one-line object-order and exact number-spelling differences", () => {
     const pair = loadPair(validPairPath);
     replaceAlphaPayload(pair.full, [
       "{",
@@ -669,6 +669,47 @@ test("DM-PROFILE-003 compares JSON examples by exact decoded value", async (t) =
     assert.deepEqual(result.diagnostics.map((entry) => entry.ruleId), ["DM-PROFILE-003"]);
     assert.equal(result.facts.completeProfilePair, null);
   });
+});
+
+test("DM-PROFILE-003 defers invalid compact JSON fence and rendering diagnostics", async (t) => {
+  await t.test("rejects a non-json fence info string before pair comparison", () => {
+    const pair = loadPair(validPairPath);
+    const example = "{\"count\":1,\"id\":\"item_01\"}";
+    replaceAlphaPayload(pair.full, example);
+    replaceAlphaPayload(pair.compact, example);
+    const compactChannel = pair.compact.files.find((file) => (
+      file.path === "channels/alpha.md"
+    ));
+    assert.notEqual(compactChannel, undefined);
+    compactChannel.content = compactChannel.content.replace("```json\n", "```jsonc\n");
+
+    const result = validateDocumentSets(pair.full, pair.compact);
+
+    assert.deepEqual(result.diagnostics.map((entry) => entry.ruleId), ["DM-MSG-004"]);
+    assert.equal(result.facts.completeProfilePair, null);
+  });
+
+  for (const fixtureCase of [
+    {
+      name: "trailing comma",
+      example: "{\"count\":1,\"id\":\"item_01\",}"
+    },
+    {
+      name: "duplicate object name",
+      example: "{\"count\":1,\"id\":\"item_01\",\"id\":\"item_02\"}"
+    }
+  ]) {
+    await t.test(`rejects ${fixtureCase.name} rendering before pair comparison`, () => {
+      const pair = loadPair(validPairPath);
+      replaceAlphaPayload(pair.full, "{\"count\":1,\"id\":\"item_01\"}");
+      replaceAlphaPayload(pair.compact, fixtureCase.example);
+
+      const result = validateDocumentSets(pair.full, pair.compact);
+
+      assert.deepEqual(result.diagnostics.map((entry) => entry.ruleId), ["DM-MSG-005"]);
+      assert.equal(result.facts.completeProfilePair, null);
+    });
+  }
 });
 
 test("DM-PROFILE-004 reconstructs compact SEND payload field defaults", () => {
