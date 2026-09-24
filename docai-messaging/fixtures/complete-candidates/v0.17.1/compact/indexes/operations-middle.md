@@ -8,6 +8,6 @@
 
 | Action | Channel | Operation | Message | Task | Summary | Required context | Supplemental context |
 |---|---|---|---|---|---|---|---|
-| SEND | m.events | m-operation | m-message | middle task | Handles the middle event range | none | none |
+| SEND | m.events | m-operation | m-message | middle task | Handles the middle event range | none | references/middle-operations.md |
 
-> docai-identity: set_id: b32:a2a643u5cz3sxmn37dgx2wu2ru | projection_id: b32:2su6l5snggpayed76bebjwuzuy
+> docai-identity: set_id: b32:4z2svaz5yrze67ovtveyeemmze | projection_id: b32:3k44labglirnz7fi4as5h2rkba

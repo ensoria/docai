@@ -1,0 +1,56 @@
+{
+  "sourceId": "complete-contexts",
+  "kind": "behavior-configuration",
+  "revision": "fixture-1",
+  "operations": {
+    "a-operation": {
+      "action": "SEND",
+      "channel": "a.events",
+      "requiredContexts": [
+        "alpha-delivery"
+      ],
+      "supplementalContexts": [
+        "alpha-observability"
+      ]
+    },
+    "m-operation": {
+      "action": "SEND",
+      "channel": "m.events",
+      "requiredContexts": [],
+      "supplementalContexts": [
+        "middle-operations"
+      ]
+    },
+    "z-operation": {
+      "action": "RECEIVE",
+      "channel": "z.events",
+      "requiredContexts": [],
+      "supplementalContexts": []
+    }
+  },
+  "workflows": {
+    "alpha-delivery": {
+      "name": "Alpha delivery",
+      "purpose": "Deliver the alpha event and record the correlated middle event.",
+      "steps": [
+        "SEND a.events (a-operation)",
+        "SEND m.events (m-operation)"
+      ],
+      "timeoutRecovery": "Retry with the retained alpha event identifier."
+    },
+    "alpha-observability": {
+      "name": "Alpha observability",
+      "purpose": "Record synthetic trace evidence for alpha delivery.",
+      "steps": [
+        "SEND a.events (a-operation)"
+      ],
+      "timeoutRecovery": "Repeat trace collection with the same synthetic identifier."
+    }
+  },
+  "referenceMaterials": {
+    "middle-operations": {
+      "instructionAuthority": "none",
+      "content": "# Middle operations notes\n\nUse only synthetic identifiers when recording examples.\n"
+    }
+  }
+}

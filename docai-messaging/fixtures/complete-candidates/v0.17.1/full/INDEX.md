@@ -8,7 +8,9 @@ Compact set: ../compact/
 
 | ID | Kind | Specification | API | Contract version | Location | Revision |
 |---|---|---|---|---|---|---|
-| source-a | pass-through | none | none | none | source.md | none |
+| complete-contexts | behavior-configuration | none | none | none | complete-contexts.json | fixture-1 |
+| storefront-asyncapi-3.1.0 | asyncapi | AsyncAPI 3.1.0 | urn:example:storefront-order-messaging | 1.0.0 | storefront.asyncapi.json | 1.0.0 |
+| storefront-behavior | behavior-configuration | none | none | none | storefront-behavior.json | fixture-1 |
 
 ## Operation Shards
 
@@ -19,6 +21,9 @@ Compact set: ../compact/
 
 ## Workflows
 
-none
+| Name | Summary | Details |
+|---|---|---|
+| Alpha delivery | Deliver alpha and record the middle event | workflows/alpha-delivery.md |
+| Alpha observability | Observe alpha delivery with synthetic traces | workflows/alpha-observability.md |
 
-> docai-identity: set_id: b32:jkmxpvf7s77mwcvzwjf2s6ngpy | projection_id: b32:2su6l5snggpayed76bebjwuzuy | set_digest: sha256:4a9977d4bf97fecb0ab9b24ba979a67e252d3b863dbfe383f396ea99bd5e84a6 | projection_digest: sha256:d4a9e5f64d319e0c107ff04814da99a639d407c15f340ed4a69d46f245e4f480
+> docai-identity: set_id: b32:yrurslkorin6ytotfgms4oeqmm | projection_id: b32:3k44labglirnz7fi4as5h2rkba | set_digest: sha256:c469192d4e8a1bec4dd329992e3890634dd4fd5427d36cb23c9de4975770650a | projection_digest: sha256:dab9c580265a22dcfca8e025d3ea2a089f2f1609e0f6092603fb886d48efde1e
