@@ -134,4 +134,108 @@ for (const profile of ["full", "compact"]) {
       supplementalWorkflows: []
     });
   });
+
+  test(`${profile} candidate exposes overlapping source and operation shard retrieval`, () => {
+    const result = validateCompleteDocumentSet(
+      loadDocumentSet(path.join(candidatePath, profile))
+    );
+
+    assert.deepEqual(result.diagnostics, []);
+    assert.equal(result.facts.core.sources.form, "sharded");
+    assert.deepEqual(
+      result.facts.core.sources.shards.map((shard) => ({
+        firstId: shard.firstId,
+        lastId: shard.lastId,
+        path: shard.path
+      })),
+      [
+        {
+          firstId: "complete-contexts",
+          lastId: "storefront-behavior",
+          path: "indexes/sources-contexts-behavior.md"
+        },
+        {
+          firstId: "storefront-asyncapi-3.1.0",
+          lastId: "storefront-asyncapi-3.1.0",
+          path: "indexes/sources-asyncapi.md"
+        }
+      ]
+    );
+    assert.deepEqual(
+      result.facts.core.sourceResolutions["indexes/sources-asyncapi.md"],
+      {
+        requestedIds: ["storefront-asyncapi-3.1.0"],
+        resolvedIds: [
+          "complete-contexts",
+          "storefront-asyncapi-3.1.0",
+          "storefront-behavior"
+        ],
+        loadedPaths: [
+          "indexes/sources-asyncapi.md",
+          "indexes/sources-contexts-behavior.md"
+        ]
+      }
+    );
+    assert.deepEqual(
+      result.facts.core.sourceResolutions["indexes/sources-contexts-behavior.md"],
+      {
+        requestedIds: ["complete-contexts", "storefront-behavior"],
+        resolvedIds: ["complete-contexts", "storefront-behavior"],
+        loadedPaths: ["indexes/sources-contexts-behavior.md"]
+      }
+    );
+    assert.deepEqual(result.facts.core.sourceResolutions["INDEX.md"], {
+      requestedIds: [
+        "complete-contexts",
+        "storefront-asyncapi-3.1.0",
+        "storefront-behavior"
+      ],
+      resolvedIds: [
+        "complete-contexts",
+        "storefront-asyncapi-3.1.0",
+        "storefront-behavior"
+      ],
+      loadedPaths: [
+        "indexes/sources-asyncapi.md",
+        "indexes/sources-contexts-behavior.md"
+      ]
+    });
+
+    const exactMiddle = result.facts.core.operationRetrieval.exact.operation["m-operation"];
+    assert.deepEqual({
+      loadedIndexPaths: exactMiddle.loadedIndexPaths,
+      falsePositiveIndexPaths: exactMiddle.falsePositiveIndexPaths,
+      matchedOperationNames: exactMiddle.matchedOperationNames,
+      loadedSourceIndexPaths: exactMiddle.loadedSourceIndexPaths
+    }, {
+      loadedIndexPaths: [
+        "indexes/operations-broad.md",
+        "indexes/operations-middle.md"
+      ],
+      falsePositiveIndexPaths: ["indexes/operations-broad.md"],
+      matchedOperationNames: ["m-operation"],
+      loadedSourceIndexPaths: [
+        "indexes/sources-asyncapi.md",
+        "indexes/sources-contexts-behavior.md"
+      ]
+    });
+    assert.deepEqual({
+      loadedIndexPaths: result.facts.core.operationRetrieval.semanticFallback.loadedIndexPaths,
+      matchedOperationNames:
+        result.facts.core.operationRetrieval.semanticFallback.matchedOperationNames,
+      loadedSourceIndexPaths:
+        result.facts.core.operationRetrieval.semanticFallback.loadedSourceIndexPaths
+    }, {
+      loadedIndexPaths: [
+        "indexes/operations-broad.md",
+        "indexes/operations-middle.md"
+      ],
+      matchedOperationNames: ["a-operation", "m-operation", "z-operation"],
+      loadedSourceIndexPaths: [
+        "indexes/sources-asyncapi.md",
+        "indexes/sources-contexts-behavior.md"
+      ]
+    });
+    assert.equal(result.facts.complete.workflows.form, "direct");
+  });
 }
