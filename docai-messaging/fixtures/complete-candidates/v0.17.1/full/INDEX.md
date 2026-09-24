@@ -1,4 +1,4 @@
-> docai-messaging: 0.17.1 | profile: full | perspective: storefront | coverage: complete | knowledge: complete | source_refs: all
+> docai-messaging: 0.17.1 | profile: full | perspective: storefront | coverage: requires-source | knowledge: requires-input | source_refs: all
 
 Compact set: ../compact/
 
@@ -26,5 +26,8 @@ Compact set: ../compact/
 |---|---|---|
 | Alpha delivery | Deliver alpha and record the middle event | workflows/alpha-delivery.md |
 | Alpha observability | Observe alpha delivery with synthetic traces | workflows/alpha-observability.md |
+| State none | Exercise every workflow section's none state | workflows/state-none.md |
+| State unknown | Exercise every workflow section's whole-section unknown state | workflows/state-unknown.md |
+| State unsupported | Exercise every workflow section's replacement unsupported state | workflows/state-unsupported.md |
 
-> docai-identity: set_id: b32:24fvyhqv55ctofsxg7odxictmq | projection_id: b32:3k44labglirnz7fi4as5h2rkba | set_digest: sha256:d70b5c1e15ef4537165737dc3ba053641fb05cabd4a689050f00b91b93b8cd0b | projection_digest: sha256:dab9c580265a22dcfca8e025d3ea2a089f2f1609e0f6092603fb886d48efde1e
+> docai-identity: set_id: b32:smapgdj3znaxjxbbxk7dfp4pia | projection_id: b32:6g66y7tydepom5w7jw22drqql4 | set_digest: sha256:9300f30d3bcb4174dc21babe32bf8f40aa2fa3b211eb545370ef03c9f150fb1f | projection_digest: sha256:f1bdec7e78191ee676df4db5a1c6105f89f81986772312b439dfa389f89d2e25

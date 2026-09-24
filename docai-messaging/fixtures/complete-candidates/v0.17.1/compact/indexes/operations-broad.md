@@ -8,7 +8,7 @@
 
 | Action | Channel | Operation | Message | Task | Summary | Required context | Supplemental context |
 |---|---|---|---|---|---|---|---|
-| SEND | a.events | a-operation | a-message | alpha task | Handles the alpha event range | workflows/alpha-delivery.md | workflows/alpha-observability.md |
+| SEND | a.events | a-operation | a-message | alpha task | Handles the alpha event range | workflows/alpha-delivery.md | workflows/alpha-observability.md, workflows/state-none.md, workflows/state-unknown.md, workflows/state-unsupported.md |
 
 ### channels/zeta.md
 
@@ -16,4 +16,4 @@
 |---|---|---|---|---|---|---|---|
 | RECEIVE | z.events | z-operation | z-message | zeta task | Handles the zeta event range | none | none |
 
-> docai-identity: set_id: b32:2rhfjg623pgukhiksu5oesrunu | projection_id: b32:3k44labglirnz7fi4as5h2rkba
+> docai-identity: set_id: b32:oyezxfn27tfa26o4afxnmsp4by | projection_id: b32:6g66y7tydepom5w7jw22drqql4

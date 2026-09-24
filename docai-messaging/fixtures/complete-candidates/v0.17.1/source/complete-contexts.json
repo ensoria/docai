@@ -10,7 +10,10 @@
         "alpha-delivery"
       ],
       "supplementalContexts": [
-        "alpha-observability"
+        "alpha-observability",
+        "state-none",
+        "state-unknown",
+        "state-unsupported"
       ]
     },
     "m-operation": {
@@ -45,6 +48,60 @@
         "SEND a.events (a-operation)"
       ],
       "timeoutRecovery": "Repeat trace collection with the same synthetic identifier."
+    },
+    "state-none": {
+      "name": "State none",
+      "purpose": "Demonstrate an applicable workflow and finish without section-specific coordination.",
+      "sections": {
+        "Preconditions": "none",
+        "Steps": "none",
+        "State Transitions": "none",
+        "Failure and Recovery": "none"
+      }
+    },
+    "state-unknown": {
+      "name": "State unknown",
+      "purpose": "Validate an unresolved workflow after every required fact is supplied.",
+      "sections": {
+        "Preconditions": {
+          "state": "unknown",
+          "requiredInput": "authoritative preconditions"
+        },
+        "Steps": {
+          "state": "unknown",
+          "requiredInput": "authoritative coordination sequence"
+        },
+        "State Transitions": {
+          "state": "unknown",
+          "requiredInput": "authoritative transition model"
+        },
+        "Failure and Recovery": {
+          "state": "unknown",
+          "requiredInput": "authoritative recovery policy"
+        }
+      }
+    },
+    "state-unsupported": {
+      "name": "State unsupported",
+      "purpose": "Validate an unrepresentable workflow after a compatible projection is available.",
+      "sections": {
+        "Preconditions": {
+          "state": "unsupported",
+          "feature": "conditional precondition graph"
+        },
+        "Steps": {
+          "state": "unsupported",
+          "feature": "parallel coordination graph"
+        },
+        "State Transitions": {
+          "state": "unsupported",
+          "feature": "conditional transition graph"
+        },
+        "Failure and Recovery": {
+          "state": "unsupported",
+          "feature": "nested recovery graph"
+        }
+      }
     }
   },
   "referenceMaterials": {

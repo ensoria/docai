@@ -56,7 +56,12 @@ for (const profile of ["full", "compact"]) {
       {
         "a-operation": {
           required: ["workflows/alpha-delivery.md"],
-          supplemental: ["workflows/alpha-observability.md"]
+          supplemental: [
+            "workflows/alpha-observability.md",
+            "workflows/state-none.md",
+            "workflows/state-unknown.md",
+            "workflows/state-unsupported.md"
+          ]
         },
         "z-operation": { required: [], supplemental: [] },
         "m-operation": {
@@ -72,16 +77,21 @@ for (const profile of ["full", "compact"]) {
       })),
       [
         { name: "Alpha delivery", path: "workflows/alpha-delivery.md" },
-        { name: "Alpha observability", path: "workflows/alpha-observability.md" }
+        { name: "Alpha observability", path: "workflows/alpha-observability.md" },
+        { name: "State none", path: "workflows/state-none.md" },
+        { name: "State unknown", path: "workflows/state-unknown.md" },
+        { name: "State unsupported", path: "workflows/state-unsupported.md" }
       ]
     );
     assert.deepEqual(
-      result.facts.complete.workflowDefinitions.map((workflow) => ({
-        path: workflow.path,
-        title: workflow.title,
-        steps: workflow.sections.Steps.steps,
-        transitions: workflow.sections["State Transitions"].rows
-      })),
+      result.facts.complete.workflowDefinitions
+        .filter((workflow) => workflow.path.startsWith("workflows/alpha-"))
+        .map((workflow) => ({
+          path: workflow.path,
+          title: workflow.title,
+          steps: workflow.sections.Steps.steps,
+          transitions: workflow.sections["State Transitions"].rows
+        })),
       [
         {
           path: "workflows/alpha-delivery.md",
@@ -133,6 +143,80 @@ for (const profile of ["full", "compact"]) {
       requiredWorkflowPaths: [],
       supplementalWorkflows: []
     });
+  });
+
+  test(`${profile} candidate materializes every workflow section state in separate cases`, () => {
+    const documentSet = loadDocumentSet(path.join(candidatePath, profile));
+    const result = validateCompleteDocumentSet(documentSet);
+
+    assert.deepEqual(result.diagnostics, []);
+    assert.deepEqual(
+      Object.fromEntries(result.facts.complete.workflowDefinitions.map((workflow) => [
+        workflow.path,
+        Object.fromEntries(Object.entries(workflow.sections).map(([heading, section]) => [
+          heading,
+          section.state
+        ]))
+      ])),
+      {
+        "workflows/alpha-delivery.md": {
+          Preconditions: "expanded",
+          Steps: "expanded",
+          "State Transitions": "expanded",
+          "Failure and Recovery": "expanded"
+        },
+        "workflows/alpha-observability.md": {
+          Preconditions: "expanded",
+          Steps: "expanded",
+          "State Transitions": "expanded",
+          "Failure and Recovery": "expanded"
+        },
+        "workflows/state-none.md": {
+          Preconditions: "none",
+          Steps: "none",
+          "State Transitions": "none",
+          "Failure and Recovery": "none"
+        },
+        "workflows/state-unknown.md": {
+          Preconditions: "unknown",
+          Steps: "unknown",
+          "State Transitions": "unknown",
+          "Failure and Recovery": "unknown"
+        },
+        "workflows/state-unsupported.md": {
+          Preconditions: "unsupported",
+          Steps: "unsupported",
+          "State Transitions": "unsupported",
+          "Failure and Recovery": "unsupported"
+        }
+      }
+    );
+    assert.deepEqual(
+      Object.fromEntries([
+        "INDEX.md",
+        "workflows/state-none.md",
+        "workflows/state-unknown.md",
+        "workflows/state-unsupported.md"
+      ].map((filePath) => {
+        const file = documentSet.files.find((entry) => entry.path === filePath);
+        return [filePath, {
+          coverage: file?.metadata.coverage,
+          knowledge: file?.metadata.knowledge
+        }];
+      })),
+      {
+        "INDEX.md": { coverage: "requires-source", knowledge: "requires-input" },
+        "workflows/state-none.md": { coverage: "complete", knowledge: "complete" },
+        "workflows/state-unknown.md": {
+          coverage: "complete",
+          knowledge: "requires-input"
+        },
+        "workflows/state-unsupported.md": {
+          coverage: "requires-source",
+          knowledge: "complete"
+        }
+      }
+    );
   });
 
   test(`${profile} candidate exposes overlapping source and operation shard retrieval`, () => {
