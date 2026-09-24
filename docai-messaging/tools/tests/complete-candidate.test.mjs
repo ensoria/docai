@@ -36,6 +36,63 @@ test("binds the complete context source scenario into the projection manifest", 
   });
   assert.equal(source.sourceId, "complete-contexts");
   assert.equal(source.revision, "fixture-1");
+  assert.deepEqual(source.referenceMaterials["middle-operations"], {
+    instructionAuthority: "none",
+    info: "markdown",
+    rawContent: [
+      "\uFEFF# Middle operations notes\r\n",
+      "\r\n",
+      "Use only synthetic identifiers when recording examples.\r\n",
+      "A literal ```` run remains data.\r\n",
+      "Cafe\u0301 stays decomposed.\r\n",
+      "\r\n"
+    ].join("")
+  });
+});
+
+test("candidate source cases reject forbidden direct context targets", () => {
+  const source = JSON.parse(fs.readFileSync(
+    path.join(candidatePath, "source", "complete-contexts.json"),
+    "utf8"
+  ));
+  assert.deepEqual(source.contextTargetCases, [
+    {
+      id: "reference-required-forbidden",
+      operation: "m-operation",
+      requiredContext: "references/middle-operations.md",
+      supplementalContext: "none",
+      expectedRule: "DM-IDX-005"
+    },
+    {
+      id: "channel-supplemental-forbidden",
+      operation: "m-operation",
+      requiredContext: "none",
+      supplementalContext: "channels/middle.md",
+      expectedRule: "DM-IDX-005"
+    }
+  ]);
+
+  const originalRow = "| SEND | m.events | m-operation | m-message | middle task | Handles the middle event range | none | references/middle-operations.md |";
+  for (const fixture of source.contextTargetCases) {
+    const documentSet = loadDocumentSet(path.join(candidatePath, "full"));
+    const operationIndex = documentSet.files.find((entry) => (
+      entry.path === "indexes/operations-middle.md"
+    ));
+    assert.notEqual(operationIndex, undefined);
+    const replacementRow = `| SEND | m.events | m-operation | m-message | middle task | Handles the middle event range | ${fixture.requiredContext} | ${fixture.supplementalContext} |`;
+    assert.equal(operationIndex.content.includes(originalRow), true);
+    operationIndex.content = operationIndex.content.replace(originalRow, replacementRow);
+    operationIndex.bytes = Buffer.from(operationIndex.content, "utf8");
+
+    const result = validateCompleteDocumentSet(documentSet, { wholeSet: false });
+    assert.equal(
+      result.diagnostics.some((entry) => (
+        entry.severity === "error" && entry.ruleId === fixture.expectedRule
+      )),
+      true,
+      fixture.id
+    );
+  }
 });
 
 for (const profile of ["full", "compact"]) {
@@ -128,8 +185,15 @@ for (const profile of ["full", "compact"]) {
     assert.deepEqual(result.facts.complete.referenceMaterials, [{
       path: "references/middle-operations.md",
       info: "markdown",
-      delimiterLength: 4,
-      content: "# Middle operations notes\n\nUse only synthetic identifiers when recording examples.\n",
+      delimiterLength: 5,
+      content: [
+        "# Middle operations notes\n",
+        "\n",
+        "Use only synthetic identifiers when recording examples.\n",
+        "A literal ```` run remains data.\n",
+        "Cafe\u0301 stays decomposed.\n",
+        "\n"
+      ].join(""),
       consumerOperations: ["m-operation"]
     }]);
 

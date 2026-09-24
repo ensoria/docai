@@ -107,7 +107,24 @@
   "referenceMaterials": {
     "middle-operations": {
       "instructionAuthority": "none",
-      "content": "# Middle operations notes\n\nUse only synthetic identifiers when recording examples.\n"
+      "info": "markdown",
+      "rawContent": "\uFEFF# Middle operations notes\r\n\r\nUse only synthetic identifiers when recording examples.\r\nA literal ```` run remains data.\r\nCafe\u0301 stays decomposed.\r\n\r\n"
     }
-  }
+  },
+  "contextTargetCases": [
+    {
+      "id": "reference-required-forbidden",
+      "operation": "m-operation",
+      "requiredContext": "references/middle-operations.md",
+      "supplementalContext": "none",
+      "expectedRule": "DM-IDX-005"
+    },
+    {
+      "id": "channel-supplemental-forbidden",
+      "operation": "m-operation",
+      "requiredContext": "none",
+      "supplementalContext": "channels/middle.md",
+      "expectedRule": "DM-IDX-005"
+    }
+  ]
 }

@@ -6,10 +6,13 @@
 
 ## Content
 
-````markdown
+`````markdown
 # Middle operations notes
 
 Use only synthetic identifiers when recording examples.
-````
+A literal ```` run remains data.
+Café stays decomposed.
 
-> docai-identity: set_id: b32:smapgdj3znaxjxbbxk7dfp4pia | projection_id: b32:6g66y7tydepom5w7jw22drqql4
+`````
+
+> docai-identity: set_id: b32:wwjwtqb7piujhgbtqfgn3nrdre | projection_id: b32:failiexdtgkqwkei25kb4ivgn4
