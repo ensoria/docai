@@ -4,13 +4,88 @@ import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
+import { resolveTrustedCompleteExampleAdapters } from "../lib/complete-example-adapters.mjs";
 import { loadDocumentSet } from "../lib/document-set.mjs";
 import { validateCompleteDocumentSet } from "../lib/validators/complete.mjs";
+import { validateCompleteProfilePair } from "../lib/validators/complete-profiles.mjs";
 
 const candidatePath = fileURLToPath(new URL(
   "../../fixtures/complete-candidates/v0.17.1/",
   import.meta.url
 ));
+const candidateManifest = JSON.parse(fs.readFileSync(
+  path.join(candidatePath, "source", "projection-input-manifest.json"),
+  "utf8"
+));
+const candidateExampleAdapters = resolveTrustedCompleteExampleAdapters(candidateManifest);
+
+function validateCandidateDocumentSet(documentSet, options = {}) {
+  return validateCompleteDocumentSet(documentSet, {
+    ...options,
+    exampleAdapters: candidateExampleAdapters
+  });
+}
+
+const CSV_MEDIA_TYPE = "text/csv;charset=utf-8";
+
+function replaceRawWithCsv(documentSet, example) {
+  const channel = documentSet.files.find((entry) => (
+    entry.path === "channels/representations.md"
+  ));
+  assert.notEqual(channel, undefined);
+  const raw = [
+    "**media_type**: application/octet-stream",
+    "",
+    "Opaque receipt bytes are limited to 2 MiB and carry a SHA-256 integrity digest."
+  ].join("\n");
+  const csv = [
+    `**media_type**: ${CSV_MEDIA_TYPE}`,
+    "",
+    "**payload_nullable**: no",
+    "",
+    "```csv",
+    example,
+    "```",
+    "",
+    "| Field | Type | Required | Nullable | Constraints / Meaning |",
+    "|---|---|---|---|---|",
+    "| event_id | string | yes | no | Synthetic event identifier |",
+    "| status | string | yes | no | Lifecycle status |"
+  ].join("\n");
+  assert.equal(channel.content.split(raw).length - 1, 1);
+  channel.content = channel.content.replace(raw, csv);
+  channel.bytes = Buffer.from(channel.content, "utf8");
+  channel.identityLine += csv.split("\n").length - raw.split("\n").length;
+}
+
+test("validates an adapter-defined structured non-JSON example only with an explicit adapter", () => {
+  const withoutAdapter = loadDocumentSet(path.join(candidatePath, "full"));
+  replaceRawWithCsv(withoutAdapter, "event_id,status\n\"evt_03\",\"created\"");
+  const rejected = validateCompleteDocumentSet(withoutAdapter, { wholeSet: false });
+  assert.equal(rejected.diagnostics.some((entry) => entry.ruleId === "DM-MSG-004"), true);
+
+  const withAdapter = loadDocumentSet(path.join(candidatePath, "full"));
+  replaceRawWithCsv(withAdapter, "event_id,status\n\"evt_03\",\"created\"");
+  const accepted = validateCompleteDocumentSet(withAdapter, {
+    wholeSet: false,
+    exampleAdapters: candidateExampleAdapters
+  });
+  assert.deepEqual(accepted.diagnostics, []);
+});
+
+test("compares full and compact adapter-defined examples by decoded value", () => {
+  const full = loadDocumentSet(path.join(candidatePath, "full"));
+  const compact = loadDocumentSet(path.join(candidatePath, "compact"));
+  replaceRawWithCsv(full, "event_id,status\n\"evt_03\",\"created\"");
+  replaceRawWithCsv(compact, "event_id,status\nevt_03,created");
+
+  const result = validateCompleteProfilePair(full, compact, {
+    wholeSet: false,
+    exampleAdapters: candidateExampleAdapters
+  });
+
+  assert.deepEqual(result.diagnostics, []);
+});
 
 test("binds the complete context source scenario into the projection manifest", () => {
   const sourcePath = path.join(candidatePath, "source", "complete-contexts.json");
@@ -81,6 +156,14 @@ test("binds the advanced representation source into the projection manifest", ()
     mediaType: entry.mediaType
   })), [
     {
+      operation: "r-csv-operation",
+      action: "SEND",
+      channel: "representations.csv",
+      message: "csv-message",
+      form: "adapter-defined-structured",
+      mediaType: "text/csv;charset=utf-8"
+    },
+    {
       operation: "r-raw-operation",
       action: "SEND",
       channel: "representations.raw",
@@ -105,6 +188,46 @@ test("binds the advanced representation source into the projection manifest", ()
       mediaType: "application/json"
     }
   ]);
+  assert.deepEqual(manifest.adapters.find((entry) => (
+    entry.class === "payload-wire" && entry.target === CSV_MEDIA_TYPE
+  )), {
+    class: "payload-wire",
+    ruleVersion: "complete-fixture-csv-1.0.0",
+    target: CSV_MEDIA_TYPE
+  });
+  const csv = source.representations.find((entry) => entry.operation === "r-csv-operation");
+  assert.deepEqual({
+    schemaFormat: csv.schemaFormat,
+    schema: csv.schema,
+    wireAdapter: csv.wireAdapter,
+    example: csv.example
+  }, {
+    schemaFormat: "application/vnd.aai.asyncapi+json;version=3.1.0",
+    schema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["event_id", "status"],
+      properties: {
+        event_id: {
+          type: "string",
+          description: "Synthetic event identifier"
+        },
+        status: {
+          type: "string",
+          description: "Lifecycle status"
+        }
+      }
+    },
+    wireAdapter: {
+      ruleVersion: "complete-fixture-csv-1.0.0",
+      fenceInfo: "csv",
+      decodedValueModel: "one object from one unique header row and one data row"
+    },
+    example: {
+      event_id: "evt_03",
+      status: "created"
+    }
+  });
 });
 
 test("candidate source cases reject forbidden direct context targets", () => {
@@ -141,7 +264,7 @@ test("candidate source cases reject forbidden direct context targets", () => {
     operationIndex.content = operationIndex.content.replace(originalRow, replacementRow);
     operationIndex.bytes = Buffer.from(operationIndex.content, "utf8");
 
-    const result = validateCompleteDocumentSet(documentSet, { wholeSet: false });
+    const result = validateCandidateDocumentSet(documentSet, { wholeSet: false });
     assert.equal(
       result.diagnostics.some((entry) => (
         entry.severity === "error" && entry.ruleId === fixture.expectedRule
@@ -153,9 +276,9 @@ test("candidate source cases reject forbidden direct context targets", () => {
 });
 
 for (const profile of ["full", "compact"]) {
-  test(`${profile} candidate materializes tagged untagged and opaque raw representations`, () => {
+  test(`${profile} candidate materializes tagged untagged raw and adapter-defined representations`, () => {
     const documentSet = loadDocumentSet(path.join(candidatePath, profile));
-    const result = validateCompleteDocumentSet(documentSet);
+    const result = validateCandidateDocumentSet(documentSet);
     const channel = documentSet.files.find((entry) => (
       entry.path === "channels/representations.md"
     ));
@@ -164,6 +287,7 @@ for (const profile of ["full", "compact"]) {
     assert.notEqual(channel, undefined);
     assert.deepEqual(
       Object.fromEntries([
+        "r-csv-operation",
         "r-raw-operation",
         "r-tagged-operation",
         "r-untagged-operation"
@@ -177,6 +301,12 @@ for (const profile of ["full", "compact"]) {
         }))
       ])),
       {
+        "r-csv-operation": [{
+          direction: "SEND",
+          message: "csv-message",
+          path: "channels/representations.md",
+          reply: false
+        }],
         "r-raw-operation": [{
           direction: "SEND",
           message: "raw-message",
@@ -225,10 +355,28 @@ for (const profile of ["full", "compact"]) {
       "",
       "Opaque receipt bytes are limited to 2 MiB and carry a SHA-256 integrity digest."
     ].join("\n")), true);
+    const csvExample = profile === "full"
+      ? '"evt_03","created"'
+      : "evt_03,created";
+    assert.equal(channel.content.includes([
+      `**media_type**: ${CSV_MEDIA_TYPE}`,
+      "",
+      "**payload_nullable**: no",
+      "",
+      "```csv",
+      "event_id,status",
+      csvExample,
+      "```",
+      "",
+      "| Field | Type | Required | Nullable | Constraints / Meaning |",
+      "|---|---|---|---|---|",
+      "| event_id | string | yes | no | Synthetic event identifier |",
+      "| status | string | yes | no | Lifecycle status |"
+    ].join("\n")), true);
   });
 
   test(`${profile} candidate materializes required and supplemental contexts`, () => {
-    const result = validateCompleteDocumentSet(
+    const result = validateCandidateDocumentSet(
       loadDocumentSet(path.join(candidatePath, profile))
     );
 
@@ -251,6 +399,7 @@ for (const profile of ["full", "compact"]) {
             "workflows/state-unsupported.md"
           ]
         },
+        "r-csv-operation": { required: [], supplemental: [] },
         "r-raw-operation": { required: [], supplemental: [] },
         "r-tagged-operation": { required: [], supplemental: [] },
         "r-untagged-operation": { required: [], supplemental: [] },
@@ -345,7 +494,7 @@ for (const profile of ["full", "compact"]) {
 
   test(`${profile} candidate materializes every workflow section state in separate cases`, () => {
     const documentSet = loadDocumentSet(path.join(candidatePath, profile));
-    const result = validateCompleteDocumentSet(documentSet);
+    const result = validateCandidateDocumentSet(documentSet);
 
     assert.deepEqual(result.diagnostics, []);
     assert.deepEqual(
@@ -418,7 +567,7 @@ for (const profile of ["full", "compact"]) {
   });
 
   test(`${profile} candidate exposes overlapping source and operation shard retrieval`, () => {
-    const result = validateCompleteDocumentSet(
+    const result = validateCandidateDocumentSet(
       loadDocumentSet(path.join(candidatePath, profile))
     );
 
@@ -526,6 +675,7 @@ for (const profile of ["full", "compact"]) {
       matchedOperationNames: [
         "a-operation",
         "m-operation",
+        "r-csv-operation",
         "r-raw-operation",
         "r-tagged-operation",
         "r-untagged-operation",

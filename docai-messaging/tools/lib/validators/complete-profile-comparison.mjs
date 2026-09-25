@@ -4,6 +4,7 @@ import { scanMarkdown } from "../markdown.mjs";
 import { parsePipeTable } from "../tables.mjs";
 import { expandFieldDefaultsFile } from "./complete-field-defaults.mjs";
 import { expandSameAsFile } from "./complete-same-as.mjs";
+import { findExampleAdapter } from "./example-adapters.mjs";
 
 const STANDARD_METADATA_KEYS = [
   "docai-messaging",
@@ -62,7 +63,8 @@ function normalizedLine(text) {
 
 function normalizedContent(file, {
   afterLine = file.metadataLine,
-  beforeLine = file.identityLine
+  beforeLine = file.identityLine,
+  exampleAdapters = []
 } = {}) {
   const scanned = scanMarkdown({ text: file.content, file: file.path });
   if (scanned.value === null) return [];
@@ -72,9 +74,11 @@ function normalizedContent(file, {
   ));
   const content = [];
   let skippedHeadingLevel = null;
+  let representationMediaType = null;
   for (let index = 0; index < lines.length; index += 1) {
     const line = lines[index];
     const heading = line.inFence ? null : line.text.match(/^(#{1,6}) /);
+    if (heading !== null) representationMediaType = null;
     if (skippedHeadingLevel !== null) {
       if (heading === null || heading[1].length > skippedHeadingLevel) continue;
       skippedHeadingLevel = null;
@@ -85,6 +89,9 @@ function normalizedContent(file, {
       continue;
     }
     if (extensionMarker(line)) continue;
+    if (!line.inFence && line.text.startsWith("**media_type**: ")) {
+      representationMediaType = line.text.slice("**media_type**: ".length);
+    }
 
     const fence = fencesByStart.get(line.line);
     if (fence !== undefined) {
@@ -97,11 +104,26 @@ function normalizedContent(file, {
           value: parseExactJson(fenceLines.map((entry) => entry.text).join("\n"))
         });
       } else {
-        content.push({
-          type: "fence",
-          info: fence.info,
-          content: fenceLines.map((entry) => entry.text)
-        });
+        const adapter = findExampleAdapter(
+          exampleAdapters,
+          representationMediaType,
+          fence.info
+        );
+        content.push(adapter === null
+          ? {
+            type: "fence",
+            info: fence.info,
+            content: fenceLines.map((entry) => entry.text)
+          }
+          : {
+            type: "adapter-example",
+            adapter: {
+              adapterClass: adapter.adapterClass,
+              target: adapter.target,
+              ruleVersion: adapter.ruleVersion
+            },
+            value: adapter.decodeExample(fenceLines.map((entry) => entry.text).join("\n"))
+          });
       }
       while (lines[index + 1]?.line <= fence.endLine) index += 1;
       continue;
@@ -121,24 +143,25 @@ function normalizedContent(file, {
   return content;
 }
 
-export function canonicalRepresentationView(file, startLine, endLine) {
+export function canonicalRepresentationView(file, startLine, endLine, options = {}) {
   return normalizedContent(file, {
     afterLine: startLine - 1,
-    beforeLine: endLine
+    beforeLine: endLine,
+    exampleAdapters: options.exampleAdapters
   });
 }
 
-export function expandedComparisonView(file) {
+export function expandedComparisonView(file, options = {}) {
   const expandedFile = expandSameAsFile(expandFieldDefaultsFile(file));
   return {
     metadata: normalizedMetadata(expandedFile),
-    content: normalizedContent(expandedFile)
+    content: normalizedContent(expandedFile, { exampleAdapters: options.exampleAdapters })
   };
 }
 
-export function compareExpandedProfileFiles(fullFile, compactFile) {
+export function compareExpandedProfileFiles(fullFile, compactFile, options = {}) {
   return isDeepStrictEqual(
-    expandedComparisonView(fullFile),
-    expandedComparisonView(compactFile)
+    expandedComparisonView(fullFile, options),
+    expandedComparisonView(compactFile, options)
   );
 }

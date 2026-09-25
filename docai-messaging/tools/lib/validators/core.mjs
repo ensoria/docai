@@ -172,7 +172,7 @@ function validateIncompleteMetadata(documentSet, root) {
   return diagnostics;
 }
 
-export function validateCoreDocumentSet(documentSet) {
+export function validateCoreDocumentSet(documentSet, options = {}) {
   const root = documentSet.files.find((file) => file.path === "INDEX.md");
   const facts = {
     profileLink: null,
@@ -217,7 +217,7 @@ export function validateCoreDocumentSet(documentSet) {
     : { diagnostics: [], facts: { unprojectedOperations: null, unprojectedRetrieval: null } };
   facts.unprojectedOperations = unprojected.facts.unprojectedOperations;
   facts.unprojectedRetrieval = unprojected.facts.unprojectedRetrieval;
-  const conventions = validateCoreConventions(documentSet);
+  const conventions = validateCoreConventions(documentSet, options);
   facts.conventions = conventions.facts.conventions;
   const operationDefinitions = structure.diagnostics.length === 0 && routing.diagnostics.length === 0
     ? validateCoreOperations(documentSet, routing.facts)
@@ -226,7 +226,7 @@ export function validateCoreDocumentSet(documentSet) {
   const messages = structure.diagnostics.length === 0
     && routing.diagnostics.length === 0
     && operationDefinitions.diagnostics.length === 0
-    ? validateCoreMessages(documentSet, routing.facts, conventions.facts)
+    ? validateCoreMessages(documentSet, routing.facts, conventions.facts, options)
     : { diagnostics: [], facts: { failureShapes: null, messageDefinitions: null } };
   facts.messageDefinitions = messages.facts.messageDefinitions;
   facts.failureShapes = messages.facts.failureShapes;

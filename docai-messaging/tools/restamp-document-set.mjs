@@ -5,6 +5,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { TextDecoder } from "node:util";
 import { fileURLToPath } from "node:url";
+import { resolveTrustedCompleteExampleAdapters } from "./lib/complete-example-adapters.mjs";
 import { loadDocumentSet, validateDocumentSet } from "./lib/document-set.mjs";
 import {
   computeSetDigest,
@@ -73,15 +74,21 @@ function projectionIdentity(manifestPath) {
     if (descriptor !== null) fs.closeSync(descriptor);
     throw new TypeError(`Projection manifest cannot be read as a regular file: ${error.code ?? error.message}.`);
   }
+  let source;
   try {
-    new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+    source = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
   } catch {
     fs.closeSync(descriptor);
     throw new TypeError("Projection manifest must contain valid UTF-8 bytes.");
   }
   const projectionDigest = `sha256:${createHash("sha256").update(bytes).digest("hex")}`;
+  let manifest = null;
+  try { manifest = JSON.parse(source); } catch {
+    // Projection manifests are hashed as bytes; non-JSON manifests simply provide no trusted adapters.
+  }
   return {
     descriptor,
+    manifest,
     projectionDigest,
     projectionId: deriveShortId(projectionDigest),
     realPath,
@@ -215,7 +222,7 @@ function parsedIdentity(file) {
   return { value: parsed.value, line: identityLines[0].line };
 }
 
-function validateStagedSet(documentSet, stampedFiles, stagedFiles, expectedSetDigest) {
+function validateStagedSet(documentSet, stampedFiles, stagedFiles, expectedSetDigest, validationOptions) {
   const stagedByPath = new Map(stagedFiles.map((file) => [file.path, file]));
   const stampedByPath = new Map(stampedFiles.map((file) => [file.path, file]));
   const candidateFiles = documentSet.files.map((original) => {
@@ -230,7 +237,7 @@ function validateStagedSet(documentSet, stampedFiles, stagedFiles, expectedSetDi
   });
   const result = validateDocumentSet(
     { ...documentSet, files: candidateFiles, diagnostics: [] },
-    { wholeSet: true }
+    { wholeSet: true, ...validationOptions }
   );
   if (result.diagnostics.length > 0 || result.facts.computedSetDigest !== expectedSetDigest) {
     const ruleIds = result.diagnostics.map((entry) => entry.ruleId).join(", ") || "digest mismatch";
@@ -325,6 +332,9 @@ export function restampDocumentSet(
 
   try {
     const { projectionDigest, projectionId } = manifestIdentity;
+    const validationOptions = {
+      exampleAdapters: resolveTrustedCompleteExampleAdapters(manifestIdentity.manifest)
+    };
     const documentSet = loadDocumentSet(physicalRoot);
     if (documentSet.diagnostics.length > 0) {
       const summary = documentSet.diagnostics
@@ -381,7 +391,13 @@ export function restampDocumentSet(
       const stagedFiles = [];
       try {
         for (const file of changedFiles) stagedFiles.push(stageFile(file, openFile));
-        validateStagedSet(documentSet, stampedFiles, stagedFiles, setDigest);
+        validateStagedSet(
+          documentSet,
+          stampedFiles,
+          stagedFiles,
+          setDigest,
+          validationOptions
+        );
         replaceStagedFiles(stagedFiles, replaceFile, restoreFile);
       } catch (error) {
         for (const file of stagedFiles) removeFileIfPresent(file.stagePath);

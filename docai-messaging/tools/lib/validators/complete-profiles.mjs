@@ -78,7 +78,7 @@ function representationWithIdentity(representations, identity) {
   ));
 }
 
-function validatePairedFullSameAs(fullDocumentSet, sameAsFacts) {
+function validatePairedFullSameAs(fullDocumentSet, sameAsFacts, options) {
   const diagnostics = [];
   const representationsByPath = new Map();
   for (const fact of sameAsFacts) {
@@ -94,8 +94,8 @@ function validatePairedFullSameAs(fullDocumentSet, sameAsFacts) {
     const canonicalMatch = target !== undefined
       && reference !== undefined
       && isDeepStrictEqual(
-        canonicalRepresentationView(fullFile, target.line, target.endLine),
-        canonicalRepresentationView(fullFile, reference.line, reference.endLine)
+        canonicalRepresentationView(fullFile, target.line, target.endLine, options),
+        canonicalRepresentationView(fullFile, reference.line, reference.endLine, options)
       );
     if (!canonicalMatch) {
       diagnostics.push(diagnostic(
@@ -164,13 +164,14 @@ export function validateCompleteProfilePair(
   if (diagnostics.length === 0) {
     diagnostics.push(...validatePairedFullSameAs(
       fullDocumentSet,
-      compactResult.facts.complete.sameAs
+      compactResult.facts.complete.sameAs,
+      options
     ));
   }
   const comparisonMismatch = diagnostics.length === 0
     ? fullDocumentSet.files.find((fullFile) => {
       const compactFile = compactDocumentSet.files.find((file) => file.path === fullFile.path);
-      return compactFile === undefined || !compareExpandedProfileFiles(fullFile, compactFile);
+      return compactFile === undefined || !compareExpandedProfileFiles(fullFile, compactFile, options);
     })
     : undefined;
   if (comparisonMismatch !== undefined) {

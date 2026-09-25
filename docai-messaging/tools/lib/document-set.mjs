@@ -212,7 +212,7 @@ export function validateDocumentSet(documentSet, options = {}) {
     computedSetDigest: null,
     core: null
   };
-  const coreResult = validateCoreDocumentSet(documentSet);
+  const coreResult = validateCoreDocumentSet(documentSet, options);
   diagnostics.push(...coreResult.diagnostics);
   facts.core = coreResult.facts;
   if (root === undefined || root.metadata === null || root.identity === null) {

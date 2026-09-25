@@ -4,6 +4,44 @@
   "revision": "fixture-1",
   "representations": [
     {
+      "operation": "r-csv-operation",
+      "action": "SEND",
+      "channel": "representations.csv",
+      "message": "csv-message",
+      "form": "adapter-defined-structured",
+      "mediaType": "text/csv;charset=utf-8",
+      "payloadRequired": "yes",
+      "payloadNullable": "no",
+      "schemaFormat": "application/vnd.aai.asyncapi+json;version=3.1.0",
+      "schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "event_id",
+          "status"
+        ],
+        "properties": {
+          "event_id": {
+            "type": "string",
+            "description": "Synthetic event identifier"
+          },
+          "status": {
+            "type": "string",
+            "description": "Lifecycle status"
+          }
+        }
+      },
+      "wireAdapter": {
+        "ruleVersion": "complete-fixture-csv-1.0.0",
+        "fenceInfo": "csv",
+        "decodedValueModel": "one object from one unique header row and one data row"
+      },
+      "example": {
+        "event_id": "evt_03",
+        "status": "created"
+      }
+    },
+    {
       "operation": "r-raw-operation",
       "action": "SEND",
       "channel": "representations.raw",

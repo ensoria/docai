@@ -14,6 +14,7 @@
 
 | Action | Channel | Operation | Message | Task | Summary | Required context | Supplemental context |
 |---|---|---|---|---|---|---|---|
+| SEND | representations.csv | r-csv-operation | csv-message | representation task | Sends one adapter-defined CSV record | none | none |
 | SEND | representations.raw | r-raw-operation | raw-message | representation task | Sends an opaque raw receipt | none | none |
 | SEND | representations.tagged | r-tagged-operation | tagged-message | representation task | Sends a tagged lifecycle event | none | none |
 | RECEIVE | representations.untagged | r-untagged-operation | untagged-message | representation task | Receives an untagged lifecycle event | none | none |
@@ -24,4 +25,4 @@
 |---|---|---|---|---|---|---|---|
 | RECEIVE | z.events | z-operation | z-message | zeta task | Handles the zeta event range | none | none |
 
-> docai-identity: set_id: b32:26yz6sr2e5uoszbbex4vkm663a | projection_id: b32:edqbodvg6sp75kl3lpsrh37bfy
+> docai-identity: set_id: b32:wd5halve5xnlznddsehqy3lmzi | projection_id: b32:bnzbddlon6mxaiywtzumct7w6y

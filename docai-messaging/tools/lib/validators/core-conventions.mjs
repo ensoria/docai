@@ -140,7 +140,7 @@ function validateStates(file, markdown) {
   return { diagnostics, sections };
 }
 
-export function validateCoreConventions(documentSet) {
+export function validateCoreConventions(documentSet, options = {}) {
   const file = documentSet.files.find((entry) => entry.path === "CONVENTIONS.md");
   if (file === undefined) {
     return {
@@ -167,7 +167,8 @@ export function validateCoreConventions(documentSet) {
   const failureShapes = validateCommonFailureShapes(
     file,
     scanned.value,
-    hasObjectOpennessDefault(documentSet)
+    hasObjectOpennessDefault(documentSet),
+    options.exampleAdapters
   );
   return {
     diagnostics: [...states.diagnostics, ...failureShapes.diagnostics],

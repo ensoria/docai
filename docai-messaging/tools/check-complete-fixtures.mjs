@@ -3,6 +3,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { loadTrustedCompleteExampleAdapterOptions } from "./lib/complete-example-adapters.mjs";
 import { loadDocumentSet } from "./lib/document-set.mjs";
 import { validateCompleteProfilePair } from "./lib/validators/complete-profiles.mjs";
 
@@ -37,10 +38,13 @@ function checkCompleteFixtures(candidatePath) {
     );
   }
 
-  const result = validateCompleteProfilePair(
-    loadDocumentSet(fullPath),
-    loadDocumentSet(compactPath)
+  const fullDocumentSet = loadDocumentSet(fullPath);
+  const compactDocumentSet = loadDocumentSet(compactPath);
+  const options = loadTrustedCompleteExampleAdapterOptions(
+    candidatePath,
+    [fullDocumentSet, compactDocumentSet]
   );
+  const result = validateCompleteProfilePair(fullDocumentSet, compactDocumentSet, options);
   if (result.diagnostics.length > 0) {
     fail(result.diagnostics.map(formattedDiagnostic));
     return;

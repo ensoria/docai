@@ -9,6 +9,7 @@ import {
   validPostTableMarkerOrder as validMarkerOrder
 } from "./core-marker-order.mjs";
 import { validChannelAddress } from "./core-routing.mjs";
+import { findExampleAdapter } from "./example-adapters.mjs";
 
 const MESSAGE_NAME = /^[A-Za-z0-9._-]+$/;
 const FAILURE_SHAPE_LABEL = /^[a-z][a-z0-9_-]*$/;
@@ -848,7 +849,15 @@ function nonEmptyMarker(text, prefix) {
   return text?.startsWith(prefix) && text.length > prefix.length;
 }
 
-function validateVariantBlocks(file, markdown, region, direction, operation, message, formatUses, objectOpennessDefault, payloadNullable) {
+function exampleParser(mediaType, fence, exampleAdapters) {
+  if (jsonRepresentationMediaType(mediaType)) {
+    return fence.info === "json" ? () => parseExactJson(fence.content) : null;
+  }
+  const adapter = findExampleAdapter(exampleAdapters, mediaType, fence.info);
+  return adapter === null ? null : () => adapter.decodeExample(fence.content);
+}
+
+function validateVariantBlocks(file, markdown, region, mediaType, direction, operation, message, formatUses, objectOpennessDefault, payloadNullable, exampleAdapters) {
   const markers = region.filter((line) => line.text.startsWith("**variant**: "));
   if (markers.length === 0) return { diagnostics: [], valid: false };
   const diagnostics = [];
@@ -892,8 +901,9 @@ function validateVariantBlocks(file, markdown, region, direction, operation, mes
     const fence = exampleFence(markdown, marker.line, blockEnd);
     const table = fence === null ? null : tableFollowingFence(markdown, fence, blockEnd);
     let example = null;
-    if (fence !== null && fence.info === "json") {
-      try { example = parseExactJson(fence.content); } catch { example = null; }
+    const parseExample = fence === null ? null : exampleParser(mediaType, fence, exampleAdapters);
+    if (parseExample !== null) {
+      try { example = parseExample(); } catch { example = null; }
     }
     if (fence === null || example === null || table === null) {
       diagnostics.push(...payloadDiagnostic("DM-MSG-006", file, marker.line, "Every variant requires one complete adapter-correct example and field table."));
@@ -923,7 +933,7 @@ function validateVariantBlocks(file, markdown, region, direction, operation, mes
   return { diagnostics, valid: true };
 }
 
-function validateExpandedRepresentation(file, markdown, region, direction, operation, name, formatUses, objectOpennessDefault) {
+function validateExpandedRepresentation(file, markdown, region, direction, operation, name, formatUses, objectOpennessDefault, exampleAdapters) {
   const diagnostics = [];
   const mediaLine = region[0];
   const mediaType = canonicalMediaType(mediaLine.text.slice("**media_type**: ".length));
@@ -978,7 +988,7 @@ function validateExpandedRepresentation(file, markdown, region, direction, opera
     }
     return { diagnostics, mediaType };
   }
-  const variants = validateVariantBlocks(file, markdown, remaining, direction, operation, name, formatUses, objectOpennessDefault, nullable);
+  const variants = validateVariantBlocks(file, markdown, remaining, mediaType, direction, operation, name, formatUses, objectOpennessDefault, nullable, exampleAdapters);
   if (variants.valid) {
     diagnostics.push(...variants.diagnostics);
     const firstVariant = remaining.findIndex((line) => line.text.startsWith("**variant**: "));
@@ -990,11 +1000,11 @@ function validateExpandedRepresentation(file, markdown, region, direction, opera
   const regionEnd = region.at(-1)?.line + 1 ?? nullableLine.line + 1;
   const fence = exampleFence(markdown, nullableLine.line, regionEnd);
   const table = fence === null ? null : tableFollowingFence(markdown, fence, regionEnd);
+  const parseExample = fence === null ? null : exampleParser(mediaType, fence, exampleAdapters);
   let example = null;
   if (fence === null
     || remaining[0]?.line !== fence.startLine
-    || fence.info !== "json"
-    || !jsonRepresentationMediaType(mediaType)
+    || parseExample === null
     || table === null) {
     diagnostics.push(...payloadDiagnostic("DM-MSG-004", file, nullableLine.line, "A complete structured representation requires one adapter-correct concrete example followed by its field table."));
     return { diagnostics, mediaType };
@@ -1013,8 +1023,8 @@ function validateExpandedRepresentation(file, markdown, region, direction, opera
       "An additional-unnamed-field marker requires the canonical field table without an example."
     ));
   }
-  try { example = parseExactJson(fence.content); } catch {
-    diagnostics.push(...payloadDiagnostic("DM-MSG-005", file, fence.startLine, "A JSON payload example must parse exactly without duplicate object names or numeric narrowing."));
+  try { example = parseExample(); } catch {
+    diagnostics.push(...payloadDiagnostic("DM-MSG-005", file, fence.startLine, "A payload example must parse exactly under its selected wire adapter."));
     return { diagnostics, mediaType };
   }
   if (example === null && nullable !== "yes") {
@@ -1025,7 +1035,7 @@ function validateExpandedRepresentation(file, markdown, region, direction, opera
   return { diagnostics, mediaType };
 }
 
-function validatePayload(file, markdown, message, direction, endLine, reply, operation, objectOpennessDefault) {
+function validatePayload(file, markdown, message, direction, endLine, reply, operation, objectOpennessDefault, exampleAdapters = []) {
   const level = message.level + 1;
   const payload = markdown.headings.find((heading) => (
     heading.level === level && heading.text === "Payload"
@@ -1119,7 +1129,7 @@ function validatePayload(file, markdown, message, direction, endLine, reply, ope
       }
       continue;
     }
-    const parsed = validateExpandedRepresentation(file, markdown, region, direction, operation, messageName(message), formatUses, objectOpennessDefault);
+    const parsed = validateExpandedRepresentation(file, markdown, region, direction, operation, messageName(message), formatUses, objectOpennessDefault, exampleAdapters);
     diagnostics.push(...parsed.diagnostics);
     if (parsed.mediaType !== null) mediaTypes.push(parsed.mediaType);
   }
@@ -1729,7 +1739,7 @@ function failureShapeFormatUses(markdown, startLine, endLine, operation, label) 
   return uses;
 }
 
-function validateFailureShape(file, markdown, marker, endLine, ruleId, operation, objectOpennessDefault) {
+function validateFailureShape(file, markdown, marker, endLine, ruleId, operation, objectOpennessDefault, exampleAdapters = []) {
   const diagnostics = [];
   const lines = sourceLines(markdown, marker.line, endLine);
   const content = nonEmptyLines(lines);
@@ -1803,7 +1813,8 @@ function validateFailureShape(file, markdown, marker, endLine, ruleId, operation
     endLine,
     false,
     operation,
-    objectOpennessDefault
+    objectOpennessDefault,
+    exampleAdapters
   );
   diagnostics.push(...remapDiagnostics(payload.diagnostics, ruleId));
   const formatUses = failureShapeFormatUses(
@@ -1826,7 +1837,7 @@ function validateFailureShape(file, markdown, marker, endLine, ruleId, operation
   };
 }
 
-export function validateCommonFailureShapes(file, markdown, objectOpennessDefault) {
+export function validateCommonFailureShapes(file, markdown, objectOpennessDefault, exampleAdapters = []) {
   const errorHeading = markdown.headings.find((heading) => (
     heading.level === 2 && heading.text === "Error Handling"
   ));
@@ -1862,7 +1873,8 @@ export function validateCommonFailureShapes(file, markdown, objectOpennessDefaul
       commonMarkers[index + 1]?.line ?? errorEnd,
       "DM-CONV-004",
       null,
-      objectOpennessDefault
+      objectOpennessDefault,
+      exampleAdapters
     );
     diagnostics.push(...parsed.diagnostics);
     definitions.push(parsed.definition);
@@ -1920,7 +1932,8 @@ function validateFailureHandling(
   operationEnd,
   operation,
   commonShapes,
-  objectOpennessDefault
+  objectOpennessDefault,
+  exampleAdapters
 ) {
   const heading = markdown.headings.find((entry) => (
     entry.level === 3
@@ -2017,7 +2030,8 @@ function validateFailureHandling(
       shapeMarkers[index + 1]?.line ?? endLine,
       "DM-FAIL-003",
       operation,
-      objectOpennessDefault
+      objectOpennessDefault,
+      exampleAdapters
     );
     diagnostics.push(...parsed.diagnostics);
     definitions.push(parsed.definition);
@@ -2032,7 +2046,8 @@ function parseMessageBlocks(
   operationEnd,
   routedRow,
   objectOpennessDefault,
-  commonShapes
+  commonShapes,
+  exampleAdapters
 ) {
   const diagnostics = [];
   const definitions = [];
@@ -2083,7 +2098,8 @@ function parseMessageBlocks(
     operationEnd,
     operation,
     commonShapes,
-    objectOpennessDefault
+    objectOpennessDefault,
+    exampleAdapters
   );
   diagnostics.push(...failures.diagnostics);
 
@@ -2112,7 +2128,8 @@ function parseMessageBlocks(
         endLine,
         reply,
         operation,
-        objectOpennessDefault
+        objectOpennessDefault,
+        exampleAdapters
       );
     diagnostics.push(...payload.diagnostics);
     definitions.push({
@@ -2133,7 +2150,7 @@ function parseMessageBlocks(
   };
 }
 
-function parseMessageFile(file, routedRows, objectOpennessDefault, commonShapes) {
+function parseMessageFile(file, routedRows, objectOpennessDefault, commonShapes, exampleAdapters) {
   const scanned = scanMarkdown({ text: file.content, file: file.path });
   if (scanned.value === null) {
     return { commonReferences: [], diagnostics: scanned.diagnostics, failureShapes: [], definitions: [] };
@@ -2156,7 +2173,8 @@ function parseMessageFile(file, routedRows, objectOpennessDefault, commonShapes)
       endLine,
       routedRow,
       objectOpennessDefault,
-      commonShapes
+      commonShapes,
+      exampleAdapters
     );
     diagnostics.push(...parsed.diagnostics);
     definitions.push(...parsed.definitions);
@@ -2181,7 +2199,7 @@ export function hasObjectOpennessDefault(documentSet) {
     || /additional properties[^\n]*allowed[^\n]*(?:string|int|number|bool|null|any|object|map<string, [^>]+>)[^\n]*by default|allow[^\n]*additional properties[^\n]*(?:string|int|number|bool|null|any|object|map<string, [^>]+>)[^\n]*by default/i.test(content);
 }
 
-export function validateCoreMessages(documentSet, routingFacts, conventionFacts = {}) {
+export function validateCoreMessages(documentSet, routingFacts, conventionFacts = {}, options = {}) {
   const rows = routingFacts.operations?.rows ?? [];
   const paths = [...new Set(rows.map((row) => row.channelPath))];
   const diagnostics = [];
@@ -2197,7 +2215,8 @@ export function validateCoreMessages(documentSet, routingFacts, conventionFacts 
       file,
       rows.filter((row) => row.channelPath === path),
       objectOpennessDefault,
-      commonShapes
+      commonShapes,
+      options.exampleAdapters
     );
     diagnostics.push(...parsed.diagnostics);
     definitions.push(...parsed.definitions);

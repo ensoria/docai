@@ -1,5 +1,67 @@
 > docai-messaging: 0.17.1 | profile: compact | perspective: storefront | coverage: complete | knowledge: complete | source_refs: complete-representations
 
+## SEND representations.csv (r-csv-operation)
+
+Sends one lifecycle record through the publication-scoped CSV wire adapter.
+
+### Behavior
+
+- side_effects: none
+- idempotency: none
+- preconditions: none
+- authorization: none
+- delivery: none
+- ordering: none
+
+### Operation Bindings
+
+none
+
+### Channel
+
+- Parameters: none
+- Bindings: none
+
+### Message csv-message
+
+#### Headers
+
+none
+
+#### Bindings
+
+none
+
+#### Payload
+
+**payload_required**: yes
+
+**media_type**: text/csv;charset=utf-8
+
+**payload_nullable**: no
+
+```csv
+event_id,status
+evt_03,created
+```
+
+| Field | Type | Required | Nullable | Constraints / Meaning |
+|---|---|---|---|---|
+| event_id | string | yes | no | Synthetic event identifier |
+| status | string | yes | no | Lifecycle status |
+
+### Reply
+
+none
+
+### Failure Handling
+
+none
+
+### Related
+
+none
+
 ## SEND representations.raw (r-raw-operation)
 
 Sends an authoritatively opaque receipt payload.
@@ -200,4 +262,4 @@ none
 
 none
 
-> docai-identity: set_id: b32:26yz6sr2e5uoszbbex4vkm663a | projection_id: b32:edqbodvg6sp75kl3lpsrh37bfy
+> docai-identity: set_id: b32:wd5halve5xnlznddsehqy3lmzi | projection_id: b32:bnzbddlon6mxaiywtzumct7w6y
