@@ -10,10 +10,18 @@
 |---|---|---|---|---|---|---|---|
 | SEND | a.events | a-operation | a-message | alpha task | Handles the alpha event range | workflows/alpha-delivery.md | workflows/alpha-observability.md, workflows/state-none.md, workflows/state-unknown.md, workflows/state-unsupported.md |
 
+### channels/representations.md
+
+| Action | Channel | Operation | Message | Task | Summary | Required context | Supplemental context |
+|---|---|---|---|---|---|---|---|
+| SEND | representations.raw | r-raw-operation | raw-message | representation task | Sends an opaque raw receipt | none | none |
+| SEND | representations.tagged | r-tagged-operation | tagged-message | representation task | Sends a tagged lifecycle event | none | none |
+| RECEIVE | representations.untagged | r-untagged-operation | untagged-message | representation task | Receives an untagged lifecycle event | none | none |
+
 ### channels/zeta.md
 
 | Action | Channel | Operation | Message | Task | Summary | Required context | Supplemental context |
 |---|---|---|---|---|---|---|---|
 | RECEIVE | z.events | z-operation | z-message | zeta task | Handles the zeta event range | none | none |
 
-> docai-identity: set_id: b32:wwjwtqb7piujhgbtqfgn3nrdre | projection_id: b32:failiexdtgkqwkei25kb4ivgn4
+> docai-identity: set_id: b32:pl6poououn54fstbkz7bh7obsi | projection_id: b32:edqbodvg6sp75kl3lpsrh37bfy

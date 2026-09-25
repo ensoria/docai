@@ -8,4 +8,4 @@
 |---|---|---|---|---|---|---|
 | storefront-asyncapi-3.1.0 | asyncapi | AsyncAPI 3.1.0 | urn:example:storefront-order-messaging | 1.0.0 | storefront.asyncapi.json | 1.0.0 |
 
-> docai-identity: set_id: b32:awkmwns74wfowjncx5es6xfm7y | projection_id: b32:failiexdtgkqwkei25kb4ivgn4
+> docai-identity: set_id: b32:26yz6sr2e5uoszbbex4vkm663a | projection_id: b32:edqbodvg6sp75kl3lpsrh37bfy

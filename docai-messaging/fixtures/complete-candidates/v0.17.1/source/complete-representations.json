@@ -1,0 +1,69 @@
+{
+  "sourceId": "complete-representations",
+  "kind": "behavior-configuration",
+  "revision": "fixture-1",
+  "representations": [
+    {
+      "operation": "r-raw-operation",
+      "action": "SEND",
+      "channel": "representations.raw",
+      "message": "raw-message",
+      "form": "opaque-raw",
+      "mediaType": "application/octet-stream",
+      "payloadRequired": "yes",
+      "description": "Opaque receipt bytes are limited to 2 MiB and carry a SHA-256 integrity digest."
+    },
+    {
+      "operation": "r-tagged-operation",
+      "action": "SEND",
+      "channel": "representations.tagged",
+      "message": "tagged-message",
+      "form": "tagged-variants",
+      "mediaType": "application/json",
+      "payloadRequired": "yes",
+      "payloadNullable": "no",
+      "discriminator": "kind",
+      "variants": [
+        {
+          "value": "created",
+          "example": {
+            "kind": "created",
+            "id": "evt_01"
+          }
+        },
+        {
+          "value": "rejected",
+          "example": {
+            "kind": "rejected",
+            "reason": "invalid"
+          }
+        }
+      ]
+    },
+    {
+      "operation": "r-untagged-operation",
+      "action": "RECEIVE",
+      "channel": "representations.untagged",
+      "message": "untagged-message",
+      "form": "untagged-variants",
+      "mediaType": "application/json",
+      "payloadPresence": "always",
+      "payloadNullable": "no",
+      "selectionRule": "The receiver identifies the applicable lifecycle shape from the complete decoded value.",
+      "variants": [
+        {
+          "label": "archived",
+          "example": {
+            "reason": "expired"
+          }
+        },
+        {
+          "label": "restored",
+          "example": {
+            "id": "evt_02"
+          }
+        }
+      ]
+    }
+  ]
+}

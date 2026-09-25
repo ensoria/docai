@@ -17,7 +17,7 @@ Compact set: ../compact/
 
 | Tasks | Actions | First channel | Last channel | First operation | Last operation | First message | Last message | Summary | Details |
 |---|---|---|---|---|---|---|---|---|---|
-| alpha task; zeta task | SEND; RECEIVE | a.events | z.events | a-operation | z-operation | a-message | z-message | Broad operation range | indexes/operations-broad.md |
+| alpha task; representation task; zeta task | SEND; RECEIVE | a.events | z.events | a-operation | z-operation | a-message | z-message | Broad operation range | indexes/operations-broad.md |
 | middle task | SEND | m.events | m.events | m-operation | m-operation | m-message | m-message | Middle operation range | indexes/operations-middle.md |
 
 ## Workflows
@@ -30,4 +30,4 @@ Compact set: ../compact/
 | State unknown | Exercise every workflow section's whole-section unknown state | workflows/state-unknown.md |
 | State unsupported | Exercise every workflow section's replacement unsupported state | workflows/state-unsupported.md |
 
-> docai-identity: set_id: b32:wwjwtqb7piujhgbtqfgn3nrdre | projection_id: b32:failiexdtgkqwkei25kb4ivgn4 | set_digest: sha256:b59369c03f7a28939833814cddb62389b2c66bb6ad765592d95e128ec3b853c4 | projection_digest: sha256:2810b412e399950b2888d7541e22a66f47b61452a3c32b53e4e7edccbb4511ea
+> docai-identity: set_id: b32:pl6poououn54fstbkz7bh7obsi | projection_id: b32:edqbodvg6sp75kl3lpsrh37bfy | set_digest: sha256:7afcf73a8ea37bc2ca61567e13fdc1924505b6d548e3e04ef29628486178fae1 | projection_digest: sha256:20e0170ea6f49ffea97b5be513efe12e092383c219ec05ab0ca53dbc1bef8bdc

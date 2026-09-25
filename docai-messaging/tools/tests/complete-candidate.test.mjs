@@ -50,6 +50,63 @@ test("binds the complete context source scenario into the projection manifest", 
   });
 });
 
+test("binds the advanced representation source into the projection manifest", () => {
+  const sourcePath = path.join(candidatePath, "source", "complete-representations.json");
+  assert.equal(fs.existsSync(sourcePath), true, "the advanced representation source exists");
+
+  const sourceBytes = fs.readFileSync(sourcePath);
+  const source = JSON.parse(sourceBytes.toString("utf8"));
+  const manifest = JSON.parse(fs.readFileSync(
+    path.join(candidatePath, "source", "projection-input-manifest.json"),
+    "utf8"
+  ));
+  const manifestSource = manifest.sources.find((entry) => (
+    entry.sourceId === "complete-representations"
+  ));
+
+  assert.deepEqual(manifestSource, {
+    location: "complete-representations.json",
+    revision: "fixture-1",
+    sha256: `sha256:${createHash("sha256").update(sourceBytes).digest("hex")}`,
+    sourceId: "complete-representations",
+    specification: "none",
+    type: "behavior-configuration"
+  });
+  assert.deepEqual(source.representations.map((entry) => ({
+    operation: entry.operation,
+    action: entry.action,
+    channel: entry.channel,
+    message: entry.message,
+    form: entry.form,
+    mediaType: entry.mediaType
+  })), [
+    {
+      operation: "r-raw-operation",
+      action: "SEND",
+      channel: "representations.raw",
+      message: "raw-message",
+      form: "opaque-raw",
+      mediaType: "application/octet-stream"
+    },
+    {
+      operation: "r-tagged-operation",
+      action: "SEND",
+      channel: "representations.tagged",
+      message: "tagged-message",
+      form: "tagged-variants",
+      mediaType: "application/json"
+    },
+    {
+      operation: "r-untagged-operation",
+      action: "RECEIVE",
+      channel: "representations.untagged",
+      message: "untagged-message",
+      form: "untagged-variants",
+      mediaType: "application/json"
+    }
+  ]);
+});
+
 test("candidate source cases reject forbidden direct context targets", () => {
   const source = JSON.parse(fs.readFileSync(
     path.join(candidatePath, "source", "complete-contexts.json"),
@@ -96,6 +153,80 @@ test("candidate source cases reject forbidden direct context targets", () => {
 });
 
 for (const profile of ["full", "compact"]) {
+  test(`${profile} candidate materializes tagged untagged and opaque raw representations`, () => {
+    const documentSet = loadDocumentSet(path.join(candidatePath, profile));
+    const result = validateCompleteDocumentSet(documentSet);
+    const channel = documentSet.files.find((entry) => (
+      entry.path === "channels/representations.md"
+    ));
+
+    assert.deepEqual(result.diagnostics, []);
+    assert.notEqual(channel, undefined);
+    assert.deepEqual(
+      Object.fromEntries([
+        "r-raw-operation",
+        "r-tagged-operation",
+        "r-untagged-operation"
+      ].map((operation) => [
+        operation,
+        result.facts.core.messageDefinitions.byOperation[operation].map((entry) => ({
+          direction: entry.direction,
+          message: entry.name,
+          path: entry.path,
+          reply: entry.reply
+        }))
+      ])),
+      {
+        "r-raw-operation": [{
+          direction: "SEND",
+          message: "raw-message",
+          path: "channels/representations.md",
+          reply: false
+        }],
+        "r-tagged-operation": [{
+          direction: "SEND",
+          message: "tagged-message",
+          path: "channels/representations.md",
+          reply: false
+        }],
+        "r-untagged-operation": [{
+          direction: "RECEIVE",
+          message: "untagged-message",
+          path: "channels/representations.md",
+          reply: false
+        }]
+      }
+    );
+    assert.equal(channel.content.includes([
+      "**variant**: kind = \"created\"",
+      "",
+      "```json",
+      "{\"kind\":\"created\",\"id\":\"evt_01\"}",
+      "```",
+      "",
+      "| Field | Type | Required | Nullable | Constraints / Meaning |",
+      "|---|---|---|---|---|",
+      "| kind | string | yes | no | `const=\"created\"`; Variant discriminator |",
+      "| id | string | yes | no | Synthetic event identifier |"
+    ].join("\n")), true);
+    assert.equal(channel.content.includes([
+      "**variant**: archived",
+      "",
+      "```json",
+      "{\"reason\":\"expired\"}",
+      "```",
+      "",
+      "| Field | Type | Presence | Nullable | Meaning |",
+      "|---|---|---|---|---|",
+      "| reason | string | always | no | Archival reason |"
+    ].join("\n")), true);
+    assert.equal(channel.content.includes([
+      "**media_type**: application/octet-stream",
+      "",
+      "Opaque receipt bytes are limited to 2 MiB and carry a SHA-256 integrity digest."
+    ].join("\n")), true);
+  });
+
   test(`${profile} candidate materializes required and supplemental contexts`, () => {
     const result = validateCompleteDocumentSet(
       loadDocumentSet(path.join(candidatePath, profile))
@@ -120,6 +251,9 @@ for (const profile of ["full", "compact"]) {
             "workflows/state-unsupported.md"
           ]
         },
+        "r-raw-operation": { required: [], supplemental: [] },
+        "r-tagged-operation": { required: [], supplemental: [] },
+        "r-untagged-operation": { required: [], supplemental: [] },
         "z-operation": { required: [], supplemental: [] },
         "m-operation": {
           required: [],
@@ -315,6 +449,7 @@ for (const profile of ["full", "compact"]) {
         requestedIds: ["storefront-asyncapi-3.1.0"],
         resolvedIds: [
           "complete-contexts",
+          "complete-representations",
           "storefront-asyncapi-3.1.0",
           "storefront-behavior"
         ],
@@ -327,19 +462,29 @@ for (const profile of ["full", "compact"]) {
     assert.deepEqual(
       result.facts.core.sourceResolutions["indexes/sources-contexts-behavior.md"],
       {
-        requestedIds: ["complete-contexts", "storefront-behavior"],
-        resolvedIds: ["complete-contexts", "storefront-behavior"],
+        requestedIds: [
+          "complete-contexts",
+          "complete-representations",
+          "storefront-behavior"
+        ],
+        resolvedIds: [
+          "complete-contexts",
+          "complete-representations",
+          "storefront-behavior"
+        ],
         loadedPaths: ["indexes/sources-contexts-behavior.md"]
       }
     );
     assert.deepEqual(result.facts.core.sourceResolutions["INDEX.md"], {
       requestedIds: [
         "complete-contexts",
+        "complete-representations",
         "storefront-asyncapi-3.1.0",
         "storefront-behavior"
       ],
       resolvedIds: [
         "complete-contexts",
+        "complete-representations",
         "storefront-asyncapi-3.1.0",
         "storefront-behavior"
       ],
@@ -378,7 +523,14 @@ for (const profile of ["full", "compact"]) {
         "indexes/operations-broad.md",
         "indexes/operations-middle.md"
       ],
-      matchedOperationNames: ["a-operation", "m-operation", "z-operation"],
+      matchedOperationNames: [
+        "a-operation",
+        "m-operation",
+        "r-raw-operation",
+        "r-tagged-operation",
+        "r-untagged-operation",
+        "z-operation"
+      ],
       loadedSourceIndexPaths: [
         "indexes/sources-asyncapi.md",
         "indexes/sources-contexts-behavior.md"
