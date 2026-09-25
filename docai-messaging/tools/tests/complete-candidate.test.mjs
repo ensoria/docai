@@ -164,6 +164,22 @@ test("binds the advanced representation source into the projection manifest", ()
       mediaType: "text/csv;charset=utf-8"
     },
     {
+      operation: "r-json-original-operation",
+      action: "SEND",
+      channel: "representations.json-original",
+      message: "json-original-message",
+      form: "structured-json",
+      mediaType: "application/json"
+    },
+    {
+      operation: "r-json-reuse-operation",
+      action: "SEND",
+      channel: "representations.json-reuse",
+      message: "json-reuse-message",
+      form: "structured-json",
+      mediaType: "application/json"
+    },
+    {
       operation: "r-raw-operation",
       action: "SEND",
       channel: "representations.raw",
@@ -230,6 +246,246 @@ test("binds the advanced representation source into the projection manifest", ()
   });
 });
 
+test("candidate source defines two equal JSON representations for compact reuse", () => {
+  const source = JSON.parse(fs.readFileSync(
+    path.join(candidatePath, "source", "complete-representations.json"),
+    "utf8"
+  ));
+  const reusable = source.representations.filter((entry) => (
+    entry.operation === "r-json-original-operation"
+      || entry.operation === "r-json-reuse-operation"
+  ));
+
+  assert.deepEqual(reusable, [
+    {
+      operation: "r-json-original-operation",
+      action: "SEND",
+      channel: "representations.json-original",
+      message: "json-original-message",
+      form: "structured-json",
+      mediaType: "application/json",
+      payloadRequired: "yes",
+      payloadNullable: "no",
+      schemaFormat: "application/vnd.aai.asyncapi+json;version=3.1.0",
+      schema: {
+        type: "object",
+        additionalProperties: false,
+        required: ["event_id", "status"],
+        properties: {
+          event_id: {
+            type: "string",
+            description: "Synthetic event identifier"
+          },
+          status: {
+            type: "string",
+            description: "Lifecycle status"
+          }
+        }
+      },
+      example: { event_id: "evt_04", status: "created" }
+    },
+    {
+      operation: "r-json-reuse-operation",
+      action: "SEND",
+      channel: "representations.json-reuse",
+      message: "json-reuse-message",
+      form: "structured-json",
+      mediaType: "application/json",
+      payloadRequired: "yes",
+      payloadNullable: "no",
+      schemaFormat: "application/vnd.aai.asyncapi+json;version=3.1.0",
+      schema: {
+        type: "object",
+        additionalProperties: false,
+        required: ["event_id", "status"],
+        properties: {
+          event_id: {
+            type: "string",
+            description: "Synthetic event identifier"
+          },
+          status: {
+            type: "string",
+            description: "Lifecycle status"
+          }
+        }
+      },
+      example: { event_id: "evt_04", status: "created" }
+    }
+  ]);
+});
+
+test("compact candidate composes one-line JSON field defaults and same_as", () => {
+  const full = loadDocumentSet(path.join(candidatePath, "full"));
+  const compact = loadDocumentSet(path.join(candidatePath, "compact"));
+  const compactResult = validateCandidateDocumentSet(compact);
+  const pairResult = validateCompleteProfilePair(full, compact, {
+    exampleAdapters: candidateExampleAdapters
+  });
+  const fullChannel = full.files.find((entry) => entry.path === "channels/representations.md");
+  const compactChannel = compact.files.find((entry) => (
+    entry.path === "channels/representations.md"
+  ));
+
+  assert.deepEqual(compactResult.diagnostics, []);
+  assert.deepEqual(pairResult.diagnostics, []);
+  assert.notEqual(fullChannel, undefined);
+  assert.notEqual(compactChannel, undefined);
+  assert.equal(fullChannel.content.includes([
+    "```json",
+    "{",
+    "  \"event_id\": \"evt_04\",",
+    "  \"status\": \"created\"",
+    "}",
+    "```",
+    "",
+    "| Field | Type | Required | Nullable | Constraints / Meaning |",
+    "|---|---|---|---|---|",
+    "| event_id | string | yes | no | Synthetic event identifier |",
+    "| status | string | yes | no | Lifecycle status |"
+  ].join("\n")), true);
+  assert.equal(compactChannel.content.includes([
+    "```json",
+    "{\"status\":\"created\",\"event_id\":\"evt_04\"}",
+    "```",
+    "",
+    "**field_defaults**: Required=yes | Nullable=no",
+    "",
+    "| Field | Type | Constraints / Meaning |",
+    "|---|---|---|",
+    "| event_id | string | Synthetic event identifier |",
+    "| status | string | Lifecycle status |"
+  ].join("\n")), true);
+  assert.equal(compactChannel.content.includes(
+    "**same_as**: Operation r-json-original-operation Message json-original-message "
+      + "Payload application/json"
+  ), true);
+  assert.deepEqual(compactResult.facts.complete.fieldDefaults.map((entry) => ({
+    path: entry.path,
+    columns: entry.columns,
+    logicalHeader: entry.logicalHeader
+  })), [{
+    path: "channels/representations.md",
+    columns: [
+      { column: "Required", value: "yes" },
+      { column: "Nullable", value: "no" }
+    ],
+    logicalHeader: ["Field", "Type", "Required", "Nullable", "Constraints / Meaning"]
+  }]);
+  assert.deepEqual(compactResult.facts.complete.sameAs.map((entry) => ({
+    path: entry.path,
+    reference: entry.reference,
+    target: {
+      operation: entry.target.operation,
+      message: entry.target.message,
+      reply: entry.target.reply,
+      mediaType: entry.target.mediaType
+    }
+  })), [{
+    path: "channels/representations.md",
+    reference: {
+      operation: "r-json-reuse-operation",
+      message: "json-reuse-message",
+      reply: false,
+      mediaType: "application/json"
+    },
+    target: {
+      operation: "r-json-original-operation",
+      message: "json-original-message",
+      reply: false,
+      mediaType: "application/json"
+    }
+  }]);
+});
+
+for (const profile of ["full", "compact"]) {
+  test(`${profile} candidate uses selective convention retrieval with workflow fallbacks`, () => {
+    const result = validateCandidateDocumentSet(
+      loadDocumentSet(path.join(candidatePath, profile))
+    );
+
+    assert.deepEqual(result.diagnostics, []);
+    const retrieval = Object.fromEntries(
+      result.facts.complete.conventionRetrieval.operations.map((entry) => [
+        entry.operation,
+        entry
+      ])
+    );
+    assert.deepEqual(retrieval["r-json-original-operation"], {
+      operation: "r-json-original-operation",
+      selector: ["Data Representation"],
+      requiredWorkflowPaths: [],
+      trusted: { wholeFile: false, sections: ["Data Representation"] },
+      untrusted: {
+        wholeFile: true,
+        sections: [
+          "Environments",
+          "Protocols and Bindings",
+          "Authentication",
+          "Connection and Session",
+          "Serialization",
+          "Message Envelope",
+          "Delivery Semantics",
+          "Idempotency and Deduplication",
+          "Ordering",
+          "Error Handling",
+          "Request-Reply",
+          "Schema Evolution",
+          "Data Representation",
+          "Empty and Omitted Values",
+          "Rate Limits and Quotas"
+        ]
+      },
+      supplementalWorkflows: []
+    });
+    assert.deepEqual({
+      selector: retrieval["a-operation"].selector,
+      requiredWorkflowPaths: retrieval["a-operation"].requiredWorkflowPaths,
+      trusted: retrieval["a-operation"].trusted,
+      supplementalWorkflows: retrieval["a-operation"].supplementalWorkflows.map((entry) => ({
+        path: entry.path,
+        reason: entry.reason,
+        wholeFile: entry.wholeFile
+      }))
+    }, {
+      selector: "none",
+      requiredWorkflowPaths: ["workflows/alpha-delivery.md"],
+      trusted: { wholeFile: false, sections: [] },
+      supplementalWorkflows: [
+        {
+          path: "workflows/alpha-observability.md",
+          reason: "supplemental-workflow",
+          wholeFile: true
+        },
+        {
+          path: "workflows/state-none.md",
+          reason: "supplemental-workflow",
+          wholeFile: true
+        },
+        {
+          path: "workflows/state-unknown.md",
+          reason: "supplemental-workflow",
+          wholeFile: true
+        },
+        {
+          path: "workflows/state-unsupported.md",
+          reason: "supplemental-workflow",
+          wholeFile: true
+        }
+      ]
+    });
+    assert.deepEqual(
+      result.facts.complete.conventionRetrieval.directWorkflows.map((entry) => entry.path),
+      [
+        "workflows/alpha-delivery.md",
+        "workflows/alpha-observability.md",
+        "workflows/state-none.md",
+        "workflows/state-unknown.md",
+        "workflows/state-unsupported.md"
+      ]
+    );
+  });
+}
+
 test("candidate source cases reject forbidden direct context targets", () => {
   const source = JSON.parse(fs.readFileSync(
     path.join(candidatePath, "source", "complete-contexts.json"),
@@ -252,14 +508,14 @@ test("candidate source cases reject forbidden direct context targets", () => {
     }
   ]);
 
-  const originalRow = "| SEND | m.events | m-operation | m-message | middle task | Handles the middle event range | none | references/middle-operations.md |";
+  const originalRow = "| SEND | m.events | m-operation | m-message | middle task | Handles the middle event range | none | references/middle-operations.md | none |";
   for (const fixture of source.contextTargetCases) {
     const documentSet = loadDocumentSet(path.join(candidatePath, "full"));
     const operationIndex = documentSet.files.find((entry) => (
       entry.path === "indexes/operations-middle.md"
     ));
     assert.notEqual(operationIndex, undefined);
-    const replacementRow = `| SEND | m.events | m-operation | m-message | middle task | Handles the middle event range | ${fixture.requiredContext} | ${fixture.supplementalContext} |`;
+    const replacementRow = `| SEND | m.events | m-operation | m-message | middle task | Handles the middle event range | ${fixture.requiredContext} | ${fixture.supplementalContext} | none |`;
     assert.equal(operationIndex.content.includes(originalRow), true);
     operationIndex.content = operationIndex.content.replace(originalRow, replacementRow);
     operationIndex.bytes = Buffer.from(operationIndex.content, "utf8");
@@ -400,6 +656,8 @@ for (const profile of ["full", "compact"]) {
           ]
         },
         "r-csv-operation": { required: [], supplemental: [] },
+        "r-json-original-operation": { required: [], supplemental: [] },
+        "r-json-reuse-operation": { required: [], supplemental: [] },
         "r-raw-operation": { required: [], supplemental: [] },
         "r-tagged-operation": { required: [], supplemental: [] },
         "r-untagged-operation": { required: [], supplemental: [] },
@@ -676,6 +934,8 @@ for (const profile of ["full", "compact"]) {
         "a-operation",
         "m-operation",
         "r-csv-operation",
+        "r-json-original-operation",
+        "r-json-reuse-operation",
         "r-raw-operation",
         "r-tagged-operation",
         "r-untagged-operation",

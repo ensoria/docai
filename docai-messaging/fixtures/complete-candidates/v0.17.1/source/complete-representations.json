@@ -42,6 +42,72 @@
       }
     },
     {
+      "operation": "r-json-original-operation",
+      "action": "SEND",
+      "channel": "representations.json-original",
+      "message": "json-original-message",
+      "form": "structured-json",
+      "mediaType": "application/json",
+      "payloadRequired": "yes",
+      "payloadNullable": "no",
+      "schemaFormat": "application/vnd.aai.asyncapi+json;version=3.1.0",
+      "schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "event_id",
+          "status"
+        ],
+        "properties": {
+          "event_id": {
+            "type": "string",
+            "description": "Synthetic event identifier"
+          },
+          "status": {
+            "type": "string",
+            "description": "Lifecycle status"
+          }
+        }
+      },
+      "example": {
+        "event_id": "evt_04",
+        "status": "created"
+      }
+    },
+    {
+      "operation": "r-json-reuse-operation",
+      "action": "SEND",
+      "channel": "representations.json-reuse",
+      "message": "json-reuse-message",
+      "form": "structured-json",
+      "mediaType": "application/json",
+      "payloadRequired": "yes",
+      "payloadNullable": "no",
+      "schemaFormat": "application/vnd.aai.asyncapi+json;version=3.1.0",
+      "schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "event_id",
+          "status"
+        ],
+        "properties": {
+          "event_id": {
+            "type": "string",
+            "description": "Synthetic event identifier"
+          },
+          "status": {
+            "type": "string",
+            "description": "Lifecycle status"
+          }
+        }
+      },
+      "example": {
+        "event_id": "evt_04",
+        "status": "created"
+      }
+    },
+    {
       "operation": "r-raw-operation",
       "action": "SEND",
       "channel": "representations.raw",

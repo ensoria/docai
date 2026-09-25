@@ -8,6 +8,7 @@ import {
   resolveTrustedCompleteExampleAdapters
 } from "../lib/complete-example-adapters.mjs";
 import { loadDocumentSet, validateDocumentSet } from "../lib/document-set.mjs";
+import { validateCompleteDocumentSet } from "../lib/validators/complete.mjs";
 import { restampDocumentSet } from "../restamp-document-set.mjs";
 
 const candidatePath = fileURLToPath(new URL(
@@ -117,6 +118,47 @@ test("restamps a document set with the trusted adapter declared by its explicit 
     exampleAdapters: resolveTrustedCompleteExampleAdapters(manifest())
   });
   assert.deepEqual(result.diagnostics, []);
+});
+
+test("restamps compact complete forms after field_defaults and same_as expansion", (t) => {
+  const temporaryRoot = fs.mkdtempSync(path.join(os.tmpdir(), "docai-compact-restamp-"));
+  const documentRoot = path.join(temporaryRoot, "compact");
+  const manifestPath = path.join(temporaryRoot, "projection-input-manifest.json");
+  fs.cpSync(path.join(candidatePath, "compact"), documentRoot, { recursive: true });
+  fs.copyFileSync(
+    path.join(candidatePath, "source", "projection-input-manifest.json"),
+    manifestPath
+  );
+  t.after(() => fs.rmSync(temporaryRoot, { recursive: true, force: true }));
+
+  const channel = fs.readFileSync(
+    path.join(documentRoot, "channels", "representations.md"),
+    "utf8"
+  );
+  assert.equal(channel.includes("**field_defaults**: Required=yes | Nullable=no"), true);
+  assert.equal(channel.includes(
+    "**same_as**: Operation r-json-original-operation Message json-original-message "
+      + "Payload application/json"
+  ), true);
+  const staleChannel = channel.replace(
+    /set_id: b32:[a-z2-7]{26}/,
+    "set_id: b32:aaaaaaaaaaaaaaaaaaaaaaaaaa"
+  );
+  assert.notEqual(staleChannel, channel);
+  fs.writeFileSync(
+    path.join(documentRoot, "channels", "representations.md"),
+    staleChannel
+  );
+
+  const restamped = restampDocumentSet(documentRoot, manifestPath, { write: true });
+  const result = validateCompleteDocumentSet(loadDocumentSet(documentRoot), {
+    wholeSet: true,
+    exampleAdapters: resolveTrustedCompleteExampleAdapters(manifest())
+  });
+
+  assert.equal(restamped.changed, true);
+  assert.deepEqual(result.diagnostics, []);
+  assert.equal(restampDocumentSet(documentRoot, manifestPath).changed, false);
 });
 
 test("applies an explicit example adapter to an inline failure-shape payload", () => {

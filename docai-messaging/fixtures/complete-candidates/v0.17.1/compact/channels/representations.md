@@ -1,4 +1,4 @@
-> docai-messaging: 0.17.1 | profile: compact | perspective: storefront | coverage: complete | knowledge: complete | source_refs: complete-representations
+> docai-messaging: 0.17.1 | profile: compact | perspective: storefront | coverage: complete | knowledge: complete | source_refs: complete-representations | x-retrieval-unit: channel-file
 
 ## SEND representations.csv (r-csv-operation)
 
@@ -49,6 +49,119 @@ evt_03,created
 |---|---|---|---|---|
 | event_id | string | yes | no | Synthetic event identifier |
 | status | string | yes | no | Lifecycle status |
+
+### Reply
+
+none
+
+### Failure Handling
+
+none
+
+### Related
+
+none
+
+## SEND representations.json-original (r-json-original-operation)
+
+Publishes the canonical lifecycle record used by the compact reuse example.
+
+### Behavior
+
+- side_effects: none
+- idempotency: none
+- preconditions: none
+- authorization: none
+- delivery: none
+- ordering: none
+
+### Operation Bindings
+
+none
+
+### Channel
+
+- Parameters: none
+- Bindings: none
+
+### Message json-original-message
+
+#### Headers
+
+none
+
+#### Bindings
+
+none
+
+#### Payload
+
+**payload_required**: yes
+
+**media_type**: application/json
+
+**payload_nullable**: no
+
+```json
+{"status":"created","event_id":"evt_04"}
+```
+
+**field_defaults**: Required=yes | Nullable=no
+
+| Field | Type | Constraints / Meaning |
+|---|---|---|
+| event_id | string | Synthetic event identifier |
+| status | string | Lifecycle status |
+
+### Reply
+
+none
+
+### Failure Handling
+
+none
+
+### Related
+
+none
+
+## SEND representations.json-reuse (r-json-reuse-operation)
+
+Publishes the same lifecycle record through a second operation.
+
+### Behavior
+
+- side_effects: none
+- idempotency: none
+- preconditions: none
+- authorization: none
+- delivery: none
+- ordering: none
+
+### Operation Bindings
+
+none
+
+### Channel
+
+- Parameters: none
+- Bindings: none
+
+### Message json-reuse-message
+
+#### Headers
+
+none
+
+#### Bindings
+
+none
+
+#### Payload
+
+**payload_required**: yes
+
+**same_as**: Operation r-json-original-operation Message json-original-message Payload application/json
 
 ### Reply
 
@@ -262,4 +375,4 @@ none
 
 none
 
-> docai-identity: set_id: b32:wd5halve5xnlznddsehqy3lmzi | projection_id: b32:bnzbddlon6mxaiywtzumct7w6y
+> docai-identity: set_id: b32:yvpcjzmj3rarcjj7kqq2ea5sqm | projection_id: b32:cc7dt7ad4wwrbmu6jgpcnxujwe

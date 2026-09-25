@@ -62,6 +62,134 @@ none
 
 none
 
+## SEND representations.json-original (r-json-original-operation)
+
+Publishes the canonical lifecycle record used by the compact reuse example.
+
+### Behavior
+
+- side_effects: none
+- idempotency: none
+- preconditions: none
+- authorization: none
+- delivery: none
+- ordering: none
+
+### Operation Bindings
+
+none
+
+### Channel
+
+- Parameters: none
+- Bindings: none
+
+### Message json-original-message
+
+#### Headers
+
+none
+
+#### Bindings
+
+none
+
+#### Payload
+
+**payload_required**: yes
+
+**media_type**: application/json
+
+**payload_nullable**: no
+
+```json
+{
+  "event_id": "evt_04",
+  "status": "created"
+}
+```
+
+| Field | Type | Required | Nullable | Constraints / Meaning |
+|---|---|---|---|---|
+| event_id | string | yes | no | Synthetic event identifier |
+| status | string | yes | no | Lifecycle status |
+
+### Reply
+
+none
+
+### Failure Handling
+
+none
+
+### Related
+
+none
+
+## SEND representations.json-reuse (r-json-reuse-operation)
+
+Publishes the same lifecycle record through a second operation.
+
+### Behavior
+
+- side_effects: none
+- idempotency: none
+- preconditions: none
+- authorization: none
+- delivery: none
+- ordering: none
+
+### Operation Bindings
+
+none
+
+### Channel
+
+- Parameters: none
+- Bindings: none
+
+### Message json-reuse-message
+
+#### Headers
+
+none
+
+#### Bindings
+
+none
+
+#### Payload
+
+**payload_required**: yes
+
+**media_type**: application/json
+
+**payload_nullable**: no
+
+```json
+{
+  "status": "created",
+  "event_id": "evt_04"
+}
+```
+
+| Field | Type | Required | Nullable | Constraints / Meaning |
+|---|---|---|---|---|
+| event_id | string | yes | no | Synthetic event identifier |
+| status | string | yes | no | Lifecycle status |
+
+### Reply
+
+none
+
+### Failure Handling
+
+none
+
+### Related
+
+none
+
 ## SEND representations.raw (r-raw-operation)
 
 Sends an authoritatively opaque receipt payload.
@@ -262,4 +390,4 @@ none
 
 none
 
-> docai-identity: set_id: b32:cueqq3gfwvgyvamqcvx5g326va | projection_id: b32:bnzbddlon6mxaiywtzumct7w6y
+> docai-identity: set_id: b32:bqrqmlgs5hghr3bkutf5tfrtci | projection_id: b32:cc7dt7ad4wwrbmu6jgpcnxujwe

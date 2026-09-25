@@ -6,7 +6,7 @@ import path from "node:path";
 import { TextDecoder } from "node:util";
 import { fileURLToPath } from "node:url";
 import { resolveTrustedCompleteExampleAdapters } from "./lib/complete-example-adapters.mjs";
-import { loadDocumentSet, validateDocumentSet } from "./lib/document-set.mjs";
+import { loadDocumentSet } from "./lib/document-set.mjs";
 import {
   computeSetDigest,
   deriveShortId,
@@ -14,6 +14,7 @@ import {
   scanUtf8Lines,
   stampIdentityTrailer
 } from "./lib/identity.mjs";
+import { validateCompleteDocumentSet } from "./lib/validators/complete.mjs";
 
 function usageError(message) {
   throw new TypeError(`${message}\nUsage: restamp-document-set.mjs [--write] --projection-manifest <path> <document-set-root>`);
@@ -235,7 +236,7 @@ function validateStagedSet(documentSet, stampedFiles, stagedFiles, expectedSetDi
       identityLine: identity.line
     };
   });
-  const result = validateDocumentSet(
+  const result = validateCompleteDocumentSet(
     { ...documentSet, files: candidateFiles, diagnostics: [] },
     { wholeSet: true, ...validationOptions }
   );
