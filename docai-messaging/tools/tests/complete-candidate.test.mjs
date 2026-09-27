@@ -398,6 +398,126 @@ test("compact candidate composes one-line JSON field defaults and same_as", () =
 });
 
 for (const profile of ["full", "compact"]) {
+  test(`${profile} candidate carries the manifest source-application perspective`, () => {
+    const documentSet = loadDocumentSet(path.join(candidatePath, profile));
+
+    assert.deepEqual(
+      Object.fromEntries(documentSet.files.map((file) => [
+        file.path,
+        file.metadata.perspective
+      ])),
+      Object.fromEntries(documentSet.files.map((file) => [
+        file.path,
+        candidateManifest.perspective.application
+      ]))
+    );
+  });
+
+  test(`${profile} candidate projects the Core storefront contract beside complete structures`, () => {
+    const documentSet = loadDocumentSet(path.join(candidatePath, profile));
+    const result = validateCandidateDocumentSet(documentSet);
+    const storefrontOperations = Object.fromEntries(
+      result.facts.core.operations.rows
+        .filter((row) => ["receiveOrderCreated", "sendCreateOrder"].includes(row.operation))
+        .map((row) => [row.operation, {
+          action: row.action,
+          channel: row.channel,
+          messages: row.messages,
+          tasks: row.tasks,
+          summary: row.summary,
+          requiredContexts: row.requiredContexts,
+          supplementalContexts: row.supplementalContexts,
+          conventions: row.conventions,
+          channelPath: row.channelPath
+        }])
+    );
+    const messageDefinitions = Object.fromEntries(
+      ["receiveOrderCreated", "sendCreateOrder"].map((operation) => [
+        operation,
+        (result.facts.core.messageDefinitions.byOperation[operation] ?? []).map((entry) => ({
+          direction: entry.direction,
+          message: entry.name,
+          path: entry.path,
+          reply: entry.reply
+        }))
+      ])
+    );
+    const conventionStates = Object.fromEntries(
+      Object.entries(result.facts.core.conventions.sections).map(([heading, section]) => [
+        heading,
+        section.state
+      ])
+    );
+    const conventionsFile = documentSet.files.find((file) => file.path === "CONVENTIONS.md");
+    const ordersFile = documentSet.files.find((file) => file.path === "channels/orders.md");
+
+    assert.deepEqual(result.diagnostics, []);
+    assert.deepEqual(storefrontOperations, {
+      receiveOrderCreated: {
+        action: "RECEIVE",
+        channel: "orders.events",
+        messages: ["OrderCreated"],
+        tasks: ["update storefront order state"],
+        summary: "Update storefront state after an order is created.",
+        requiredContexts: [],
+        supplementalContexts: [],
+        conventions: "all",
+        channelPath: "channels/orders.md"
+      },
+      sendCreateOrder: {
+        action: "SEND",
+        channel: "orders.commands",
+        messages: ["CreateOrder", "reply:OrderAccepted"],
+        tasks: ["submit an order"],
+        summary: "Submit an order and receive its acceptance reply.",
+        requiredContexts: [],
+        supplementalContexts: [],
+        conventions: "all",
+        channelPath: "channels/orders.md"
+      }
+    });
+    assert.deepEqual(messageDefinitions, {
+      receiveOrderCreated: [{
+        direction: "RECEIVE",
+        message: "OrderCreated",
+        path: "channels/orders.md",
+        reply: false
+      }],
+      sendCreateOrder: [{
+        direction: "SEND",
+        message: "CreateOrder",
+        path: "channels/orders.md",
+        reply: false
+      }, {
+        direction: "RECEIVE",
+        message: "OrderAccepted",
+        path: "channels/orders.md",
+        reply: true
+      }]
+    });
+    assert.deepEqual(conventionStates, {
+      Environments: "expanded",
+      "Protocols and Bindings": "expanded",
+      Authentication: "expanded",
+      "Connection and Session": "expanded",
+      Serialization: "expanded",
+      "Message Envelope": "expanded",
+      "Delivery Semantics": "expanded",
+      "Idempotency and Deduplication": "expanded",
+      Ordering: "expanded",
+      "Error Handling": "expanded",
+      "Request-Reply": "expanded",
+      "Schema Evolution": "expanded",
+      "Data Representation": "expanded",
+      "Empty and Omitted Values": "expanded",
+      "Rate Limits and Quotas": "none"
+    });
+    assert.equal(conventionsFile?.metadata.source_refs, "storefront-asyncapi-3.1.0, storefront-behavior");
+    assert.equal(ordersFile?.metadata.source_refs, "storefront-asyncapi-3.1.0, storefront-behavior");
+  });
+}
+
+for (const profile of ["full", "compact"]) {
   test(`${profile} candidate uses selective convention retrieval with workflow fallbacks`, () => {
     const result = validateCandidateDocumentSet(
       loadDocumentSet(path.join(candidatePath, profile))
@@ -655,6 +775,8 @@ for (const profile of ["full", "compact"]) {
             "workflows/state-unsupported.md"
           ]
         },
+        receiveOrderCreated: { required: [], supplemental: [] },
+        sendCreateOrder: { required: [], supplemental: [] },
         "r-csv-operation": { required: [], supplemental: [] },
         "r-json-original-operation": { required: [], supplemental: [] },
         "r-json-reuse-operation": { required: [], supplemental: [] },
@@ -939,6 +1061,8 @@ for (const profile of ["full", "compact"]) {
         "r-raw-operation",
         "r-tagged-operation",
         "r-untagged-operation",
+        "receiveOrderCreated",
+        "sendCreateOrder",
         "z-operation"
       ],
       loadedSourceIndexPaths: [

@@ -1,4 +1,4 @@
-> docai-messaging: 0.17.1 | profile: full | perspective: storefront | coverage: complete | knowledge: complete | source_refs: complete-contexts, complete-representations, storefront-behavior
+> docai-messaging: 0.17.1 | profile: full | perspective: storefront-service | coverage: complete | knowledge: complete | source_refs: complete-contexts, complete-representations, storefront-behavior
 
 # Messaging Source Index
 
@@ -10,4 +10,4 @@
 | complete-representations | behavior-configuration | none | none | none | complete-representations.json | fixture-1 |
 | storefront-behavior | behavior-configuration | none | none | none | storefront-behavior.json | fixture-1 |
 
-> docai-identity: set_id: b32:bqrqmlgs5hghr3bkutf5tfrtci | projection_id: b32:cc7dt7ad4wwrbmu6jgpcnxujwe
+> docai-identity: set_id: b32:i4rvjwvkyj6sostbzlrdyozsim | projection_id: b32:cc7dt7ad4wwrbmu6jgpcnxujwe

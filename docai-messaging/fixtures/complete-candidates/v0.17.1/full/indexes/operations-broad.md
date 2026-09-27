@@ -1,4 +1,4 @@
-> docai-messaging: 0.17.1 | profile: full | perspective: storefront | coverage: complete | knowledge: complete | source_refs: all
+> docai-messaging: 0.17.1 | profile: full | perspective: storefront-service | coverage: complete | knowledge: complete | source_refs: all
 
 # Messaging Operation Index
 
@@ -9,6 +9,13 @@
 | Action | Channel | Operation | Message | Task | Summary | Required context | Supplemental context | Conventions |
 |---|---|---|---|---|---|---|---|---|
 | SEND | a.events | a-operation | a-message | alpha task | Handles the alpha event range | workflows/alpha-delivery.md | workflows/alpha-observability.md, workflows/state-none.md, workflows/state-unknown.md, workflows/state-unsupported.md | none |
+
+### channels/orders.md
+
+| Action | Channel | Operation | Message | Task | Summary | Required context | Supplemental context | Conventions |
+|---|---|---|---|---|---|---|---|---|
+| RECEIVE | orders.events | receiveOrderCreated | OrderCreated | update storefront order state | Update storefront state after an order is created. | none | none | all |
+| SEND | orders.commands | sendCreateOrder | CreateOrder; reply:OrderAccepted | submit an order | Submit an order and receive its acceptance reply. | none | none | all |
 
 ### channels/representations.md
 
@@ -27,4 +34,4 @@
 |---|---|---|---|---|---|---|---|---|
 | RECEIVE | z.events | z-operation | z-message | zeta task | Handles the zeta event range | none | none | none |
 
-> docai-identity: set_id: b32:bqrqmlgs5hghr3bkutf5tfrtci | projection_id: b32:cc7dt7ad4wwrbmu6jgpcnxujwe
+> docai-identity: set_id: b32:i4rvjwvkyj6sostbzlrdyozsim | projection_id: b32:cc7dt7ad4wwrbmu6jgpcnxujwe

@@ -1,4 +1,4 @@
-> docai-messaging: 0.17.1 | profile: compact | perspective: storefront | coverage: complete | knowledge: complete | source_refs: all
+> docai-messaging: 0.17.1 | profile: compact | perspective: storefront-service | coverage: complete | knowledge: complete | source_refs: all
 
 # Alpha observability guidance
 
@@ -22,4 +22,4 @@ Record synthetic trace evidence for alpha delivery.
 
 - On timeout, repeat trace collection with the same synthetic identifier
 
-> docai-identity: set_id: b32:yvpcjzmj3rarcjj7kqq2ea5sqm | projection_id: b32:cc7dt7ad4wwrbmu6jgpcnxujwe
+> docai-identity: set_id: b32:kvq6vcjyopzhz43tt47cyhwrsq | projection_id: b32:cc7dt7ad4wwrbmu6jgpcnxujwe

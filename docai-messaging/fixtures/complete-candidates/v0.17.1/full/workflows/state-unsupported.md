@@ -1,4 +1,4 @@
-> docai-messaging: 0.17.1 | profile: full | perspective: storefront | coverage: requires-source | knowledge: complete | source_refs: complete-contexts
+> docai-messaging: 0.17.1 | profile: full | perspective: storefront-service | coverage: requires-source | knowledge: complete | source_refs: complete-contexts
 
 # Workflow section unsupported states
 
@@ -20,4 +20,4 @@ Validate an unrepresentable workflow after a compatible projection is available.
 
 **unsupported**: replaces workflow Failure and Recovery: nested recovery graph at complete-contexts.json#/workflows/state-unsupported/sections/Failure%20and%20Recovery
 
-> docai-identity: set_id: b32:bqrqmlgs5hghr3bkutf5tfrtci | projection_id: b32:cc7dt7ad4wwrbmu6jgpcnxujwe
+> docai-identity: set_id: b32:i4rvjwvkyj6sostbzlrdyozsim | projection_id: b32:cc7dt7ad4wwrbmu6jgpcnxujwe

@@ -1,4 +1,4 @@
-> docai-messaging: 0.17.1 | profile: full | perspective: storefront | coverage: complete | knowledge: requires-input | source_refs: complete-contexts
+> docai-messaging: 0.17.1 | profile: full | perspective: storefront-service | coverage: complete | knowledge: requires-input | source_refs: complete-contexts
 
 # Workflow section unknown states
 
@@ -24,4 +24,4 @@ unknown
 unknown
 **unknown**: workflow Failure and Recovery require the authoritative recovery policy
 
-> docai-identity: set_id: b32:bqrqmlgs5hghr3bkutf5tfrtci | projection_id: b32:cc7dt7ad4wwrbmu6jgpcnxujwe
+> docai-identity: set_id: b32:i4rvjwvkyj6sostbzlrdyozsim | projection_id: b32:cc7dt7ad4wwrbmu6jgpcnxujwe

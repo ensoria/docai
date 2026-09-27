@@ -1,4 +1,4 @@
-> docai-messaging: 0.17.1 | profile: full | perspective: storefront | coverage: complete | knowledge: complete | source_refs: all
+> docai-messaging: 0.17.1 | profile: full | perspective: storefront-service | coverage: complete | knowledge: complete | source_refs: all
 
 # Alpha delivery across operation boundaries
 
@@ -24,4 +24,4 @@ Deliver the alpha event and record the correlated middle event.
 
 - On timeout, retry with the retained alpha event identifier
 
-> docai-identity: set_id: b32:bqrqmlgs5hghr3bkutf5tfrtci | projection_id: b32:cc7dt7ad4wwrbmu6jgpcnxujwe
+> docai-identity: set_id: b32:i4rvjwvkyj6sostbzlrdyozsim | projection_id: b32:cc7dt7ad4wwrbmu6jgpcnxujwe
