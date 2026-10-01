@@ -4,6 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadTrustedCompleteExampleAdapterOptions } from "./lib/complete-example-adapters.mjs";
+import { auditCompleteCandidateSources } from "./lib/complete-candidate-source-audit.mjs";
 import { loadDocumentSet } from "./lib/document-set.mjs";
 import { validateCompleteProfilePair } from "./lib/validators/complete-profiles.mjs";
 
@@ -47,6 +48,15 @@ function checkCompleteFixtures(candidatePath) {
   const result = validateCompleteProfilePair(fullDocumentSet, compactDocumentSet, options);
   if (result.diagnostics.length > 0) {
     fail(result.diagnostics.map(formattedDiagnostic));
+    return;
+  }
+
+  const sourceIssues = auditCompleteCandidateSources(candidatePath, {
+    full: fullDocumentSet,
+    compact: compactDocumentSet
+  }, options);
+  if (sourceIssues.length > 0) {
+    fail(sourceIssues.map((issue) => `Complete source traceability: ${issue}`));
     return;
   }
 
