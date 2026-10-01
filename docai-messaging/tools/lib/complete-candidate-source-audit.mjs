@@ -252,6 +252,25 @@ export function auditCompleteCandidateSources(candidatePath, documentSets, optio
       && typeof recovery.deadLetterChannel === "string" && recovery.deadLetterChannel.length > 0
       && convention("Error Handling") === `${retryAction} After five delivery attempts, ${terminalAction}`,
     "CONVENTIONS Error Handling");
+    const requestReply = behavior.requestReply;
+    const replyOperations = Object.values(asyncapi.operations ?? {})
+      .filter((operation) => operation.reply !== undefined);
+    const replyChannel = resolveRef(replyOperations[0]?.reply?.channel);
+    const correlation = requestReply?.correlation?.replaceAll(
+      envelope.correlationIdHeader, `\`${envelope.correlationIdHeader}\``
+    );
+    const timeoutMeaning = requestReply?.timeoutMeaning?.replace(
+      "No acceptance reply arrived before the deadline; command outcome is",
+      "if no acceptance reply arrives, the command outcome is"
+    );
+    check(replyOperations.length === 1
+      && replyChannel?.address === requestReply?.replyChannel
+      && convention("Request-Reply") === [
+        `Replies use \`${requestReply.replyChannel}\`.`,
+        correlation,
+        `Wait ${requestReply.timeout} for a reply; ${timeoutMeaning}`
+      ].join(" "),
+    "CONVENTIONS Request-Reply");
     check(convention("Empty and Omitted Values") === [
       behavior.emptyAndOmittedValues.nullability,
       behavior.emptyAndOmittedValues.omission

@@ -1772,6 +1772,10 @@ Final review の Important finding 対応により、この checkpoint は当初
 
 > **Error Handling gate verification:** 全843 tests中842成功 / 1既存skip（Python 3.9未導入）/ 0失敗。Core checkerは264 cases / 193 invalid / one-invalidity 193/193 / 未使用rule 0 / coverage gap 0、complete checkerは17 paths等価。両profileのexplicit-manifest dry-runは`restamp required: no`、`git diff --check`成功。
 
+> **Implementation note (Task 12 Request-Reply source-traceability checkpoint, 2026-10-01):** ユーザー承認の次の1コミット単位として、candidate-specific source auditへRequest-Reply節の全文照合を追加した。behaviorのreply channel・相関文・timeout・期限切れ時の意味を、AsyncAPIでReplyを持つoperationの実reply-channel参照先addressと突き合わせ、`correlation-id`のinline code化と期限切れ文のcandidate固有の言い換えを含む節本文全体を両profileで検証する。TDDのREDではbehaviorの4 factとAsyncAPI reply channel addressを個別に変えてdigest再binding・両profile再restampした5件、両profileへ同じ根拠のないRequest-Reply文を追記した1件が旧checkerを通ることを確認し、GREENでは拒否とchecker前後のcandidate bytes不変を確認した。影響はsource-aware checker、回帰test、監査記録のみで、source / projection / manifest bytes、Core corpus、公開grammar / validator rule、作業順序は変更しない。CONVENTIONSは14/15節をsource-aware gateで照合済み。残るSchema Evolution、operation本文のexpanded Reply、および他のcomplete fact domainを後続checkpointに残し、Task 12 source traceability checkboxは未完了とする。
+
+> **Request-Reply gate verification:** 全849 tests中848成功 / 1既存skip（Python 3.9未導入）/ 0失敗。Core checkerは264 cases / 193 invalid / one-invalidity 193/193 / 未使用rule 0 / coverage gap 0、complete checkerは17 paths等価。両profileのexplicit-manifest dry-runは`restamp required: no`、`git diff --check`成功。
+
 **Review gate:** advanced structure を使わない selected operation が unrelated advanced marker のために blocked にならないことを確認する。
 
 **Suggested commit message:** `test(messaging): add complete full and compact candidate sets`

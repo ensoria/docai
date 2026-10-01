@@ -429,6 +429,53 @@ test("rejects matching Error Handling prose unsupported by the behavior source",
   assert.deepEqual(directorySnapshot(candidatePath), before);
 });
 
+for (const [fact, file, from, to] of [
+  ["behavior reply channel", "storefront-behavior.json",
+    '"replyChannel": "orders.replies"', '"replyChannel": "orders.changed-replies"'],
+  ["behavior correlation", "storefront-behavior.json",
+    "The reply correlation-id equals the command correlation-id.",
+    "The reply correlation-id differs from the command correlation-id."],
+  ["behavior timeout", "storefront-behavior.json",
+    '"timeout": "5 seconds"', '"timeout": "7 seconds"'],
+  ["behavior timeout meaning", "storefront-behavior.json",
+    "command outcome is unknown to the caller.", "command outcome is known to the caller."],
+  ["AsyncAPI reply channel address", "storefront.asyncapi.json",
+    '"address": "orders.replies"', '"address": "orders.changed-replies"']
+]) {
+  test(`rejects stale Request-Reply after ${fact} source rebinding and restamp`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    replaceExactlyOnce(path.join(candidatePath, "source", file), from, to);
+    rebindAndRestamp(candidatePath, file);
+    const before = directorySnapshot(candidatePath);
+
+    const result = runChecker([candidatePath]);
+
+    assert.equal(result.status, 1, result.stdout);
+    assert.match(result.stderr, /CONVENTIONS.*Request-Reply/i);
+    assert.deepEqual(directorySnapshot(candidatePath), before);
+  });
+}
+
+test("rejects matching Request-Reply prose unsupported by either source", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");
+  for (const profile of ["full", "compact"]) {
+    replaceExactlyOnce(
+      path.join(candidatePath, profile, "CONVENTIONS.md"),
+      "the command outcome is unknown to the caller.",
+      "the command outcome is unknown to the caller. Retry with a new correlation-id."
+    );
+    restampDocumentSet(path.join(candidatePath, profile), manifestPath, { write: true });
+  }
+  const before = directorySnapshot(candidatePath);
+
+  const result = runChecker([candidatePath]);
+
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /CONVENTIONS.*Request-Reply/i);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
 test("rejects matching Ordering prose that disagrees with the behavior source", (t) => {
   const candidatePath = copyVersionedCandidate(t);
   const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");
