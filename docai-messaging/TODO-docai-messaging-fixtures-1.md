@@ -1756,6 +1756,10 @@ Final review の Important finding 対応により、この checkpoint は当初
 
 > **CONVENTIONS gate verification:** 全819 tests中818成功 / 1既存skip（Python 3.9未導入）/ 0失敗。Core checkerは264 cases / 193 invalid / one-invalidity 193/193 / 未使用rule 0 / coverage gap 0、complete checkerは17 paths等価。両profileのexplicit-manifest dry-runは`restamp required: no`、`git diff --check`成功。candidate source / projection bytes、Core corpus、Git stateは変更していない。
 
+> **Implementation note (Task 12 normalized behavior-backed CONVENTIONS checkpoint, 2026-10-01):** candidate-specific source auditにMessage Envelope、Delivery Semantics、Idempotency and Deduplicationの全文照合を追加した。behavior sourceのheader名、delivery保証・redelivery visibility・acknowledgement文、deduplication key / retention / scopeを入力として、candidateのinline-code markup、sentence連結、NACKの先頭文字、positive ACKとNACKの区切りだけを明示的に正規化する。TDDのREDではdelivery redelivery文とdeduplication scopeのsource bytesを変えdigest再binding・両profile再restampした2件、両profileのMessage Envelopeに根拠のない文を追記して再restampした1件が旧checkerを通ることを確認し、GREENで各節全文のsource不一致を拒否しchecker前後のcandidate bytes不変を確認した。意図的なrendering文面変更ではsource factとgate templateを同時reviewする。CONVENTIONSは計8/15節をsource-aware gateで照合済み。残る7節とその他のcomplete fact domainのmatrix reviewは後続checkpointへ残し、Task 12 source traceability checkboxは未完了とする。
+
+> **Normalized CONVENTIONS gate verification:** 全822 tests中821成功 / 1既存skip（Python 3.9未導入）/ 0失敗。Core checkerは264 cases / 193 invalid / one-invalidity 193/193 / 未使用rule 0 / coverage gap 0、complete checkerは17 paths等価。両profileのexplicit-manifest dry-runは`restamp required: no`、`git diff --check`成功。candidate source / projection bytes、Core corpus、Git stateは変更していない。
+
 **Review gate:** advanced structure を使わない selected operation が unrelated advanced marker のために blocked にならないことを確認する。
 
 **Suggested commit message:** `test(messaging): add complete full and compact candidate sets`

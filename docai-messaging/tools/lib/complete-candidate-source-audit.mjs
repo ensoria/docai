@@ -144,6 +144,26 @@ export function auditCompleteCandidateSources(candidatePath, documentSets, optio
     }
     const conventions = set.files.find((file) => file.path === "CONVENTIONS.md");
     const convention = (heading) => section(conventions?.content, `## ${heading}`);
+    const envelope = behavior.messageEnvelope;
+    check(convention("Message Envelope") === `Use \`${envelope.messageIdHeader}\` as the message identifier, `
+      + `\`${envelope.correlationIdHeader}\` as the correlation identifier, and `
+      + `\`${envelope.replyAddressHeader}\` as the reply address.`,
+    "CONVENTIONS Message Envelope");
+    const redelivery = behavior.delivery.redeliveryVisibility.replaceAll(
+      envelope.messageIdHeader, `\`${envelope.messageIdHeader}\``
+    );
+    const positiveAck = behavior.acknowledgement.positive.replace(/\.$/, "");
+    const negativeAck = behavior.acknowledgement.nack.replace(/^./, (letter) => letter.toLowerCase());
+    check(convention("Delivery Semantics") === [
+      `Delivery is ${behavior.delivery.guarantee}.`,
+      redelivery,
+      `${positiveAck}; ${negativeAck}`,
+      behavior.acknowledgement.timeout
+    ].join(" "), "CONVENTIONS Delivery Semantics");
+    check(convention("Idempotency and Deduplication")
+      === `Deduplicate by \`${behavior.deduplication.key}\` for `
+        + `${behavior.deduplication.retention} ${behavior.deduplication.scope}.`,
+    "CONVENTIONS Idempotency and Deduplication");
     check(convention("Connection and Session") === [
       behavior.connectionAndSession.reconnect,
       behavior.connectionAndSession.sessionFailure

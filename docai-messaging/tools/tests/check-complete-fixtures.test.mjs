@@ -294,6 +294,48 @@ test("rejects unsourced Data Representation prose after the format table", (t) =
   assert.deepEqual(directorySnapshot(candidatePath), before);
 });
 
+for (const [heading, from, to] of [
+  ["Delivery Semantics",
+    "A redelivery retains the original message-id.",
+    "A redelivery retains the original message-id and sequence."],
+  ["Idempotency and Deduplication",
+    '"scope": "per storefront tenant"',
+    '"scope": "per storefront region"']
+]) {
+  test(`rejects stale ${heading} after behavior source rebinding and restamp`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    replaceExactlyOnce(path.join(candidatePath, "source", "storefront-behavior.json"), from, to);
+    rebindAndRestamp(candidatePath, "storefront-behavior.json");
+    const before = directorySnapshot(candidatePath);
+
+    const result = runChecker([candidatePath]);
+
+    assert.equal(result.status, 1, result.stdout);
+    assert.match(result.stderr, new RegExp(`CONVENTIONS.*${heading}`, "i"));
+    assert.deepEqual(directorySnapshot(candidatePath), before);
+  });
+}
+
+test("rejects matching Message Envelope prose unsupported by the behavior source", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");
+  for (const profile of ["full", "compact"]) {
+    replaceExactlyOnce(
+      path.join(candidatePath, profile, "CONVENTIONS.md"),
+      "Use `message-id` as the message identifier, `correlation-id` as the correlation identifier, and `reply-to` as the reply address.",
+      "Use `message-id` as the message identifier, `correlation-id` as the correlation identifier, and `reply-to` as the reply address. All messages are encrypted."
+    );
+    restampDocumentSet(path.join(candidatePath, profile), manifestPath, { write: true });
+  }
+  const before = directorySnapshot(candidatePath);
+
+  const result = runChecker([candidatePath]);
+
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /CONVENTIONS.*Message Envelope/i);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
 test("checks one whole-set complete full and compact pair without modifying it", (t) => {
   const { candidatePath } = restampCandidate(t);
   const before = directorySnapshot(candidatePath);
