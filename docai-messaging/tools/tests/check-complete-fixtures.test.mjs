@@ -476,6 +476,103 @@ test("rejects matching Request-Reply prose unsupported by either source", (t) =>
   assert.deepEqual(directorySnapshot(candidatePath), before);
 });
 
+for (const [fact, from, to] of [
+  ["compatibility policy",
+    "Additive optional fields are backward compatible; removing or changing a required field requires a new contract version.",
+    "Removing optional fields is backward compatible; changing a required field requires a new contract version."],
+  ["logical API identity", '"logicalApi": "urn:example:storefront-order-messaging"',
+    '"logicalApi": "urn:example:changed-order-messaging"'],
+  ["contract version", '"contractVersion": "1.0.0"',
+    '"contractVersion": "1.0.1"']
+]) {
+  test(`rejects stale Schema Evolution after behavior ${fact} rebinding and restamp`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    replaceExactlyOnce(
+      path.join(candidatePath, "source", "storefront-behavior.json"), from, to
+    );
+    rebindAndRestamp(candidatePath, "storefront-behavior.json");
+    const before = directorySnapshot(candidatePath);
+
+    const result = runChecker([candidatePath]);
+
+    assert.equal(result.status, 1, result.stdout);
+    assert.match(result.stderr, /CONVENTIONS.*Schema Evolution/i);
+    assert.deepEqual(directorySnapshot(candidatePath), before);
+  });
+}
+
+test("rejects stale Schema Evolution after AsyncAPI identity and Sources rows are updated", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  replaceExactlyOnce(
+    path.join(candidatePath, "source", "storefront.asyncapi.json"),
+    '"id": "urn:example:storefront-order-messaging"',
+    '"id": "urn:example:changed-order-messaging"'
+  );
+  for (const profile of ["full", "compact"]) {
+    replaceExactlyOnce(
+      path.join(candidatePath, profile, "indexes", "sources-asyncapi.md"),
+      "| urn:example:storefront-order-messaging |",
+      "| urn:example:changed-order-messaging |"
+    );
+  }
+  rebindAndRestamp(candidatePath, "storefront.asyncapi.json");
+  const before = directorySnapshot(candidatePath);
+
+  const result = runChecker([candidatePath]);
+
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /CONVENTIONS.*Schema Evolution/i);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
+test("rejects stale Schema Evolution after AsyncAPI version and Sources bindings are updated", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  replaceExactlyOnce(
+    path.join(candidatePath, "source", "storefront.asyncapi.json"),
+    '"version": "1.0.0"', '"version": "1.0.1"'
+  );
+  const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+  manifest.sources.find((entry) => entry.sourceId === "storefront-asyncapi-3.1.0").revision
+    = "1.0.1";
+  fs.writeFileSync(manifestPath, JSON.stringify(manifest));
+  for (const profile of ["full", "compact"]) {
+    replaceExactlyOnce(
+      path.join(candidatePath, profile, "indexes", "sources-asyncapi.md"),
+      "| 1.0.0 | storefront.asyncapi.json | 1.0.0 |",
+      "| 1.0.1 | storefront.asyncapi.json | 1.0.1 |"
+    );
+  }
+  rebindAndRestamp(candidatePath, "storefront.asyncapi.json");
+  const before = directorySnapshot(candidatePath);
+
+  const result = runChecker([candidatePath]);
+
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /CONVENTIONS.*Schema Evolution/i);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
+test("rejects matching Schema Evolution prose unsupported by either source", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");
+  for (const profile of ["full", "compact"]) {
+    replaceExactlyOnce(
+      path.join(candidatePath, profile, "CONVENTIONS.md"),
+      "and this corpus projects contract version `1.0.0`.",
+      "and this corpus projects contract version `1.0.0`. Every change is compatible."
+    );
+    restampDocumentSet(path.join(candidatePath, profile), manifestPath, { write: true });
+  }
+  const before = directorySnapshot(candidatePath);
+
+  const result = runChecker([candidatePath]);
+
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /CONVENTIONS.*Schema Evolution/i);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
 test("rejects matching Ordering prose that disagrees with the behavior source", (t) => {
   const candidatePath = copyVersionedCandidate(t);
   const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");

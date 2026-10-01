@@ -271,6 +271,17 @@ export function auditCompleteCandidateSources(candidatePath, documentSets, optio
         `Wait ${requestReply.timeout} for a reply; ${timeoutMeaning}`
       ].join(" "),
     "CONVENTIONS Request-Reply");
+    const schemaEvolution = behavior.schemaEvolution;
+    const compatibility = schemaEvolution?.compatibility?.replace("; removing", ". Removing");
+    check(typeof schemaEvolution?.logicalApi === "string" && schemaEvolution.logicalApi.length > 0
+      && typeof schemaEvolution.contractVersion === "string"
+      && schemaEvolution.contractVersion.length > 0
+      && schemaEvolution.logicalApi === asyncapi.id
+      && schemaEvolution.contractVersion === asyncapi.info?.version
+      && convention("Schema Evolution") === `${compatibility} The logical API is `
+        + `\`${schemaEvolution.logicalApi}\`, and this corpus projects contract version `
+        + `\`${schemaEvolution.contractVersion}\`.`,
+    "CONVENTIONS Schema Evolution");
     check(convention("Empty and Omitted Values") === [
       behavior.emptyAndOmittedValues.nullability,
       behavior.emptyAndOmittedValues.omission

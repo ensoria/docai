@@ -1776,6 +1776,10 @@ Final review の Important finding 対応により、この checkpoint は当初
 
 > **Request-Reply gate verification:** 全849 tests中848成功 / 1既存skip（Python 3.9未導入）/ 0失敗。Core checkerは264 cases / 193 invalid / one-invalidity 193/193 / 未使用rule 0 / coverage gap 0、complete checkerは17 paths等価。両profileのexplicit-manifest dry-runは`restamp required: no`、`git diff --check`成功。
 
+> **Implementation note (Task 12 Schema Evolution source-traceability checkpoint, 2026-10-01):** ユーザー承認の次の1コミット単位として、candidate-specific source auditへSchema Evolution節の全文照合を追加した。behaviorのcompatibility policy・logical API ID・contract versionを、AsyncAPIの`id`・`info.version`と突き合わせ、compatibility文の`; removing`→`. Removing`というcandidate固有の表示正規化とともにfull / compactの節本文全体を検証する。TDDのREDではbehaviorの3 fact、AsyncAPIのID・versionを個別に変更してdigest再binding・両profile再restampした5件と、両profileへ同じ根拠のないSchema Evolution文を追記した1件が旧checkerを通ることを確認し、GREENで全6件を拒否した。AsyncAPI ID・version変異のtestではSources catalogとmanifest revisionも整合させ、既存catalog gateではなく新しい節gateの不一致を検証した。影響はsource-aware checker、回帰test、監査記録のみで、source / projection / manifest bytes、Core corpus、公開grammar / validator rule、作業順序は変更しない。現candidateのCONVENTIONS 15/15節はsource-aware gateで照合済み。一方、現candidateにないidentity / version欠落時の`unknown` marker scenario、operation本文の認可・Reply・failure rowsを含む他のcomplete fact domainと最終matrix reviewは後続checkpointに残し、Task 12 source traceability checkboxは未完了とする。
+
+> **Schema Evolution gate verification:** 全855 tests中854成功 / 1既存skip（Python 3.9未導入）/ 0失敗。Core checkerは264 cases / 193 invalid / one-invalidity 193/193 / 未使用rule 0 / coverage gap 0、complete checkerは17 paths等価。両profileのexplicit-manifest dry-runは`restamp required: no`、`git diff --check`成功。
+
 **Review gate:** advanced structure を使わない selected operation が unrelated advanced marker のために blocked にならないことを確認する。
 
 **Suggested commit message:** `test(messaging): add complete full and compact candidate sets`
