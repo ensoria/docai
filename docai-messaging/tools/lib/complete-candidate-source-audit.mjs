@@ -66,6 +66,10 @@ export function auditCompleteCandidateSources(candidatePath, documentSets, optio
 
   const issues = [];
   const sources = new Map();
+  if (!Array.isArray(manifest.sources) || manifest.sources.length !== sourceFiles.size
+      || manifest.sources.some((entry) => !sourceFiles.has(entry.sourceId))) {
+    issues.push("unexpected source binding in the complete candidate manifest");
+  }
   for (const [id, filename] of sourceFiles) {
     const entries = manifest.sources?.filter((entry) => entry.sourceId === id) ?? [];
     if (entries.length !== 1 || entries[0].location !== filename) {
@@ -95,6 +99,31 @@ export function auditCompleteCandidateSources(candidatePath, documentSets, optio
   const representations = sources.get("complete-representations");
   const asyncapi = sources.get("storefront-asyncapi-3.1.0");
   const behavior = sources.get("storefront-behavior");
+  const expectedSourceRows = new Map();
+  for (const [id] of sourceFiles) {
+    const binding = manifest.sources.find((entry) => entry.sourceId === id);
+    const source = sources.get(id);
+    const isAsyncapi = id === "storefront-asyncapi-3.1.0";
+    const sourceRevision = isAsyncapi ? source.info?.version : source.revision;
+    if (!isAsyncapi && (source.sourceId !== id || source.kind !== binding.type)) {
+      issues.push(`${id}: source identity or kind differs from its Sources binding`);
+    }
+    if (sourceRevision !== binding.revision) {
+      issues.push(`${id}: Sources Revision differs from the source contract version`);
+    }
+    if (isAsyncapi && binding.specification !== `AsyncAPI ${source.asyncapi}`) {
+      issues.push(`${id}: Sources Specification differs from the source AsyncAPI version`);
+    }
+    expectedSourceRows.set(id, {
+      kind: binding.type,
+      specification: binding.specification,
+      api: isAsyncapi ? source.id : "none",
+      contractVersion: isAsyncapi ? source.info?.version : "none",
+      location: binding.location,
+      revision: binding.revision
+    });
+  }
+  if (issues.length > 0) return issues;
   for (const [profile, set] of Object.entries(documentSets)) {
     const result = validateCompleteDocumentSet(set, options);
     const expanded = validateCompleteSameAs(validateCompleteFieldDefaults(set).expandedDocumentSet)
@@ -112,6 +141,26 @@ export function auditCompleteCandidateSources(candidatePath, documentSets, optio
         `${file.path} perspective`);
       check(file.metadata["docai-messaging"] === manifest.docaiMessaging,
         `${file.path} DocAI Messaging version`);
+    }
+    const actualSourceRows = result.facts.core.sources.rows;
+    check(actualSourceRows.length === expectedSourceRows.size, "Sources row count");
+    for (const [id, expected] of expectedSourceRows) {
+      const actual = actualSourceRows.find((row) => row.id === id);
+      for (const [field, value] of Object.entries(expected)) {
+        check(actual?.[field] === value, `${id} Sources ${field}`);
+      }
+    }
+    const rowsByFile = new Map();
+    for (const row of actualSourceRows) {
+      if (!rowsByFile.has(row.file)) rowsByFile.set(row.file, []);
+      rowsByFile.get(row.file).push(row.id);
+    }
+    for (const [filePath, sourceIds] of rowsByFile) {
+      const file = set.files.find((entry) => entry.path === filePath);
+      const expectedRefs = sourceIds.sort((left, right) => Buffer.compare(
+        Buffer.from(left, "ascii"), Buffer.from(right, "ascii")
+      )).join(", ");
+      check(file?.metadata.source_refs === expectedRefs, `${filePath} Sources source_refs`);
     }
     for (const [name, operation] of Object.entries(asyncapi.operations)) {
       const route = result.facts.core.operations.rows.find((row) => row.operation === name);

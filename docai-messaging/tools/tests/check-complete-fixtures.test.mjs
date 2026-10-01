@@ -118,6 +118,85 @@ test("rejects a restamped versioned candidate with a different generator identit
   assert.deepEqual(directorySnapshot(candidatePath), before);
 });
 
+test("rejects a manifest Sources revision that differs from the bound source", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+  manifest.sources.find((entry) => entry.sourceId === "complete-contexts").revision = "fixture-2";
+  fs.writeFileSync(manifestPath, JSON.stringify(manifest));
+  for (const profile of ["full", "compact"]) {
+    restampDocumentSet(path.join(candidatePath, profile), manifestPath, { write: true });
+  }
+  const before = directorySnapshot(candidatePath);
+
+  const result = runChecker([candidatePath]);
+
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /complete-contexts.*Sources.*Revision/i);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
+test("rejects an undeclared fifth source binding in the candidate manifest", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+  manifest.sources.push({
+    ...manifest.sources.find((entry) => entry.sourceId === "storefront-behavior"),
+    sourceId: "unexpected-fifth-source"
+  });
+  fs.writeFileSync(manifestPath, JSON.stringify(manifest));
+  for (const profile of ["full", "compact"]) {
+    restampDocumentSet(path.join(candidatePath, profile), manifestPath, { write: true });
+  }
+  const before = directorySnapshot(candidatePath);
+
+  const result = runChecker([candidatePath]);
+
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /unexpected source binding/i);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
+test("rejects matching profile Sources rows that disagree with the bound source", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");
+  for (const profile of ["full", "compact"]) {
+    replaceExactlyOnce(
+      path.join(candidatePath, profile, "indexes", "sources-contexts-behavior.md"),
+      "| complete-contexts | behavior-configuration | none | none | none | complete-contexts.json | fixture-1 |",
+      "| complete-contexts | behavior-configuration | none | none | none | complete-contexts.json | fixture-2 |"
+    );
+    restampDocumentSet(path.join(candidatePath, profile), manifestPath, { write: true });
+  }
+  const before = directorySnapshot(candidatePath);
+
+  const result = runChecker([candidatePath]);
+
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /complete-contexts.*Sources.*revision/i);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
+test("rejects an unrelated source_ref on a Sources shard after both profiles are restamped", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");
+  for (const profile of ["full", "compact"]) {
+    replaceExactlyOnce(
+      path.join(candidatePath, profile, "indexes", "sources-asyncapi.md"),
+      "source_refs: storefront-asyncapi-3.1.0",
+      "source_refs: complete-contexts, storefront-asyncapi-3.1.0"
+    );
+    restampDocumentSet(path.join(candidatePath, profile), manifestPath, { write: true });
+  }
+  const before = directorySnapshot(candidatePath);
+
+  const result = runChecker([candidatePath]);
+
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /sources-asyncapi\.md.*source_refs/i);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
 for (const [label, file, from, to, mismatch] of [
   ["primary Message identity", "complete-contexts.json", '"message": "a-message"',
     '"message": "a-renamed-message"', /a-operation.*Message/i],

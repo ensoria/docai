@@ -1748,6 +1748,10 @@ Final review の Important finding 対応により、この checkpoint は当初
 
 > **Gate verification:** 全809 tests中808成功 / 1既存skip（Python 3.9未導入）/ 0失敗。Core checkerは264 cases / 193 invalid / one-invalidity 193/193 / 未使用rule 0 / coverage gap 0、complete checkerは17 paths等価。両profileのexplicit-manifest dry-runは`restamp required: no`、`git diff --check`成功。source/projection bytesおよびGit stateは変更せず、checker、self-test、監査文書のみ変更した。
 
+> **Implementation note (Task 12 Sources catalog provenance checkpoint, 2026-10-01):** 前checkpointのsource-aware gateを、manifest / 実ソース / full・compact Sources rowsの三者照合へ拡張した。各sourceのidentity・kind・revision、AsyncAPI specification、API ID・contract version、manifest locationとtypeに基づき全7 standard cellsをsource IDごとに確認し、missing / extra rowと余分なmanifest source bindingも拒否する。今回の4-source scenarioでは各catalog rowを同名source自身が供給するため、各Sources shardの`source_refs`をそのshardのrow ID集合にexact一致させる。これは一般のcross-source catalog-cell contributorを禁止する規則ではなく、candidate-localなsource-aware assertionである。TDDではmanifest revisionのみを変更してrestampしたpair、両profileのSources行のみを同じ誤値へ変更してrestampしたpair、根拠のないshard `source_refs`を両profileへ追加してrestampしたpair、5番目のmanifest sourceを追加してrestampしたpairが従来checkerを通るREDを順に確認し、GREENでread-only拒否とcandidate bytes不変を確認した。candidate READMEの「source-traceability gate未実装」という古い説明も、partial gateと残件の境界へ修正した。Task 12の全fact matrix最終reviewとstorefront conventions、schema/example、incomplete Workflow states、Reference Material、selection rule、compact policy、convention closureの照合は未完了のままとする。
+
+> **Sources gate verification:** 全813 tests中812成功 / 1既存skip（Python 3.9未導入）/ 0失敗。Core checkerは264 cases / 193 invalid / one-invalidity 193/193 / 未使用rule 0 / coverage gap 0、complete checkerは17 paths等価。両profileのexplicit-manifest dry-runは`restamp required: no`、`git diff --check`成功。candidate source / projection bytes、Core corpus、Git stateは変更していない。
+
 **Review gate:** advanced structure を使わない selected operation が unrelated advanced marker のために blocked にならないことを確認する。
 
 **Suggested commit message:** `test(messaging): add complete full and compact candidate sets`
