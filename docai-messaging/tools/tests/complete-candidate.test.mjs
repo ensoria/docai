@@ -340,6 +340,7 @@ test("compact candidate composes one-line JSON field defaults and same_as", () =
     "",
     "| Field | Type | Required | Nullable | Constraints / Meaning |",
     "|---|---|---|---|---|",
+    "| $ | object | yes | no | Additional properties are forbidden. |",
     "| event_id | string | yes | no | Synthetic event identifier |",
     "| status | string | yes | no | Lifecycle status |"
   ].join("\n")), true);
@@ -352,6 +353,7 @@ test("compact candidate composes one-line JSON field defaults and same_as", () =
     "",
     "| Field | Type | Constraints / Meaning |",
     "|---|---|---|",
+    "| $ | object | Additional properties are forbidden. |",
     "| event_id | string | Synthetic event identifier |",
     "| status | string | Lifecycle status |"
   ].join("\n")), true);
@@ -712,6 +714,7 @@ for (const profile of ["full", "compact"]) {
       "",
       "| Field | Type | Required | Nullable | Constraints / Meaning |",
       "|---|---|---|---|---|",
+      "| $ | object | yes | no | Additional properties are forbidden. |",
       "| kind | string | yes | no | `const=\"created\"`; Variant discriminator |",
       "| id | string | yes | no | Synthetic event identifier |"
     ].join("\n")), true);
@@ -724,6 +727,7 @@ for (const profile of ["full", "compact"]) {
       "",
       "| Field | Type | Presence | Nullable | Meaning |",
       "|---|---|---|---|---|",
+      "| $ | object | always | no | Additional properties are forbidden. |",
       "| reason | string | always | no | Archival reason |"
     ].join("\n")), true);
     assert.equal(channel.content.includes([
@@ -746,6 +750,7 @@ for (const profile of ["full", "compact"]) {
       "",
       "| Field | Type | Required | Nullable | Constraints / Meaning |",
       "|---|---|---|---|---|",
+      "| $ | object | yes | no | Additional properties are forbidden. |",
       "| event_id | string | yes | no | Synthetic event identifier |",
       "| status | string | yes | no | Lifecycle status |"
     ].join("\n")), true);

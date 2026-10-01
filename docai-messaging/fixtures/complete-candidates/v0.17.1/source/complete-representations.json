@@ -133,6 +133,25 @@
           "example": {
             "kind": "created",
             "id": "evt_01"
+          },
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "kind",
+              "id"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "created",
+                "description": "Variant discriminator"
+              },
+              "id": {
+                "type": "string",
+                "description": "Synthetic event identifier"
+              }
+            }
           }
         },
         {
@@ -140,9 +159,29 @@
           "example": {
             "kind": "rejected",
             "reason": "invalid"
+          },
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "kind",
+              "reason"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "rejected",
+                "description": "Variant discriminator"
+              },
+              "reason": {
+                "type": "string",
+                "description": "Rejection reason"
+              }
+            }
           }
         }
-      ]
+      ],
+      "schemaFormat": "application/vnd.aai.asyncapi+json;version=3.1.0"
     },
     {
       "operation": "r-untagged-operation",
@@ -159,15 +198,80 @@
           "label": "archived",
           "example": {
             "reason": "expired"
+          },
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "reason"
+            ],
+            "properties": {
+              "reason": {
+                "type": "string",
+                "description": "Archival reason"
+              }
+            }
           }
         },
         {
           "label": "restored",
           "example": {
             "id": "evt_02"
+          },
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Synthetic event identifier"
+              }
+            }
           }
         }
-      ]
+      ],
+      "schemaFormat": "application/vnd.aai.asyncapi+json;version=3.1.0"
     }
-  ]
+  ],
+  "scenarioPolicy": "These are synthetic fixture operations, not production storefront operations. operationDefaults explicitly establishes known absence only for operations declared in this source. Missing facts outside this enumerated policy remain unknown. These operations impose no additional convention dependencies beyond their selected Data Representation rules. Workflow coordination is caller-local: identifiers, trace records, and state labels are not message headers or payload fields. Local orchestration timeouts do not imply a messaging reply.",
+  "operationDefaults": {
+    "behavior": {
+      "side_effects": "none",
+      "idempotency": "none",
+      "preconditions": "none",
+      "authorization": "none",
+      "delivery": "none",
+      "ordering": "none"
+    },
+    "operationBindings": "none",
+    "channelParameters": "none",
+    "channelBindings": "none",
+    "headers": "none",
+    "messageBindings": "none",
+    "reply": "none",
+    "failureHandling": "none"
+  },
+  "operationContracts": {
+    "r-csv-operation": {
+      "purpose": "Sends one lifecycle record through the publication-scoped CSV wire adapter."
+    },
+    "r-json-original-operation": {
+      "purpose": "Publishes the canonical lifecycle record used by the compact reuse example."
+    },
+    "r-json-reuse-operation": {
+      "purpose": "Publishes the same lifecycle record through a second operation."
+    },
+    "r-raw-operation": {
+      "purpose": "Sends an authoritatively opaque receipt payload."
+    },
+    "r-tagged-operation": {
+      "purpose": "Sends a lifecycle event selected by its complete discriminator mapping."
+    },
+    "r-untagged-operation": {
+      "purpose": "Receives a lifecycle event selected without a discriminator field."
+    }
+  }
 }

@@ -2,7 +2,7 @@
 
 ## SEND a.events (a-operation)
 
-Documents the selected messaging operation.
+Publish the payload-free alpha control signal.
 
 ### Behavior
 
@@ -48,4 +48,4 @@ none
 
 workflows/alpha-delivery.md, workflows/alpha-observability.md, workflows/state-none.md, workflows/state-unknown.md, workflows/state-unsupported.md
 
-> docai-identity: set_id: b32:kvq6vcjyopzhz43tt47cyhwrsq | projection_id: b32:cc7dt7ad4wwrbmu6jgpcnxujwe
+> docai-identity: set_id: b32:adbabw3k2mxgyspfoxykybb27i | projection_id: b32:gw6dvhi3pw2jw6wf7jgv3ky54q

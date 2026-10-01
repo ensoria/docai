@@ -14,7 +14,10 @@
         "state-none",
         "state-unknown",
         "state-unsupported"
-      ]
+      ],
+      "message": "a-message",
+      "payload": "none",
+      "purpose": "Publish the payload-free alpha control signal."
     },
     "m-operation": {
       "action": "SEND",
@@ -22,13 +25,19 @@
       "requiredContexts": [],
       "supplementalContexts": [
         "middle-operations"
-      ]
+      ],
+      "message": "m-message",
+      "payload": "none",
+      "purpose": "Publish the payload-free middle control signal."
     },
     "z-operation": {
       "action": "RECEIVE",
       "channel": "z.events",
       "requiredContexts": [],
-      "supplementalContexts": []
+      "supplementalContexts": [],
+      "message": "z-message",
+      "payload": "none",
+      "purpose": "Receive the payload-free zeta control signal."
     }
   },
   "workflows": {
@@ -39,7 +48,28 @@
         "SEND a.events (a-operation)",
         "SEND m.events (m-operation)"
       ],
-      "timeoutRecovery": "Retry with the retained alpha event identifier."
+      "preconditions": [
+        "Caller-local alpha event data is validated"
+      ],
+      "stepAnnotations": [
+        "retain the alpha event identifier",
+        "record the correlated middle event"
+      ],
+      "transitions": [
+        {
+          "from": "alpha.ready",
+          "trigger": "SEND a.events (a-operation)",
+          "to": "alpha.sent"
+        },
+        {
+          "from": "alpha.sent",
+          "trigger": "SEND m.events (m-operation)",
+          "to": "middle.recorded"
+        }
+      ],
+      "failureRecovery": [
+        "On timeout, retry with the retained alpha event identifier"
+      ]
     },
     "alpha-observability": {
       "name": "Alpha observability",
@@ -47,7 +77,22 @@
       "steps": [
         "SEND a.events (a-operation)"
       ],
-      "timeoutRecovery": "Repeat trace collection with the same synthetic identifier."
+      "preconditions": [
+        "Caller-local synthetic trace collection is enabled"
+      ],
+      "stepAnnotations": [
+        "record the synthetic trace identifier"
+      ],
+      "transitions": [
+        {
+          "from": "trace.pending",
+          "trigger": "SEND a.events (a-operation)",
+          "to": "trace.recorded"
+        }
+      ],
+      "failureRecovery": [
+        "On timeout, repeat trace collection with the same synthetic identifier"
+      ]
     },
     "state-none": {
       "name": "State none",
@@ -126,5 +171,23 @@
       "supplementalContext": "channels/middle.md",
       "expectedRule": "DM-IDX-005"
     }
-  ]
+  ],
+  "scenarioPolicy": "These are synthetic fixture operations, not production storefront operations. operationDefaults explicitly establishes known absence only for operations declared in this source. Missing facts outside this enumerated policy remain unknown. These operations impose no additional convention dependencies beyond their selected Data Representation rules. Workflow coordination is caller-local: identifiers, trace records, and state labels are not message headers or payload fields. Local orchestration timeouts do not imply a messaging reply.",
+  "operationDefaults": {
+    "behavior": {
+      "side_effects": "none",
+      "idempotency": "none",
+      "preconditions": "none",
+      "authorization": "none",
+      "delivery": "none",
+      "ordering": "none"
+    },
+    "operationBindings": "none",
+    "channelParameters": "none",
+    "channelBindings": "none",
+    "headers": "none",
+    "messageBindings": "none",
+    "reply": "none",
+    "failureHandling": "none"
+  }
 }

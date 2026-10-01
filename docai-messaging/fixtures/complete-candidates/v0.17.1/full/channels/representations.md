@@ -47,6 +47,7 @@ event_id,status
 
 | Field | Type | Required | Nullable | Constraints / Meaning |
 |---|---|---|---|---|
+| $ | object | yes | no | Additional properties are forbidden. |
 | event_id | string | yes | no | Synthetic event identifier |
 | status | string | yes | no | Lifecycle status |
 
@@ -111,6 +112,7 @@ none
 
 | Field | Type | Required | Nullable | Constraints / Meaning |
 |---|---|---|---|---|
+| $ | object | yes | no | Additional properties are forbidden. |
 | event_id | string | yes | no | Synthetic event identifier |
 | status | string | yes | no | Lifecycle status |
 
@@ -175,6 +177,7 @@ none
 
 | Field | Type | Required | Nullable | Constraints / Meaning |
 |---|---|---|---|---|
+| $ | object | yes | no | Additional properties are forbidden. |
 | event_id | string | yes | no | Synthetic event identifier |
 | status | string | yes | no | Lifecycle status |
 
@@ -290,6 +293,7 @@ none
 
 | Field | Type | Required | Nullable | Constraints / Meaning |
 |---|---|---|---|---|
+| $ | object | yes | no | Additional properties are forbidden. |
 | kind | string | yes | no | `const="created"`; Variant discriminator |
 | id | string | yes | no | Synthetic event identifier |
 
@@ -301,6 +305,7 @@ none
 
 | Field | Type | Required | Nullable | Constraints / Meaning |
 |---|---|---|---|---|
+| $ | object | yes | no | Additional properties are forbidden. |
 | kind | string | yes | no | `const="rejected"`; Variant discriminator |
 | reason | string | yes | no | Rejection reason |
 
@@ -366,6 +371,7 @@ The receiver identifies the applicable lifecycle shape from the complete decoded
 
 | Field | Type | Presence | Nullable | Meaning |
 |---|---|---|---|---|
+| $ | object | always | no | Additional properties are forbidden. |
 | reason | string | always | no | Archival reason |
 
 **variant**: restored
@@ -376,6 +382,7 @@ The receiver identifies the applicable lifecycle shape from the complete decoded
 
 | Field | Type | Presence | Nullable | Meaning |
 |---|---|---|---|---|
+| $ | object | always | no | Additional properties are forbidden. |
 | id | string | always | no | Synthetic event identifier |
 
 ### Reply
@@ -390,4 +397,4 @@ none
 
 none
 
-> docai-identity: set_id: b32:i4rvjwvkyj6sostbzlrdyozsim | projection_id: b32:cc7dt7ad4wwrbmu6jgpcnxujwe
+> docai-identity: set_id: b32:o4gkycqsjyozksqbu6ydyc4yh4 | projection_id: b32:gw6dvhi3pw2jw6wf7jgv3ky54q
