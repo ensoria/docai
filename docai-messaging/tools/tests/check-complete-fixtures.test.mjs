@@ -254,6 +254,76 @@ for (const [heading, from, to] of [
   });
 }
 
+for (const [heading, file, from, to] of [
+  ["Environments", "storefront.asyncapi.json",
+    '"host": "broker.example.invalid:9092"', '"host": "broker.changed.example.invalid:9092"'],
+  ["Environments", "storefront-behavior.json",
+    "Use the production server for this corpus scenario.",
+    "Use the production server only for this corpus scenario."],
+  ["Protocols and Bindings", "storefront-behavior.json",
+    '"protocolVersion": "3.6.0"', '"protocolVersion": "3.7.0"'],
+  ["Protocols and Bindings", "storefront.asyncapi.json",
+    '"protocolVersion": "3.6.0"', '"protocolVersion": "3.7.0"'],
+  ["Serialization", "storefront-behavior.json",
+    '"wireMediaType": "application/json"',
+    '"wireMediaType": "application/cloudevents+json"'],
+  ["Serialization", "storefront.asyncapi.json",
+    '"defaultContentType": "application/json"',
+    '"defaultContentType": "application/cloudevents+json"']
+]) {
+  test(`rejects stale ${heading} after ${file} rebinding and restamp`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    replaceExactlyOnce(path.join(candidatePath, "source", file), from, to);
+    rebindAndRestamp(candidatePath, file);
+    const before = directorySnapshot(candidatePath);
+
+    const result = runChecker([candidatePath]);
+
+    assert.equal(result.status, 1, result.stdout);
+    assert.match(result.stderr, new RegExp(`CONVENTIONS.*${heading}`, "i"));
+    assert.deepEqual(directorySnapshot(candidatePath), before);
+  });
+}
+
+for (const messageName of ["CreateOrder", "OrderAccepted"]) {
+  test(`rejects Serialization when selected AsyncAPI ${messageName} content type differs`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    const sourcePath = path.join(candidatePath, "source", "storefront.asyncapi.json");
+    const source = JSON.parse(fs.readFileSync(sourcePath, "utf8"));
+    assert.notEqual(source.components.messages[messageName], undefined);
+    source.components.messages[messageName].contentType = "application/cloudevents+json";
+    fs.writeFileSync(sourcePath, JSON.stringify(source));
+    rebindAndRestamp(candidatePath, "storefront.asyncapi.json");
+    const before = directorySnapshot(candidatePath);
+
+    const result = runChecker([candidatePath]);
+
+    assert.equal(result.status, 1, result.stdout);
+    assert.match(result.stderr, /CONVENTIONS.*Serialization/i);
+    assert.deepEqual(directorySnapshot(candidatePath), before);
+  });
+}
+
+test("rejects matching Protocols and Bindings prose unsupported by either source", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");
+  for (const profile of ["full", "compact"]) {
+    replaceExactlyOnce(
+      path.join(candidatePath, profile, "CONVENTIONS.md"),
+      "and clients expose logical headers by their documented names.",
+      "and clients expose logical headers by their documented names. All headers are encrypted."
+    );
+    restampDocumentSet(path.join(candidatePath, profile), manifestPath, { write: true });
+  }
+  const before = directorySnapshot(candidatePath);
+
+  const result = runChecker([candidatePath]);
+
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /CONVENTIONS.*Protocols and Bindings/i);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
 test("rejects matching Ordering prose that disagrees with the behavior source", (t) => {
   const candidatePath = copyVersionedCandidate(t);
   const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");

@@ -144,6 +144,41 @@ export function auditCompleteCandidateSources(candidatePath, documentSets, optio
     }
     const conventions = set.files.find((file) => file.path === "CONVENTIONS.md");
     const convention = (heading) => section(conventions?.content, `## ${heading}`);
+    const environments = Object.entries(behavior.environments ?? {});
+    const [environmentName, environment] = environments[0] ?? [];
+    const server = asyncapi.servers?.[environment?.server];
+    const selectedServer = `the ${environmentName} server`;
+    const expectedEnvironment = environment?.selection?.replace(
+      selectedServer, `the \`${environmentName}\` server at \`${server?.host}\``
+    );
+    check(environments.length === 1 && environment?.server === environmentName
+      && typeof server?.host === "string" && server.host.length > 0
+      && environment.selection.includes(selectedServer)
+      && convention("Environments") === expectedEnvironment,
+    "CONVENTIONS Environments");
+    const bindings = behavior.protocolsAndBindings;
+    const protocol = bindings?.protocol;
+    const expectedProtocols = `Use ${protocol?.[0]?.toUpperCase()}${protocol?.slice(1)} protocol version `
+      + `\`${bindings?.protocolVersion}\`. ${bindings?.headerEncoding?.replace(/\.$/, "")}, and `
+      + bindings?.clientExposure?.replace(/^Expose /, "clients expose ");
+    check(server?.protocol === protocol && server?.protocolVersion === bindings?.protocolVersion
+      && convention("Protocols and Bindings") === expectedProtocols,
+    "CONVENTIONS Protocols and Bindings");
+    const serialization = behavior.serialization;
+    const resolveRef = (value) => value?.$ref?.startsWith("#/")
+      ? value.$ref.slice(2).split("/").reduce((node, key) => node?.[key], asyncapi) : null;
+    const selectedMessageRefs = Object.values(asyncapi.operations ?? {}).flatMap((operation) => [
+      ...(operation.messages ?? []), ...(operation.reply?.messages ?? [])
+    ]);
+    const expectedSerialization = `Use ${serialization?.encoding} with media type `
+      + `\`${serialization?.wireMediaType}\`. `
+      + serialization?.schemaResolution?.replace("the client does", "clients do");
+    check(serialization?.wireMediaType === asyncapi.defaultContentType
+      && selectedMessageRefs.length > 0
+      && selectedMessageRefs.every((ref) => resolveRef(resolveRef(ref))?.contentType
+        === serialization.wireMediaType)
+      && convention("Serialization") === expectedSerialization,
+    "CONVENTIONS Serialization");
     const envelope = behavior.messageEnvelope;
     check(convention("Message Envelope") === `Use \`${envelope.messageIdHeader}\` as the message identifier, `
       + `\`${envelope.correlationIdHeader}\` as the correlation identifier, and `

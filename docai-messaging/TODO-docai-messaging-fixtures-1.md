@@ -1760,6 +1760,10 @@ Final review の Important finding 対応により、この checkpoint は当初
 
 > **Normalized CONVENTIONS gate verification:** 全822 tests中821成功 / 1既存skip（Python 3.9未導入）/ 0失敗。Core checkerは264 cases / 193 invalid / one-invalidity 193/193 / 未使用rule 0 / coverage gap 0、complete checkerは17 paths等価。両profileのexplicit-manifest dry-runは`restamp required: no`、`git diff --check`成功。candidate source / projection bytes、Core corpus、Git stateは変更していない。
 
+> **Implementation note (Task 12 cross-source CONVENTIONS checkpoint, 2026-10-01):** ユーザーが承認したEnvironments、Protocols and Bindings、Serializationの3節をcandidate-specific source auditへ追加した。Environmentsはbehaviorの選択文・server IDとAsyncAPIのserver hostを、Protocols and Bindingsはbehaviorのprotocol / version / header文とAsyncAPI serverのprotocol / versionを、Serializationはbehaviorのencoding / media type / schema resolutionとAsyncAPI default content typeおよび選択されたprimary / reply Messageのcontent typeを照合する。各節は両profileの全文を比較し、同じ根拠のない追記を両profileへ加えたpairも拒否する。TDDのREDではsource変更・digest再binding・両profile再restampの5件と、両profileの同一unsupported prose追記1件を旧checkerが通すことを確認し、GREENで拒否とchecker前後のcandidate bytes不変を確認した。GREEN後の自己レビューでAsyncAPI protocol version / default media typeとreply Message content typeの個別変異3件を追加した。実candidateの初回検証でschema-resolution文の単複変換差を発見して修正した。意図的なsource文面やrendering変更ではgate templateを同時reviewする。CONVENTIONSは計11/15節をsource-aware gateで照合済み。残るAuthentication、Error Handling、Request-Reply、Schema Evolutionの4節とその他のcomplete fact domainのmatrix reviewは後続checkpointへ残し、Task 12 source traceability checkboxは未完了とする。
+
+> **Cross-source CONVENTIONS gate verification:** 全831 tests中830成功 / 1既存skip（Python 3.9未導入）/ 0失敗。Core checkerは264 cases / 193 invalid / one-invalidity 193/193 / 未使用rule 0 / coverage gap 0、complete checkerは17 paths等価。両profileのexplicit-manifest dry-runは`restamp required: no`、`git diff --check`成功。candidate source / projection bytes、Core corpus、Git stateは変更していない。
+
 **Review gate:** advanced structure を使わない selected operation が unrelated advanced marker のために blocked にならないことを確認する。
 
 **Suggested commit message:** `test(messaging): add complete full and compact candidate sets`
