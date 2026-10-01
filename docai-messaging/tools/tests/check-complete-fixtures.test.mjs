@@ -324,6 +324,64 @@ test("rejects matching Protocols and Bindings prose unsupported by either source
   assert.deepEqual(directorySnapshot(candidatePath), before);
 });
 
+for (const [label, file, mutate] of [
+  ["behavior scheme", "storefront-behavior.json", (source) => {
+    source.authentication.scheme = "changedOAuth";
+  }],
+  ["behavior credential acquisition", "storefront-behavior.json", (source) => {
+    source.authentication.credentialAcquisition = "Obtain a token from a separate authorization service.";
+  }],
+  ["behavior credential rotation", "storefront-behavior.json", (source) => {
+    source.authentication.credentialRotation = "Acquire a replacement token two minutes before expiry.";
+  }],
+  ["AsyncAPI token URL", "storefront.asyncapi.json", (source) => {
+    source.operations.sendCreateOrder.security[0].flows.clientCredentials.tokenUrl
+      = "https://auth.changed.example.invalid/oauth/token";
+  }],
+  ["AsyncAPI operation scope", "storefront.asyncapi.json", (source) => {
+    source.operations.sendCreateOrder.security[0].scopes = ["orders:read"];
+  }],
+  ["behavior operation scope", "storefront-behavior.json", (source) => {
+    source.authorization.sendCreateOrder = ["orders:read"];
+  }]
+]) {
+  test(`rejects stale Authentication after ${label} rebinding and restamp`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    const sourcePath = path.join(candidatePath, "source", file);
+    const source = JSON.parse(fs.readFileSync(sourcePath, "utf8"));
+    mutate(source);
+    fs.writeFileSync(sourcePath, JSON.stringify(source));
+    rebindAndRestamp(candidatePath, file);
+    const before = directorySnapshot(candidatePath);
+
+    const result = runChecker([candidatePath]);
+
+    assert.equal(result.status, 1, result.stdout);
+    assert.match(result.stderr, /CONVENTIONS.*Authentication/i);
+    assert.deepEqual(directorySnapshot(candidatePath), before);
+  });
+}
+
+test("rejects matching Authentication prose unsupported by either source", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");
+  for (const profile of ["full", "compact"]) {
+    replaceExactlyOnce(
+      path.join(candidatePath, profile, "CONVENTIONS.md"),
+      "and acquire a replacement token before the current token expires.",
+      "and acquire a replacement token before the current token expires. Share it across tenants."
+    );
+    restampDocumentSet(path.join(candidatePath, profile), manifestPath, { write: true });
+  }
+  const before = directorySnapshot(candidatePath);
+
+  const result = runChecker([candidatePath]);
+
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /CONVENTIONS.*Authentication/i);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
 test("rejects matching Ordering prose that disagrees with the behavior source", (t) => {
   const candidatePath = copyVersionedCandidate(t);
   const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");

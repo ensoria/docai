@@ -164,6 +164,43 @@ export function auditCompleteCandidateSources(candidatePath, documentSets, optio
     check(server?.protocol === protocol && server?.protocolVersion === bindings?.protocolVersion
       && convention("Protocols and Bindings") === expectedProtocols,
     "CONVENTIONS Protocols and Bindings");
+    const authentication = behavior.authentication;
+    const authorization = behavior.authorization;
+    const securedOperations = Object.entries(asyncapi.operations ?? {});
+    const tokenUrl = securedOperations[0]?.[1]?.security?.[0]?.flows?.clientCredentials?.tokenUrl;
+    const credentialAcquisition = authentication?.credentialAcquisition?.replace(
+      "a client-credentials token from the configured synthetic authorization service.",
+      `a token from \`${tokenUrl}\` with the operation-specific scope`
+    );
+    const credentialRotation = authentication?.credentialRotation?.replace(
+      /^Acquire /, "acquire "
+    );
+    const expectedAuthentication = `Use the \`${authentication?.scheme}\` OAuth2 client-credentials scheme. `
+      + `${credentialAcquisition}, and ${credentialRotation}`;
+    check(typeof authentication?.scheme === "string" && authentication.scheme.length > 0
+      && typeof tokenUrl === "string" && tokenUrl.length > 0
+      && authorization?.scheme === authentication.scheme
+      && securedOperations.length > 0
+      && isDeepStrictEqual(
+        Object.keys(authorization).filter((name) => name !== "scheme").sort(),
+        securedOperations.map(([name]) => name).sort()
+      )
+      && securedOperations.every(([name, operation]) => {
+        const security = operation.security?.[0];
+        const flow = security?.flows?.clientCredentials;
+        const scopes = security?.scopes;
+        const expectedScopes = authorization[name];
+        return operation.security?.length === 1 && security?.type === "oauth2"
+          && Object.keys(security.flows ?? {}).length === 1
+          && flow?.tokenUrl === tokenUrl
+          && Array.isArray(scopes) && scopes.length > 0
+          && new Set(scopes).size === scopes.length
+          && Array.isArray(expectedScopes)
+          && isDeepStrictEqual([...scopes].sort(), [...expectedScopes].sort())
+          && scopes.every((scope) => Object.hasOwn(flow.availableScopes ?? {}, scope));
+      })
+      && convention("Authentication") === expectedAuthentication,
+    "CONVENTIONS Authentication");
     const serialization = behavior.serialization;
     const resolveRef = (value) => value?.$ref?.startsWith("#/")
       ? value.$ref.slice(2).split("/").reduce((node, key) => node?.[key], asyncapi) : null;

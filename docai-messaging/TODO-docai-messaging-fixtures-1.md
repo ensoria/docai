@@ -1764,6 +1764,10 @@ Final review の Important finding 対応により、この checkpoint は当初
 
 > **Cross-source CONVENTIONS gate verification:** 全831 tests中830成功 / 1既存skip（Python 3.9未導入）/ 0失敗。Core checkerは264 cases / 193 invalid / one-invalidity 193/193 / 未使用rule 0 / coverage gap 0、complete checkerは17 paths等価。両profileのexplicit-manifest dry-runは`restamp required: no`、`git diff --check`成功。candidate source / projection bytes、Core corpus、Git stateは変更していない。
 
+> **Implementation note (Task 12 Authentication source-traceability checkpoint, 2026-10-01):** ユーザー承認の1コミット単位として、candidate-specific source auditへAuthentication節の全文照合を追加した。behaviorのscheme・credential acquisition / rotation・operation別authorizationと、AsyncAPI各operationの単一OAuth2 client-credentials flow、同一token URL、非空で重複のない選択scope、declared available scopesを照合する。source文のtoken URL挿入、operation-specific scope表現、rotation文の接続だけをcandidate固有の表示正規化とする。TDDのREDではbehavior scheme / acquisition / rotation / operation scope、AsyncAPI token URL / operation scopeの6件と、両profileへ同じ根拠のないAuthentication文を追記した1件が旧checkerを通ることを確認し、GREENでは各caseを拒否してchecker実行前後のcandidate bytes不変を確認した。source・projection・manifest bytes、Core corpus、公開grammarとvalidator ruleは変更しない。CONVENTIONSのsource-aware gateは12/15節となり、残るError Handling、Request-Reply、Schema Evolutionとその他のcomplete fact domainは後続checkpointへ残す。今回の節チェックはoperation本文の認可文そのものをまだ認証しないため、Task 12 source traceability checkboxは未完了とする。
+
+> **Authentication gate verification:** 全838 tests中837成功 / 1既存skip（Python 3.9未導入）/ 0失敗。Core checkerは264 cases / 193 invalid / one-invalidity 193/193 / 未使用rule 0 / coverage gap 0、complete checkerは17 paths等価。両profileのexplicit-manifest dry-runは`restamp required: no`、`git diff --check`成功。
+
 **Review gate:** advanced structure を使わない selected operation が unrelated advanced marker のために blocked にならないことを確認する。
 
 **Suggested commit message:** `test(messaging): add complete full and compact candidate sets`
