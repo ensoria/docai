@@ -228,6 +228,72 @@ for (const [label, file, from, to, mismatch] of [
   });
 }
 
+for (const [heading, from, to] of [
+  ["Connection and Session",
+    "Reconnect with bounded exponential backoff from 100 milliseconds to 10 seconds.",
+    "Reconnect with bounded exponential backoff from 200 milliseconds to 10 seconds."],
+  ["Data Representation", '"role": "constraint"', '"role": "annotation"'],
+  ["Empty and Omitted Values",
+    "Only fields not listed as required may be omitted.",
+    "All fields may be omitted."],
+  ["Rate Limits and Quotas", '"applies": false', '"applies": true']
+]) {
+  test(`rejects stale ${heading} after behavior source rebinding and restamp`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    replaceExactlyOnce(
+      path.join(candidatePath, "source", "storefront-behavior.json"), from, to
+    );
+    rebindAndRestamp(candidatePath, "storefront-behavior.json");
+    const before = directorySnapshot(candidatePath);
+
+    const result = runChecker([candidatePath]);
+
+    assert.equal(result.status, 1, result.stdout);
+    assert.match(result.stderr, new RegExp(`CONVENTIONS.*${heading}`, "i"));
+    assert.deepEqual(directorySnapshot(candidatePath), before);
+  });
+}
+
+test("rejects matching Ordering prose that disagrees with the behavior source", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");
+  for (const profile of ["full", "compact"]) {
+    replaceExactlyOnce(
+      path.join(candidatePath, profile, "CONVENTIONS.md"),
+      "There is no ordering guarantee across distinct `orderId` values.",
+      "There is an ordering guarantee across distinct `orderId` values."
+    );
+    restampDocumentSet(path.join(candidatePath, profile), manifestPath, { write: true });
+  }
+  const before = directorySnapshot(candidatePath);
+
+  const result = runChecker([candidatePath]);
+
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /CONVENTIONS.*Ordering/i);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
+test("rejects unsourced Data Representation prose after the format table", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");
+  for (const profile of ["full", "compact"]) {
+    replaceExactlyOnce(
+      path.join(candidatePath, profile, "CONVENTIONS.md"),
+      '| "date-time" | constraint | An RFC 3339 date-time string with an explicit offset. |',
+      '| "date-time" | constraint | An RFC 3339 date-time string with an explicit offset. |\n\nAll formats are optional.'
+    );
+    restampDocumentSet(path.join(candidatePath, profile), manifestPath, { write: true });
+  }
+  const before = directorySnapshot(candidatePath);
+
+  const result = runChecker([candidatePath]);
+
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /CONVENTIONS.*Data Representation/i);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
 test("checks one whole-set complete full and compact pair without modifying it", (t) => {
   const { candidatePath } = restampCandidate(t);
   const before = directorySnapshot(candidatePath);

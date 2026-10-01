@@ -1752,6 +1752,10 @@ Final review の Important finding 対応により、この checkpoint は当初
 
 > **Sources gate verification:** 全813 tests中812成功 / 1既存skip（Python 3.9未導入）/ 0失敗。Core checkerは264 cases / 193 invalid / one-invalidity 193/193 / 未使用rule 0 / coverage gap 0、complete checkerは17 paths等価。両profileのexplicit-manifest dry-runは`restamp required: no`、`git diff --check`成功。candidate source / projection bytes、Core corpus、Git stateは変更していない。
 
+> **Implementation note (Task 12 directly behavior-backed CONVENTIONS checkpoint, 2026-10-01):** candidate-specific source auditを、`storefront-behavior.json`から直接照合できる5節へ拡張した。Connection and Session、Ordering、Empty and Omitted Valuesは出典の全sentenceを両profileのsection本文と比較し、Orderingのinline-code markupだけを意味を変えない表示差として除く。Data Representationはformat / role / meaningのparsed tableをsourceのentriesと比較し、Rate Limits and Quotasは明示`applies=false`と`none`の組を確認する。TDDのREDではsourceのreconnect、format role、omission、rate-limit適用をそれぞれ変えてdigest再binding・両profile再restampした4件と、Ordering本文を両profileで同じ誤記へ変えて再restampした1件の計5件が旧checkerを通ることを確認し、GREENで拒否とchecker実行前後のbytes不変を確認した。自己レビューではtable parserが表の後続文章を読み飛ばす境界を見つけ、両profileへの根拠のない追記を通す追加REDを確認して、section末尾まで表に含まれることを要求するGREENへ進めた。15節すべてのprojected wordingをcheckerへ固定せず、残る10節のmixed-input / normalized source mappingは後続のsource-aware checkpointで設計する。Task 12 source traceability checkboxは未完了とする。
+
+> **CONVENTIONS gate verification:** 全819 tests中818成功 / 1既存skip（Python 3.9未導入）/ 0失敗。Core checkerは264 cases / 193 invalid / one-invalidity 193/193 / 未使用rule 0 / coverage gap 0、complete checkerは17 paths等価。両profileのexplicit-manifest dry-runは`restamp required: no`、`git diff --check`成功。candidate source / projection bytes、Core corpus、Git stateは変更していない。
+
 **Review gate:** advanced structure を使わない selected operation が unrelated advanced marker のために blocked にならないことを確認する。
 
 **Suggested commit message:** `test(messaging): add complete full and compact candidate sets`

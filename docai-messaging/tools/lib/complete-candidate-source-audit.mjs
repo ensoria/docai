@@ -142,6 +142,37 @@ export function auditCompleteCandidateSources(candidatePath, documentSets, optio
       check(file.metadata["docai-messaging"] === manifest.docaiMessaging,
         `${file.path} DocAI Messaging version`);
     }
+    const conventions = set.files.find((file) => file.path === "CONVENTIONS.md");
+    const convention = (heading) => section(conventions?.content, `## ${heading}`);
+    check(convention("Connection and Session") === [
+      behavior.connectionAndSession.reconnect,
+      behavior.connectionAndSession.sessionFailure
+    ].join(" "), "CONVENTIONS Connection and Session");
+    check(convention("Ordering")?.replaceAll("`", "") === [
+      behavior.ordering.guarantee,
+      behavior.ordering.negativeGuarantee
+    ].join(" "), "CONVENTIONS Ordering");
+    check(convention("Empty and Omitted Values") === [
+      behavior.emptyAndOmittedValues.nullability,
+      behavior.emptyAndOmittedValues.omission
+    ].join(" "), "CONVENTIONS Empty and Omitted Values");
+    const dataRepresentation = convention("Data Representation");
+    const formatLines = dataRepresentation?.split("\n");
+    const formatTable = formatLines === undefined ? null : parsePipeTable(
+      formatLines.map((text, index) => ({
+        text, file: "CONVENTIONS.md", line: index + 1
+      }))
+    );
+    const expectedFormats = Object.entries(behavior.dataRepresentation).map(([format, facts]) => [
+      JSON.stringify(format), facts.role, facts.meaning
+    ]);
+    check(formatTable?.diagnostics.length === 0
+      && isDeepStrictEqual(formatTable.value?.header, ["Format", "Role", "Meaning"])
+      && isDeepStrictEqual(formatTable.value?.rows, expectedFormats)
+      && formatTable.value?.endLine === formatLines.length,
+    "CONVENTIONS Data Representation");
+    check(behavior.rateLimitsAndQuotas.applies === false
+      && convention("Rate Limits and Quotas") === "none", "CONVENTIONS Rate Limits and Quotas");
     const actualSourceRows = result.facts.core.sources.rows;
     check(actualSourceRows.length === expectedSourceRows.size, "Sources row count");
     for (const [id, expected] of expectedSourceRows) {
