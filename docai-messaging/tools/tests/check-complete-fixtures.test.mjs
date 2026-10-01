@@ -382,6 +382,53 @@ test("rejects matching Authentication prose unsupported by either source", (t) =
   assert.deepEqual(directorySnapshot(candidatePath), before);
 });
 
+for (const [fact, from, to] of [
+  ["retry action",
+    "Negative-acknowledge retryable failures; reject non-retryable failures.",
+    "Negative-acknowledge all failures; reject none."],
+  ["maximum delivery attempts", '"maxDeliveryAttempts": 5', '"maxDeliveryAttempts": 6'],
+  ["dead-letter channel", '"deadLetterChannel": "orders.dead-letter"',
+    '"deadLetterChannel": "orders.changed-dead-letter"'],
+  ["terminal action",
+    "Publish the failed envelope and diagnostic code to the dead-letter channel.",
+    "Publish only the diagnostic code to the dead-letter channel."]
+]) {
+  test(`rejects stale Error Handling after ${fact} source rebinding and restamp`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    replaceExactlyOnce(
+      path.join(candidatePath, "source", "storefront-behavior.json"), from, to
+    );
+    rebindAndRestamp(candidatePath, "storefront-behavior.json");
+    const before = directorySnapshot(candidatePath);
+
+    const result = runChecker([candidatePath]);
+
+    assert.equal(result.status, 1, result.stdout);
+    assert.match(result.stderr, /CONVENTIONS.*Error Handling/i);
+    assert.deepEqual(directorySnapshot(candidatePath), before);
+  });
+}
+
+test("rejects matching Error Handling prose unsupported by the behavior source", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");
+  for (const profile of ["full", "compact"]) {
+    replaceExactlyOnce(
+      path.join(candidatePath, profile, "CONVENTIONS.md"),
+      "publish the failed envelope and diagnostic code to `orders.dead-letter`.",
+      "publish the failed envelope and diagnostic code to `orders.dead-letter`. Discard every retry."
+    );
+    restampDocumentSet(path.join(candidatePath, profile), manifestPath, { write: true });
+  }
+  const before = directorySnapshot(candidatePath);
+
+  const result = runChecker([candidatePath]);
+
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /CONVENTIONS.*Error Handling/i);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
 test("rejects matching Ordering prose that disagrees with the behavior source", (t) => {
   const candidatePath = copyVersionedCandidate(t);
   const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");

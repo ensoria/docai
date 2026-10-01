@@ -244,6 +244,14 @@ export function auditCompleteCandidateSources(candidatePath, documentSets, optio
       behavior.ordering.guarantee,
       behavior.ordering.negativeGuarantee
     ].join(" "), "CONVENTIONS Ordering");
+    const recovery = behavior.failureRecovery;
+    const retryAction = recovery?.retryAction?.replace("; reject", " and reject");
+    const terminalAction = recovery?.terminalAction?.replace(/^Publish /, "publish ")
+      .replace("the dead-letter channel", `\`${recovery?.deadLetterChannel}\``);
+    check(recovery?.maxDeliveryAttempts === 5
+      && typeof recovery.deadLetterChannel === "string" && recovery.deadLetterChannel.length > 0
+      && convention("Error Handling") === `${retryAction} After five delivery attempts, ${terminalAction}`,
+    "CONVENTIONS Error Handling");
     check(convention("Empty and Omitted Values") === [
       behavior.emptyAndOmittedValues.nullability,
       behavior.emptyAndOmittedValues.omission

@@ -1768,6 +1768,10 @@ Final review の Important finding 対応により、この checkpoint は当初
 
 > **Authentication gate verification:** 全838 tests中837成功 / 1既存skip（Python 3.9未導入）/ 0失敗。Core checkerは264 cases / 193 invalid / one-invalidity 193/193 / 未使用rule 0 / coverage gap 0、complete checkerは17 paths等価。両profileのexplicit-manifest dry-runは`restamp required: no`、`git diff --check`成功。
 
+> **Implementation note (Task 12 Error Handling source-traceability checkpoint, 2026-10-01):** ユーザー承認の次の1コミット単位として、candidate-specific source auditへError Handling節の全文照合を追加した。`storefront-behavior.json`の`failureRecovery`からretry / reject action、最大delivery attempt数、dead-letter channel、terminal actionを確認し、candidate固有の`; reject`から`and reject`への接続、`Publish`の文中小文字化、channelのinline code化、現在の`5`→`five`という表示を照合する。dead-letter channelはAsyncAPI channelとして宣言されていないため、未宣言のcross-source topologyを推測しない。TDDのREDでは四source factを個別に変えてdigest再binding・両profile再restampした4件と、両profileへ同じ根拠のないError Handling文を追記した1件が旧checkerを通ることを確認し、GREENでは拒否とchecker前後のcandidate bytes不変を確認した。影響はsource-aware checker、回帰test、監査記録のみで、source / projection / manifest bytes、Core corpus、公開grammar / validator rule、作業順序は変更しない。CONVENTIONSは13/15節をsource-aware gateで照合済み。残るRequest-Reply、Schema Evolutionおよびoperation-specific Failure Handling rowsを含む他のcomplete fact domainは後続checkpointに残し、Task 12 source traceability checkboxは未完了とする。
+
+> **Error Handling gate verification:** 全843 tests中842成功 / 1既存skip（Python 3.9未導入）/ 0失敗。Core checkerは264 cases / 193 invalid / one-invalidity 193/193 / 未使用rule 0 / coverage gap 0、complete checkerは17 paths等価。両profileのexplicit-manifest dry-runは`restamp required: no`、`git diff --check`成功。
+
 **Review gate:** advanced structure を使わない selected operation が unrelated advanced marker のために blocked にならないことを確認する。
 
 **Suggested commit message:** `test(messaging): add complete full and compact candidate sets`
