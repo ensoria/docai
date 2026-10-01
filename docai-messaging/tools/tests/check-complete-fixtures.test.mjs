@@ -573,6 +573,74 @@ test("rejects matching Schema Evolution prose unsupported by either source", (t)
   assert.deepEqual(directorySnapshot(candidatePath), before);
 });
 
+for (const [name, field, replacement] of [
+  ["receiveOrderCreated", "sideEffects", "Delete the storefront order state."],
+  ["sendCreateOrder", "idempotency", "Use a fresh message-id for every retry."],
+  ["receiveOrderCreated", "preconditions", "No subscription is required."],
+  ["sendCreateOrder", "authorization", "OAuth2 scope orders:read is required."],
+  ["receiveOrderCreated", "delivery", "at-most-once -- Never redeliver."],
+  ["sendCreateOrder", "ordering", "Publish commands in arbitrary order."]
+]) {
+  test(`rejects stale storefront Behavior ${name} ${field} after source rebinding`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    const sourcePath = path.join(candidatePath, "source", "storefront-behavior.json");
+    const source = JSON.parse(fs.readFileSync(sourcePath, "utf8"));
+    source.operationBehavior[name][field] = replacement;
+    fs.writeFileSync(sourcePath, JSON.stringify(source));
+    rebindAndRestamp(candidatePath, "storefront-behavior.json");
+    const before = directorySnapshot(candidatePath);
+
+    const result = runChecker([candidatePath]);
+
+    assert.equal(result.status, 1, result.stdout);
+    assert.match(result.stderr, new RegExp(`${name} Behavior`));
+    assert.deepEqual(directorySnapshot(candidatePath), before);
+  });
+}
+
+test("rejects matching storefront Behavior prose unsupported by its source", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");
+  for (const profile of ["full", "compact"]) {
+    replaceExactlyOnce(
+      path.join(candidatePath, profile, "channels", "orders.md"),
+      "- side_effects: Update the storefront order state to created.",
+      "- side_effects: Delete the storefront order state."
+    );
+    restampDocumentSet(path.join(candidatePath, profile), manifestPath, { write: true });
+  }
+  const before = directorySnapshot(candidatePath);
+
+  const result = runChecker([candidatePath]);
+
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /receiveOrderCreated Behavior/);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
+test("rejects storefront Behavior authorization that contradicts its sourced scope", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  const sourcePath = path.join(candidatePath, "source", "storefront-behavior.json");
+  const source = JSON.parse(fs.readFileSync(sourcePath, "utf8"));
+  source.operationBehavior.sendCreateOrder.authorization = "OAuth2 scope orders:read is required.";
+  fs.writeFileSync(sourcePath, JSON.stringify(source));
+  for (const profile of ["full", "compact"]) {
+    replaceExactlyOnce(
+      path.join(candidatePath, profile, "channels", "orders.md"),
+      "- authorization: OAuth2 scope orders:write is required.",
+      "- authorization: OAuth2 scope orders:read is required."
+    );
+  }
+  rebindAndRestamp(candidatePath, "storefront-behavior.json");
+  const before = directorySnapshot(candidatePath);
+
+  const result = runChecker([candidatePath]);
+
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /sendCreateOrder Behavior authorization/);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
 test("rejects matching Ordering prose that disagrees with the behavior source", (t) => {
   const candidatePath = copyVersionedCandidate(t);
   const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");

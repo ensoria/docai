@@ -1780,6 +1780,10 @@ Final review の Important finding 対応により、この checkpoint は当初
 
 > **Schema Evolution gate verification:** 全855 tests中854成功 / 1既存skip（Python 3.9未導入）/ 0失敗。Core checkerは264 cases / 193 invalid / one-invalidity 193/193 / 未使用rule 0 / coverage gap 0、complete checkerは17 paths等価。両profileのexplicit-manifest dry-runは`restamp required: no`、`git diff --check`成功。
 
+> **Implementation note (Task 12 storefront Behavior source-traceability checkpoint, 2026-10-01):** ユーザー承認の次の1コミット単位として、candidate-specific source auditへ両storefront operationの6行のBehavior全文照合を追加した。behavior sourceの`sideEffects` / `idempotency` / `preconditions` / `authorization` / `delivery` / `ordering`を標準key順へ対応付け、各operationの認可文は既存Authentication gateがAsyncAPIと照合する単一scopeの宣言とも一致させる。これは現candidateの単一scope表現だけを固定し、一般的なmulti-scope rendering policyは定めない。TDDのREDでは6 fieldを両operationに分けてsource変異・digest再binding・両profile再restampした6件、両profileへ同じ根拠のないBehavior文を投影した1件、sourceと投影文を一致させても宣言scopeに反する認可文の1件が旧checkerを通ることを確認し、GREENで全8件を拒否した。影響はsource-aware checker、回帰test、監査記録のみで、source / projection / manifest bytes、Core corpus、公開grammar / validator rule、作業順序は変更しない。expanded Reply、operation-specific Failure Handling、Message schema / exampleを含む他のcomplete fact domainと最終matrix reviewは後続checkpointに残し、Task 12 source traceability checkboxは未完了とする。
+
+> **Storefront Behavior gate verification:** 全863 tests中862成功 / 1既存skip（Python 3.9未導入）/ 0失敗。Core checkerは264 cases / 193 invalid / one-invalidity 193/193 / 未使用rule 0 / coverage gap 0、complete checkerは17 paths等価。両profileのexplicit-manifest dry-runは`restamp required: no`、`git diff --check`成功。
+
 **Review gate:** advanced structure を使わない selected operation が unrelated advanced marker のために blocked にならないことを確認する。
 
 **Suggested commit message:** `test(messaging): add complete full and compact candidate sets`

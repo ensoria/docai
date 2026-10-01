@@ -329,6 +329,8 @@ export function auditCompleteCandidateSources(candidatePath, documentSets, optio
       const messageKey = operation.messages?.[0]?.$ref?.split("/").at(-1);
       const messageRef = asyncapi.channels[channelKey]?.messages?.[messageKey]?.$ref;
       const messageName = messageRef?.split("/").at(-1);
+      const body = operationBody(name);
+      const behaviorFacts = behavior.operationBehavior[name];
       check(route?.action === operation.action.toUpperCase()
         && route?.channel === asyncapi.channels[channelKey]?.address,
       `${name} operation route`);
@@ -336,8 +338,21 @@ export function auditCompleteCandidateSources(candidatePath, documentSets, optio
       check(isDeepStrictEqual(result.facts.core.messageDefinitions.byOperation[name]
         ?.filter((message) => !message.reply).map((message) => message.name), [messageName]),
       `${name} Message identity`);
-      check(operationBody(name)?.split("\n\n")[0] === behavior.operationBehavior[name]?.purpose,
+      check(body?.split("\n\n")[0] === behaviorFacts?.purpose,
         `${name} purpose`);
+      const behaviorFields = [
+        ["side_effects", "sideEffects"], ["idempotency", "idempotency"],
+        ["preconditions", "preconditions"], ["authorization", "authorization"],
+        ["delivery", "delivery"], ["ordering", "ordering"]
+      ];
+      check(behaviorFields.every(([, sourceKey]) => typeof behaviorFacts?.[sourceKey] === "string"
+        && behaviorFacts[sourceKey].length > 0)
+        && section(body, "### Behavior") === behaviorFields.map(([key, sourceKey]) =>
+          `- ${key}: ${behaviorFacts[sourceKey]}`).join("\n"), `${name} Behavior`);
+      const scopes = authorization?.[name];
+      check(Array.isArray(scopes) && scopes.length === 1
+        && behaviorFacts?.authorization === `OAuth2 scope ${scopes[0]} is required.`,
+      `${name} Behavior authorization`);
     }
     for (const [name, operation] of Object.entries(contexts.operations)) {
       const definition = result.facts.core.operationDefinitions.byName[name];
