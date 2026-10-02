@@ -641,6 +641,71 @@ test("rejects storefront Behavior authorization that contradicts its sourced sco
   assert.deepEqual(directorySnapshot(candidatePath), before);
 });
 
+for (const name of ["receiveOrderCreated", "sendCreateOrder"]) {
+  for (const [field, replacement] of [
+    ["failure", "unrecognized failure"],
+    ["signal", "an unrelated error signal"],
+    ["condition", "The operation has a different precondition."],
+    ["action", "Ignore the failure and continue."]
+  ]) {
+    test(`rejects stale ${name} Failure Handling ${field} after source rebinding`, (t) => {
+      const candidatePath = copyVersionedCandidate(t);
+      const sourcePath = path.join(candidatePath, "source", "storefront-behavior.json");
+      const source = JSON.parse(fs.readFileSync(sourcePath, "utf8"));
+      source.operationFailures[name][0][field] = replacement;
+      fs.writeFileSync(sourcePath, JSON.stringify(source));
+      rebindAndRestamp(candidatePath, "storefront-behavior.json");
+      const before = directorySnapshot(candidatePath);
+
+      const result = runChecker([candidatePath]);
+
+      assert.equal(result.status, 1, result.stdout);
+      assert.match(result.stderr, new RegExp(`${name} Failure Handling`));
+      assert.deepEqual(directorySnapshot(candidatePath), before);
+    });
+  }
+}
+
+test("rejects matching storefront Failure Handling prose unsupported by the source", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");
+  for (const profile of ["full", "compact"]) {
+    replaceExactlyOnce(path.join(candidatePath, profile, "channels", "orders.md"),
+      "| retryable handler failure | handler returns a retryable error |",
+      "| retryable handler failure | handler returns a different error |"
+    );
+    restampDocumentSet(path.join(candidatePath, profile), manifestPath, { write: true });
+  }
+  const before = directorySnapshot(candidatePath);
+
+  const result = runChecker([candidatePath]);
+
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /receiveOrderCreated Failure Handling/);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
+for (const [change, mutate] of [
+  ["row order", (failures) => failures.reverse()],
+  ["row count", (failures) => failures.pop()]
+]) {
+  test(`rejects stale sendCreateOrder Failure Handling ${change} after source rebinding`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    const sourcePath = path.join(candidatePath, "source", "storefront-behavior.json");
+    const source = JSON.parse(fs.readFileSync(sourcePath, "utf8"));
+    mutate(source.operationFailures.sendCreateOrder);
+    fs.writeFileSync(sourcePath, JSON.stringify(source));
+    rebindAndRestamp(candidatePath, "storefront-behavior.json");
+    const before = directorySnapshot(candidatePath);
+
+    const result = runChecker([candidatePath]);
+
+    assert.equal(result.status, 1, result.stdout);
+    assert.match(result.stderr, /sendCreateOrder Failure Handling/);
+    assert.deepEqual(directorySnapshot(candidatePath), before);
+  });
+}
+
 for (const [fact, sourceName, mutate, label] of [
   ["receive known no-reply", "storefront-behavior.json", (source) => {
     source.operationBehavior.receiveOrderCreated.noReply = false;

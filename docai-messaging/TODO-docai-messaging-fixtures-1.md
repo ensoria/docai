@@ -1790,6 +1790,12 @@ Final review の Important finding 対応により、この checkpoint は当初
 
 > **Storefront Reply independent review:** Critical / Important findingなし。現在のReply Message identity source変異は選択Messageの照合を検証するが、INDEXの`reply:`一致条件を単独で狙うmutationではない。また、reply Channelのknown-absenceはBindings追加で検証したがParameters追加の単独mutationは未実施。いずれも現candidateの不具合ではなく、後続のsource-aware matrix reviewで検査境界と追加evidence要否を再確認する。
 
+> **Approved design and implementation note (Task 12 storefront operation-specific Failure Handling source-traceability checkpoint, 2026-10-02):** 次の1コミット単位として、`storefront-behavior.json`の`operationFailures.receiveOrderCreated` / `.sendCreateOrder`と両profileの`channels/orders.md`の各`Failure Handling`表をsource-awareに照合した。`Failure | Signal | Condition | Action`の4列、全source行の値・件数・順序、表の後続に未出典内容がないことをcandidate-specific CLI gateで確認し、general failure-shape projection policyは導出しない。TDDのREDでは両operation×4 fieldのsource変更とdigest再binding・両profile再restampの8件、両profileが同じ誤ったSignalを持つ1件、source行の順序・件数変更2件が、旧checkerで17 paths等価として通ることを確認した。GREENでは11件すべてを拒否し、checker実行前後のcandidate bytes不変を確認した。影響はsource-aware checker、回帰test、`SOURCE-TRACEABILITY.md`の監査境界と本記録に限定し、source / projection / manifest bytes、Core corpus、公開grammar / validator rule、Task 12以降の作業順序は変更しない。Task 12のsource traceability checkboxは、Message schema / example、incomplete Workflow state、Reference Material normalization、compact policy、convention closureと最終fact matrix reviewが未完了のため維持する。
+
+> **Storefront Failure Handling gate verification:** 全883 tests中882成功 / 1既存skip（Python 3.9未導入）/ 0失敗。Core checkerは264 cases / 193 invalid / one-invalidity 193/193 / 未使用rule 0 / coverage gap 0、complete checkerは17 paths等価。両profileのexplicit-manifest dry-runは`restamp required: no`となった。
+
+> **Storefront Failure Handling independent review:** Critical / Important findingなし。Minorとして、表の後続に未出典内容がある場合を単独で狙う回帰mutationがまだない。現gateは`parsePipeTable`の最終行とFailure Handling節の最終行を比較して拒否するが、この条件自体の専用evidenceは後続のsource-aware matrix reviewで追加要否を再確認する。historical REDと全suite / Core / dry-runの独立再実行、およびTask 12全体のtraceability完成判定は今回のreview scope外とした。
+
 **Review gate:** advanced structure を使わない selected operation が unrelated advanced marker のために blocked にならないことを確認する。
 
 **Suggested commit message:** `test(messaging): add complete full and compact candidate sets`

@@ -356,6 +356,23 @@ export function auditCompleteCandidateSources(candidatePath, documentSets, optio
         && behaviorFacts?.authorization === `OAuth2 scope ${scopes[0]} is required.`,
       `${name} Behavior authorization`);
     }
+    for (const name of ["receiveOrderCreated", "sendCreateOrder"]) {
+      const fields = ["failure", "signal", "condition", "action"];
+      const failures = behavior.operationFailures?.[name];
+      const expectedRows = Array.isArray(failures) && failures.length > 0
+        && failures.every((failure) => fields.every((field) =>
+          typeof failure?.[field] === "string" && failure[field].length > 0))
+        ? failures.map((failure) => fields.map((field) => failure[field])) : null;
+      const lines = section(operationBody(name), "### Failure Handling")?.split("\n");
+      const table = lines === undefined ? null : parsePipeTable(lines.map((text, index) => ({
+        text, file: "channels/orders.md", line: index + 1
+      })));
+      check(expectedRows !== null && table?.diagnostics.length === 0
+        && isDeepStrictEqual(table.value?.header, ["Failure", "Signal", "Condition", "Action"])
+        && isDeepStrictEqual(table.value?.rows, expectedRows)
+        && table.value?.endLine === lines.length,
+      `${name} Failure Handling`);
+    }
     const receiveOperation = asyncapi.operations.receiveOrderCreated;
     const receiveReply = section(operationBody("receiveOrderCreated"), "### Reply");
     check(receiveOperation?.reply === undefined
