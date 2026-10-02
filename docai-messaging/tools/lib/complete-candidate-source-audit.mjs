@@ -338,7 +338,9 @@ export function auditCompleteCandidateSources(candidatePath, documentSets, optio
       check(isDeepStrictEqual(result.facts.core.messageDefinitions.byOperation[name]
         ?.filter((message) => !message.reply).map((message) => message.name), [messageName]),
       `${name} Message identity`);
-      check(body?.split("\n\n")[0] === behaviorFacts?.purpose,
+      const expectedPurpose = name === "sendCreateOrder"
+        ? `${behaviorFacts?.purpose} ${behaviorFacts?.reply}` : behaviorFacts?.purpose;
+      check(body?.split("\n\n")[0] === expectedPurpose,
         `${name} purpose`);
       const behaviorFields = [
         ["side_effects", "sideEffects"], ["idempotency", "idempotency"],
@@ -354,6 +356,40 @@ export function auditCompleteCandidateSources(candidatePath, documentSets, optio
         && behaviorFacts?.authorization === `OAuth2 scope ${scopes[0]} is required.`,
       `${name} Behavior authorization`);
     }
+    const receiveOperation = asyncapi.operations.receiveOrderCreated;
+    const receiveReply = section(operationBody("receiveOrderCreated"), "### Reply");
+    check(receiveOperation?.reply === undefined
+      && behavior.operationBehavior.receiveOrderCreated?.noReply === true
+      && receiveReply === "none", "receiveOrderCreated Reply");
+    const sendOperation = asyncapi.operations.sendCreateOrder;
+    const sendReply = sendOperation?.reply;
+    const sendReplySection = section(operationBody("sendCreateOrder"), "### Reply");
+    const replyKeys = sendReplySection?.split("\n\n#### Channel")[0]?.split("\n") ?? [];
+    const sendReplyChannel = resolveRef(sendReply?.channel);
+    check(replyKeys[0] === `- channel: ${sendReplyChannel?.address}`
+      && sendReplyChannel?.address === requestReply.replyChannel,
+    "sendCreateOrder Reply channel");
+    check(replyKeys[1] === `- correlation: ${requestReply.correlation}`,
+      "sendCreateOrder Reply correlation");
+    check(replyKeys.length === 3
+      && replyKeys[2] === `- timeout: ${requestReply.timeout} -- ${requestReply.timeoutMeaning}`,
+    "sendCreateOrder Reply timeout");
+    check(sendReplyChannel?.parameters === undefined && sendReplyChannel?.bindings === undefined
+      && section(sendReplySection, "#### Channel") === "- Parameters: none\n- Bindings: none",
+    "sendCreateOrder Reply Channel");
+    const selectedReplyRef = sendReply?.messages?.[0];
+    const replyChannelKey = sendReply?.channel?.$ref?.split("/").at(-1);
+    const selectedReplyMessage = resolveRef(resolveRef(selectedReplyRef));
+    const replyMessageName = selectedReplyMessage?.name;
+    const routedSend = result.facts.core.operations.rows
+      .find((row) => row.operation === "sendCreateOrder");
+    check(sendReply?.messages?.length === 1
+      && selectedReplyRef?.$ref?.startsWith(`#/channels/${replyChannelKey}/messages/`)
+      && typeof replyMessageName === "string" && replyMessageName.length > 0
+      && isDeepStrictEqual(result.facts.core.messageDefinitions.byOperation.sendCreateOrder
+        ?.filter((message) => message.reply).map((message) => message.name), [replyMessageName])
+      && isDeepStrictEqual(routedSend?.messages?.filter((name) => name.startsWith("reply:")),
+        [`reply:${replyMessageName}`]), "sendCreateOrder Reply Message");
     for (const [name, operation] of Object.entries(contexts.operations)) {
       const definition = result.facts.core.operationDefinitions.byName[name];
       const body = operationBody(name);

@@ -641,6 +641,85 @@ test("rejects storefront Behavior authorization that contradicts its sourced sco
   assert.deepEqual(directorySnapshot(candidatePath), before);
 });
 
+for (const [fact, sourceName, mutate, label] of [
+  ["receive known no-reply", "storefront-behavior.json", (source) => {
+    source.operationBehavior.receiveOrderCreated.noReply = false;
+  }, "receiveOrderCreated Reply"],
+  ["send reply meaning", "storefront-behavior.json", (source) => {
+    source.operationBehavior.sendCreateOrder.reply =
+      "The orderAccepted reply confirms final fulfillment.";
+  }, "sendCreateOrder purpose"],
+  ["selected reply Message", "storefront.asyncapi.json", (source) => {
+    source.channels.orderReplies.messages.orderAccepted.$ref =
+      "#/components/messages/OrderCreated";
+  }, "sendCreateOrder Reply Message"],
+  ["reply Channel binding", "storefront.asyncapi.json", (source) => {
+    source.channels.orderReplies.bindings = { kafka: { topic: "orders.replies" } };
+  }, "sendCreateOrder Reply Channel"]
+]) {
+  test(`rejects stale storefront Reply after ${fact} source rebinding`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    const sourcePath = path.join(candidatePath, "source", sourceName);
+    const source = JSON.parse(fs.readFileSync(sourcePath, "utf8"));
+    mutate(source);
+    fs.writeFileSync(sourcePath, JSON.stringify(source));
+    rebindAndRestamp(candidatePath, sourceName);
+    const before = directorySnapshot(candidatePath);
+
+    const result = runChecker([candidatePath]);
+
+    assert.equal(result.status, 1, result.stdout);
+    assert.match(result.stderr, new RegExp(label));
+    assert.deepEqual(directorySnapshot(candidatePath), before);
+  });
+}
+
+for (const [fact, sourceValue, conventionFrom, conventionTo, label] of [
+  ["correlation", "The reply correlation-id differs from the command correlation-id.",
+    "The reply `correlation-id` equals the command `correlation-id`.",
+    "The reply `correlation-id` differs from the command `correlation-id`.",
+    "sendCreateOrder Reply correlation"],
+  ["timeout", "7 seconds", "Wait 5 seconds for a reply", "Wait 7 seconds for a reply",
+    "sendCreateOrder Reply timeout"]
+]) {
+  test(`rejects stale storefront Reply ${fact} after matching convention rebinding`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    const sourcePath = path.join(candidatePath, "source", "storefront-behavior.json");
+    const source = JSON.parse(fs.readFileSync(sourcePath, "utf8"));
+    source.requestReply[fact] = sourceValue;
+    fs.writeFileSync(sourcePath, JSON.stringify(source));
+    for (const profile of ["full", "compact"]) {
+      replaceExactlyOnce(path.join(candidatePath, profile, "CONVENTIONS.md"),
+        conventionFrom, conventionTo);
+    }
+    rebindAndRestamp(candidatePath, "storefront-behavior.json");
+    const before = directorySnapshot(candidatePath);
+
+    const result = runChecker([candidatePath]);
+
+    assert.equal(result.status, 1, result.stdout);
+    assert.match(result.stderr, new RegExp(label));
+    assert.deepEqual(directorySnapshot(candidatePath), before);
+  });
+}
+
+test("rejects matching storefront Reply channel unsupported by either source", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");
+  for (const profile of ["full", "compact"]) {
+    replaceExactlyOnce(path.join(candidatePath, profile, "channels", "orders.md"),
+      "- channel: orders.replies", "- channel: orders.unrelated");
+    restampDocumentSet(path.join(candidatePath, profile), manifestPath, { write: true });
+  }
+  const before = directorySnapshot(candidatePath);
+
+  const result = runChecker([candidatePath]);
+
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /sendCreateOrder Reply channel/);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
 test("rejects matching Ordering prose that disagrees with the behavior source", (t) => {
   const candidatePath = copyVersionedCandidate(t);
   const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");

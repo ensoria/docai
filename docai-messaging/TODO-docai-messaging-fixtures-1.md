@@ -1784,6 +1784,12 @@ Final review の Important finding 対応により、この checkpoint は当初
 
 > **Storefront Behavior gate verification:** 全863 tests中862成功 / 1既存skip（Python 3.9未導入）/ 0失敗。Core checkerは264 cases / 193 invalid / one-invalidity 193/193 / 未使用rule 0 / coverage gap 0、complete checkerは17 paths等価。両profileのexplicit-manifest dry-runは`restamp required: no`、`git diff --check`成功。
 
+> **Approved plan adjustment and implementation note (Task 12 storefront Reply envelope/source-meaning checkpoint, 2026-10-02):** 次の1コミット単位としてexpanded Replyのsource-to-output照合を選ぶ際、`storefront-behavior.json`の`operationBehavior.sendCreateOrder.reply`が述べる「受理の確認であり最終的な履行の確認ではない」というclient-visible meaningが両profileに未投影であることを発見した。既存Reply表示だけを検査するとその意味欠落を残すため、ユーザー承認を得てSEND operation purposeの第2文としてsource文を投影した。Replyの固定key grammarは変更しない。candidate-specific source auditはRECEIVEの`noReply=true`とAsyncAPI Reply不在による`none`、SENDのsource/AsyncAPIに基づくchannel・correlation・timeout、reply ChannelのParameters/Bindings既知不在、選択reply Message identityとINDEXの`reply:` entryを両profileで照合する。reply MessageのHeaders / Bindings / Payload schema・exampleはこのcheckpointで認証しない。TDDのREDでは欠落した第2文をfull/compactの2件で再現し、no-reply source、reply meaning、選択Message、reply Channel binding、correlation、timeout、両profileで同じ根拠のないchannelの7件が旧checkerを通ることを確認した。GREENで9件を通し、四つのauthoritative source bytesは変えず、fixture projector versionを`1.0.0`から`1.0.1`へ更新して同一explicit manifestでfull/compact各17 pathsをrestampした。投影内容とmanifest identityの変更はこの承認済み意味補完に限定し、Core corpus、公開grammar / validator rule、後続Task 13以降の順序は変更しない。operation-specific Failure Handling、replyを含むMessage契約と他のcomplete fact domainの最終matrix reviewは後続checkpointに残し、Task 12 source traceability checkboxは未完了とする。
+
+> **Storefront Reply gate verification:** 全872 tests中871成功 / 1既存skip（Python 3.9未導入）/ 0失敗。Core checkerは264 cases / 193 invalid / one-invalidity 193/193 / 未使用rule 0 / coverage gap 0、complete checkerは17 paths等価。両profileのexplicit-manifest dry-runは`restamp required: no`、`git diff --check`成功。
+
+> **Storefront Reply independent review:** Critical / Important findingなし。現在のReply Message identity source変異は選択Messageの照合を検証するが、INDEXの`reply:`一致条件を単独で狙うmutationではない。また、reply Channelのknown-absenceはBindings追加で検証したがParameters追加の単独mutationは未実施。いずれも現candidateの不具合ではなく、後続のsource-aware matrix reviewで検査境界と追加evidence要否を再確認する。
+
 **Review gate:** advanced structure を使わない selected operation が unrelated advanced marker のために blocked にならないことを確認する。
 
 **Suggested commit message:** `test(messaging): add complete full and compact candidate sets`

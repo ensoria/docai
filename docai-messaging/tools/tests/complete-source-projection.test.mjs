@@ -14,6 +14,7 @@ const root = fileURLToPath(new URL("../../fixtures/complete-candidates/v0.17.1/"
 const readSource = (name) => JSON.parse(fs.readFileSync(path.join(root, "source", name), "utf8"));
 const contexts = readSource("complete-contexts.json");
 const representations = readSource("complete-representations.json");
+const storefrontBehavior = readSource("storefront-behavior.json");
 
 // These assertions compare independent source facts with the parsed/materialized
 // output, so equal omissions in full and compact cannot satisfy the audit.
@@ -50,6 +51,12 @@ for (const profile of ["full", "compact"]) {
     const file = expanded.files.find((entry) => entry.path === definition.path);
     return section(file.content, `## ${definition.action} ${definition.channel} (${name})`);
   };
+
+  test(`${profile} storefront reply purpose preserves the acceptance-versus-fulfillment boundary`, () => {
+    const source = storefrontBehavior.operationBehavior.sendCreateOrder;
+    assert.equal(operationBody("sendCreateOrder").split("\n\n")[0],
+      `${source.purpose} ${source.reply}`);
+  });
 
   test(`${profile} synthetic message identities and empty payloads have explicit source authority`, () => {
     assert.deepEqual(result.diagnostics, []);
