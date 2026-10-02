@@ -1796,6 +1796,12 @@ Final review の Important finding 対応により、この checkpoint は当初
 
 > **Storefront Failure Handling independent review:** Critical / Important findingなし。Minorとして、表の後続に未出典内容がある場合を単独で狙う回帰mutationがまだない。現gateは`parsePipeTable`の最終行とFailure Handling節の最終行を比較して拒否するが、この条件自体の専用evidenceは後続のsource-aware matrix reviewで追加要否を再確認する。historical REDと全suite / Core / dry-runの独立再実行、およびTask 12全体のtraceability完成判定は今回のreview scope外とした。
 
+> **Approved design and implementation note (Task 12 incomplete Workflow source-traceability checkpoint, 2026-10-02):** 次の1コミット単位として、`complete-contexts.json`の`state-none` / `state-unknown` / `state-unsupported`三Workflowをcandidate-specific CLI auditへ追加した。各sourceの`name`とWorkflow routing、`purpose`と導入文、4固定節の`none`、`unknown` + `requiredInput`、`unsupported` + `feature` / section-specific publication-safe locationをfull / compactそれぞれで照合し、sourceに余分なsectionがある場合も拒否する。file-level coverage / knowledgeはsource section stateから導出して確認し、root aggregateは既存complete validatorの構造検証に委ねる。TDDの初回test実行は新testのtemplate literal閉じ忘れによる構文エラーでRED不成立だったため、原因箇所だけ修正して再実行した。正式なREDではsourceのrouting名・導入文・none state・余分なsectionの4件、unknown / unsupported各4節の8件、両profileで同じ誤ったunknown markerまたはunsupported source locationを持つ2件の計14件が旧checkerを通ることを確認し、GREENで全14件を拒否しchecker実行前後のcandidate bytes不変を確認した。影響はsource-aware checker、回帰test、`SOURCE-TRACEABILITY.md`と本記録に限定し、source / projection / manifest bytes、Core corpus、公開grammar / validator rule、Task 12以降の作業順序は変更しない。expanded Workflowと今回のincomplete stateがsource-awareになった一方、Reference Material normalization、Message schema / example、representation selection rules、compact policy、convention closureと最終fact matrix reviewは未完了のためTask 12 checkboxは維持する。
+
+> **Incomplete Workflow gate verification:** 全897 tests中896成功 / 1既存skip（Python 3.9未導入）/ 0失敗。Core checkerは264 cases / 193 invalid / one-invalidity 193/193 / 未使用rule 0 / coverage gap 0、complete checkerは17 paths等価。両profileのexplicit-manifest dry-runは`restamp required: no`となった。
+
+> **Incomplete Workflow independent review:** Critical / Important / Minor findingなし。新規14件、default complete checkerの17 paths等価、`git diff --check`をreviewerが独立再確認した。historical RED、全suite / Core / dry-runの独立再実行、およびTask 12全体のsemantic completenessと後続Reference Material / schema / selection / closure auditは今回のreview scope外とした。
+
 **Review gate:** advanced structure を使わない selected operation が unrelated advanced marker のために blocked にならないことを確認する。
 
 **Suggested commit message:** `test(messaging): add complete full and compact candidate sets`

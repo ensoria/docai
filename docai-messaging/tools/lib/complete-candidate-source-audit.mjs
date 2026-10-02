@@ -454,6 +454,49 @@ export function auditCompleteCandidateSources(candidatePath, documentSets, optio
       check(isDeepStrictEqual(actual?.sections["Failure and Recovery"].items, source.failureRecovery),
         `${id} Failure and Recovery`);
     }
+    const workflowHeadings = [
+      "Preconditions", "Steps", "State Transitions", "Failure and Recovery"
+    ];
+    for (const id of ["state-none", "state-unknown", "state-unsupported"]) {
+      const source = contexts.workflows?.[id];
+      const workflowPath = `workflows/${id}.md`;
+      const file = set.files.find((entry) => entry.path === workflowPath);
+      const definition = result.facts.complete.workflowDefinitions
+        .find((entry) => entry.path === workflowPath);
+      const route = result.facts.complete.workflows.rows
+        .find((entry) => entry.path === workflowPath);
+      check(typeof source?.name === "string" && source.name.length > 0
+        && route?.name === source.name, `${id} routing name`);
+      check(typeof source?.purpose === "string" && source.purpose.length > 0
+        && definition?.introduction === source.purpose, `${id} introduction`);
+      check(isDeepStrictEqual(Object.keys(source?.sections ?? {}).sort(),
+        [...workflowHeadings].sort()), `${id} sections`);
+      const states = [];
+      for (const heading of workflowHeadings) {
+        const sectionSource = source?.sections?.[heading];
+        let expected = null;
+        if (sectionSource === "none") {
+          states.push("none");
+          expected = "none";
+        } else if (sectionSource?.state === "unknown"
+          && typeof sectionSource.requiredInput === "string"
+          && sectionSource.requiredInput.length > 0) {
+          states.push("unknown");
+          expected = `unknown\n**unknown**: workflow ${heading} require the ${sectionSource.requiredInput}`;
+        } else if (sectionSource?.state === "unsupported"
+          && typeof sectionSource.feature === "string" && sectionSource.feature.length > 0) {
+          states.push("unsupported");
+          expected = `**unsupported**: replaces workflow ${heading}: ${sectionSource.feature} `
+            + `at complete-contexts.json#/workflows/${id}/sections/${encodeURIComponent(heading)}`;
+        }
+        check(expected !== null && section(file?.content, `## ${heading}`) === expected,
+          `${id} ${heading}`);
+      }
+      check(file?.metadata.coverage === (states.includes("unsupported")
+        ? "requires-source" : "complete")
+        && file?.metadata.knowledge === (states.includes("unknown")
+          ? "requires-input" : "complete"), `${id} completeness`);
+    }
     for (const entry of representations.representations.filter((item) => item.variants)) {
       const actual = fieldTables(operationBody(entry.operation));
       check(actual.length === entry.variants.length, `${entry.operation} variant count`);

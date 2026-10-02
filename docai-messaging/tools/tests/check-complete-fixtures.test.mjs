@@ -706,6 +706,88 @@ for (const [change, mutate] of [
   });
 }
 
+for (const [fact, mutate, label] of [
+  ["routing name", (source) => {
+    source.workflows["state-none"].name = "Different state name";
+  }, "state-none routing name"],
+  ["introduction", (source) => {
+    source.workflows["state-unsupported"].purpose =
+      "A different unrepresentable workflow purpose.";
+  }, "state-unsupported introduction"],
+  ["none section state", (source) => {
+    source.workflows["state-none"].sections.Preconditions = {
+      state: "unknown", requiredInput: "authoritative preconditions"
+    };
+  }, "state-none Preconditions"],
+  ["extra section", (source) => {
+    source.workflows["state-none"].sections.Extra = "none";
+  }, "state-none sections"]
+]) {
+  test(`rejects stale incomplete Workflow ${fact} after source rebinding`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    const sourcePath = path.join(candidatePath, "source", "complete-contexts.json");
+    const source = JSON.parse(fs.readFileSync(sourcePath, "utf8"));
+    mutate(source);
+    fs.writeFileSync(sourcePath, JSON.stringify(source));
+    rebindAndRestamp(candidatePath, "complete-contexts.json");
+    const before = directorySnapshot(candidatePath);
+
+    const result = runChecker([candidatePath]);
+
+    assert.equal(result.status, 1, result.stdout);
+    assert.match(result.stderr, new RegExp(label));
+    assert.deepEqual(directorySnapshot(candidatePath), before);
+  });
+}
+
+for (const heading of ["Preconditions", "Steps", "State Transitions", "Failure and Recovery"]) {
+  for (const [state, field, replacement] of [
+    ["unknown", "requiredInput", `revised ${heading.toLowerCase()} input`],
+    ["unsupported", "feature", `revised ${heading.toLowerCase()} feature`]
+  ]) {
+    test(`rejects stale incomplete Workflow ${state} ${heading} after source rebinding`, (t) => {
+      const candidatePath = copyVersionedCandidate(t);
+      const sourcePath = path.join(candidatePath, "source", "complete-contexts.json");
+      const source = JSON.parse(fs.readFileSync(sourcePath, "utf8"));
+      source.workflows[`state-${state}`].sections[heading][field] = replacement;
+      fs.writeFileSync(sourcePath, JSON.stringify(source));
+      rebindAndRestamp(candidatePath, "complete-contexts.json");
+      const before = directorySnapshot(candidatePath);
+
+      const result = runChecker([candidatePath]);
+
+      assert.equal(result.status, 1, result.stdout);
+      assert.match(result.stderr, new RegExp(`state-${state} ${heading}`));
+      assert.deepEqual(directorySnapshot(candidatePath), before);
+    });
+  }
+}
+
+for (const [state, from, to, label] of [
+  ["unknown", "workflow Preconditions require the authoritative preconditions",
+    "workflow Preconditions require an unrelated checklist", "state-unknown Preconditions"],
+  ["unsupported", "complete-contexts.json#/workflows/state-unsupported/sections/Preconditions",
+    "complete-contexts.json#/workflows/state-unsupported/sections/Steps",
+    "state-unsupported Preconditions"]
+]) {
+  test(`rejects matching incomplete Workflow ${state} marker unsupported by source`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");
+    for (const profile of ["full", "compact"]) {
+      replaceExactlyOnce(path.join(candidatePath, profile, "workflows", `state-${state}.md`),
+        from, to);
+      restampDocumentSet(path.join(candidatePath, profile), manifestPath, { write: true });
+    }
+    const before = directorySnapshot(candidatePath);
+
+    const result = runChecker([candidatePath]);
+
+    assert.equal(result.status, 1, result.stdout);
+    assert.match(result.stderr, new RegExp(label));
+    assert.deepEqual(directorySnapshot(candidatePath), before);
+  });
+}
+
 for (const [fact, sourceName, mutate, label] of [
   ["receive known no-reply", "storefront-behavior.json", (source) => {
     source.operationBehavior.receiveOrderCreated.noReply = false;
