@@ -497,6 +497,41 @@ export function auditCompleteCandidateSources(candidatePath, documentSets, optio
         && file?.metadata.knowledge === (states.includes("unknown")
           ? "requires-input" : "complete"), `${id} completeness`);
     }
+    const referenceId = "middle-operations";
+    const referencePath = `references/${referenceId}.md`;
+    const referenceSource = contexts.referenceMaterials?.[referenceId];
+    const reference = result.facts.complete.referenceMaterials
+      .find((entry) => entry.path === referencePath);
+    const sourceConsumers = Object.entries(contexts.operations ?? {})
+      .filter(([, operation]) => operation.supplementalContexts?.includes(referenceId))
+      .map(([name]) => name).sort();
+    const requiredConsumers = Object.entries(contexts.operations ?? {})
+      .filter(([, operation]) => operation.requiredContexts?.includes(referenceId))
+      .map(([name]) => name);
+    const rawContent = referenceSource?.rawContent;
+    const normalizedLines = typeof rawContent === "string"
+      ? rawContent.replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n") : null;
+    const normalizedContent = normalizedLines === null ? null
+      : normalizedLines.endsWith("\n") ? normalizedLines : `${normalizedLines}\n`;
+    const longestRun = normalizedContent === null ? 0
+      : [...normalizedContent.matchAll(/`+/g)].reduce((length, match) => (
+        Math.max(length, match[0].length)
+      ), 0);
+    check(isDeepStrictEqual(Object.keys(contexts.referenceMaterials ?? {}), [referenceId])
+      && referenceSource?.instructionAuthority === "none"
+      && ["markdown", "text"].includes(referenceSource?.info)
+      && typeof rawContent === "string"
+      && isDeepStrictEqual(result.facts.complete.referenceMaterials.map((entry) => entry.path),
+        [referencePath])
+      && reference?.content === normalizedContent
+      && reference?.info === referenceSource.info
+      && reference?.delimiterLength === Math.max(4, longestRun + 1)
+      && requiredConsumers.length === 0
+      && isDeepStrictEqual(reference?.consumerOperations, sourceConsumers)
+      && isDeepStrictEqual(sourceConsumers, ["m-operation"]),
+    `${referenceId} Reference Material`);
+    check(set.files.find((entry) => entry.path === referencePath)?.metadata.source_refs
+      === contexts.sourceId, `${referenceId} Reference Material source_refs`);
     for (const entry of representations.representations.filter((item) => item.variants)) {
       const actual = fieldTables(operationBody(entry.operation));
       check(actual.length === entry.variants.length, `${entry.operation} variant count`);

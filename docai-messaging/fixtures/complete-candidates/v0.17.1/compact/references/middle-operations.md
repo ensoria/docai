@@ -1,4 +1,4 @@
-> docai-messaging: 0.17.1 | profile: compact | perspective: storefront-service | coverage: complete | knowledge: complete | source_refs: all
+> docai-messaging: 0.17.1 | profile: compact | perspective: storefront-service | coverage: complete | knowledge: complete | source_refs: complete-contexts
 
 # Reference Material
 
@@ -15,4 +15,4 @@ Café stays decomposed.
 
 `````
 
-> docai-identity: set_id: b32:qrgmmwxvr5dkap3nx4rizssrre | projection_id: b32:4omtovrrchetnyox6kpbrqwmmq
+> docai-identity: set_id: b32:bi5guuuixzyyhjqm4pvdywwmfq | projection_id: b32:ytqnqpytxsc7vw52hjlx3sqhsy

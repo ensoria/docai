@@ -28,6 +28,16 @@ function validateCandidateDocumentSet(documentSet, options = {}) {
 
 const CSV_MEDIA_TYPE = "text/csv;charset=utf-8";
 
+test("Reference Material names only its contributing source in both profiles", () => {
+  for (const profile of ["full", "compact"]) {
+    const set = loadDocumentSet(path.join(candidatePath, profile));
+    const reference = set.files.find((file) => (
+      file.path === "references/middle-operations.md"
+    ));
+    assert.equal(reference?.metadata.source_refs, "complete-contexts");
+  }
+});
+
 function replaceRawWithCsv(documentSet, example) {
   const channel = documentSet.files.find((entry) => (
     entry.path === "channels/representations.md"

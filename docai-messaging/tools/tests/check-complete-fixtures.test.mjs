@@ -788,6 +788,111 @@ for (const [state, from, to, label] of [
   });
 }
 
+for (const [fact, mutate] of [
+  ["raw content", (source) => {
+    source.referenceMaterials["middle-operations"].rawContent =
+      source.referenceMaterials["middle-operations"].rawContent.replace(
+        "Use only synthetic identifiers", "Use real identifiers"
+      );
+  }],
+  ["fence-driving backtick run", (source) => {
+    source.referenceMaterials["middle-operations"].rawContent =
+      source.referenceMaterials["middle-operations"].rawContent.replace(
+        "literal ```` run", "literal ````` run"
+      );
+  }],
+  ["decomposed Unicode", (source) => {
+    source.referenceMaterials["middle-operations"].rawContent =
+      source.referenceMaterials["middle-operations"].rawContent.replace("Cafe\u0301", "Café");
+  }],
+  ["trailing blank line", (source) => {
+    source.referenceMaterials["middle-operations"].rawContent =
+      source.referenceMaterials["middle-operations"].rawContent.replace(/\r\n$/, "");
+  }],
+  ["info string", (source) => {
+    source.referenceMaterials["middle-operations"].info = "text";
+  }],
+  ["instruction authority", (source) => {
+    source.referenceMaterials["middle-operations"].instructionAuthority = "trusted";
+  }],
+  ["extra Reference Material", (source) => {
+    source.referenceMaterials.extra = {
+      instructionAuthority: "none", info: "text", rawContent: "Extra reference."
+    };
+  }]
+]) {
+  test(`rejects stale Reference Material ${fact} after source rebinding`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    const sourcePath = path.join(candidatePath, "source", "complete-contexts.json");
+    const source = JSON.parse(fs.readFileSync(sourcePath, "utf8"));
+    mutate(source);
+    fs.writeFileSync(sourcePath, JSON.stringify(source));
+    rebindAndRestamp(candidatePath, "complete-contexts.json");
+    const before = directorySnapshot(candidatePath);
+
+    const result = runChecker([candidatePath]);
+
+    assert.equal(result.status, 1, result.stdout);
+    assert.match(result.stderr, /Reference Material/);
+    assert.deepEqual(directorySnapshot(candidatePath), before);
+  });
+}
+
+test("rejects matching Reference Material content unsupported by source", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");
+  for (const profile of ["full", "compact"]) {
+    replaceExactlyOnce(
+      path.join(candidatePath, profile, "references", "middle-operations.md"),
+      "Use only synthetic identifiers", "Use real identifiers"
+    );
+    restampDocumentSet(path.join(candidatePath, profile), manifestPath, { write: true });
+  }
+  const before = directorySnapshot(candidatePath);
+
+  const result = runChecker([candidatePath]);
+
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /Reference Material/);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
+test("rejects matching Reference Material source_refs with unrelated sources", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");
+  for (const profile of ["full", "compact"]) {
+    replaceExactlyOnce(
+      path.join(candidatePath, profile, "references", "middle-operations.md"),
+      "source_refs: complete-contexts", "source_refs: all"
+    );
+    restampDocumentSet(path.join(candidatePath, profile), manifestPath, { write: true });
+  }
+  const before = directorySnapshot(candidatePath);
+
+  const result = runChecker([candidatePath]);
+
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /Reference Material.*source_refs/);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
+test("accepts equivalent Reference Material after BOM and lone-CR normalization", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  const sourcePath = path.join(candidatePath, "source", "complete-contexts.json");
+  const source = JSON.parse(fs.readFileSync(sourcePath, "utf8"));
+  source.referenceMaterials["middle-operations"].rawContent =
+    source.referenceMaterials["middle-operations"].rawContent
+      .replace(/^\uFEFF/, "").replace(/\r\n/g, "\r");
+  fs.writeFileSync(sourcePath, JSON.stringify(source));
+  rebindAndRestamp(candidatePath, "complete-contexts.json");
+  const before = directorySnapshot(candidatePath);
+
+  const result = runChecker([candidatePath]);
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
 for (const [fact, sourceName, mutate, label] of [
   ["receive known no-reply", "storefront-behavior.json", (source) => {
     source.operationBehavior.receiveOrderCreated.noReply = false;

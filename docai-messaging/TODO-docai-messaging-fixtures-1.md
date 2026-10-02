@@ -1802,6 +1802,12 @@ Final review の Important finding 対応により、この checkpoint は当初
 
 > **Incomplete Workflow independent review:** Critical / Important / Minor findingなし。新規14件、default complete checkerの17 paths等価、`git diff --check`をreviewerが独立再確認した。historical RED、全suite / Core / dry-runの独立再実行、およびTask 12全体のsemantic completenessと後続Reference Material / schema / selection / closure auditは今回のreview scope外とした。
 
+> **Approved design and implementation note (Task 12 Reference Material source-traceability checkpoint, 2026-10-02):** 次の1コミット単位として、`complete-contexts.json#/referenceMaterials/middle-operations`の`instructionAuthority`、info、raw contentをcandidate-specific CLI auditで両profileの`references/middle-operations.md`に照合した。先頭BOM 1個の除去、CRLF / lone CRからLFへの変換、末尾LFがない場合だけの追加、その他の文字・末尾空行の保持、最長embedded backtick runからの最小fence長をsource由来で確認する。Reference Materialのsource entryは1件、`m-operation`のsupplemental-only consumerはsourceと投影で一致する必要がある。README §3.2との不整合だった同fileの`source_refs: all`を承認に基づき両profileで`complete-contexts`へ是正し、同じsource/manifestからの投影変更を識別できるようfixture projector版を`1.0.1`から`1.0.2`へ更新して両rootをrestampした。TDDのREDはsource変更・digest再binding・両root再restamp後にも旧checkerが内容、fence-driving run、info、authority、余分なsource entryの5件を通し、両rootが同じ誤内容を持つ1件も通すことを確認した。metadata是正前に両profileの`source_refs`が`all`であるRED、是正後に両rootの誤った`all`をcheckerが通すREDを別々に確認し、各GREENで拒否を確認した。分解Unicodeと末尾空行の変異も拒否し、BOM除去とlone CR変換が同じ投影になる正例を追加した。checkerはread-onlyのまま、source bytes、Core corpus、公開grammar、一般validator rule、Task 12以降の順序は変更しない。Message schema / example、representation selection rules、compact policy、convention closure、最終fact matrix reviewは未完了のためTask 12 checkboxは維持する。Reference Materialのstructural escapeおよびnon-UTF-8 focused rejectionは予定どおりTask 13に残す。
+
+> **Reference Material gate verification:** 全908 tests中907成功 / 1既存skip（Python 3.9未導入）/ 0失敗。Core checkerは264 cases / 193 invalid / one-invalidity 193/193 / 未使用rule 0 / coverage gap 0、complete checkerは17 paths等価。両profileのexplicit-manifest dry-runは`restamp required: no`、`git diff --check`成功。
+
+> **Reference Material independent review:** Critical / Important / Minor findingなし。reviewerはReference Material関連11 testを独立再実行した。末尾LFなしのsourceを正規化する正例とsource consumer除去の単独mutationは現gateの分岐を直接狙う追加evidence候補として最終fact matrix reviewに残す。historical RED、全suite / Core / dry-runの独立再実行、Task 13のnon-UTF-8 / structural-escape corpus、およびcomplete-surface全体のready判定はreview scope外とした。
+
 **Review gate:** advanced structure を使わない selected operation が unrelated advanced marker のために blocked にならないことを確認する。
 
 **Suggested commit message:** `test(messaging): add complete full and compact candidate sets`
