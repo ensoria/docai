@@ -100,7 +100,9 @@
       "preconditions": "The storefront is subscribed to orders.events.",
       "sideEffects": "Update the storefront order state to created.",
       "noReply": true,
-      "purpose": "Update storefront order state from the created event."
+      "purpose": "Update storefront order state from the created event.",
+      "requiredContexts": [],
+      "supplementalContexts": []
     },
     "sendCreateOrder": {
       "authorization": "OAuth2 scope orders:write is required.",
@@ -110,7 +112,9 @@
       "preconditions": "The referenced tenant and every SKU already exist.",
       "sideEffects": "Ask the order service to create the submitted order.",
       "purpose": "Submit one order command and await its acceptance reply.",
-      "reply": "The orderAccepted reply confirms command acceptance, not final fulfillment."
+      "reply": "The orderAccepted reply confirms command acceptance, not final fulfillment.",
+      "requiredContexts": [],
+      "supplementalContexts": []
     }
   },
   "operationFailures": {

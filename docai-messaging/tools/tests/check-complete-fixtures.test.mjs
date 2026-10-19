@@ -115,6 +115,194 @@ function ordinaryPairValid(candidatePath) {
   assert.deepEqual(validateCompleteProfilePair(full, compact, options).diagnostics, []);
 }
 
+function mutateStorefrontContextSource(candidatePath, mutate) {
+  const file = path.join(candidatePath, "source", "storefront-behavior.json");
+  const source = JSON.parse(fs.readFileSync(file, "utf8"));
+  // Explicit intended fixture facts make the pre-gate RED reproducible.
+  for (const operation of ["receiveOrderCreated", "sendCreateOrder"]) {
+    for (const field of ["requiredContexts", "supplementalContexts"]) {
+      if (!Object.hasOwn(source.operationBehavior[operation], field)) {
+        source.operationBehavior[operation][field] = [];
+      }
+    }
+  }
+  mutate(source);
+  fs.writeFileSync(file, JSON.stringify(source));
+  rebindAndRestamp(candidatePath, "storefront-behavior.json");
+}
+
+function replaceStorefrontContextRoute(candidatePath, operation, required, supplemental) {
+  for (const profile of ["full", "compact"]) {
+    const file = path.join(candidatePath, profile, "indexes", "operations-broad.md");
+    const row = fs.readFileSync(file, "utf8").split("\n")
+      .find((line) => line.includes(`| ${operation} |`));
+    assert.ok(row);
+    const cells = row.split("|");
+    assert.equal(cells.length, 11);
+    cells[7] = ` ${required} `;
+    cells[8] = ` ${supplemental} `;
+    replaceExactlyOnce(file, row, cells.join("|"));
+    restampDocumentSet(path.join(candidatePath, profile),
+      path.join(candidatePath, "source", "projection-input-manifest.json"), { write: true });
+  }
+}
+
+for (const operation of ["receiveOrderCreated", "sendCreateOrder"]) {
+  for (const field of ["requiredContexts", "supplementalContexts"]) {
+    for (const [label, mutate] of [
+      ["missing declaration", (facts) => { delete facts[field]; }],
+      ["null declaration", (facts) => { facts[field] = null; }],
+      ["string declaration", (facts) => { facts[field] = "none"; }],
+      ["non-string ID", (facts) => { facts[field] = [["alpha-delivery"]]; }],
+      ["unknown ID", (facts) => { facts[field] = ["unknown-context"]; }],
+      ["duplicate ID", (facts) => { facts[field] = ["alpha-delivery", "alpha-delivery"]; }],
+      ["stale empty routing", (facts) => { facts[field] = ["alpha-delivery"]; }]
+    ]) {
+      test(`rejects storefront context selection ${operation} ${field}: ${label}`, (t) => {
+        const candidatePath = copyVersionedCandidate(t);
+        mutateStorefrontContextSource(candidatePath, (source) => mutate(source.operationBehavior[operation]));
+        ordinaryPairValid(candidatePath);
+        const before = directorySnapshot(candidatePath);
+
+        const result = runChecker([candidatePath]);
+
+        assert.equal(result.status, 1, result.stdout);
+        assert.match(result.stderr, /storefront context selection/);
+        assert.doesNotMatch(result.stderr, /TypeError/);
+        assert.deepEqual(directorySnapshot(candidatePath), before);
+      });
+    }
+  }
+  for (const [label, mutate] of [
+    ["required Reference Material", (facts) => { facts.requiredContexts = ["middle-operations"]; }],
+    ["cross-column duplicate", (facts) => {
+      facts.requiredContexts = ["alpha-delivery"];
+      facts.supplementalContexts = ["alpha-delivery"];
+    }]
+  ]) {
+    test(`rejects storefront context selection ${operation}: ${label}`, (t) => {
+      const candidatePath = copyVersionedCandidate(t);
+      mutateStorefrontContextSource(candidatePath, (source) => mutate(source.operationBehavior[operation]));
+      ordinaryPairValid(candidatePath);
+      const before = directorySnapshot(candidatePath);
+      const result = runChecker([candidatePath]);
+      assert.equal(result.status, 1, result.stdout);
+      assert.match(result.stderr, /storefront context selection/);
+      assert.deepEqual(directorySnapshot(candidatePath), before);
+    });
+  }
+  for (const required of [true, false]) {
+    test(`rejects storefront context selection unsourced ${required ? "required" : "supplemental"} workflow for ${operation}`, (t) => {
+      const candidatePath = copyVersionedCandidate(t);
+      replaceStorefrontContextRoute(candidatePath, operation,
+        required ? "workflows/alpha-delivery.md" : "none",
+        required ? "none" : "workflows/alpha-observability.md");
+      ordinaryPairValid(candidatePath);
+      const before = directorySnapshot(candidatePath);
+      const result = runChecker([candidatePath]);
+      assert.equal(result.status, 1, result.stdout);
+      assert.match(result.stderr, /storefront context selection/);
+      assert.deepEqual(directorySnapshot(candidatePath), before);
+    });
+  }
+}
+
+test("rejects storefront context selection facts attached to a non-storefront owner", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  mutateStorefrontContextSource(candidatePath, (source) => {
+    source.operationBehavior["z-operation"] = { requiredContexts: [], supplementalContexts: [] };
+  });
+  ordinaryPairValid(candidatePath);
+  const before = directorySnapshot(candidatePath);
+  const result = runChecker([candidatePath]);
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /storefront context selection/);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
+test("rejects storefront context selection moved to the wrong operation", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  mutateStorefrontContextSource(candidatePath, (source) => {
+    source.operationBehavior.receiveOrderCreated.requiredContexts = ["alpha-delivery"];
+  });
+  replaceStorefrontContextRoute(candidatePath, "sendCreateOrder", "workflows/alpha-delivery.md", "none");
+  ordinaryPairValid(candidatePath);
+  const before = directorySnapshot(candidatePath);
+  const result = runChecker([candidatePath]);
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /storefront context selection/);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
+test("rejects storefront context selection moved from required to supplemental", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  mutateStorefrontContextSource(candidatePath, (source) => {
+    source.operationBehavior.receiveOrderCreated.requiredContexts = ["alpha-delivery"];
+  });
+  replaceStorefrontContextRoute(candidatePath, "receiveOrderCreated", "none", "workflows/alpha-delivery.md");
+  ordinaryPairValid(candidatePath);
+  const before = directorySnapshot(candidatePath);
+  const result = runChecker([candidatePath]);
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /storefront context selection/);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
+test("rejects storefront context selection with an ambiguous source ID", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  mutateStorefrontContextSource(candidatePath, (source) => {
+    source.operationBehavior.receiveOrderCreated.supplementalContexts = ["alpha-delivery"];
+  });
+  const file = path.join(candidatePath, "source", "complete-contexts.json");
+  const source = JSON.parse(fs.readFileSync(file, "utf8"));
+  source.referenceMaterials["alpha-delivery"] = { ...source.referenceMaterials["middle-operations"] };
+  fs.writeFileSync(file, JSON.stringify(source));
+  rebindAndRestamp(candidatePath, "complete-contexts.json");
+  ordinaryPairValid(candidatePath);
+  const before = directorySnapshot(candidatePath);
+  const result = runChecker([candidatePath]);
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /storefront context selection/);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
+for (const mode of ["missing", "wrong source", "duplicate"]) {
+  test(`rejects storefront context selection authority ${mode}`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    const file = path.join(candidatePath, "source", "projection-input-manifest.json");
+    const manifest = JSON.parse(fs.readFileSync(file, "utf8"));
+    manifest.precedence = manifest.precedence.filter((entry) => entry.factDomain !== "storefront-context-selection");
+    if (mode !== "missing") manifest.precedence.push({ factDomain: "storefront-context-selection",
+      sourceOrder: [mode === "wrong source" ? "complete-contexts" : "storefront-behavior"] });
+    if (mode === "duplicate") manifest.precedence.push({ factDomain: "storefront-context-selection", sourceOrder: ["storefront-behavior"] });
+    fs.writeFileSync(file, JSON.stringify(manifest));
+    for (const profile of ["full", "compact"]) restampDocumentSet(path.join(candidatePath, profile), file, { write: true });
+    ordinaryPairValid(candidatePath);
+    const before = directorySnapshot(candidatePath);
+    const result = runChecker([candidatePath]);
+    assert.equal(result.status, 1, result.stdout);
+    assert.match(result.stderr, /storefront context selection authority/);
+    assert.deepEqual(directorySnapshot(candidatePath), before);
+  });
+}
+
+for (const [field, target] of [["requiredContexts", "alpha-delivery"], ["supplementalContexts", "alpha-observability"]]) {
+  test(`accepts storefront context selection matching sourced ${field}`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    mutateStorefrontContextSource(candidatePath, (source) => {
+      source.operationBehavior.receiveOrderCreated[field] = [target];
+    });
+    replaceStorefrontContextRoute(candidatePath, "receiveOrderCreated",
+      field === "requiredContexts" ? `workflows/${target}.md` : "none",
+      field === "supplementalContexts" ? `workflows/${target}.md` : "none");
+    ordinaryPairValid(candidatePath);
+    const before = directorySnapshot(candidatePath);
+    const result = runChecker([candidatePath]);
+    assert.equal(result.status, 0, result.stderr);
+    assert.deepEqual(directorySnapshot(candidatePath), before);
+  });
+}
+
 function addInventoryOperation(candidatePath, target) {
   const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");
   for (const profile of ["full", "compact"]) {

@@ -13,6 +13,7 @@ import {
 import { auditSyntheticRepresentations } from "./complete-representation-source-audit.mjs";
 import { auditConventionDependencies } from "./complete-convention-source-audit.mjs";
 import { collectCompleteOperationInventory } from "./complete-operation-inventory.mjs";
+import { auditStorefrontContextSelection } from "./complete-storefront-context-audit.mjs";
 
 const sourceFiles = new Map([
   ["complete-contexts", "complete-contexts.json"],
@@ -112,6 +113,10 @@ export function auditCompleteCandidateSources(candidatePath, documentSets, optio
     [{ factDomain: "convention-dependencies", sourceOrder: ["complete-contexts", "complete-representations"] }])) {
     return ["convention dependencies precedence differs from the candidate source policy"];
   }
+  if (!isDeepStrictEqual(manifest.precedence?.filter((entry) => entry.factDomain === "storefront-context-selection"),
+    [{ factDomain: "storefront-context-selection", sourceOrder: ["storefront-behavior"] }])) {
+    return ["storefront context selection authority differs from the candidate source policy"];
+  }
   const profiles = Object.entries(documentSets).map(([profile, set]) => ({
     profile, set, result: validateCompleteDocumentSet(set, options)
   }));
@@ -130,6 +135,8 @@ export function auditCompleteCandidateSources(candidatePath, documentSets, optio
       .map((file) => file.path).sort(),
     [...new Set(result.facts.core.operations.rows.map((row) => row.channelPath))].sort()),
     "operation inventory channel coverage");
+    auditStorefrontContextSelection(behavior, asyncapi, contexts,
+      result.facts.core.operations.rows, check);
   }
   if (issues.length > 0) return issues;
   for (const { profile, set, result } of profiles) {
