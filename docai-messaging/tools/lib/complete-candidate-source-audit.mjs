@@ -8,6 +8,7 @@ import { validateCompleteSameAs } from "./validators/complete-same-as.mjs";
 import { parsePipeTable } from "./tables.mjs";
 import { parseExactJson } from "./json-value.mjs";
 import { auditStorefrontMessageContracts } from "./complete-storefront-message-audit.mjs";
+import { auditSyntheticRepresentations } from "./complete-representation-source-audit.mjs";
 
 const sourceFiles = new Map([
   ["complete-contexts", "complete-contexts.json"],
@@ -29,35 +30,6 @@ function section(text, heading) {
     .join("\n").trim();
 }
 
-function fieldTables(text) {
-  if (typeof text !== "string") return [];
-  return [...text.matchAll(/^\| Field \|[^\n]*\n(?:\|[^\n]*\n?)+/gm)].map(([table]) => {
-    const parsed = parsePipeTable(table.trimEnd().split("\n").map((line, index) => ({
-      text: line, file: "representation", line: index + 1
-    })));
-    return parsed.diagnostics.length === 0 ? parsed.value.rows : null;
-  });
-}
-
-function expectedVariantRows(entry, variant) {
-  const schema = variant.schema;
-  if (schema?.type !== "object" || schema.additionalProperties !== false
-      || !Array.isArray(schema.required) || !schema.properties) return null;
-  const presence = entry.action === "SEND" ? "yes" : "always";
-  const properties = Object.entries(schema.properties);
-  if (properties.some(([name, field]) => !schema.required.includes(name)
-      || field.type !== "string" || typeof field.description !== "string")) return null;
-  return [
-    ["$", "object", presence, "no", "Additional properties are forbidden."],
-    ...properties.map(([name, field]) => [
-      name, field.type, presence, "no",
-      Object.hasOwn(field, "const")
-        ? `\`const=${JSON.stringify(field.const)}\`; ${field.description}`
-        : field.description
-    ])
-  ];
-}
-
 export function auditCompleteCandidateSources(candidatePath, documentSets, options) {
   const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");
   if (!fs.existsSync(manifestPath)) return [];
@@ -69,6 +41,7 @@ export function auditCompleteCandidateSources(candidatePath, documentSets, optio
   const issues = [];
   const sources = new Map();
   let exactAsyncapi = null;
+  let exactRepresentations = null;
   if (!Array.isArray(manifest.sources) || manifest.sources.length !== sourceFiles.size
       || manifest.sources.some((entry) => !sourceFiles.has(entry.sourceId))) {
     issues.push("unexpected source binding in the complete candidate manifest");
@@ -93,6 +66,7 @@ export function auditCompleteCandidateSources(candidatePath, documentSets, optio
     try {
       sources.set(id, JSON.parse(bytes.toString("utf8")));
       if (id === "storefront-asyncapi-3.1.0") exactAsyncapi = parseExactJson(bytes.toString("utf8"));
+      if (id === "complete-representations") exactRepresentations = parseExactJson(bytes.toString("utf8"));
     } catch {
       issues.push(`${id}: source JSON is invalid`);
     }
@@ -538,20 +512,8 @@ export function auditCompleteCandidateSources(candidatePath, documentSets, optio
     `${referenceId} Reference Material`);
     check(set.files.find((entry) => entry.path === referencePath)?.metadata.source_refs
       === contexts.sourceId, `${referenceId} Reference Material source_refs`);
-    for (const entry of representations.representations.filter((item) => item.variants)) {
-      const actual = fieldTables(operationBody(entry.operation));
-      check(actual.length === entry.variants.length, `${entry.operation} variant count`);
-      for (const [index, variant] of entry.variants.entries()) {
-        check(isDeepStrictEqual(actual[index], expectedVariantRows(entry, variant)),
-          `${entry.operation} variant ${index} schema`);
-      }
-    }
-    for (const entry of representations.representations.filter((item) => item.schema)) {
-      check(entry.schema.additionalProperties === false
-        && isDeepStrictEqual(fieldTables(operationBody(entry.operation))[0]?.[0],
-          ["$", "object", "yes", "no", "Additional properties are forbidden."]),
-      `${entry.operation} closed root`);
-    }
+    auditSyntheticRepresentations(representations, exactRepresentations, result.facts.core,
+      operationBody, options, check);
   }
   return issues;
 }

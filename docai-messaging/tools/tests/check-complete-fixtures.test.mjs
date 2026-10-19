@@ -84,6 +84,203 @@ function rebindAndRestamp(candidatePath, sourceName) {
   }
 }
 
+const structuredSyntheticOperations = [
+  "r-csv-operation", "r-json-original-operation", "r-json-reuse-operation"
+];
+const syntheticRepresentationMutations = [
+  ...structuredSyntheticOperations.flatMap((operation) => [
+    [operation, "field meaning", (entry) => {
+      entry.schema.properties.event_id.description = "A different event identifier";
+    }],
+    [operation, "field requiredness", (entry) => {
+      entry.schema.required = ["status"];
+    }],
+    [operation, "field type", (entry) => { entry.schema.properties.event_id.type = "number"; }],
+    [operation, "unprojected field constraint", (entry) => {
+      entry.schema.properties.event_id.maxLength = 99;
+    }],
+    [operation, "example", (entry) => { entry.example.event_id = "evt_different"; }]
+  ]),
+  ...[...structuredSyntheticOperations, "r-raw-operation", "r-tagged-operation", "r-untagged-operation"]
+    .map((operation) => [operation, "payload presence", (entry) => {
+      if (entry.action === "SEND") entry.payloadRequired = "no";
+      else entry.payloadPresence = "optional";
+    }]),
+  ...["r-tagged-operation", "r-untagged-operation"].flatMap((operation) => [0, 1]
+    .map((index) => [operation, `variant ${index} example`, (entry) => {
+      const example = entry.variants[index].example;
+      example[Object.hasOwn(example, "id") ? "id" : "reason"] = "different";
+    }])),
+  ...["ruleVersion", "fenceInfo", "decodedValueModel"].map((field) => [
+    "r-csv-operation", `wire adapter ${field}`, (entry) => { entry.wireAdapter[field] = "different"; }
+  ]),
+  ...["r-json-original-operation", "r-tagged-operation"].map((operation) => [
+    operation, "schema target", (entry) => { entry.schemaFormat = "unknown-schema-target"; }
+  ]),
+  ["r-tagged-operation", "discriminator", (entry) => { entry.discriminator = "different"; }],
+  ["r-tagged-operation", "variant identity", (entry) => { entry.variants[0].value = "different"; }],
+  ["r-tagged-operation", "unprojected variant constraint", (entry) => {
+    entry.variants[0].schema.properties.id.maxLength = 99;
+  }],
+  ["r-untagged-operation", "variant label", (entry) => { entry.variants[0].label = "different"; }],
+  ["r-untagged-operation", "selection rule", (entry) => {
+    entry.selectionRule = "The receiver selects a different lifecycle contract.";
+  }],
+  ["r-raw-operation", "raw form", (entry) => { entry.form = "structured-json"; }],
+  ["r-raw-operation", "raw description", (entry) => { entry.description = "Different receipt bytes."; }],
+  ["r-csv-operation", "channel", (entry) => { entry.channel = "representations.different"; }],
+  ["r-json-reuse-operation", "Message identity", (entry) => { entry.message = "different-message"; }]
+];
+
+for (const [operation, fact, mutate] of syntheticRepresentationMutations) {
+  test(`rejects stale synthetic representation ${operation} ${fact} after source rebinding`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    const sourcePath = path.join(candidatePath, "source", "complete-representations.json");
+    const source = JSON.parse(fs.readFileSync(sourcePath, "utf8"));
+    mutate(source.representations.find((entry) => entry.operation === operation));
+    fs.writeFileSync(sourcePath, JSON.stringify(source));
+    rebindAndRestamp(candidatePath, "complete-representations.json");
+    const before = directorySnapshot(candidatePath);
+
+    const result = runChecker([candidatePath]);
+
+    assert.equal(result.status, 1, result.stdout);
+    assert.match(result.stderr, new RegExp(`${operation}.*representation`));
+    assert.deepEqual(directorySnapshot(candidatePath), before);
+  });
+}
+
+test("rejects a missing synthetic representation source entry even when projections agree", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  const sourcePath = path.join(candidatePath, "source", "complete-representations.json");
+  const source = JSON.parse(fs.readFileSync(sourcePath, "utf8"));
+  source.representations = source.representations.filter((entry) => (
+    entry.operation !== "r-json-reuse-operation"
+  ));
+  fs.writeFileSync(sourcePath, JSON.stringify(source));
+  rebindAndRestamp(candidatePath, "complete-representations.json");
+  const before = directorySnapshot(candidatePath);
+
+  const result = runChecker([candidatePath]);
+
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /representation inventory/);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
+for (const kind of ["CSV", "JSON reuse"]) {
+  test(`rejects matching synthetic representation ${kind} examples unsupported by source`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");
+    for (const profile of ["full", "compact"]) {
+      const file = path.join(candidatePath, profile, "channels", "representations.md");
+      const content = fs.readFileSync(file, "utf8");
+      const from = kind === "CSV" ? "evt_03" : "evt_04";
+      assert.equal(content.split(from).length - 1, kind === "JSON reuse" && profile === "full" ? 2 : 1);
+      fs.writeFileSync(file, content.replaceAll(from, "evt_wrong"));
+      restampDocumentSet(path.join(candidatePath, profile), manifestPath, { write: true });
+    }
+    const before = directorySnapshot(candidatePath);
+
+    const result = runChecker([candidatePath]);
+
+    assert.equal(result.status, 1, result.stdout);
+    assert.match(result.stderr, /representation.*example/);
+    assert.deepEqual(directorySnapshot(candidatePath), before);
+  });
+}
+
+test("accepts equivalent synthetic representation CSV with reordered wire columns", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");
+  replaceExactlyOnce(path.join(candidatePath, "compact", "channels", "representations.md"),
+    "event_id,status\nevt_03,created", "status,event_id\ncreated,evt_03");
+  restampDocumentSet(path.join(candidatePath, "compact"), manifestPath, { write: true });
+  const before = directorySnapshot(candidatePath);
+
+  const result = runChecker([candidatePath]);
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
+test("rejects an extra projected synthetic representation without a source entry", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");
+  for (const profile of ["full", "compact"]) {
+    const file = path.join(candidatePath, profile, "channels", "representations.md");
+    const content = fs.readFileSync(file, "utf8");
+    const start = content.indexOf("## SEND representations.json-original (r-json-original-operation)");
+    const end = content.indexOf("## SEND representations.json-reuse (r-json-reuse-operation)");
+    assert.ok(start >= 0 && end > start);
+    const extra = content.slice(start, end).replaceAll("json-original", "json-other");
+    fs.writeFileSync(file, content.slice(0, end) + extra + content.slice(end));
+    const indexPath = path.join(candidatePath, profile, "indexes", "operations-broad.md");
+    const rows = fs.readFileSync(indexPath, "utf8");
+    const row = rows.split("\n").find((line) => line.includes("| r-json-original-operation |"));
+    assert.ok(row);
+    replaceExactlyOnce(indexPath, row, `${row}\n${row.replaceAll("json-original", "json-other")}`);
+    restampDocumentSet(path.join(candidatePath, profile), manifestPath, { write: true });
+  }
+  const before = directorySnapshot(candidatePath);
+
+  const result = runChecker([candidatePath]);
+
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /projected representation inventory/);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
+for (const extension of ["prose trailing spaces", "x-marker", "x-section with fenced data"]) {
+  test(`accepts synthetic representation ${extension} excluded by canonical comparison`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");
+    const file = path.join(candidatePath, "compact", "channels", "representations.md");
+    if (extension === "prose trailing spaces") {
+      const prose = "The receiver identifies the applicable lifecycle shape from the complete decoded value.";
+      replaceExactlyOnce(file, prose, `${prose}  `);
+    } else {
+      const row = "| status | string | yes | no | Lifecycle status |";
+      const extra = extension === "x-marker" ? "**x-audit**: Non-contract fixture note."
+        : '##### x-Audit\n\n```json\n{"extra":"not a payload example"}\n```';
+      replaceExactlyOnce(file, `${row}\n\n### Reply`, `${row}\n\n${extra}\n\n### Reply`);
+    }
+    restampDocumentSet(path.join(candidatePath, "compact"), manifestPath, { write: true });
+    const before = directorySnapshot(candidatePath);
+
+    const result = runChecker([candidatePath]);
+
+    assert.equal(result.status, 0, result.stderr);
+    assert.deepEqual(directorySnapshot(candidatePath), before);
+  });
+}
+
+test("rejects a non-string synthetic representation schema required entry", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  const sourcePath = path.join(candidatePath, "source", "complete-representations.json");
+  const source = JSON.parse(fs.readFileSync(sourcePath, "utf8"));
+  source.representations[0].schema.required = [["event_id"], "status"];
+  fs.writeFileSync(sourcePath, JSON.stringify(source));
+  for (const profile of ["full", "compact"]) {
+    const file = path.join(candidatePath, profile, "channels", "representations.md");
+    const content = fs.readFileSync(file, "utf8");
+    const end = content.indexOf("## SEND representations.json-original (r-json-original-operation)");
+    assert.ok(end > 0);
+    const csv = content.slice(0, end);
+    const row = "| event_id | string | yes | no | Synthetic event identifier |";
+    assert.equal(csv.split(row).length - 1, 1);
+    fs.writeFileSync(file, csv.replace(row, row.replace("| yes |", "| no |")) + content.slice(end));
+  }
+  rebindAndRestamp(candidatePath, "complete-representations.json");
+  const before = directorySnapshot(candidatePath);
+
+  const result = runChecker([candidatePath]);
+
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /r-csv-operation.*representation.*schema/);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
 for (const message of ["CreateOrder", "OrderCreated", "OrderAccepted"]) {
   for (const [fact, mutate] of [
     ["header type", (entry) => { entry.headers.properties["message-id"].type = "integer"; }],
