@@ -115,6 +115,230 @@ function ordinaryPairValid(candidatePath) {
   assert.deepEqual(validateCompleteProfilePair(full, compact, options).diagnostics, []);
 }
 
+// Authored scenario labels, not values recovered from a generated table.
+const operationLabels = [
+  ["a-operation", "alpha task", "Handles the alpha event range"],
+  ["m-operation", "middle task", "Handles the middle event range"],
+  ["z-operation", "zeta task", "Handles the zeta event range"],
+  ["r-csv-operation", "representation task", "Sends one adapter-defined CSV record"],
+  ["r-json-original-operation", "representation task", "Sends the canonical reusable JSON record"],
+  ["r-json-reuse-operation", "representation task", "Sends the reused JSON record"],
+  ["r-raw-operation", "representation task", "Sends an opaque raw receipt"],
+  ["r-tagged-operation", "representation task", "Sends a tagged lifecycle event"],
+  ["r-untagged-operation", "representation task", "Receives an untagged lifecycle event"],
+  ["receiveOrderCreated", "update storefront order state", "Update storefront state after an order is created."],
+  ["sendCreateOrder", "submit an order", "Submit an order and receive its acceptance reply."]
+];
+const labelAuthorities = [
+  { factDomain: "operation-tasks", sourceOrder: ["complete-contexts", "complete-representations", "storefront-behavior"] },
+  { factDomain: "operation-summaries", sourceOrder: ["complete-contexts", "complete-representations", "storefront-asyncapi-3.1.0"] }
+];
+
+function labelSourceContract(sources, operation, field) {
+  if (operation.startsWith("r-")) return sources["complete-representations.json"].representations
+    .find((entry) => entry.operation === operation);
+  if (operation.endsWith("-operation")) return sources["complete-contexts.json"].operations[operation];
+  return field === "task" ? sources["storefront-behavior.json"].operationBehavior[operation]
+    : sources["storefront.asyncapi.json"].operations[operation];
+}
+
+function mutateOperationLabelSources(candidatePath, mutate = () => {}) {
+  const filenames = ["complete-contexts.json", "complete-representations.json",
+    "storefront-behavior.json", "storefront.asyncapi.json"];
+  const sources = Object.fromEntries(filenames.map((filename) => [filename,
+    JSON.parse(fs.readFileSync(path.join(candidatePath, "source", filename), "utf8"))]));
+  // Seed the approved contract only where absent so historical RED remains reproducible.
+  for (const [operation, task, summary] of operationLabels) {
+    for (const [field, value] of [["task", task], ["summary", summary]]) {
+      const contract = labelSourceContract(sources, operation, field);
+      if (!Object.hasOwn(contract, field)) contract[field] = value;
+    }
+  }
+  mutate(sources);
+  const manifestFile = path.join(candidatePath, "source", "projection-input-manifest.json");
+  const manifest = JSON.parse(fs.readFileSync(manifestFile, "utf8"));
+  for (const authority of labelAuthorities) {
+    if (!manifest.precedence.some((entry) => entry.factDomain === authority.factDomain)) {
+      manifest.precedence.push(authority);
+    }
+  }
+  for (const filename of filenames) {
+    const bytes = JSON.stringify(sources[filename]);
+    fs.writeFileSync(path.join(candidatePath, "source", filename), bytes);
+    manifest.sources.find((entry) => entry.location === filename).sha256 =
+      `sha256:${createHash("sha256").update(bytes).digest("hex")}`;
+  }
+  fs.writeFileSync(manifestFile, JSON.stringify(manifest));
+  for (const profile of ["full", "compact"]) {
+    restampDocumentSet(path.join(candidatePath, profile), manifestFile, { write: true });
+  }
+}
+
+function assertOperationLabelResult(candidatePath, status, pattern) {
+  ordinaryPairValid(candidatePath);
+  const before = directorySnapshot(candidatePath);
+  const result = runChecker([candidatePath]);
+  assert.equal(result.status, status, result.stderr || result.stdout);
+  if (pattern) assert.match(result.stderr, pattern);
+  assert.doesNotMatch(result.stderr, /TypeError/);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+}
+
+for (const [operation] of operationLabels) {
+  for (const field of ["task", "summary"]) {
+    test(`rejects operation labels stale ${operation} ${field}`, (t) => {
+      const candidatePath = copyVersionedCandidate(t);
+      mutateOperationLabelSources(candidatePath, (sources) => {
+        labelSourceContract(sources, operation, field)[field] += " revised";
+      });
+      assertOperationLabelResult(candidatePath, 1, /operation labels| Summary/);
+    });
+  }
+}
+
+for (const operation of ["a-operation", "r-csv-operation", "receiveOrderCreated"]) {
+  for (const field of ["task", "summary"]) {
+    // Storefront Summary already has a source comparison; it is characterized below.
+    if (operation === "receiveOrderCreated" && field === "summary") continue;
+    for (const [mode, value] of [["missing", undefined], ["null", null], ["empty", ""],
+      ["non-string", ["label"]], ["multiline", "label\nsecond line"], ["padding", " label "]]) {
+      test(`rejects operation labels ${operation} ${field} ${mode}`, (t) => {
+        const candidatePath = copyVersionedCandidate(t);
+        mutateOperationLabelSources(candidatePath, (sources) => {
+          const contract = labelSourceContract(sources, operation, field);
+          if (mode === "missing") delete contract[field];
+          else contract[field] = value;
+        });
+        assertOperationLabelResult(candidatePath, 1, /operation labels/);
+      });
+    }
+  }
+}
+
+for (const field of ["task", "summary"]) {
+  test(`rejects operation labels ${field} moved to another owner`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    mutateOperationLabelSources(candidatePath, (sources) => {
+      const a = labelSourceContract(sources, "a-operation", field);
+      const z = labelSourceContract(sources, "z-operation", field);
+      [a[field], z[field]] = [z[field], a[field]];
+    });
+    assertOperationLabelResult(candidatePath, 1, /operation labels/);
+  });
+}
+
+for (const authority of labelAuthorities) {
+  for (const mode of ["missing", "wrong source", "duplicate"]) {
+    test(`rejects operation labels ${authority.factDomain} authority ${mode}`, (t) => {
+      const candidatePath = copyVersionedCandidate(t);
+      mutateOperationLabelSources(candidatePath);
+      const file = path.join(candidatePath, "source", "projection-input-manifest.json");
+      const manifest = JSON.parse(fs.readFileSync(file, "utf8"));
+      manifest.precedence = manifest.precedence.filter((entry) => entry.factDomain !== authority.factDomain);
+      if (mode !== "missing") manifest.precedence.push({ ...authority,
+        sourceOrder: mode === "wrong source" ? ["storefront-behavior"] : authority.sourceOrder });
+      if (mode === "duplicate") manifest.precedence.push(authority);
+      fs.writeFileSync(file, JSON.stringify(manifest));
+      for (const profile of ["full", "compact"]) {
+        restampDocumentSet(path.join(candidatePath, profile), file, { write: true });
+      }
+      assertOperationLabelResult(candidatePath, 1, /operation labels.*authority/);
+    });
+  }
+}
+
+function replaceOperationLabelRoute(candidatePath, operation, field, value) {
+  const shard = operation === "m-operation" ? "operations-middle.md" : "operations-broad.md";
+  for (const profile of ["full", "compact"]) {
+    const root = path.join(candidatePath, profile);
+    const file = path.join(root, "indexes", shard);
+    const row = fs.readFileSync(file, "utf8").split("\n")
+      .find((line) => line.includes(`| ${operation} |`));
+    assert.ok(row);
+    const cells = row.split("|");
+    cells[field === "task" ? 5 : 6] = ` ${value} `;
+    replaceExactlyOnce(file, row, cells.join("|"));
+    if (field === "task") {
+      const tasks = fs.readFileSync(file, "utf8").split("\n")
+        .filter((line) => /^\| (SEND|RECEIVE) \|/.test(line))
+        .flatMap((line) => line.split("|")[5].trim().split("; "));
+      const index = path.join(root, "INDEX.md");
+      const aggregate = fs.readFileSync(index, "utf8").split("\n")
+        .find((line) => line.endsWith(`| indexes/${shard} |`));
+      assert.ok(aggregate);
+      const aggregateCells = aggregate.split("|");
+      aggregateCells[1] = ` ${[...new Set(tasks)].sort().join("; ")} `;
+      replaceExactlyOnce(index, aggregate, aggregateCells.join("|"));
+    }
+    restampDocumentSet(root, path.join(candidatePath, "source", "projection-input-manifest.json"), { write: true });
+  }
+}
+
+for (const operation of ["a-operation", "r-csv-operation", "receiveOrderCreated"]) {
+  for (const field of ["task", "summary"]) {
+    test(`accepts operation labels matching revised ${operation} ${field}`, (t) => {
+      const candidatePath = copyVersionedCandidate(t);
+      const value = field === "task" ? "alternate task" : "Revised synthetic routing description.";
+      mutateOperationLabelSources(candidatePath, (sources) => {
+        labelSourceContract(sources, operation, field)[field] = value;
+      });
+      replaceOperationLabelRoute(candidatePath, operation, field, value);
+      assertOperationLabelResult(candidatePath, 0);
+    });
+  }
+}
+
+test("rejects operation labels with Task and Summary source columns swapped", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  mutateOperationLabelSources(candidatePath, (sources) => {
+    const contract = sources["complete-contexts.json"].operations["a-operation"];
+    [contract.task, contract.summary] = [contract.summary, contract.task];
+  });
+  assertOperationLabelResult(candidatePath, 1, /operation labels/);
+});
+
+test("rejects operation labels after a missing behavior owner registry without crashing", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  mutateOperationLabelSources(candidatePath, (sources) => {
+    delete sources["storefront-behavior.json"].operationBehavior;
+  });
+  assertOperationLabelResult(candidatePath, 1, /storefront context selection owners/);
+});
+
+for (const field of ["task", "summary"]) {
+  test(`rejects operation labels storefront ${field} with only a non-authoritative shadow`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    mutateOperationLabelSources(candidatePath, (sources) => {
+      const authority = labelSourceContract(sources, "receiveOrderCreated", field);
+      const shadow = field === "task" ? sources["storefront.asyncapi.json"].operations.receiveOrderCreated
+        : sources["storefront-behavior.json"].operationBehavior.receiveOrderCreated;
+      shadow[field] = authority[field];
+      delete authority[field];
+    });
+    assertOperationLabelResult(candidatePath, 1, /operation labels/);
+  });
+}
+
+test("accepts operation labels from storefront authorities despite conflicting shadow labels", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  mutateOperationLabelSources(candidatePath, (sources) => {
+    sources["storefront.asyncapi.json"].operations.receiveOrderCreated.task = "untrusted shadow task";
+    sources["storefront-behavior.json"].operationBehavior.receiveOrderCreated.summary = "Untrusted shadow summary.";
+  });
+  assertOperationLabelResult(candidatePath, 0);
+});
+
+test("accepts operation labels with Unicode and a decoded pipe", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  mutateOperationLabelSources(candidatePath, (sources) => {
+    sources["complete-contexts.json"].operations["a-operation"].task = "alpha Café task";
+    sources["complete-contexts.json"].operations["a-operation"].summary = "Alpha | synthetic control signal";
+  });
+  replaceOperationLabelRoute(candidatePath, "a-operation", "task", "alpha Café task");
+  replaceOperationLabelRoute(candidatePath, "a-operation", "summary", "Alpha \\| synthetic control signal");
+  assertOperationLabelResult(candidatePath, 0);
+});
+
 function mutateStorefrontContextSource(candidatePath, mutate) {
   const file = path.join(candidatePath, "source", "storefront-behavior.json");
   const source = JSON.parse(fs.readFileSync(file, "utf8"));

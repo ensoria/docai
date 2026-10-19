@@ -269,6 +269,8 @@ test("candidate source defines two equal JSON representations for compact reuse"
   assert.deepEqual(reusable, [
     {
       operation: "r-json-original-operation",
+      task: "representation task",
+      summary: "Sends the canonical reusable JSON record",
       action: "SEND",
       channel: "representations.json-original",
       message: "json-original-message",
@@ -296,6 +298,8 @@ test("candidate source defines two equal JSON representations for compact reuse"
     },
     {
       operation: "r-json-reuse-operation",
+      task: "representation task",
+      summary: "Sends the reused JSON record",
       action: "SEND",
       channel: "representations.json-reuse",
       message: "json-reuse-message",

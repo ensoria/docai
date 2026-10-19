@@ -10,6 +10,8 @@ The latest [fact matrix review](SOURCE-TRACEABILITY.md#fact-matrix-review--2026-
 
 MATRIX-001 is resolved for this candidate by the whole-operation inventory gate and the subsequent storefront context gate. The former requires unique ownership and exact source/routing/definition name sets with full channel-file ownership; the latter compares each storefront operation's explicit required/supplemental arrays to routing under a manifest-bound behavior authority. The candidate-local behavior source adds four empty arrays, its digest and context authority are bound by the manifest, and both profiles are restamped without changing their bodies. The Core sources, public grammar and projector version remain unchanged.
 
+MATRIX-002's operation-label portion is now source-compared: context/representation entries declare Task and Summary, storefront behavior declares Task, and storefront AsyncAPI remains Summary's authority. The label gate compares every owner/column in both profiles and rejects absent, malformed or stale labels and invalid manifest authority. The twenty added fields and two authority domains are digest-bound; all 34 profile identity trailers are refreshed without changing projected bodies or projector `1.0.2`. This finite one-task-per-operation policy does not resolve Workflow labels/titles, catalog/shard display prose, Related, path policy or language, so MATRIX-002 and Task 12 remain open.
+
 Validate the current pair without modifying it:
 
 ```sh

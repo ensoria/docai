@@ -14,6 +14,7 @@ import { auditSyntheticRepresentations } from "./complete-representation-source-
 import { auditConventionDependencies } from "./complete-convention-source-audit.mjs";
 import { collectCompleteOperationInventory } from "./complete-operation-inventory.mjs";
 import { auditStorefrontContextSelection } from "./complete-storefront-context-audit.mjs";
+import { auditOperationLabels } from "./complete-operation-label-audit.mjs";
 
 const sourceFiles = new Map([
   ["complete-contexts", "complete-contexts.json"],
@@ -117,6 +118,15 @@ export function auditCompleteCandidateSources(candidatePath, documentSets, optio
     [{ factDomain: "storefront-context-selection", sourceOrder: ["storefront-behavior"] }])) {
     return ["storefront context selection authority differs from the candidate source policy"];
   }
+  for (const [factDomain, sourceOrder] of [
+    ["operation-tasks", ["complete-contexts", "complete-representations", "storefront-behavior"]],
+    ["operation-summaries", ["complete-contexts", "complete-representations", "storefront-asyncapi-3.1.0"]]
+  ]) {
+    if (!isDeepStrictEqual(manifest.precedence?.filter((entry) => entry.factDomain === factDomain),
+      [{ factDomain, sourceOrder }])) {
+      return [`operation labels ${factDomain} authority differs from the candidate source policy`];
+    }
+  }
   const profiles = Object.entries(documentSets).map(([profile, set]) => ({
     profile, set, result: validateCompleteDocumentSet(set, options)
   }));
@@ -136,6 +146,8 @@ export function auditCompleteCandidateSources(candidatePath, documentSets, optio
     [...new Set(result.facts.core.operations.rows.map((row) => row.channelPath))].sort()),
     "operation inventory channel coverage");
     auditStorefrontContextSelection(behavior, asyncapi, contexts,
+      result.facts.core.operations.rows, check);
+    auditOperationLabels(contexts, representations, asyncapi, behavior,
       result.facts.core.operations.rows, check);
   }
   if (issues.length > 0) return issues;
@@ -350,7 +362,6 @@ export function auditCompleteCandidateSources(candidatePath, documentSets, optio
       check(route?.action === operation.action.toUpperCase()
         && route?.channel === asyncapi.channels[channelKey]?.address,
       `${name} operation route`);
-      check(route?.summary === operation.summary, `${name} Summary`);
       check(isDeepStrictEqual(result.facts.core.messageDefinitions.byOperation[name]
         ?.filter((message) => !message.reply).map((message) => message.name), [messageName]),
       `${name} Message identity`);

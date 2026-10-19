@@ -93,6 +93,7 @@
   },
   "operationBehavior": {
     "receiveOrderCreated": {
+      "task": "update storefront order state",
       "authorization": "OAuth2 scope orders:read is required.",
       "delivery": "at-least-once -- Acknowledge after durable processing; negative-acknowledge retryable failures.",
       "idempotency": "Deduplicate redeliveries by header.message-id and preserve the prior durable result.",
@@ -105,6 +106,7 @@
       "supplementalContexts": []
     },
     "sendCreateOrder": {
+      "task": "submit an order",
       "authorization": "OAuth2 scope orders:write is required.",
       "delivery": "at-least-once -- Broker acknowledgement makes publish durable; timeout leaves outcome ambiguous.",
       "idempotency": "Resend with the same header.message-id; consumers deduplicate for 24 hours.",

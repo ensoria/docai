@@ -81,7 +81,7 @@ export function auditSyntheticRepresentations(source, exactSource, core, operati
     const variants = form === "tagged-variants" || form === "untagged-variants";
     const csv = form === "adapter-defined-structured";
     const raw = form === "opaque-raw";
-    const keys = ["operation", "action", "channel", "message", "form", "mediaType",
+    const keys = ["operation", "action", "channel", "message", "form", "mediaType", "task", "summary",
       entry.action === "SEND" ? "payloadRequired" : "payloadPresence"];
     if (raw) keys.push("description");
     else keys.push("payloadNullable", "schemaFormat", ...(variants ? ["variants",

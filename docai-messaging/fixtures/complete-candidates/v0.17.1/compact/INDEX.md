@@ -30,4 +30,4 @@ Full set: ../full/
 | State unknown | Exercise every workflow section's whole-section unknown state | workflows/state-unknown.md |
 | State unsupported | Exercise every workflow section's replacement unsupported state | workflows/state-unsupported.md |
 
-> docai-identity: set_id: b32:p7hun32mfbjpm5hinclnsds6fi | projection_id: b32:uygw4jczzdr2sspyf43d6el3wa | set_digest: sha256:7fcf46ef4c2852f674e86896d90e5e2aec8d90e1b371c682b84a665907880eb4 | projection_digest: sha256:a60d6e2459c8e3a949f82f363f117bb0cdda3858e503a438d8754e0bcf036936
+> docai-identity: set_id: b32:7wceitvwbejasj3tfsllwlzfoy | projection_id: b32:scvpfhyxpjtyjsshc5wuk7xxbq | set_digest: sha256:fd84444eb609120927732c96bb2f2576182781dc5e81ec27180f040d455e3d1e | projection_digest: sha256:90aaf29f177a6784ca47176d457ef70cae85bdaf0ce4bc9b0d7f0193808f0cf8

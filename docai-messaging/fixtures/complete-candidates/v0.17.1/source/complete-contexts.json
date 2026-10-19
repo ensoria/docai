@@ -6,6 +6,8 @@
     "a-operation": {
       "action": "SEND",
       "channel": "a.events",
+      "task": "alpha task",
+      "summary": "Handles the alpha event range",
       "requiredContexts": [
         "alpha-delivery"
       ],
@@ -22,6 +24,8 @@
     "m-operation": {
       "action": "SEND",
       "channel": "m.events",
+      "task": "middle task",
+      "summary": "Handles the middle event range",
       "requiredContexts": [],
       "supplementalContexts": [
         "middle-operations"
@@ -33,6 +37,8 @@
     "z-operation": {
       "action": "RECEIVE",
       "channel": "z.events",
+      "task": "zeta task",
+      "summary": "Handles the zeta event range",
       "requiredContexts": [],
       "supplementalContexts": [],
       "message": "z-message",

@@ -5,6 +5,8 @@
   "representations": [
     {
       "operation": "r-csv-operation",
+      "task": "representation task",
+      "summary": "Sends one adapter-defined CSV record",
       "action": "SEND",
       "channel": "representations.csv",
       "message": "csv-message",
@@ -43,6 +45,8 @@
     },
     {
       "operation": "r-json-original-operation",
+      "task": "representation task",
+      "summary": "Sends the canonical reusable JSON record",
       "action": "SEND",
       "channel": "representations.json-original",
       "message": "json-original-message",
@@ -76,6 +80,8 @@
     },
     {
       "operation": "r-json-reuse-operation",
+      "task": "representation task",
+      "summary": "Sends the reused JSON record",
       "action": "SEND",
       "channel": "representations.json-reuse",
       "message": "json-reuse-message",
@@ -109,6 +115,8 @@
     },
     {
       "operation": "r-raw-operation",
+      "task": "representation task",
+      "summary": "Sends an opaque raw receipt",
       "action": "SEND",
       "channel": "representations.raw",
       "message": "raw-message",
@@ -119,6 +127,8 @@
     },
     {
       "operation": "r-tagged-operation",
+      "task": "representation task",
+      "summary": "Sends a tagged lifecycle event",
       "action": "SEND",
       "channel": "representations.tagged",
       "message": "tagged-message",
@@ -185,6 +195,8 @@
     },
     {
       "operation": "r-untagged-operation",
+      "task": "representation task",
+      "summary": "Receives an untagged lifecycle event",
       "action": "RECEIVE",
       "channel": "representations.untagged",
       "message": "untagged-message",
