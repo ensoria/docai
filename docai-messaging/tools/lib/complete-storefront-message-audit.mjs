@@ -2,6 +2,13 @@ import { isDeepStrictEqual } from "node:util";
 import { equalExactJson, parseExactJson } from "./json-value.mjs";
 import { scanMarkdown } from "./markdown.mjs";
 import { parsePipeTable } from "./tables.mjs";
+import { canonicalRepresentationView } from "./validators/complete-profile-comparison.mjs";
+
+const storefrontMessages = [
+  ["receiveOrderCreated", "OrderCreated", false],
+  ["sendCreateOrder", "CreateOrder", false],
+  ["sendCreateOrder", "OrderAccepted", true]
+];
 
 // This is the finite schema vocabulary used by this candidate, not a schema adapter.
 const constraints = ["const", "format", "minimum", "minLength", "pattern", "minItems"];
@@ -95,36 +102,95 @@ function matchesTable(lines, expected, direction, firstColumn) {
     });
 }
 
-function messageSections(set, definition) {
+function childSections(set, definition, names) {
   const file = set.files.find((entry) => entry.path === definition?.path);
   const markdown = file && scanMarkdown(file.content).value;
-  const message = markdown?.headings.find((heading) => heading.line === definition?.line);
-  if (!message) return {};
-  const messageEnd = markdown.headings.find((heading) => (
-    heading.line > message.line && heading.level <= message.level
+  const parent = markdown?.headings.find((heading) => heading.line === definition?.line);
+  if (!parent) return {};
+  const parentEnd = markdown.headings.find((heading) => (
+    heading.line > parent.line && heading.level <= parent.level
   ))?.line ?? markdown.lines.length + 1;
-  return Object.fromEntries(["Headers", "Payload"].map((name) => {
-    const heading = markdown.headings.find((entry) => entry.line > message.line
-      && entry.line < messageEnd && entry.level === message.level + 1 && entry.text === name);
+  return Object.fromEntries(names.map((name) => {
+    const heading = markdown.headings.find((entry) => entry.line > parent.line
+      && entry.line < parentEnd && entry.level === parent.level + 1 && entry.text === name);
     if (!heading) return [name, null];
     const end = markdown.headings.find((entry) => entry.line > heading.line
-      && entry.level <= heading.level)?.line ?? messageEnd;
+      && entry.level <= heading.level)?.line ?? parentEnd;
     return [name, markdown.lines.filter((line) => line.line > heading.line && line.line < end)
       .map((line) => line.text).join("\n").trim()];
   }));
 }
 
+function canonicalSection(text) {
+  return typeof text === "string" ? canonicalRepresentationView({
+    path: "channels/orders.md", content: text
+  }, 1, text.split("\n").length + 1) : null;
+}
+
+function hasNoLocalBindings(owner) {
+  if (!(owner instanceof Map)) return false;
+  const bindings = owner.get("bindings");
+  return !owner.has("bindings") || (bindings instanceof Map && bindings.size === 0);
+}
+
+function resolveLocalReference(source, value) {
+  const seen = new Set();
+  while (value instanceof Map && value.has("$ref")) {
+    const ref = value.get("$ref");
+    if (typeof ref !== "string" || !ref.startsWith("#/") || seen.has(ref)) return null;
+    seen.add(ref);
+    const tokens = ref.slice(2).split("/");
+    if (tokens.some((token) => /~(?![01])/.test(token))) return null;
+    value = tokens.reduce((node, token) => node instanceof Map
+      ? node.get(token.replace(/~1/g, "/").replace(/~0/g, "~")) : undefined, source);
+  }
+  return value instanceof Map ? value : null;
+}
+
+function selectedStorefrontMessage(source, operationName, reply) {
+  const operation = resolveLocalReference(source, source?.get("operations")?.get(operationName));
+  const owner = reply ? resolveLocalReference(source, operation?.get("reply")) : operation;
+  const selected = owner?.get("messages");
+  return Array.isArray(selected) && selected.length === 1
+    ? resolveLocalReference(source, selected[0]) : null;
+}
+
+export function auditStorefrontLocalBindings(source, set, core, check) {
+  for (const name of ["receiveOrderCreated", "sendCreateOrder"]) {
+    const operation = source?.get("operations")?.get(name);
+    const sections = childSections(set, core.operationDefinitions.byName[name],
+      ["Operation Bindings", "Channel"]);
+    check(hasNoLocalBindings(operation)
+      && isDeepStrictEqual(canonicalSection(sections["Operation Bindings"]), ["none"]),
+    `storefront operation ${name} Bindings`);
+    const ref = operation?.get("channel")?.get("$ref");
+    const channelName = typeof ref === "string" ? ref.match(/^#\/channels\/([^/]+)$/)?.[1] : null;
+    const channel = source?.get("channels")?.get(channelName);
+    const content = canonicalSection(sections.Channel);
+    const headed = content?.indexOf("#### Bindings") ?? -1;
+    const collapsed = content?.indexOf("- Bindings: none") ?? -1;
+    check(hasNoLocalBindings(channel) && (headed >= 0
+      ? isDeepStrictEqual(content.slice(headed + 1), ["none"])
+      : collapsed >= 0 && collapsed === content.length - 1),
+    `storefront Channel ${channelName} Bindings`);
+  }
+  for (const [operation, name, reply] of storefrontMessages) {
+    const message = selectedStorefrontMessage(source, operation, reply);
+    const definition = core.messageDefinitions.byOperation[operation]
+      ?.find((entry) => entry.reply === reply);
+    const sections = childSections(set, definition, ["Bindings"]);
+    check(message?.get("name") === name && hasNoLocalBindings(message)
+      && isDeepStrictEqual(canonicalSection(sections.Bindings), ["none"]),
+    `storefront Message ${name} Bindings`);
+  }
+}
+
 export function auditStorefrontMessageContracts(source, set, definitions, check) {
-  const messages = source?.get("components")?.get("messages");
-  for (const [operation, name, reply] of [
-    ["receiveOrderCreated", "OrderCreated", false],
-    ["sendCreateOrder", "CreateOrder", false],
-    ["sendCreateOrder", "OrderAccepted", true]
-  ]) {
-    const message = messages?.get(name);
+  for (const [operation, name, reply] of storefrontMessages) {
+    const message = selectedStorefrontMessage(source, operation, reply);
     const definition = definitions.byOperation[operation]?.find((entry) => entry.reply === reply);
     const direction = definition?.direction;
-    const sections = messageSections(set, definition);
+    const sections = childSections(set, definition, ["Headers", "Payload"]);
     const headerRows = schemaRows(message?.get("headers"), direction, true);
     check(message?.get("name") === definition?.name
       && matchesTable(sections.Headers?.split("\n"), headerRows, direction, "Name"),

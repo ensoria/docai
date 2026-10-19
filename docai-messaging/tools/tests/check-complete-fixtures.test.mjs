@@ -84,6 +84,171 @@ function rebindAndRestamp(candidatePath, sourceName) {
   }
 }
 
+const storefrontBindingScopes = [
+  ...["receiveOrderCreated", "sendCreateOrder"].map((name) => ({
+    label: `storefront operation ${name} Bindings`,
+    owner: (source) => source.operations[name],
+    anchor: name === "receiveOrderCreated" ? "## RECEIVE orders.events (receiveOrderCreated)"
+      : "## SEND orders.commands (sendCreateOrder)",
+    from: "### Operation Bindings\n\nnone", heading: "### Operation Bindings"
+  })),
+  ...[["orderEvents", "## RECEIVE orders.events (receiveOrderCreated)"],
+    ["orderCommands", "## SEND orders.commands (sendCreateOrder)"]].map(([name, anchor]) => ({
+    label: `storefront Channel ${name} Bindings`,
+    owner: (source) => source.channels[name], anchor,
+    from: "- Bindings: none", heading: "\n#### Bindings"
+  })),
+  ...["OrderCreated", "CreateOrder", "OrderAccepted"].map((name) => {
+    const reply = name === "OrderAccepted";
+    return {
+      label: `storefront Message ${name} Bindings`,
+      owner: (source) => source.components.messages[name],
+      anchor: `${reply ? "####" : "###"} Message ${name}`,
+      from: `${reply ? "#####" : "####"} Bindings\n\nnone`,
+      heading: `${reply ? "#####" : "####"} Bindings`
+    };
+  })
+];
+
+function replaceStorefrontBinding(file, scope, replacement) {
+  const content = fs.readFileSync(file, "utf8");
+  const start = content.indexOf(scope.anchor);
+  const index = content.indexOf(scope.from, start);
+  const end = content.indexOf("\n## ", start + scope.anchor.length);
+  assert.ok(start >= 0 && index > start && (end < 0 || index < end), scope.label);
+  fs.writeFileSync(file, content.slice(0, index) + replacement + content.slice(index + scope.from.length));
+}
+
+for (const scope of storefrontBindingScopes) {
+  test(`rejects stale ${scope.label} known absence after source rebinding`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    const sourcePath = path.join(candidatePath, "source", "storefront.asyncapi.json");
+    const source = JSON.parse(fs.readFileSync(sourcePath, "utf8"));
+    scope.owner(source).bindings = { kafka: { bindingVersion: "0.5.0" } };
+    fs.writeFileSync(sourcePath, JSON.stringify(source));
+    rebindAndRestamp(candidatePath, "storefront.asyncapi.json");
+    const before = directorySnapshot(candidatePath);
+
+    const result = runChecker([candidatePath]);
+
+    assert.equal(result.status, 1, result.stdout);
+    assert.match(result.stderr, new RegExp(scope.label));
+    assert.deepEqual(directorySnapshot(candidatePath), before);
+  });
+
+  test(`rejects matching unsourced ${scope.label} table`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");
+    const table = "| Protocol | Property | Value / Rule |\n|---|---|---|\n| kafka | bindingVersion | 0.5.0 |";
+    for (const profile of ["full", "compact"]) {
+      replaceStorefrontBinding(path.join(candidatePath, profile, "channels", "orders.md"),
+        scope, `${scope.heading}\n\n${table}`);
+      restampDocumentSet(path.join(candidatePath, profile), manifestPath, { write: true });
+    }
+    const before = directorySnapshot(candidatePath);
+
+    const result = runChecker([candidatePath]);
+
+    assert.equal(result.status, 1, result.stdout);
+    assert.match(result.stderr, new RegExp(scope.label));
+    assert.deepEqual(directorySnapshot(candidatePath), before);
+  });
+}
+
+for (const [index, value] of [[0, null], [2, []], [6, "none"], [5, { kafka: {} }]]) {
+  const scope = storefrontBindingScopes[index];
+  test(`rejects non-empty-map absence interpretation for ${scope.label}`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    const sourcePath = path.join(candidatePath, "source", "storefront.asyncapi.json");
+    const source = JSON.parse(fs.readFileSync(sourcePath, "utf8"));
+    scope.owner(source).bindings = value;
+    fs.writeFileSync(sourcePath, JSON.stringify(source));
+    rebindAndRestamp(candidatePath, "storefront.asyncapi.json");
+    const before = directorySnapshot(candidatePath);
+
+    const result = runChecker([candidatePath]);
+
+    assert.equal(result.status, 1, result.stdout);
+    assert.match(result.stderr, new RegExp(scope.label));
+    assert.deepEqual(directorySnapshot(candidatePath), before);
+  });
+}
+
+test("accepts explicit empty storefront local Bindings maps", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  const sourcePath = path.join(candidatePath, "source", "storefront.asyncapi.json");
+  const source = JSON.parse(fs.readFileSync(sourcePath, "utf8"));
+  for (const scope of storefrontBindingScopes) scope.owner(source).bindings = {};
+  fs.writeFileSync(sourcePath, JSON.stringify(source));
+  rebindAndRestamp(candidatePath, "storefront.asyncapi.json");
+  const before = directorySnapshot(candidatePath);
+
+  const result = runChecker([candidatePath]);
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
+test("accepts headed storefront primary Channel Bindings known absence", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");
+  for (const profile of ["full", "compact"]) {
+    for (const scope of storefrontBindingScopes.slice(2, 4)) {
+      replaceStorefrontBinding(path.join(candidatePath, profile, "channels", "orders.md"),
+        scope, `${scope.heading}\n\nnone`);
+    }
+    restampDocumentSet(path.join(candidatePath, profile), manifestPath, { write: true });
+  }
+  const before = directorySnapshot(candidatePath);
+
+  const result = runChecker([candidatePath]);
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
+for (const [fact, mutate, label] of [
+  ["Bindings", (message) => { message.bindings = { kafka: { bindingVersion: "0.5.0" } }; },
+    "storefront Message OrderAccepted Bindings"],
+  ["schema", (message) => { message.headers.properties["message-id"].minLength = 2; },
+    "storefront Message OrderAccepted Headers schema"]
+]) {
+  test(`rejects stale storefront selected Reply Message ${fact} behind an alternate component`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    const sourcePath = path.join(candidatePath, "source", "storefront.asyncapi.json");
+    const source = JSON.parse(fs.readFileSync(sourcePath, "utf8"));
+    const message = structuredClone(source.components.messages.OrderAccepted);
+    mutate(message);
+    source.components.messages.OrderAcceptedAlternate = message;
+    source.channels.orderReplies.messages.orderAccepted.$ref = "#/components/messages/OrderAcceptedAlternate";
+    fs.writeFileSync(sourcePath, JSON.stringify(source));
+    rebindAndRestamp(candidatePath, "storefront.asyncapi.json");
+    const before = directorySnapshot(candidatePath);
+
+    const result = runChecker([candidatePath]);
+
+    assert.equal(result.status, 1, result.stdout);
+    assert.match(result.stderr, new RegExp(label));
+    assert.deepEqual(directorySnapshot(candidatePath), before);
+  });
+}
+
+test("accepts equivalent storefront selected Reply Message behind an alternate component", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  const sourcePath = path.join(candidatePath, "source", "storefront.asyncapi.json");
+  const source = JSON.parse(fs.readFileSync(sourcePath, "utf8"));
+  source.components.messages.OrderAcceptedAlternate = structuredClone(source.components.messages.OrderAccepted);
+  source.channels.orderReplies.messages.orderAccepted.$ref = "#/components/messages/OrderAcceptedAlternate";
+  fs.writeFileSync(sourcePath, JSON.stringify(source));
+  rebindAndRestamp(candidatePath, "storefront.asyncapi.json");
+  const before = directorySnapshot(candidatePath);
+
+  const result = runChecker([candidatePath]);
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
 const structuredSyntheticOperations = [
   "r-csv-operation", "r-json-original-operation", "r-json-reuse-operation"
 ];

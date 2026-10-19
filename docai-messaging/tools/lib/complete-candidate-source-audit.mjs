@@ -7,7 +7,9 @@ import { validateCompleteFieldDefaults } from "./validators/complete-field-defau
 import { validateCompleteSameAs } from "./validators/complete-same-as.mjs";
 import { parsePipeTable } from "./tables.mjs";
 import { parseExactJson } from "./json-value.mjs";
-import { auditStorefrontMessageContracts } from "./complete-storefront-message-audit.mjs";
+import {
+  auditStorefrontLocalBindings, auditStorefrontMessageContracts
+} from "./complete-storefront-message-audit.mjs";
 import { auditSyntheticRepresentations } from "./complete-representation-source-audit.mjs";
 
 const sourceFiles = new Map([
@@ -116,6 +118,7 @@ export function auditCompleteCandidateSources(candidatePath, documentSets, optio
     };
     auditStorefrontMessageContracts(exactAsyncapi, expanded,
       result.facts.core.messageDefinitions, check);
+    auditStorefrontLocalBindings(exactAsyncapi, expanded, result.facts.core, check);
     for (const file of set.files) {
       check(file.metadata.perspective === manifest.perspective.application,
         `${file.path} perspective`);
