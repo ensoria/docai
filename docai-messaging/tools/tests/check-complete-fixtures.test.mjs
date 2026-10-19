@@ -84,6 +84,175 @@ function rebindAndRestamp(candidatePath, sourceName) {
   }
 }
 
+const storefrontMeanings = [
+  ["CreateOrder", "headers/properties/correlation-id", "Correlates the acceptance reply."],
+  ["CreateOrder", "headers/properties/message-id", "Message identifier used for deduplication."],
+  ["CreateOrder", "headers/properties/reply-to", "Reply address."],
+  ["CreateOrder", "payload/properties/items", "Submitted order items."],
+  ["CreateOrder", "payload/properties/items/items/properties/quantity", "Item quantity."],
+  ["CreateOrder", "payload/properties/items/items/properties/sku", "SKU identifier."],
+  ["CreateOrder", "payload/properties/orderId", "Order identifier."],
+  ["CreateOrder", "payload/properties/tenantId", "Storefront tenant identifier."],
+  ["OrderAccepted", "headers/properties/correlation-id", "Equals the command correlation-id."],
+  ["OrderAccepted", "headers/properties/message-id", "Reply message identifier."],
+  ["OrderAccepted", "payload/properties/acceptedAt", "Command acceptance time."],
+  ["OrderAccepted", "payload/properties/orderId", "Order identifier."],
+  ["OrderAccepted", "payload/properties/status", "Accepted state."],
+  ["OrderCreated", "headers/properties/message-id", "Message identifier retained across redelivery."],
+  ["OrderCreated", "payload/properties/createdAt", "Order creation time."],
+  ["OrderCreated", "payload/properties/orderId", "Order identifier."],
+  ["OrderCreated", "payload/properties/status", "Created state."]
+];
+
+function storefrontSchema(source, name, schemaPath) {
+  return schemaPath.split("/").reduce((node, key) => node[key], source.components.messages[name]);
+}
+
+function replaceStorefrontMeaning(file, name, from, to) {
+  const content = fs.readFileSync(file, "utf8");
+  const heading = `${name === "OrderAccepted" ? "####" : "###"} Message ${name}`;
+  const start = content.indexOf(heading);
+  const index = content.indexOf(from, start);
+  assert.ok(start >= 0 && index > start, `${name}: ${from}`);
+  fs.writeFileSync(file, content.slice(0, index) + to + content.slice(index + from.length));
+}
+
+for (const [name, schemaPath, prose] of storefrontMeanings) {
+  const section = schemaPath.startsWith("headers/") ? "Headers" : "Payload";
+  test(`rejects stale storefront field prose ${name} ${schemaPath} after source rebinding`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    const sourcePath = path.join(candidatePath, "source", "storefront.asyncapi.json");
+    const source = JSON.parse(fs.readFileSync(sourcePath, "utf8"));
+    storefrontSchema(source, name, schemaPath).description = "A different fixture meaning.";
+    fs.writeFileSync(sourcePath, JSON.stringify(source));
+    rebindAndRestamp(candidatePath, "storefront.asyncapi.json");
+    const before = directorySnapshot(candidatePath);
+
+    const result = runChecker([candidatePath]);
+
+    assert.equal(result.status, 1, result.stdout);
+    assert.match(result.stderr, new RegExp(`storefront Message ${name} ${section} schema`));
+    assert.deepEqual(directorySnapshot(candidatePath), before);
+  });
+
+  test(`rejects matching unsourced storefront field prose ${name} ${schemaPath}`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");
+    for (const profile of ["full", "compact"]) {
+      replaceStorefrontMeaning(path.join(candidatePath, profile, "channels", "orders.md"),
+        name, prose, "A different fixture meaning.");
+      restampDocumentSet(path.join(candidatePath, profile), manifestPath, { write: true });
+    }
+    const before = directorySnapshot(candidatePath);
+
+    const result = runChecker([candidatePath]);
+
+    assert.equal(result.status, 1, result.stdout);
+    assert.match(result.stderr, new RegExp(`storefront Message ${name} ${section} schema`));
+    assert.deepEqual(directorySnapshot(candidatePath), before);
+  });
+}
+
+for (const [label, schemaPath, description] of [
+  ["null", "payload/properties/orderId", null],
+  ["array", "payload/properties/orderId", []],
+  ["number", "payload/properties/orderId", 42],
+  ["multiline", "payload/properties/orderId", "First line.\nSecond line."],
+  ["header root", "headers", "A header-map description without a projected row."],
+  ["payload root", "payload", "Additional source object meaning."],
+  ["array item object", "payload/properties/items/items", "Additional source object meaning."]
+]) {
+  test(`rejects unprojected storefront field prose at ${label}`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    const sourcePath = path.join(candidatePath, "source", "storefront.asyncapi.json");
+    const source = JSON.parse(fs.readFileSync(sourcePath, "utf8"));
+    storefrontSchema(source, "CreateOrder", schemaPath).description = description;
+    fs.writeFileSync(sourcePath, JSON.stringify(source));
+    rebindAndRestamp(candidatePath, "storefront.asyncapi.json");
+    const before = directorySnapshot(candidatePath);
+
+    const result = runChecker([candidatePath]);
+
+    assert.equal(result.status, 1, result.stdout);
+    assert.match(result.stderr, /storefront Message CreateOrder (Headers|Payload) schema/);
+    assert.deepEqual(directorySnapshot(candidatePath), before);
+  });
+}
+
+test("rejects stale storefront field prose behind the selected alternate Reply component", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  const sourcePath = path.join(candidatePath, "source", "storefront.asyncapi.json");
+  const source = JSON.parse(fs.readFileSync(sourcePath, "utf8"));
+  source.components.messages.OrderAcceptedAlternate = structuredClone(source.components.messages.OrderAccepted);
+  source.components.messages.OrderAcceptedAlternate.payload.properties.acceptedAt.description = "A different time.";
+  source.channels.orderReplies.messages.orderAccepted.$ref = "#/components/messages/OrderAcceptedAlternate";
+  fs.writeFileSync(sourcePath, JSON.stringify(source));
+  rebindAndRestamp(candidatePath, "storefront.asyncapi.json");
+  const before = directorySnapshot(candidatePath);
+
+  const result = runChecker([candidatePath]);
+
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /storefront Message OrderAccepted Payload schema/);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
+test("accepts sourced storefront field prose with a table-escaped pipe", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  const sourcePath = path.join(candidatePath, "source", "storefront.asyncapi.json");
+  const source = JSON.parse(fs.readFileSync(sourcePath, "utf8"));
+  source.components.messages.CreateOrder.payload.properties.tenantId.description = "Fixture tenant | documented identifier.";
+  fs.writeFileSync(sourcePath, JSON.stringify(source));
+  for (const profile of ["full", "compact"]) {
+    replaceStorefrontMeaning(path.join(candidatePath, profile, "channels", "orders.md"),
+      "CreateOrder", "Storefront tenant identifier.", "Fixture tenant \\| documented identifier.");
+  }
+  rebindAndRestamp(candidatePath, "storefront.asyncapi.json");
+  const before = directorySnapshot(candidatePath);
+
+  const result = runChecker([candidatePath]);
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
+test("accepts sourced storefront field prose preceding object closure", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  const sourcePath = path.join(candidatePath, "source", "storefront.asyncapi.json");
+  const source = JSON.parse(fs.readFileSync(sourcePath, "utf8"));
+  source.components.messages.CreateOrder.payload.description = "Submitted order contract.";
+  fs.writeFileSync(sourcePath, JSON.stringify(source));
+  for (const profile of ["full", "compact"]) {
+    replaceStorefrontMeaning(path.join(candidatePath, profile, "channels", "orders.md"),
+      "CreateOrder", "Additional properties are forbidden.",
+      "Submitted order contract. Additional properties are forbidden.");
+  }
+  rebindAndRestamp(candidatePath, "storefront.asyncapi.json");
+  const before = directorySnapshot(candidatePath);
+
+  const result = runChecker([candidatePath]);
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
+test("accepts storefront field prose table-cell boundary spaces", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");
+  for (const profile of ["full", "compact"]) {
+    replaceStorefrontMeaning(path.join(candidatePath, profile, "channels", "orders.md"),
+      "OrderCreated", "Message identifier retained across redelivery.",
+      "Message identifier retained across redelivery.   ");
+    restampDocumentSet(path.join(candidatePath, profile), manifestPath, { write: true });
+  }
+  const before = directorySnapshot(candidatePath);
+
+  const result = runChecker([candidatePath]);
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
 const storefrontBindingScopes = [
   ...["receiveOrderCreated", "sendCreateOrder"].map((name) => ({
     label: `storefront operation ${name} Bindings`,

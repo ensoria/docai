@@ -27,6 +27,10 @@ function schemaRows(schema, direction, headers = false) {
     if (type === "array") keys.push("items");
     if ([...node.keys()].some((key) => !keys.includes(key))) return false;
     if (headerRoot && constraints.some((key) => node.has(key))) return false;
+    const description = node.has("description") ? node.get("description") : "";
+    // This candidate emits single-line field prose; a header-map root has no row.
+    if (typeof description !== "string" || /[\r\n]/.test(description)
+        || (headerRoot && description !== "")) return false;
     if (node.has("format") && node.get("format") !== "date-time") return false;
     const itemType = node.get("items")?.get?.("type");
     const visibleType = type === "array" && types.has(itemType)
@@ -37,7 +41,8 @@ function schemaRows(schema, direction, headers = false) {
         cells: [name, visibleType, direction === "SEND"
           ? (required ? "yes" : "no") : (required ? "always" : "optional"), "no"],
         fragments: constraints.filter((key) => node.has(key)).map((key) => [key, node.get(key)]),
-        closed: type === "object"
+        prose: [description, type === "object" ? "Additional properties are forbidden." : ""]
+          .filter((part) => part !== "").join(" ")
       });
     }
     if (type === "object") {
@@ -98,7 +103,7 @@ function matchesTable(lines, expected, direction, firstColumn) {
         && parts.fragments.every(([key, value], index) => (
           key === source.fragments[index][0] && equalExactJson(value, source.fragments[index][1])
         ))
-        && (!source.closed || parts.prose === "Additional properties are forbidden.");
+        && parts.prose === source.prose;
     });
 }
 
