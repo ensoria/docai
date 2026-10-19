@@ -115,6 +115,296 @@ function ordinaryPairValid(candidatePath) {
   assert.deepEqual(validateCompleteProfilePair(full, compact, options).diagnostics, []);
 }
 
+const contextConventionDependencies = {
+  operations: { "a-operation": [], "m-operation": [], "z-operation": [] },
+  workflows: {
+    "alpha-delivery": [], "alpha-observability": [], "state-none": [],
+    "state-unknown": [], "state-unsupported": []
+  },
+  sections: {}
+};
+const representationConventionDependencies = {
+  operations: Object.fromEntries([
+    "r-csv-operation", "r-json-original-operation", "r-json-reuse-operation",
+    "r-raw-operation", "r-tagged-operation", "r-untagged-operation"
+  ].map((name) => [name, ["Data Representation"]])),
+  workflows: {}, sections: { "Data Representation": [] }
+};
+
+function mutateConventionSource(candidatePath, filename, mutate) {
+  const file = path.join(candidatePath, "source", filename);
+  const source = JSON.parse(fs.readFileSync(file, "utf8"));
+  // Explicit intended fixtures also let these mutations expose the old gate's RED.
+  if (!Object.hasOwn(source, "conventionDependencies")) {
+    source.conventionDependencies = structuredClone(filename === "complete-contexts.json"
+      ? contextConventionDependencies : representationConventionDependencies);
+  }
+  mutate(source.conventionDependencies, source);
+  fs.writeFileSync(file, JSON.stringify(source));
+  rebindAndRestamp(candidatePath, filename);
+}
+
+function replaceConventionSelector(candidatePath, operation, selector) {
+  for (const profile of ["full", "compact"]) {
+    const index = path.join(candidatePath, profile, "indexes",
+      operation === "m-operation" ? "operations-middle.md" : "operations-broad.md");
+    const row = fs.readFileSync(index, "utf8").split("\n")
+      .find((line) => line.includes(`| ${operation} |`));
+    assert.ok(row, operation);
+    replaceExactlyOnce(index, row, row.replace(/[^|]+\|$/, ` ${selector} |`));
+    restampDocumentSet(path.join(candidatePath, profile),
+      path.join(candidatePath, "source", "projection-input-manifest.json"), { write: true });
+  }
+}
+
+for (const [label, filename, mutate] of [
+  ["direct operation dependency", "complete-contexts.json", (deps) => {
+    deps.operations["z-operation"] = ["Data Representation"];
+  }],
+  ["required workflow dependency", "complete-contexts.json", (deps) => {
+    deps.workflows["alpha-delivery"] = ["Data Representation"];
+  }],
+  ["transitive section dependency", "complete-representations.json", (deps) => {
+    deps.sections["Data Representation"] = ["Authentication"];
+    deps.sections.Authentication = ["Message Envelope"];
+    deps.sections["Message Envelope"] = [];
+  }],
+  ["unknown operation dependency", "complete-contexts.json", (deps) => {
+    deps.operations["a-operation"] = null;
+  }],
+  ["unknown required workflow dependency", "complete-contexts.json", (deps) => {
+    deps.workflows["alpha-delivery"] = null;
+  }],
+  ["unknown section dependency", "complete-representations.json", (deps) => {
+    deps.sections["Data Representation"] = null;
+  }],
+  ["missing section dependency", "complete-representations.json", (deps) => {
+    delete deps.sections["Data Representation"];
+  }],
+  ["missing operation entry", "complete-contexts.json", (deps) => {
+    delete deps.operations["z-operation"];
+  }],
+  ["extra operation entry", "complete-contexts.json", (deps) => {
+    deps.operations.extra = [];
+  }],
+  ["missing workflow entry", "complete-contexts.json", (deps) => {
+    delete deps.workflows["alpha-delivery"];
+  }],
+  ["malformed dependency list", "complete-contexts.json", (deps) => {
+    deps.operations["z-operation"] = "none";
+  }],
+  ["non-string dependency", "complete-contexts.json", (deps) => {
+    deps.operations["z-operation"] = [["Data Representation"]];
+  }],
+  ["duplicate dependency", "complete-representations.json", (deps) => {
+    deps.operations["r-csv-operation"] = ["Data Representation", "Data Representation"];
+  }],
+  ["unknown convention name", "complete-contexts.json", (deps) => {
+    deps.operations["z-operation"] = ["not-a-convention"];
+  }],
+  ["missing dependency model", "complete-contexts.json", (_deps, source) => {
+    delete source.conventionDependencies;
+  }],
+  ["malformed dependency model", "complete-contexts.json", (_deps, source) => {
+    source.conventionDependencies = [];
+  }],
+  ["conflicting section definitions", "complete-contexts.json", (deps) => {
+    deps.sections["Data Representation"] = ["Authentication"];
+    deps.sections.Authentication = [];
+  }],
+  ["malformed context container on a workflow step operation", "complete-contexts.json", (_deps, source) => {
+    source.operations["m-operation"].requiredContexts = "not-an-array";
+  }],
+  ["missing required-context fact on an empty-context operation", "complete-contexts.json", (_deps, source) => {
+    delete source.operations["m-operation"].requiredContexts;
+  }],
+  ["duplicate workflow dependency owner", "complete-representations.json", (deps, source) => {
+    source.workflows = { "alpha-delivery": {} };
+    deps.workflows["alpha-delivery"] = [];
+  }]
+]) {
+  test(`rejects convention closure after source rebinding: ${label}`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    mutateConventionSource(candidatePath, filename, mutate);
+    ordinaryPairValid(candidatePath);
+    const before = directorySnapshot(candidatePath);
+
+    const result = runChecker([candidatePath]);
+
+    assert.equal(result.status, 1, result.stdout);
+    assert.match(result.stderr, /convention (?:closure|dependencies)/);
+    assert.deepEqual(directorySnapshot(candidatePath), before);
+  });
+}
+
+for (const [label, operation, selector] of [
+  ["representation dependency omitted", "r-json-original-operation", "none"],
+  ["unproven extra section selected", "r-json-original-operation", "Authentication, Data Representation"],
+  ["storefront reduced without proof", "sendCreateOrder", "Data Representation"]
+]) {
+  test(`rejects matching convention closure selectors: ${label}`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    replaceConventionSelector(candidatePath, operation, selector);
+    ordinaryPairValid(candidatePath);
+    const before = directorySnapshot(candidatePath);
+
+    const result = runChecker([candidatePath]);
+
+    assert.equal(result.status, 1, result.stdout);
+    assert.match(result.stderr, /convention closure/);
+    assert.deepEqual(directorySnapshot(candidatePath), before);
+  });
+}
+
+test("rejects convention closure missing an operation used by a required workflow", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  mutateConventionSource(candidatePath, "complete-contexts.json", (deps) => {
+    deps.operations["m-operation"] = ["Data Representation"];
+  });
+  replaceConventionSelector(candidatePath, "m-operation", "Data Representation");
+  ordinaryPairValid(candidatePath);
+  const before = directorySnapshot(candidatePath);
+
+  const result = runChecker([candidatePath]);
+
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /a-operation convention closure/);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
+test("rejects convention closure when a required source workflow disappears from routing", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  for (const profile of ["full", "compact"]) {
+    const file = path.join(candidatePath, profile, "indexes", "operations-broad.md");
+    replaceExactlyOnce(file,
+      "| workflows/alpha-delivery.md | workflows/alpha-observability.md,",
+      "| none | workflows/alpha-observability.md,");
+    restampDocumentSet(path.join(candidatePath, profile),
+      path.join(candidatePath, "source", "projection-input-manifest.json"), { write: true });
+  }
+  ordinaryPairValid(candidatePath);
+  const before = directorySnapshot(candidatePath);
+
+  const result = runChecker([candidatePath]);
+
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /a-operation convention closure/);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
+function promoteRequiredWorkflow(candidatePath, id, shadowSteps = false) {
+  mutateConventionSource(candidatePath, "complete-contexts.json", (_deps, source) => {
+    source.operations["a-operation"].requiredContexts.push(id);
+    source.operations["a-operation"].supplementalContexts = source.operations["a-operation"]
+      .supplementalContexts.filter((name) => name !== id);
+    if (shadowSteps) source.workflows[id].steps = [];
+  });
+  const beforeSupplemental = ["alpha-observability", "state-none", "state-unknown", "state-unsupported"];
+  for (const profile of ["full", "compact"]) {
+    const file = path.join(candidatePath, profile, "indexes", "operations-broad.md");
+    replaceExactlyOnce(file, "| workflows/alpha-delivery.md |",
+      `| workflows/alpha-delivery.md, workflows/${id}.md |`);
+    replaceExactlyOnce(file, beforeSupplemental.map((name) => `workflows/${name}.md`).join(", "),
+      beforeSupplemental.filter((name) => name !== id).map((name) => `workflows/${name}.md`).join(", "));
+    restampDocumentSet(path.join(candidatePath, profile),
+      path.join(candidatePath, "source", "projection-input-manifest.json"), { write: true });
+  }
+}
+
+for (const [id, shadowSteps] of [["state-unknown", false], ["state-unsupported", false],
+  ["state-unknown", true], ["state-none", true]]) {
+  test(`rejects convention closure for required ${id} Steps${shadowSteps ? " shadowed by an empty array" : ""}`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    promoteRequiredWorkflow(candidatePath, id, shadowSteps);
+    ordinaryPairValid(candidatePath);
+    const before = directorySnapshot(candidatePath);
+
+    const result = runChecker([candidatePath]);
+
+    assert.equal(result.status, 1, result.stdout);
+    assert.match(result.stderr, /a-operation convention closure/);
+    assert.deepEqual(directorySnapshot(candidatePath), before);
+  });
+}
+
+for (const [id, selector] of [["state-none", "none"], ["state-unknown", "all"], ["state-unsupported", "all"]]) {
+  test(`accepts convention closure for required ${id} with ${selector}`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    promoteRequiredWorkflow(candidatePath, id);
+    replaceConventionSelector(candidatePath, "a-operation", selector);
+    ordinaryPairValid(candidatePath);
+    const before = directorySnapshot(candidatePath);
+
+    const result = runChecker([candidatePath]);
+
+    assert.equal(result.status, 0, result.stderr);
+    assert.deepEqual(directorySnapshot(candidatePath), before);
+  });
+}
+
+for (const label of ["satisfied transitive cycle", "unknown operation with all",
+  "unknown required workflow with all", "required workflow union", "supplemental workflow fallback"]) {
+  test(`accepts convention closure with ${label}`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    if (label === "satisfied transitive cycle") {
+      mutateConventionSource(candidatePath, "complete-representations.json", (deps) => {
+        deps.sections["Data Representation"] = ["Authentication"];
+        deps.sections.Authentication = ["Data Representation"];
+      });
+      for (const operation of Object.keys(representationConventionDependencies.operations)) {
+        replaceConventionSelector(candidatePath, operation, "Authentication, Data Representation");
+      }
+    } else if (label === "unknown operation with all") {
+      mutateConventionSource(candidatePath, "complete-contexts.json", (deps) => {
+        deps.operations["z-operation"] = null;
+      });
+      replaceConventionSelector(candidatePath, "z-operation", "all");
+    } else if (label === "unknown required workflow with all") {
+      mutateConventionSource(candidatePath, "complete-contexts.json", (deps) => {
+        deps.workflows["alpha-delivery"] = null;
+      });
+      replaceConventionSelector(candidatePath, "a-operation", "all");
+    } else if (label === "required workflow union") {
+      mutateConventionSource(candidatePath, "complete-contexts.json", (deps) => {
+        deps.workflows["alpha-delivery"] = ["Data Representation"];
+        deps.operations["m-operation"] = ["Data Representation"];
+      });
+      replaceConventionSelector(candidatePath, "a-operation", "Data Representation");
+      replaceConventionSelector(candidatePath, "m-operation", "Data Representation");
+    } else {
+      mutateConventionSource(candidatePath, "complete-contexts.json", (deps) => {
+        deps.workflows["alpha-observability"] = null;
+      });
+    }
+    ordinaryPairValid(candidatePath);
+    const before = directorySnapshot(candidatePath);
+
+    const result = runChecker([candidatePath]);
+
+    assert.equal(result.status, 0, result.stderr);
+    assert.deepEqual(directorySnapshot(candidatePath), before);
+  });
+}
+
+test("rejects convention dependencies missing their manifest authority domain", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+  manifest.precedence = manifest.precedence.filter((entry) => entry.factDomain !== "convention-dependencies");
+  fs.writeFileSync(manifestPath, JSON.stringify(manifest));
+  for (const profile of ["full", "compact"]) {
+    restampDocumentSet(path.join(candidatePath, profile), manifestPath, { write: true });
+  }
+  ordinaryPairValid(candidatePath);
+  const before = directorySnapshot(candidatePath);
+
+  const result = runChecker([candidatePath]);
+
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /convention dependencies precedence/);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
 for (const [label, mutate, expected] of [
   ["expanded defaulted table", (file) => {
     replaceExactlyOnce(file, defaultedJsonTable, jsonFieldTable);

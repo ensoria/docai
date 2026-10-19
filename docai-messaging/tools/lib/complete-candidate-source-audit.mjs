@@ -11,6 +11,7 @@ import {
   auditStorefrontLocalBindings, auditStorefrontMessageContracts
 } from "./complete-storefront-message-audit.mjs";
 import { auditSyntheticRepresentations } from "./complete-representation-source-audit.mjs";
+import { auditConventionDependencies } from "./complete-convention-source-audit.mjs";
 
 const sourceFiles = new Map([
   ["complete-contexts", "complete-contexts.json"],
@@ -104,6 +105,10 @@ export function auditCompleteCandidateSources(candidatePath, documentSets, optio
     });
   }
   if (issues.length > 0) return issues;
+  if (!isDeepStrictEqual(manifest.precedence?.filter((entry) => entry.factDomain === "convention-dependencies"),
+    [{ factDomain: "convention-dependencies", sourceOrder: ["complete-contexts", "complete-representations"] }])) {
+    return ["convention dependencies precedence differs from the candidate source policy"];
+  }
   for (const [profile, set] of Object.entries(documentSets)) {
     const result = validateCompleteDocumentSet(set, options);
     const expanded = validateCompleteSameAs(validateCompleteFieldDefaults(set).expandedDocumentSet)
@@ -119,6 +124,7 @@ export function auditCompleteCandidateSources(candidatePath, documentSets, optio
     auditStorefrontMessageContracts(exactAsyncapi, expanded,
       result.facts.core.messageDefinitions, check);
     auditStorefrontLocalBindings(exactAsyncapi, expanded, result.facts.core, check);
+    auditConventionDependencies(contexts, representations, asyncapi, result, check);
     for (const file of set.files) {
       check(file.metadata.perspective === manifest.perspective.application,
         `${file.path} perspective`);

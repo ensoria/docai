@@ -172,7 +172,22 @@
       "expectedRule": "DM-IDX-005"
     }
   ],
-  "scenarioPolicy": "These are synthetic fixture operations, not production storefront operations. operationDefaults explicitly establishes known absence only for operations declared in this source. Missing facts outside this enumerated policy remain unknown. These operations impose no additional convention dependencies beyond their selected Data Representation rules. Workflow coordination is caller-local: identifiers, trace records, and state labels are not message headers or payload fields. Local orchestration timeouts do not imply a messaging reply.",
+  "scenarioPolicy": "These are synthetic fixture operations, not production storefront operations. operationDefaults explicitly establishes known absence only for operations declared in this source. Missing facts outside this enumerated policy remain unknown. conventionDependencies explicitly declares scoped direct convention needs; an empty array establishes no direct addition, null means unknown, and absent section edges remain unproven. Workflow dependencies additionally include every operation used by its steps and their required workflows. Workflow coordination is caller-local: identifiers, trace records, and state labels are not message headers or payload fields. Local orchestration timeouts do not imply a messaging reply.",
+  "conventionDependencies": {
+    "operations": {
+      "a-operation": [],
+      "m-operation": [],
+      "z-operation": []
+    },
+    "workflows": {
+      "alpha-delivery": [],
+      "alpha-observability": [],
+      "state-none": [],
+      "state-unknown": [],
+      "state-unsupported": []
+    },
+    "sections": {}
+  },
   "operationDefaults": {
     "behavior": {
       "side_effects": "none",
