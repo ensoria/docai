@@ -7,6 +7,9 @@ import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import { restampDocumentSet } from "../restamp-document-set.mjs";
+import { loadDocumentSet } from "../lib/document-set.mjs";
+import { loadTrustedCompleteExampleAdapterOptions } from "../lib/complete-example-adapters.mjs";
+import { validateCompleteProfilePair } from "../lib/validators/complete-profiles.mjs";
 
 const repositoryRoot = fileURLToPath(new URL("../../../", import.meta.url));
 const checkerPath = fileURLToPath(new URL("../check-complete-fixtures.mjs", import.meta.url));
@@ -82,6 +85,122 @@ function rebindAndRestamp(candidatePath, sourceName) {
   for (const profile of ["full", "compact"]) {
     restampDocumentSet(path.join(candidatePath, profile), manifestPath, { write: true });
   }
+}
+
+const compactJsonExample = '{"status":"created","event_id":"evt_04"}';
+const jsonFieldTable = [
+  "| Field | Type | Required | Nullable | Constraints / Meaning |",
+  "|---|---|---|---|---|",
+  "| $ | object | yes | no | Additional properties are forbidden. |",
+  "| event_id | string | yes | no | Synthetic event identifier |",
+  "| status | string | yes | no | Lifecycle status |"
+].join("\n");
+const defaultedJsonTable = [
+  "**field_defaults**: Required=yes | Nullable=no", "",
+  "| Field | Type | Constraints / Meaning |", "|---|---|---|",
+  "| $ | object | Additional properties are forbidden. |",
+  "| event_id | string | Synthetic event identifier |",
+  "| status | string | Lifecycle status |"
+].join("\n");
+const sameAsJson = "**same_as**: Operation r-json-original-operation Message json-original-message Payload application/json";
+const expandedJson = [
+  "**media_type**: application/json", "", "**payload_nullable**: no", "",
+  "```json", compactJsonExample, "```", "", jsonFieldTable
+].join("\n");
+
+function ordinaryPairValid(candidatePath) {
+  const full = loadDocumentSet(path.join(candidatePath, "full"));
+  const compact = loadDocumentSet(path.join(candidatePath, "compact"));
+  const options = loadTrustedCompleteExampleAdapterOptions(candidatePath, [full, compact]);
+  assert.deepEqual(validateCompleteProfilePair(full, compact, options).diagnostics, []);
+}
+
+for (const [label, mutate, expected] of [
+  ["expanded defaulted table", (file) => {
+    replaceExactlyOnce(file, defaultedJsonTable, jsonFieldTable);
+  }, "field_defaults"],
+  ["only one default column", (file) => {
+    const nullableOnly = [
+      "**field_defaults**: Nullable=no", "",
+      "| Field | Type | Required | Constraints / Meaning |", "|---|---|---|---|",
+      "| $ | object | yes | Additional properties are forbidden. |",
+      "| event_id | string | yes | Synthetic event identifier |",
+      "| status | string | yes | Lifecycle status |"
+    ].join("\n");
+    replaceExactlyOnce(file, defaultedJsonTable, nullableOnly);
+  }, "field_defaults"],
+  ["defaults moved to another representation", (file) => {
+    replaceExactlyOnce(file, jsonFieldTable, defaultedJsonTable);
+    // The first replacement is the CSV table, not the JSON table.
+    const content = fs.readFileSync(file, "utf8");
+    const start = content.indexOf("## SEND representations.json-original");
+    const at = content.indexOf(defaultedJsonTable, start);
+    assert.ok(at > start);
+    fs.writeFileSync(file, content.slice(0, at) + jsonFieldTable + content.slice(at + defaultedJsonTable.length));
+  }, "field_defaults"],
+  ["expanded reuse representation", (file) => {
+    replaceExactlyOnce(file, sameAsJson, expandedJson);
+  }, "same_as"],
+  ["reuse and retrieval unit both removed", (file) => {
+    replaceExactlyOnce(file, sameAsJson, expandedJson);
+    replaceExactlyOnce(file, " | x-retrieval-unit: channel-file", "");
+  }, "same_as"],
+  ["multiline JSON target example", (file) => {
+    replaceExactlyOnce(file, compactJsonExample, '{\n  "status": "created",\n  "event_id": "evt_04"\n}');
+  }, "one-line JSON"],
+  ["one-line JSON decoy in an extension", (file) => {
+    replaceExactlyOnce(file, compactJsonExample, '{\n  "status": "created",\n  "event_id": "evt_04"\n}');
+    replaceExactlyOnce(file, defaultedJsonTable, `${defaultedJsonTable}\n\n##### x-Decoy\n\n\`\`\`json\n${compactJsonExample}\n\`\`\``);
+  }, "one-line JSON"],
+  ["same_as decoy in an extension fence", (file) => {
+    replaceExactlyOnce(file, sameAsJson, `${expandedJson}\n\n##### x-Decoy\n\n\`\`\`text\n${sameAsJson}\n\`\`\``);
+  }, "same_as"]
+]) {
+  test(`rejects compact representative policy loss: ${label}`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    const file = path.join(candidatePath, "compact", "channels", "representations.md");
+    mutate(file);
+    restampDocumentSet(path.join(candidatePath, "compact"),
+      path.join(candidatePath, "source", "projection-input-manifest.json"), { write: true });
+    ordinaryPairValid(candidatePath);
+    const before = directorySnapshot(candidatePath);
+
+    const result = runChecker([candidatePath]);
+
+    assert.equal(result.status, 1, result.stdout);
+    assert.match(result.stderr, /Complete compact policy:/);
+    assert.ok(result.stderr.includes(expected), result.stderr);
+    assert.deepEqual(directorySnapshot(candidatePath), before);
+  });
+}
+
+for (const [label, mutate] of [
+  ["equivalent JSON escape spelling", (file) => {
+    replaceExactlyOnce(file, compactJsonExample, '{"event_id":"evt_\\u0030\\u0034","status":"created"}');
+  }],
+  ["equivalent one-line JSON whitespace", (file) => {
+    replaceExactlyOnce(file, compactJsonExample, '{ "status": "created", "event_id": "evt_04" }');
+  }],
+  ["additional valid defaults on CSV", (file) => {
+    replaceExactlyOnce(file, jsonFieldTable, defaultedJsonTable);
+  }],
+  ["extension shifts representation line numbers", (file) => {
+    replaceExactlyOnce(file, defaultedJsonTable, `${defaultedJsonTable}\n\n##### x-Audit\n\nNon-contract note.`);
+  }]
+]) {
+  test(`accepts compact representative policy with ${label}`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    mutate(path.join(candidatePath, "compact", "channels", "representations.md"));
+    restampDocumentSet(path.join(candidatePath, "compact"),
+      path.join(candidatePath, "source", "projection-input-manifest.json"), { write: true });
+    ordinaryPairValid(candidatePath);
+    const before = directorySnapshot(candidatePath);
+
+    const result = runChecker([candidatePath]);
+
+    assert.equal(result.status, 0, result.stderr);
+    assert.deepEqual(directorySnapshot(candidatePath), before);
+  });
 }
 
 const storefrontMeanings = [
