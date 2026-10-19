@@ -84,6 +84,145 @@ function rebindAndRestamp(candidatePath, sourceName) {
   }
 }
 
+for (const message of ["CreateOrder", "OrderCreated", "OrderAccepted"]) {
+  for (const [fact, mutate] of [
+    ["header type", (entry) => { entry.headers.properties["message-id"].type = "integer"; }],
+    ["header requiredness", (entry) => {
+      entry.headers.required = entry.headers.required.filter((name) => name !== "message-id");
+    }],
+    ["header constraint", (entry) => { entry.headers.properties["message-id"].minLength = 2; }],
+    ["header-root constraint", (entry) => { entry.headers.const = entry.examples[0].headers; }],
+    ["header inventory", (entry) => { entry.headers.properties.extra = { type: "string" }; }],
+    ["payload requiredness", (entry) => {
+      entry.payload.required = entry.payload.required.filter((name) => name !== "orderId");
+    }],
+    ["payload nullability", (entry) => { entry.payload.type = ["object", "null"]; }],
+    ["payload openness", (entry) => { entry.payload.additionalProperties = true; }],
+    ["payload constraint", (entry) => {
+      entry.payload.properties.orderId.pattern = "^ord_[A-Z]+$";
+    }],
+    ["payload example", (entry) => { entry.examples[0].payload.orderId = "ord_OTHER"; }]
+  ]) {
+    test(`rejects stale storefront Message ${message} ${fact} after source rebinding`, (t) => {
+      const candidatePath = copyVersionedCandidate(t);
+      const sourcePath = path.join(candidatePath, "source", "storefront.asyncapi.json");
+      const source = JSON.parse(fs.readFileSync(sourcePath, "utf8"));
+      mutate(source.components.messages[message]);
+      fs.writeFileSync(sourcePath, JSON.stringify(source));
+      rebindAndRestamp(candidatePath, "storefront.asyncapi.json");
+      const before = directorySnapshot(candidatePath);
+
+      const result = runChecker([candidatePath]);
+
+      assert.equal(result.status, 1, result.stdout);
+      assert.match(result.stderr, new RegExp(`storefront Message ${message}`));
+      assert.deepEqual(directorySnapshot(candidatePath), before);
+    });
+  }
+}
+
+for (const [fact, mutate] of [
+  ["array bound", (entry) => { entry.payload.properties.items.minItems = 0; }],
+  ["nested item bound", (entry) => {
+    entry.payload.properties.items.items.properties.quantity.minimum = 2;
+  }],
+  ["unprojected schema keyword", (entry) => {
+    entry.payload.properties.orderId.maxLength = 99;
+  }]
+]) {
+  test(`rejects stale storefront Message CreateOrder ${fact} after source rebinding`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    const sourcePath = path.join(candidatePath, "source", "storefront.asyncapi.json");
+    const source = JSON.parse(fs.readFileSync(sourcePath, "utf8"));
+    mutate(source.components.messages.CreateOrder);
+    fs.writeFileSync(sourcePath, JSON.stringify(source));
+    rebindAndRestamp(candidatePath, "storefront.asyncapi.json");
+    const before = directorySnapshot(candidatePath);
+
+    const result = runChecker([candidatePath]);
+
+    assert.equal(result.status, 1, result.stdout);
+    assert.match(result.stderr, /storefront Message CreateOrder/);
+    assert.deepEqual(directorySnapshot(candidatePath), before);
+  });
+}
+
+for (const [fact, from, to] of [
+  ["constraint", "`minimum=1`; Item quantity.", "`minimum=0`; Item quantity."],
+  ["example", '"acceptedAt": "2026-01-02T03:04:05Z"',
+    '"acceptedAt": "2026-01-03T03:04:05Z"']
+]) {
+  test(`rejects matching storefront Message ${fact} unsupported by source`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");
+    for (const profile of ["full", "compact"]) {
+      replaceExactlyOnce(path.join(candidatePath, profile, "channels", "orders.md"),
+        profile === "compact" ? from.replaceAll(": ", ":") : from,
+        profile === "compact" ? to.replaceAll(": ", ":") : to);
+      restampDocumentSet(path.join(candidatePath, profile), manifestPath, { write: true });
+    }
+    const before = directorySnapshot(candidatePath);
+
+    const result = runChecker([candidatePath]);
+
+    assert.equal(result.status, 1, result.stdout);
+    assert.match(result.stderr, /storefront Message/);
+    assert.deepEqual(directorySnapshot(candidatePath), before);
+  });
+}
+
+test("rejects storefront Message example drift beyond IEEE 754 precision", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  replaceExactlyOnce(path.join(candidatePath, "source", "storefront.asyncapi.json"),
+    '"quantity": 2', '"quantity": 9007199254740993');
+  for (const profile of ["full", "compact"]) {
+    replaceExactlyOnce(path.join(candidatePath, profile, "channels", "orders.md"),
+      profile === "compact" ? '"quantity":2' : '"quantity": 2',
+      profile === "compact" ? '"quantity":9007199254740992' : '"quantity": 9007199254740992');
+  }
+  rebindAndRestamp(candidatePath, "storefront.asyncapi.json");
+  const before = directorySnapshot(candidatePath);
+
+  const result = runChecker([candidatePath]);
+
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /storefront Message CreateOrder/);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
+test("accepts storefront Message example object order and exact number spelling differences", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");
+  replaceExactlyOnce(path.join(candidatePath, "compact", "channels", "orders.md"),
+    '{"items":[{"quantity":2,"sku":"sku_demo_01"}],"orderId":"ord_01HXYZ","tenantId":"tenant_demo"}',
+    '{"tenantId":"tenant_demo","orderId":"ord_01HXYZ","items":[{"sku":"sku_demo_01","quantity":2e0}]}');
+  restampDocumentSet(path.join(candidatePath, "compact"), manifestPath, { write: true });
+  const before = directorySnapshot(candidatePath);
+
+  const result = runChecker([candidatePath]);
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
+test("rejects matching storefront Message header duplicates that hide a missing source header", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");
+  for (const profile of ["full", "compact"]) {
+    replaceExactlyOnce(path.join(candidatePath, profile, "channels", "orders.md"),
+      "| message-id | string | yes | no | `minLength=1`; Message identifier used for deduplication. |",
+      "| correlation-id | string | yes | no | `minLength=1`; Correlates the acceptance reply. |");
+    restampDocumentSet(path.join(candidatePath, profile), manifestPath, { write: true });
+  }
+  const before = directorySnapshot(candidatePath);
+
+  const result = runChecker([candidatePath]);
+
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /storefront Message CreateOrder Headers schema/);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
 test("rejects candidate source bytes outside the manifest digest even when profiles agree", (t) => {
   const candidatePath = copyVersionedCandidate(t);
   replaceExactlyOnce(

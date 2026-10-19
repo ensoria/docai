@@ -6,6 +6,8 @@ import { validateCompleteDocumentSet } from "./validators/complete.mjs";
 import { validateCompleteFieldDefaults } from "./validators/complete-field-defaults.mjs";
 import { validateCompleteSameAs } from "./validators/complete-same-as.mjs";
 import { parsePipeTable } from "./tables.mjs";
+import { parseExactJson } from "./json-value.mjs";
+import { auditStorefrontMessageContracts } from "./complete-storefront-message-audit.mjs";
 
 const sourceFiles = new Map([
   ["complete-contexts", "complete-contexts.json"],
@@ -66,6 +68,7 @@ export function auditCompleteCandidateSources(candidatePath, documentSets, optio
 
   const issues = [];
   const sources = new Map();
+  let exactAsyncapi = null;
   if (!Array.isArray(manifest.sources) || manifest.sources.length !== sourceFiles.size
       || manifest.sources.some((entry) => !sourceFiles.has(entry.sourceId))) {
     issues.push("unexpected source binding in the complete candidate manifest");
@@ -89,6 +92,7 @@ export function auditCompleteCandidateSources(candidatePath, documentSets, optio
     }
     try {
       sources.set(id, JSON.parse(bytes.toString("utf8")));
+      if (id === "storefront-asyncapi-3.1.0") exactAsyncapi = parseExactJson(bytes.toString("utf8"));
     } catch {
       issues.push(`${id}: source JSON is invalid`);
     }
@@ -136,6 +140,8 @@ export function auditCompleteCandidateSources(candidatePath, documentSets, optio
       const file = expanded.files.find((entry) => entry.path === definition?.path);
       return section(file?.content, `## ${definition?.action} ${definition?.channel} (${name})`);
     };
+    auditStorefrontMessageContracts(exactAsyncapi, expanded,
+      result.facts.core.messageDefinitions, check);
     for (const file of set.files) {
       check(file.metadata.perspective === manifest.perspective.application,
         `${file.path} perspective`);
