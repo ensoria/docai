@@ -115,6 +115,166 @@ function ordinaryPairValid(candidatePath) {
   assert.deepEqual(validateCompleteProfilePair(full, compact, options).diagnostics, []);
 }
 
+function addInventoryOperation(candidatePath, target) {
+  const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");
+  for (const profile of ["full", "compact"]) {
+    const root = path.join(candidatePath, profile);
+    const zeta = fs.readFileSync(path.join(root, "channels", "zeta.md"), "utf8");
+    const body = zeta.slice(zeta.indexOf("## RECEIVE"), zeta.indexOf("> docai-identity:"))
+      .replaceAll("z-operation", "zz-operation").replaceAll("z-message", "zz-message");
+    const file = path.join(root, "channels", `${target}.md`);
+    replaceExactlyOnce(file, "\n> docai-identity:", `\n${body}> docai-identity:`);
+    const indexPath = path.join(root, "indexes", "operations-broad.md");
+    const index = fs.readFileSync(indexPath, "utf8");
+    const row = index.split("\n").find((line) => line.includes("| z-operation |"));
+    const anchor = index.split("\n").find((line) => line.includes(`| ${target === "zeta" ? "z" : "a"}-operation |`));
+    assert.ok(row && anchor);
+    const extra = row.replaceAll("z-operation", "zz-operation")
+      .replaceAll("z-message", "zz-message").replace(/ none \|$/, " all |");
+    replaceExactlyOnce(indexPath, anchor, `${anchor}\n${extra}`);
+    replaceExactlyOnce(path.join(root, "INDEX.md"),
+      "| a-operation | z-operation | CreateOrder | z-message |",
+      "| a-operation | zz-operation | CreateOrder | zz-message |");
+    restampDocumentSet(root, manifestPath, { write: true });
+  }
+}
+
+for (const target of ["zeta", "alpha"]) {
+  test(`rejects an unowned operation projected in the ${target} channel file`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    addInventoryOperation(candidatePath, target);
+    ordinaryPairValid(candidatePath);
+    const before = directorySnapshot(candidatePath);
+
+    const result = runChecker([candidatePath]);
+
+    assert.equal(result.status, 1, result.stdout);
+    assert.match(result.stderr, /operation inventory/);
+    assert.deepEqual(directorySnapshot(candidatePath), before);
+  });
+}
+
+test("rejects a same-size operation inventory with a replaced source owner", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");
+  for (const profile of ["full", "compact"]) {
+    for (const relative of ["INDEX.md", "indexes/operations-broad.md", "channels/zeta.md"]) {
+      const file = path.join(candidatePath, profile, relative);
+      const content = fs.readFileSync(file, "utf8");
+      assert.ok(content.includes("z-operation"));
+      fs.writeFileSync(file, content.replaceAll("z-operation", "zz-operation")
+        .replaceAll("z-message", "zz-message"));
+    }
+    restampDocumentSet(path.join(candidatePath, profile), manifestPath, { write: true });
+  }
+  ordinaryPairValid(candidatePath);
+  const before = directorySnapshot(candidatePath);
+
+  const result = runChecker([candidatePath]);
+
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /operation inventory routing/);
+  assert.match(result.stderr, /operation inventory definitions/);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
+test("rejects duplicate operation owners before semantic source auditing", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  const sourcePath = path.join(candidatePath, "source", "complete-contexts.json");
+  const source = JSON.parse(fs.readFileSync(sourcePath, "utf8"));
+  source.operations.sendCreateOrder = {};
+  fs.writeFileSync(sourcePath, JSON.stringify(source));
+  rebindAndRestamp(candidatePath, "complete-contexts.json");
+  ordinaryPairValid(candidatePath);
+  const before = directorySnapshot(candidatePath);
+
+  const result = runChecker([candidatePath]);
+
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /duplicate operation owner/);
+  assert.doesNotMatch(result.stderr, /TypeError|convention dependencies model/);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
+test("accepts an additional operation declared by its source inventory", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  addInventoryOperation(candidatePath, "zeta");
+  const sourcePath = path.join(candidatePath, "source", "complete-contexts.json");
+  const source = JSON.parse(fs.readFileSync(sourcePath, "utf8"));
+  source.operations["zz-operation"] = { ...source.operations["z-operation"], message: "zz-message" };
+  source.conventionDependencies.operations["zz-operation"] = [];
+  fs.writeFileSync(sourcePath, JSON.stringify(source));
+  rebindAndRestamp(candidatePath, "complete-contexts.json");
+  ordinaryPairValid(candidatePath);
+  const before = directorySnapshot(candidatePath);
+
+  const result = runChecker([candidatePath]);
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
+for (const identity of ["zz-operation", "z-operation"]) {
+  test(`rejects an unrouted channel file containing ${identity}`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");
+    for (const profile of ["full", "compact"]) {
+      const root = path.join(candidatePath, profile);
+      const body = fs.readFileSync(path.join(root, "channels", "zeta.md"), "utf8")
+        .replaceAll("z-operation", identity);
+      fs.writeFileSync(path.join(root, "channels", "zz-extra.md"), body);
+      restampDocumentSet(root, manifestPath, { write: true });
+    }
+    ordinaryPairValid(candidatePath);
+    const before = directorySnapshot(candidatePath);
+
+    const result = runChecker([candidatePath]);
+
+    assert.equal(result.status, 1, result.stdout);
+    assert.match(result.stderr, /operation inventory channel coverage/);
+    assert.deepEqual(directorySnapshot(candidatePath), before);
+  });
+}
+
+test("rejects missing operation inventory before malformed owner semantics", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  const sourcePath = path.join(candidatePath, "source", "complete-contexts.json");
+  const source = JSON.parse(fs.readFileSync(sourcePath, "utf8"));
+  source.operations["zz-operation"] = null;
+  source.conventionDependencies.operations["zz-operation"] = [];
+  fs.writeFileSync(sourcePath, JSON.stringify(source));
+  rebindAndRestamp(candidatePath, "complete-contexts.json");
+  ordinaryPairValid(candidatePath);
+  const before = directorySnapshot(candidatePath);
+
+  const result = runChecker([candidatePath]);
+
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /full: operation inventory routing/);
+  assert.match(result.stderr, /compact: operation inventory definitions/);
+  assert.doesNotMatch(result.stderr, /TypeError/);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
+test("accepts operation inventory after moving a routed channel file", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");
+  for (const profile of ["full", "compact"]) {
+    const root = path.join(candidatePath, profile);
+    fs.renameSync(path.join(root, "channels", "zeta.md"), path.join(root, "channels", "zz-routed.md"));
+    replaceExactlyOnce(path.join(root, "indexes", "operations-broad.md"),
+      "### channels/zeta.md", "### channels/zz-routed.md");
+    restampDocumentSet(root, manifestPath, { write: true });
+  }
+  ordinaryPairValid(candidatePath);
+  const before = directorySnapshot(candidatePath);
+
+  const result = runChecker([candidatePath]);
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+});
+
 const contextConventionDependencies = {
   operations: { "a-operation": [], "m-operation": [], "z-operation": [] },
   workflows: {
@@ -907,7 +1067,7 @@ test("rejects a missing synthetic representation source entry even when projecti
   const result = runChecker([candidatePath]);
 
   assert.equal(result.status, 1, result.stdout);
-  assert.match(result.stderr, /representation inventory/);
+  assert.match(result.stderr, /operation inventory/);
   assert.deepEqual(directorySnapshot(candidatePath), before);
 });
 
@@ -970,7 +1130,7 @@ test("rejects an extra projected synthetic representation without a source entry
   const result = runChecker([candidatePath]);
 
   assert.equal(result.status, 1, result.stdout);
-  assert.match(result.stderr, /projected representation inventory/);
+  assert.match(result.stderr, /operation inventory/);
   assert.deepEqual(directorySnapshot(candidatePath), before);
 });
 

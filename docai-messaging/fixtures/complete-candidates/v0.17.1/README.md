@@ -8,6 +8,8 @@ The current candidate contains a whole-set-valid full/compact profile pair, over
 
 The latest [fact matrix review](SOURCE-TRACEABILITY.md#fact-matrix-review--2026-10-19) separates source-aware gates, ordinary validation, fixture-only assertions, and human review. Its open `MATRIX-001`–`MATRIX-005` items cover inventory/context closure, display/navigation policy, contributor provenance, primary Channel Parameters, and the finite manifest-policy boundary. Task 12 remains incomplete pending their resolution or explicitly justified acceptance; checker success alone does not close them.
 
+The subsequent whole-candidate operation-inventory gate resolves the inventory portion of MATRIX-001: it requires unique source ownership and exact source/routing/definition name sets in each profile, without hard-coding eleven operations. The storefront context-policy portion remains open; the other matrix items and Task 12 are not closed by this checkpoint. Source and projection bytes are unchanged.
+
 Validate the current pair without modifying it:
 
 ```sh

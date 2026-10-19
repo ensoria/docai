@@ -12,6 +12,7 @@ import {
 } from "./complete-storefront-message-audit.mjs";
 import { auditSyntheticRepresentations } from "./complete-representation-source-audit.mjs";
 import { auditConventionDependencies } from "./complete-convention-source-audit.mjs";
+import { collectCompleteOperationInventory } from "./complete-operation-inventory.mjs";
 
 const sourceFiles = new Map([
   ["complete-contexts", "complete-contexts.json"],
@@ -105,17 +106,36 @@ export function auditCompleteCandidateSources(candidatePath, documentSets, optio
     });
   }
   if (issues.length > 0) return issues;
+  const inventory = collectCompleteOperationInventory(contexts, representations, asyncapi);
+  if (inventory.issues.length > 0) return inventory.issues;
   if (!isDeepStrictEqual(manifest.precedence?.filter((entry) => entry.factDomain === "convention-dependencies"),
     [{ factDomain: "convention-dependencies", sourceOrder: ["complete-contexts", "complete-representations"] }])) {
     return ["convention dependencies precedence differs from the candidate source policy"];
   }
-  for (const [profile, set] of Object.entries(documentSets)) {
-    const result = validateCompleteDocumentSet(set, options);
+  const profiles = Object.entries(documentSets).map(([profile, set]) => ({
+    profile, set, result: validateCompleteDocumentSet(set, options)
+  }));
+  const checkFor = (profile) => (condition, label) => {
+    if (!condition) issues.push(`${profile}: ${label} differs from authoritative source`);
+  };
+  for (const { profile, set, result } of profiles) {
+    const check = checkFor(profile);
+    check(isDeepStrictEqual(result.facts.core.operations.rows.map((row) => row.operation).sort(),
+      inventory.operations), "operation inventory routing");
+    check(isDeepStrictEqual(Object.keys(result.facts.core.operationDefinitions.byName).sort(),
+      inventory.operations), "operation inventory definitions");
+    // Core parses operation definitions only in routed channel files. Establish
+    // full file coverage before treating those facts as the complete inventory.
+    check(isDeepStrictEqual(set.files.filter((file) => file.path.startsWith("channels/"))
+      .map((file) => file.path).sort(),
+    [...new Set(result.facts.core.operations.rows.map((row) => row.channelPath))].sort()),
+    "operation inventory channel coverage");
+  }
+  if (issues.length > 0) return issues;
+  for (const { profile, set, result } of profiles) {
+    const check = checkFor(profile);
     const expanded = validateCompleteSameAs(validateCompleteFieldDefaults(set).expandedDocumentSet)
       .expandedDocumentSet;
-    const check = (condition, label) => {
-      if (!condition) issues.push(`${profile}: ${label} differs from authoritative source`);
-    };
     const operationBody = (name) => {
       const definition = result.facts.core.operationDefinitions.byName[name];
       const file = expanded.files.find((entry) => entry.path === definition?.path);
