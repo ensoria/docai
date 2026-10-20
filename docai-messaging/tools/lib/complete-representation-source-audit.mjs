@@ -2,6 +2,7 @@ import { isDeepStrictEqual } from "node:util";
 import { equalExactJson } from "./json-value.mjs";
 import { findExampleAdapter } from "./validators/example-adapters.mjs";
 import { canonicalRepresentationView } from "./validators/complete-profile-comparison.mjs";
+import { extractSourceSection } from "./complete-source-sections.mjs";
 
 const forms = new Map([
   ["r-csv-operation", "adapter-defined-structured"],
@@ -94,11 +95,7 @@ export function auditSyntheticRepresentations(source, exactSource, core, operati
       && isDeepStrictEqual(messages?.map((message) => [message.name, message.reply]), [[entry.message, false]]),
     `${name} representation identity/form`);
     const body = operationBody(name);
-    const heading = "#### Payload";
-    const lines = body?.split("\n") ?? [];
-    const start = lines.indexOf(heading);
-    const end = lines.findIndex((line, index) => index > start && /^#{1,4} /.test(line));
-    const payload = start < 0 ? null : lines.slice(start + 1, end < 0 ? undefined : end).join("\n").trim();
+    const payload = extractSourceSection(body, "#### Payload");
     const actual = payloadView(payload, options);
     const expected = [entry.action === "SEND" ? `**payload_required**: ${entry.payloadRequired}`
       : `**payload_presence**: ${entry.payloadPresence}`, `**media_type**: ${entry.mediaType}`];

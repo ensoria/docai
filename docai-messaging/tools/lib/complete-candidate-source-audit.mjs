@@ -16,6 +16,7 @@ import { collectCompleteOperationInventory } from "./complete-operation-inventor
 import { auditStorefrontContextSelection } from "./complete-storefront-context-audit.mjs";
 import { auditOperationLabels } from "./complete-operation-label-audit.mjs";
 import { auditWorkflowLabels } from "./complete-workflow-label-audit.mjs";
+import { extractSourceSection as section } from "./complete-source-sections.mjs";
 
 const sourceFiles = new Map([
   ["complete-contexts", "complete-contexts.json"],
@@ -23,19 +24,6 @@ const sourceFiles = new Map([
   ["storefront-asyncapi-3.1.0", "storefront.asyncapi.json"],
   ["storefront-behavior", "storefront-behavior.json"]
 ]);
-
-function section(text, heading) {
-  if (typeof text !== "string") return null;
-  const lines = text.split("\n");
-  const start = lines.indexOf(heading);
-  if (start < 0) return null;
-  const level = heading.match(/^#+/)[0].length;
-  const rest = lines.slice(start + 1);
-  const end = rest.findIndex((line) => /^#+ /.test(line) && line.match(/^#+/)[0].length <= level);
-  return (end < 0 ? rest : rest.slice(0, end))
-    .filter((line) => !line.startsWith("> docai-identity:"))
-    .join("\n").trim();
-}
 
 export function auditCompleteCandidateSources(candidatePath, documentSets, options) {
   const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");

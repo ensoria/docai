@@ -293,6 +293,77 @@ test("accepts Related navigation across shared-file same-as expansion drift", (t
   assertRelatedPolicyResult(candidatePath, 0);
 });
 
+function insertSourceAuditFence(candidatePath, profile, content, length = 3) {
+  const file = path.join(candidatePath, profile, "channels", "representations.md");
+  const text = fs.readFileSync(file, "utf8");
+  const heading = "## SEND representations.json-original (r-json-original-operation)";
+  const anchor = profile === "full" ? jsonFieldTable : defaultedJsonTable;
+  const start = text.indexOf(heading);
+  const at = text.indexOf(anchor, start);
+  assert.ok(start >= 0 && at > start);
+  const delimiter = "`".repeat(length);
+  const extension = `\n\n##### x-Audit\n\n${delimiter}text\n${content}\n${delimiter}`;
+  fs.writeFileSync(file, text.slice(0, at + anchor.length) + extension + text.slice(at + anchor.length));
+  restampDocumentSet(path.join(candidatePath, profile),
+    path.join(candidatePath, "source", "projection-input-manifest.json"), { write: true });
+}
+
+function assertSourceAuditFenceResult(candidatePath, status, diagnostic) {
+  ordinaryPairValid(candidatePath);
+  const before = directorySnapshot(candidatePath);
+  const result = runChecker([candidatePath]);
+  assert.equal(result.status, status, result.stderr || result.stdout);
+  if (status !== 0) {
+    const lines = result.stderr.trim().split("\n");
+    assert.equal(lines.length, 2, result.stderr);
+    for (const [index, profile] of ["full", "compact"].entries()) {
+      assert.ok(lines[index].startsWith(`Complete source traceability: ${profile}:`), result.stderr);
+      assert.match(lines[index], diagnostic);
+    }
+  }
+  assert.doesNotMatch(result.stderr, /TypeError|DM-PROFILE/);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+}
+
+for (const profile of ["full", "compact"]) {
+  for (const [label, content, length] of [
+    ["later operation heading", "## SEND representations.raw (r-raw-operation)", 3],
+    ["same operation heading", "## SEND representations.json-original (r-json-original-operation)", 3],
+    ["Reply heading", "### Reply\n\nnot a messaging reply", 3],
+    ["Payload heading", "#### Payload\n\nnot a payload", 3],
+    ["shallower heading", "# Not a document title", 3],
+    ["short inner fence and decoys", ["```", "#### Payload", "### Reply",
+      "## SEND representations.raw (r-raw-operation)"].join("\n"), 5]
+  ]) {
+    test(`accepts source-audit fenced heading ${profile}: ${label}`, (t) => {
+      const candidatePath = copyVersionedCandidate(t);
+      insertSourceAuditFence(candidatePath, profile, content, length);
+      assertSourceAuditFenceResult(candidatePath, 0);
+    });
+  }
+}
+
+for (const mode of ["source-only", "matching stale profiles"]) {
+  test(`rejects source-audit fenced heading decoys hiding ${mode} raw contract drift`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    const description = "Opaque receipt bytes are limited to 2 MiB and carry a SHA-256 integrity digest.";
+    const revised = "Opaque receipt bytes are limited to 3 MiB and carry a SHA-256 integrity digest.";
+    if (mode === "source-only") {
+      replaceExactlyOnce(path.join(candidatePath, "source", "complete-representations.json"), description, revised);
+      rebindAndRestamp(candidatePath, "complete-representations.json");
+    } else {
+      for (const profile of ["full", "compact"]) {
+        replaceExactlyOnce(path.join(candidatePath, profile, "channels", "representations.md"), description, revised);
+      }
+    }
+    for (const profile of ["full", "compact"]) {
+      insertSourceAuditFence(candidatePath, profile,
+        ["## SEND representations.raw (r-raw-operation)", "#### Payload", description].join("\n"));
+    }
+    assertSourceAuditFenceResult(candidatePath, 1, /r-raw-operation representation raw contract/);
+  });
+}
+
 // Publication policy inputs are authored independently of emitted root rows.
 const catalogSummaries = {
   sourceShards: [
