@@ -115,6 +115,145 @@ function ordinaryPairValid(candidatePath) {
   assert.deepEqual(validateCompleteProfilePair(full, compact, options).diagnostics, []);
 }
 
+// Publication policy inputs are authored independently of emitted root rows.
+const catalogSummaries = {
+  sourceShards: [
+    { details: "indexes/sources-contexts-behavior.md", summary: "Complete contexts and behavior sources" },
+    { details: "indexes/sources-asyncapi.md", summary: "AsyncAPI contract source" }
+  ],
+  operationShards: [
+    { details: "indexes/operations-broad.md", summary: "Broad operation range" },
+    { details: "indexes/operations-middle.md", summary: "Middle operation range" }
+  ]
+};
+
+function mutateCatalogPolicy(candidatePath, mutate = () => {}) {
+  const file = path.join(candidatePath, "source", "projection-input-manifest.json");
+  const manifest = JSON.parse(fs.readFileSync(file, "utf8"));
+  if (!Object.hasOwn(manifest.publicationPolicy, "catalogSummaries")) {
+    manifest.publicationPolicy.catalogSummaries = structuredClone(catalogSummaries);
+  }
+  mutate(manifest.publicationPolicy);
+  fs.writeFileSync(file, JSON.stringify(manifest));
+  for (const profile of ["full", "compact"]) {
+    restampDocumentSet(path.join(candidatePath, profile), file, { write: true });
+  }
+}
+
+function replaceCatalogSummary(candidatePath, kind, details, summary) {
+  for (const profile of ["full", "compact"]) {
+    const root = path.join(candidatePath, profile);
+    const file = path.join(root, "INDEX.md");
+    const row = fs.readFileSync(file, "utf8").split("\n")
+      .find((line) => line.endsWith(`| ${details} |`));
+    assert.ok(row);
+    const cells = row.split("|");
+    cells[kind === "sourceShards" ? 4 : 9] = ` ${summary} `;
+    replaceExactlyOnce(file, row, cells.join("|"));
+    restampDocumentSet(root, path.join(candidatePath, "source", "projection-input-manifest.json"), { write: true });
+  }
+}
+
+function assertCatalogPolicyResult(candidatePath, status) {
+  ordinaryPairValid(candidatePath);
+  const before = directorySnapshot(candidatePath);
+  const result = runChecker([candidatePath]);
+  assert.equal(result.status, status, result.stderr || result.stdout);
+  if (status !== 0) {
+    assert.match(result.stderr, /Complete catalog policy: full:/);
+    assert.match(result.stderr, /Complete catalog policy: compact:/);
+  }
+  assert.doesNotMatch(result.stderr, /TypeError/);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+}
+
+for (const [kind, entries] of Object.entries(catalogSummaries)) {
+  for (const { details } of entries) {
+    for (const [mode, value] of [["missing", undefined], ["null", null], ["empty", ""],
+      ["non-string", ["summary"]], ["LF", "summary\nnext"], ["CR", "summary\rnext"],
+      ["tab", "summary\tpart"], ["padding", " summary "], ["stale output", "Revised shard summary"]]) {
+      test(`rejects catalog Summary policy ${kind} ${details}: ${mode}`, (t) => {
+        const candidatePath = copyVersionedCandidate(t);
+        mutateCatalogPolicy(candidatePath, (policy) => {
+          const entry = policy.catalogSummaries[kind].find((entry) => entry.details === details);
+          if (mode === "missing") delete entry.summary;
+          else entry.summary = value;
+        });
+        assertCatalogPolicyResult(candidatePath, 1);
+      });
+    }
+    test(`rejects catalog Summary policy stale projected ${details}`, (t) => {
+      const candidatePath = copyVersionedCandidate(t);
+      mutateCatalogPolicy(candidatePath);
+      replaceCatalogSummary(candidatePath, kind, details, "Unsourced projected shard summary");
+      assertCatalogPolicyResult(candidatePath, 1);
+    });
+    test(`accepts catalog Summary policy matching revised ${details}`, (t) => {
+      const candidatePath = copyVersionedCandidate(t);
+      mutateCatalogPolicy(candidatePath, (policy) => {
+        policy.catalogSummaries[kind].find((entry) => entry.details === details).summary = "Revised synthetic shard summary";
+      });
+      replaceCatalogSummary(candidatePath, kind, details, "Revised synthetic shard summary");
+      assertCatalogPolicyResult(candidatePath, 0);
+    });
+  }
+  for (const [mode, mutate] of [
+    ["missing group", (policy) => { delete policy[kind]; }],
+    ["null group", (policy) => { policy[kind] = null; }],
+    ["object group", (policy) => { policy[kind] = {}; }],
+    ["missing entry", (policy) => { policy[kind].pop(); }],
+    ["extra entry", (policy) => { policy[kind].push({ details: "indexes/extra.md", summary: "Extra shard" }); }],
+    ["duplicate path", (policy) => { policy[kind].push({ ...policy[kind][0] }); }],
+    ["unknown path", (policy) => { policy[kind][0].details = "indexes/not-owned.md"; }],
+    ["missing path", (policy) => { delete policy[kind][0].details; }],
+    ["non-string path", (policy) => { policy[kind][0].details = [policy[kind][0].details]; }],
+    ["null entry", (policy) => { policy[kind][0] = null; }],
+    ["unexpected entry field", (policy) => { policy[kind][0].fallbackSummary = "Alternate summary"; }],
+    ["swapped summaries", (policy) => {
+      [policy[kind][0].summary, policy[kind][1].summary] = [policy[kind][1].summary, policy[kind][0].summary];
+    }]
+  ]) {
+    test(`rejects catalog Summary policy ${kind}: ${mode}`, (t) => {
+      const candidatePath = copyVersionedCandidate(t);
+      mutateCatalogPolicy(candidatePath, (policy) => mutate(policy.catalogSummaries));
+      assertCatalogPolicyResult(candidatePath, 1);
+    });
+  }
+  test(`accepts catalog Summary policy ${kind} in reverse declaration order`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    mutateCatalogPolicy(candidatePath, (policy) => { policy.catalogSummaries[kind].reverse(); });
+    assertCatalogPolicyResult(candidatePath, 0);
+  });
+}
+
+for (const [mode, mutate] of [
+  ["missing block", (policy) => { delete policy.catalogSummaries; }],
+  ["null block", (policy) => { policy.catalogSummaries = null; }],
+  ["array block", (policy) => { policy.catalogSummaries = []; }],
+  ["string block", (policy) => { policy.catalogSummaries = "none"; }],
+  ["unknown group", (policy) => { policy.catalogSummaries.workflowShards = []; }],
+  ["swapped kinds", (policy) => {
+    const value = policy.catalogSummaries;
+    [value.sourceShards, value.operationShards] = [value.operationShards, value.sourceShards];
+  }]
+]) {
+  test(`rejects catalog Summary policy ${mode}`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    mutateCatalogPolicy(candidatePath, mutate);
+    assertCatalogPolicyResult(candidatePath, 1);
+  });
+}
+
+test("accepts catalog Summary policy with Unicode and a decoded pipe", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  mutateCatalogPolicy(candidatePath, (policy) => {
+    policy.catalogSummaries.sourceShards[0].summary = "Café synthetic sources | behavior inputs";
+  });
+  replaceCatalogSummary(candidatePath, "sourceShards", "indexes/sources-contexts-behavior.md",
+    "Café synthetic sources \\| behavior inputs");
+  assertCatalogPolicyResult(candidatePath, 0);
+});
+
 // Intended fixture labels are independent inputs, not recovered from projection bytes.
 const workflowLabels = [
   ["alpha-delivery", "Alpha delivery", "Deliver alpha and record the middle event", "Alpha delivery across operation boundaries"],

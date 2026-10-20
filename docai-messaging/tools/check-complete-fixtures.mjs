@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { loadTrustedCompleteExampleAdapterOptions } from "./lib/complete-example-adapters.mjs";
 import { auditCompleteCandidateSources } from "./lib/complete-candidate-source-audit.mjs";
 import { auditCompleteCompactPolicy } from "./lib/complete-compact-policy-audit.mjs";
+import { auditCompleteCatalogPolicy } from "./lib/complete-catalog-policy-audit.mjs";
 import { loadDocumentSet } from "./lib/document-set.mjs";
 import { validateCompleteProfilePair } from "./lib/validators/complete-profiles.mjs";
 
@@ -62,8 +63,16 @@ function checkCompleteFixtures(candidatePath) {
   }
 
   const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");
-  if (fs.existsSync(manifestPath) && JSON.parse(fs.readFileSync(manifestPath, "utf8"))
-    .generator?.id === "docai-messaging-complete-fixture-projector") {
+  const manifest = fs.existsSync(manifestPath) ? JSON.parse(fs.readFileSync(manifestPath, "utf8")) : null;
+  if (manifest?.generator?.id === "docai-messaging-complete-fixture-projector") {
+    const catalogIssues = [["full", fullDocumentSet], ["compact", compactDocumentSet]]
+      .flatMap(([profile, set]) => auditCompleteCatalogPolicy(
+        manifest.publicationPolicy?.catalogSummaries, set, options
+      ).map((issue) => `${profile}: ${issue}`));
+    if (catalogIssues.length > 0) {
+      fail(catalogIssues.map((issue) => `Complete catalog policy: ${issue}`));
+      return;
+    }
     const policyIssues = auditCompleteCompactPolicy(compactDocumentSet);
     if (policyIssues.length > 0) {
       fail(policyIssues.map((issue) => `Complete compact policy: ${issue}`));
