@@ -7,6 +7,7 @@ import { loadTrustedCompleteExampleAdapterOptions } from "./lib/complete-example
 import { auditCompleteCandidateSources } from "./lib/complete-candidate-source-audit.mjs";
 import { auditCompleteCompactPolicy } from "./lib/complete-compact-policy-audit.mjs";
 import { auditCompleteCatalogPolicy } from "./lib/complete-catalog-policy-audit.mjs";
+import { auditCompleteRelatedPolicy } from "./lib/complete-related-policy-audit.mjs";
 import { loadDocumentSet } from "./lib/document-set.mjs";
 import { validateCompleteProfilePair } from "./lib/validators/complete-profiles.mjs";
 
@@ -71,6 +72,16 @@ function checkCompleteFixtures(candidatePath) {
       ).map((issue) => `${profile}: ${issue}`));
     if (catalogIssues.length > 0) {
       fail(catalogIssues.map((issue) => `Complete catalog policy: ${issue}`));
+      return;
+    }
+    const syntheticSources = ["complete-contexts.json", "complete-representations.json"]
+      .map((filename) => JSON.parse(fs.readFileSync(path.join(candidatePath, "source", filename), "utf8")));
+    const relatedIssues = [["full", fullDocumentSet], ["compact", compactDocumentSet]]
+      .flatMap(([profile, set]) => auditCompleteRelatedPolicy(
+        manifest.publicationPolicy?.relatedNavigation, syntheticSources, set, options
+      ).map((issue) => `${profile}: ${issue}`));
+    if (relatedIssues.length > 0) {
+      fail(relatedIssues.map((issue) => `Complete Related policy: ${issue}`));
       return;
     }
     const policyIssues = auditCompleteCompactPolicy(compactDocumentSet);

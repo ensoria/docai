@@ -10,6 +10,7 @@ import { restampDocumentSet } from "../restamp-document-set.mjs";
 import { loadDocumentSet } from "../lib/document-set.mjs";
 import { loadTrustedCompleteExampleAdapterOptions } from "../lib/complete-example-adapters.mjs";
 import { validateCompleteProfilePair } from "../lib/validators/complete-profiles.mjs";
+import { validateCompleteDocumentSet } from "../lib/validators/complete.mjs";
 
 const repositoryRoot = fileURLToPath(new URL("../../../", import.meta.url));
 const checkerPath = fileURLToPath(new URL("../check-complete-fixtures.mjs", import.meta.url));
@@ -114,6 +115,183 @@ function ordinaryPairValid(candidatePath) {
   const options = loadTrustedCompleteExampleAdapterOptions(candidatePath, [full, compact]);
   assert.deepEqual(validateCompleteProfilePair(full, compact, options).diagnostics, []);
 }
+
+function mutateRelatedPolicy(candidatePath, mutate = () => {}) {
+  const file = path.join(candidatePath, "source", "projection-input-manifest.json");
+  const manifest = JSON.parse(fs.readFileSync(file, "utf8"));
+  manifest.publicationPolicy.relatedNavigation ??= { rule: "workflow-contexts-and-known-steps-v1" };
+  mutate(manifest.publicationPolicy);
+  fs.writeFileSync(file, JSON.stringify(manifest));
+  for (const profile of ["full", "compact"]) {
+    restampDocumentSet(path.join(candidatePath, profile), file, { write: true });
+  }
+}
+
+function replaceRelated(candidatePath, operation, related) {
+  for (const profile of ["full", "compact"]) {
+    const directory = path.join(candidatePath, profile, "channels");
+    const file = fs.readdirSync(directory).map((name) => path.join(directory, name))
+      .find((name) => fs.readFileSync(name, "utf8").includes(`(${operation})\n`));
+    assert.ok(file, operation);
+    const text = fs.readFileSync(file, "utf8");
+    const heading = text.indexOf(`(${operation})\n`);
+    const start = text.indexOf("### Related\n\n", heading) + "### Related\n\n".length;
+    const end = text.indexOf("\n", start);
+    fs.writeFileSync(file, text.slice(0, start) + related + text.slice(end));
+  }
+  mutateRelatedPolicy(candidatePath);
+}
+
+function assertRelatedPolicyResult(candidatePath, status, owner) {
+  ordinaryPairValid(candidatePath);
+  const before = directorySnapshot(candidatePath);
+  const result = runChecker([candidatePath]);
+  assert.equal(result.status, status, result.stderr || result.stdout);
+  if (status !== 0) {
+    assert.match(result.stderr, /Complete Related policy: full:/);
+    assert.match(result.stderr, /Complete Related policy: compact:/);
+    if (owner) assert.ok(result.stderr.includes(owner), result.stderr);
+  }
+  assert.doesNotMatch(result.stderr, /TypeError/);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+}
+
+for (const [mode, value] of [["missing", undefined], ["null", null], ["array", []],
+  ["string", "workflow-contexts-and-known-steps-v1"], ["empty", {}],
+  ["unknown rule", { rule: "contexts-only" }], ["null rule", { rule: null }],
+  ["extra field", { rule: "workflow-contexts-and-known-steps-v1", includeReferences: true }]]) {
+  test(`rejects Related navigation policy ${mode}`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    mutateRelatedPolicy(candidatePath, (policy) => {
+      if (mode === "missing") delete policy.relatedNavigation;
+      else policy.relatedNavigation = value;
+    });
+    assertRelatedPolicyResult(candidatePath, 1);
+  });
+}
+
+const alphaRelated = ["alpha-delivery", "alpha-observability", "state-none", "state-unknown", "state-unsupported"]
+  .map((id) => `workflows/${id}.md`);
+for (const omitted of alphaRelated) {
+  test(`rejects Related navigation dropped alpha link ${omitted}`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    replaceRelated(candidatePath, "a-operation", alphaRelated.filter((value) => value !== omitted).join(", "));
+    assertRelatedPolicyResult(candidatePath, 1, "a-operation");
+  });
+}
+
+for (const [operation, value] of [
+  ["a-operation", "none"], ["m-operation", "none"],
+  ["m-operation", "workflows/alpha-observability.md"],
+  ["m-operation", "references/middle-operations.md, workflows/alpha-delivery.md"],
+  ["a-operation", [...alphaRelated].reverse().join(", ")],
+  ["a-operation", [...alphaRelated, "workflows/state-unknown.md"].join(", ")],
+  ["a-operation", alphaRelated.join(",")],
+  ...["z-operation", "r-csv-operation", "r-json-original-operation", "r-json-reuse-operation",
+    "r-raw-operation", "r-tagged-operation", "r-untagged-operation", "receiveOrderCreated", "sendCreateOrder"]
+    .map((operation) => [operation, "workflows/alpha-delivery.md"])
+]) {
+  test(`rejects Related navigation unsourced or noncanonical ${operation}: ${value}`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    replaceRelated(candidatePath, operation, value);
+    assertRelatedPolicyResult(candidatePath, 1, operation);
+  });
+}
+
+for (const field of ["requiredContexts", "supplementalContexts"]) {
+  for (const matched of [false, true]) {
+    test(`${matched ? "accepts" : "rejects stale"} Related navigation sourced storefront ${field}`, (t) => {
+      const candidatePath = copyVersionedCandidate(t);
+      mutateRelatedPolicy(candidatePath);
+      mutateStorefrontContextSource(candidatePath, (source) => {
+        source.operationBehavior.receiveOrderCreated[field] = ["alpha-observability"];
+      });
+      replaceStorefrontContextRoute(candidatePath, "receiveOrderCreated",
+        field === "requiredContexts" ? "workflows/alpha-observability.md" : "none",
+        field === "supplementalContexts" ? "workflows/alpha-observability.md" : "none");
+      if (matched) replaceRelated(candidatePath, "receiveOrderCreated", "workflows/alpha-observability.md");
+      assertRelatedPolicyResult(candidatePath, matched ? 0 : 1, "receiveOrderCreated");
+    });
+  }
+}
+
+for (const matched of [false, true]) {
+  test(`${matched ? "accepts" : "rejects stale"} Related navigation sourced Steps owner replacement`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    mutateRelatedPolicy(candidatePath);
+    const file = path.join(candidatePath, "source", "complete-contexts.json");
+    const source = JSON.parse(fs.readFileSync(file, "utf8"));
+    source.workflows["alpha-delivery"].steps[1] = "RECEIVE z.events (z-operation)";
+    source.workflows["alpha-delivery"].transitions[1].trigger = "RECEIVE z.events (z-operation)";
+    fs.writeFileSync(file, JSON.stringify(source));
+    for (const profile of ["full", "compact"]) {
+      const workflow = path.join(candidatePath, profile, "workflows", "alpha-delivery.md");
+      fs.writeFileSync(workflow, fs.readFileSync(workflow, "utf8")
+        .replaceAll("SEND m.events (m-operation)", "RECEIVE z.events (z-operation)"));
+    }
+    rebindAndRestamp(candidatePath, "complete-contexts.json");
+    if (matched) {
+      replaceRelated(candidatePath, "m-operation", "none");
+      replaceRelated(candidatePath, "z-operation", "workflows/alpha-delivery.md");
+    }
+    assertRelatedPolicyResult(candidatePath, matched ? 0 : 1, "m-operation");
+  });
+}
+
+test("accepts Related navigation known context union without granting required retrieval", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  mutateRelatedPolicy(candidatePath);
+  const full = loadDocumentSet(path.join(candidatePath, "full"));
+  const compact = loadDocumentSet(path.join(candidatePath, "compact"));
+  const options = loadTrustedCompleteExampleAdapterOptions(candidatePath, [full, compact]);
+  const result = validateCompleteDocumentSet(full, options);
+  // m participates in known Steps but does not acquire a required Workflow;
+  // alpha's unknown/unsupported supplemental Workflows do not become required.
+  const rows = result.facts.core.operations.rows;
+  assert.deepEqual(rows.find((row) => row.operation === "m-operation").requiredContexts, []);
+  assert.deepEqual(rows.find((row) => row.operation === "a-operation").requiredContexts,
+    ["workflows/alpha-delivery.md"]);
+  assertRelatedPolicyResult(candidatePath, 0);
+  const retrieval = result.facts.complete.conventionRetrieval;
+  replaceRelated(candidatePath, "m-operation", "workflows/state-unsupported.md");
+  ordinaryPairValid(candidatePath);
+  const revised = validateCompleteDocumentSet(loadDocumentSet(path.join(candidatePath, "full")), options);
+  assert.deepEqual(revised.facts.complete.conventionRetrieval, retrieval);
+});
+
+for (const state of ["none", "unknown", "unsupported"]) {
+  test(`accepts Related navigation without treating ${state} Steps shadow as known edges`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    mutateRelatedPolicy(candidatePath);
+    const file = path.join(candidatePath, "source", "complete-contexts.json");
+    const source = JSON.parse(fs.readFileSync(file, "utf8"));
+    source.workflows[`state-${state}`].steps = ["RECEIVE z.events (z-operation)"];
+    fs.writeFileSync(file, JSON.stringify(source));
+    rebindAndRestamp(candidatePath, "complete-contexts.json");
+    assertRelatedPolicyResult(candidatePath, 0);
+  });
+}
+
+test("accepts Related navigation source context order independent union", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  mutateRelatedPolicy(candidatePath);
+  const file = path.join(candidatePath, "source", "complete-contexts.json");
+  const source = JSON.parse(fs.readFileSync(file, "utf8"));
+  source.operations["a-operation"].supplementalContexts.reverse();
+  fs.writeFileSync(file, JSON.stringify(source));
+  rebindAndRestamp(candidatePath, "complete-contexts.json");
+  assertRelatedPolicyResult(candidatePath, 0);
+});
+
+test("accepts Related navigation across shared-file same-as expansion drift", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  const file = path.join(candidatePath, "compact", "channels", "representations.md");
+  const content = Array.from({ length: 80 }, () => "Non-contract audit data.").join("\n");
+  replaceExactlyOnce(file, defaultedJsonTable,
+    `${defaultedJsonTable}\n\n##### x-Audit\n\n\`\`\`text\n${content}\n\`\`\``);
+  mutateRelatedPolicy(candidatePath);
+  assertRelatedPolicyResult(candidatePath, 0);
+});
 
 // Publication policy inputs are authored independently of emitted root rows.
 const catalogSummaries = {
@@ -872,6 +1050,7 @@ for (const [field, target] of [["requiredContexts", "alpha-delivery"], ["supplem
     replaceStorefrontContextRoute(candidatePath, "receiveOrderCreated",
       field === "requiredContexts" ? `workflows/${target}.md` : "none",
       field === "supplementalContexts" ? `workflows/${target}.md` : "none");
+    replaceRelated(candidatePath, "receiveOrderCreated", `workflows/${target}.md`);
     ordinaryPairValid(candidatePath);
     const before = directorySnapshot(candidatePath);
     const result = runChecker([candidatePath]);
