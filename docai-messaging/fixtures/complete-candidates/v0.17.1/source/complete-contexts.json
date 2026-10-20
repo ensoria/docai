@@ -49,6 +49,8 @@
   "workflows": {
     "alpha-delivery": {
       "name": "Alpha delivery",
+      "summary": "Deliver alpha and record the middle event",
+      "displayTitle": "Alpha delivery across operation boundaries",
       "purpose": "Deliver the alpha event and record the correlated middle event.",
       "steps": [
         "SEND a.events (a-operation)",
@@ -79,6 +81,8 @@
     },
     "alpha-observability": {
       "name": "Alpha observability",
+      "summary": "Observe alpha delivery with synthetic traces",
+      "displayTitle": "Alpha observability guidance",
       "purpose": "Record synthetic trace evidence for alpha delivery.",
       "steps": [
         "SEND a.events (a-operation)"
@@ -102,6 +106,8 @@
     },
     "state-none": {
       "name": "State none",
+      "summary": "Exercise every workflow section's none state",
+      "displayTitle": "Workflow section none states",
       "purpose": "Demonstrate an applicable workflow and finish without section-specific coordination.",
       "sections": {
         "Preconditions": "none",
@@ -112,6 +118,8 @@
     },
     "state-unknown": {
       "name": "State unknown",
+      "summary": "Exercise every workflow section's whole-section unknown state",
+      "displayTitle": "Workflow section unknown states",
       "purpose": "Validate an unresolved workflow after every required fact is supplied.",
       "sections": {
         "Preconditions": {
@@ -134,6 +142,8 @@
     },
     "state-unsupported": {
       "name": "State unsupported",
+      "summary": "Exercise every workflow section's replacement unsupported state",
+      "displayTitle": "Workflow section unsupported states",
       "purpose": "Validate an unrepresentable workflow after a compatible projection is available.",
       "sections": {
         "Preconditions": {

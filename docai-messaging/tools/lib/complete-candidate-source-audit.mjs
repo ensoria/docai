@@ -15,6 +15,7 @@ import { auditConventionDependencies } from "./complete-convention-source-audit.
 import { collectCompleteOperationInventory } from "./complete-operation-inventory.mjs";
 import { auditStorefrontContextSelection } from "./complete-storefront-context-audit.mjs";
 import { auditOperationLabels } from "./complete-operation-label-audit.mjs";
+import { auditWorkflowLabels } from "./complete-workflow-label-audit.mjs";
 
 const sourceFiles = new Map([
   ["complete-contexts", "complete-contexts.json"],
@@ -127,6 +128,10 @@ export function auditCompleteCandidateSources(candidatePath, documentSets, optio
       return [`operation labels ${factDomain} authority differs from the candidate source policy`];
     }
   }
+  if (!isDeepStrictEqual(manifest.precedence?.filter((entry) => entry.factDomain === "workflow-labels"),
+    [{ factDomain: "workflow-labels", sourceOrder: ["complete-contexts"] }])) {
+    return ["Workflow labels authority differs from the candidate source policy"];
+  }
   const profiles = Object.entries(documentSets).map(([profile, set]) => ({
     profile, set, result: validateCompleteDocumentSet(set, options)
   }));
@@ -149,6 +154,7 @@ export function auditCompleteCandidateSources(candidatePath, documentSets, optio
       result.facts.core.operations.rows, check);
     auditOperationLabels(contexts, representations, asyncapi, behavior,
       result.facts.core.operations.rows, check);
+    auditWorkflowLabels(contexts, result.facts.complete, check);
   }
   if (issues.length > 0) return issues;
   for (const { profile, set, result } of profiles) {
@@ -490,10 +496,6 @@ export function auditCompleteCandidateSources(candidatePath, documentSets, optio
       const file = set.files.find((entry) => entry.path === workflowPath);
       const definition = result.facts.complete.workflowDefinitions
         .find((entry) => entry.path === workflowPath);
-      const route = result.facts.complete.workflows.rows
-        .find((entry) => entry.path === workflowPath);
-      check(typeof source?.name === "string" && source.name.length > 0
-        && route?.name === source.name, `${id} routing name`);
       check(typeof source?.purpose === "string" && source.purpose.length > 0
         && definition?.introduction === source.purpose, `${id} introduction`);
       check(isDeepStrictEqual(Object.keys(source?.sections ?? {}).sort(),

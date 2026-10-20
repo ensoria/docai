@@ -115,6 +115,220 @@ function ordinaryPairValid(candidatePath) {
   assert.deepEqual(validateCompleteProfilePair(full, compact, options).diagnostics, []);
 }
 
+// Intended fixture labels are independent inputs, not recovered from projection bytes.
+const workflowLabels = [
+  ["alpha-delivery", "Alpha delivery", "Deliver alpha and record the middle event", "Alpha delivery across operation boundaries"],
+  ["alpha-observability", "Alpha observability", "Observe alpha delivery with synthetic traces", "Alpha observability guidance"],
+  ["state-none", "State none", "Exercise every workflow section's none state", "Workflow section none states"],
+  ["state-unknown", "State unknown", "Exercise every workflow section's whole-section unknown state", "Workflow section unknown states"],
+  ["state-unsupported", "State unsupported", "Exercise every workflow section's replacement unsupported state", "Workflow section unsupported states"]
+];
+const workflowLabelAuthority = { factDomain: "workflow-labels", sourceOrder: ["complete-contexts"] };
+
+function mutateWorkflowLabelSource(candidatePath, mutate = () => {}) {
+  const file = path.join(candidatePath, "source", "complete-contexts.json");
+  const source = JSON.parse(fs.readFileSync(file, "utf8"));
+  for (const [id, , summary, displayTitle] of workflowLabels) {
+    for (const [field, value] of [["summary", summary], ["displayTitle", displayTitle]]) {
+      if (!Object.hasOwn(source.workflows[id], field)) source.workflows[id][field] = value;
+    }
+  }
+  const manifestFile = path.join(candidatePath, "source", "projection-input-manifest.json");
+  const manifest = JSON.parse(fs.readFileSync(manifestFile, "utf8"));
+  if (!manifest.precedence.some((entry) => entry.factDomain === "workflow-labels")) {
+    manifest.precedence.push(workflowLabelAuthority);
+  }
+  mutate(source, manifest);
+  fs.writeFileSync(file, JSON.stringify(source));
+  fs.writeFileSync(manifestFile, JSON.stringify(manifest));
+  rebindAndRestamp(candidatePath, "complete-contexts.json");
+}
+
+function replaceWorkflowLabel(candidatePath, id, field, value) {
+  for (const profile of ["full", "compact"]) {
+    const root = path.join(candidatePath, profile);
+    if (field === "displayTitle") {
+      const file = path.join(root, "workflows", `${id}.md`);
+      const title = fs.readFileSync(file, "utf8").split("\n").find((line) => line.startsWith("# "));
+      assert.ok(title);
+      replaceExactlyOnce(file, title, `# ${value}`);
+    } else {
+      const file = path.join(root, "INDEX.md");
+      const row = fs.readFileSync(file, "utf8").split("\n")
+        .find((line) => line.endsWith(`| workflows/${id}.md |`));
+      assert.ok(row);
+      const cells = row.split("|");
+      cells[field === "name" ? 1 : 2] = ` ${value} `;
+      replaceExactlyOnce(file, row, cells.join("|"));
+    }
+    restampDocumentSet(root, path.join(candidatePath, "source", "projection-input-manifest.json"), { write: true });
+  }
+}
+
+function assertWorkflowLabelResult(candidatePath, status, pattern) {
+  ordinaryPairValid(candidatePath);
+  const before = directorySnapshot(candidatePath);
+  const result = runChecker([candidatePath]);
+  assert.equal(result.status, status, result.stderr || result.stdout);
+  if (pattern) assert.match(result.stderr, pattern);
+  assert.doesNotMatch(result.stderr, /TypeError/);
+  assert.deepEqual(directorySnapshot(candidatePath), before);
+}
+
+for (const [id] of workflowLabels) {
+  for (const field of ["name", "summary", "displayTitle"]) {
+    test(`rejects Workflow labels stale ${id} ${field}`, (t) => {
+      const candidatePath = copyVersionedCandidate(t);
+      mutateWorkflowLabelSource(candidatePath, (source) => { source.workflows[id][field] += " revised"; });
+      assertWorkflowLabelResult(candidatePath, 1, /Workflow labels|routing name/);
+    });
+  }
+}
+
+for (const id of ["alpha-delivery", "state-none"]) {
+  for (const field of ["name", "summary", "displayTitle"]) {
+    for (const [mode, value] of [["missing", undefined], ["null", null], ["empty", ""],
+      ["non-string", ["label"]], ["LF", "label\nsecond line"], ["CR", "label\rsecond line"],
+      ["tab", "label\tpart"], ["padding", " label "]]) {
+      test(`rejects Workflow labels ${id} ${field} ${mode}`, (t) => {
+        const candidatePath = copyVersionedCandidate(t);
+        mutateWorkflowLabelSource(candidatePath, (source) => {
+          if (mode === "missing") delete source.workflows[id][field];
+          else source.workflows[id][field] = value;
+        });
+        assertWorkflowLabelResult(candidatePath, 1, /Workflow labels|routing name/);
+      });
+    }
+  }
+}
+
+for (const field of ["name", "summary", "displayTitle"]) {
+  test(`rejects Workflow labels ${field} attached to another owner`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    mutateWorkflowLabelSource(candidatePath, (source) => {
+      const a = source.workflows["alpha-delivery"], b = source.workflows["alpha-observability"];
+      [a[field], b[field]] = [b[field], a[field]];
+    });
+    assertWorkflowLabelResult(candidatePath, 1, /Workflow labels/);
+  });
+}
+
+for (const [left, right] of [["name", "summary"], ["name", "displayTitle"], ["summary", "displayTitle"]]) {
+  test(`rejects Workflow labels roles swapped ${left}/${right}`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    mutateWorkflowLabelSource(candidatePath, (source) => {
+      const facts = source.workflows["alpha-delivery"];
+      [facts[left], facts[right]] = [facts[right], facts[left]];
+    });
+    assertWorkflowLabelResult(candidatePath, 1, /Workflow labels/);
+  });
+}
+
+for (const mode of ["missing", "wrong source", "duplicate"]) {
+  test(`rejects Workflow labels authority ${mode}`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    mutateWorkflowLabelSource(candidatePath, (_source, manifest) => {
+      manifest.precedence = manifest.precedence.filter((entry) => entry.factDomain !== "workflow-labels");
+      if (mode !== "missing") manifest.precedence.push({ ...workflowLabelAuthority,
+        sourceOrder: mode === "wrong source" ? ["storefront-behavior"] : ["complete-contexts"] });
+      if (mode === "duplicate") manifest.precedence.push(workflowLabelAuthority);
+    });
+    assertWorkflowLabelResult(candidatePath, 1, /Workflow labels authority/);
+  });
+}
+
+test("rejects Workflow labels routed to the wrong owner path", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  mutateWorkflowLabelSource(candidatePath);
+  for (const profile of ["full", "compact"]) {
+    const file = path.join(candidatePath, profile, "INDEX.md");
+    const content = fs.readFileSync(file, "utf8").replaceAll("| workflows/alpha-delivery.md |", "| workflow-placeholder |")
+      .replaceAll("| workflows/alpha-observability.md |", "| workflows/alpha-delivery.md |")
+      .replaceAll("| workflow-placeholder |", "| workflows/alpha-observability.md |");
+    fs.writeFileSync(file, content);
+    restampDocumentSet(path.join(candidatePath, profile),
+      path.join(candidatePath, "source", "projection-input-manifest.json"), { write: true });
+  }
+  assertWorkflowLabelResult(candidatePath, 1, /Workflow labels/);
+});
+
+for (const id of ["alpha-delivery", "state-none"]) {
+  for (const field of ["name", "summary", "displayTitle"]) {
+    test(`accepts Workflow labels matching revised ${id} ${field}`, (t) => {
+      const candidatePath = copyVersionedCandidate(t);
+      const original = workflowLabels.find((entry) => entry[0] === id);
+      const value = `${original[["name", "summary", "displayTitle"].indexOf(field) + 1]} revised`;
+      mutateWorkflowLabelSource(candidatePath, (source) => { source.workflows[id][field] = value; });
+      replaceWorkflowLabel(candidatePath, id, field, value);
+      assertWorkflowLabelResult(candidatePath, 0);
+    });
+  }
+}
+
+for (const [mode, value] of [["missing", undefined], ["null", null], ["array", []], ["string", "none"]]) {
+  test(`rejects Workflow labels with ${mode} source registry without crashing`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    mutateWorkflowLabelSource(candidatePath, (source) => {
+      if (mode === "missing") delete source.workflows;
+      else source.workflows = value;
+    });
+    assertWorkflowLabelResult(candidatePath, 1, /Workflow labels source registry/);
+  });
+}
+
+test("rejects Workflow labels with a null source owner without crashing", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  mutateWorkflowLabelSource(candidatePath, (source) => { source.workflows["alpha-delivery"] = null; });
+  assertWorkflowLabelResult(candidatePath, 1, /Workflow labels alpha-delivery/);
+});
+
+test("rejects Workflow labels on a projected path without a source owner", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  mutateWorkflowLabelSource(candidatePath);
+  for (const profile of ["full", "compact"]) {
+    const root = path.join(candidatePath, profile);
+    fs.copyFileSync(path.join(root, "workflows", "alpha-observability.md"),
+      path.join(root, "workflows", "alpha-extra.md"));
+    const index = path.join(root, "INDEX.md");
+    const anchor = "| Alpha observability | Observe alpha delivery with synthetic traces | workflows/alpha-observability.md |";
+    replaceExactlyOnce(index, anchor,
+      `${anchor}\n| Alpha supplemental | Extra workflow | workflows/alpha-extra.md |`);
+    restampDocumentSet(root, path.join(candidatePath, "source", "projection-input-manifest.json"), { write: true });
+  }
+  assertWorkflowLabelResult(candidatePath, 1, /Workflow labels routing paths/);
+});
+
+test("accepts Workflow labels whose explicit display title equals its routing name", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  mutateWorkflowLabelSource(candidatePath, (source) => {
+    source.workflows["alpha-delivery"].displayTitle = "Alpha delivery";
+  });
+  replaceWorkflowLabel(candidatePath, "alpha-delivery", "displayTitle", "Alpha delivery");
+  assertWorkflowLabelResult(candidatePath, 0);
+});
+
+test("accepts Workflow labels with Unicode and a decoded summary pipe", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  mutateWorkflowLabelSource(candidatePath, (source) => {
+    source.workflows["alpha-delivery"].name = "Alpha delivery Café";
+    source.workflows["alpha-delivery"].summary = "Record alpha | synthetic progress";
+    source.workflows["alpha-delivery"].displayTitle = "Alpha delivery — Café coordination";
+  });
+  replaceWorkflowLabel(candidatePath, "alpha-delivery", "name", "Alpha delivery Café");
+  replaceWorkflowLabel(candidatePath, "alpha-delivery", "summary", "Record alpha \\| synthetic progress");
+  replaceWorkflowLabel(candidatePath, "alpha-delivery", "displayTitle", "Alpha delivery — Café coordination");
+  assertWorkflowLabelResult(candidatePath, 0);
+});
+
+test("rejects Workflow labels differing only by Unicode normalization", (t) => {
+  const candidatePath = copyVersionedCandidate(t);
+  mutateWorkflowLabelSource(candidatePath, (source) => {
+    source.workflows["alpha-delivery"].displayTitle = "Alpha delivery Café";
+  });
+  replaceWorkflowLabel(candidatePath, "alpha-delivery", "displayTitle", "Alpha delivery Cafe\u0301");
+  assertWorkflowLabelResult(candidatePath, 1, /Workflow labels alpha-delivery/);
+});
+
 // Authored scenario labels, not values recovered from a generated table.
 const operationLabels = [
   ["a-operation", "alpha task", "Handles the alpha event range"],
