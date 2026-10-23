@@ -118,8 +118,9 @@ function expandFile(file) {
   if (scanned.value === null) {
     return { file, diagnostics: [], facts: [] };
   }
-  const sourceLines = file.content.split("\n");
   const lines = scanned.value.lines;
+  const sourceLines = lines.map((line) => line.text);
+  let expandedDefaults = false;
   const diagnostics = [];
   const facts = [];
   for (let markerIndex = 0; markerIndex < lines.length; markerIndex += 1) {
@@ -189,6 +190,7 @@ function expandFile(file) {
       }
     }
 
+    expandedDefaults = true;
     sourceLines[marker.line - 1] = "";
     if (table !== null && logicalHeader !== null) {
       const expanded = renderedTable(table, logicalHeader, uniqueDefaults);
@@ -205,7 +207,7 @@ function expandFile(file) {
     if (tableIndex !== -1) markerIndex = tableIndex;
   }
   return {
-    file: sourceLines.join("\n") === file.content
+    file: !expandedDefaults || sourceLines.join("\n") === file.content
       ? file
       : { ...file, content: sourceLines.join("\n") },
     diagnostics,

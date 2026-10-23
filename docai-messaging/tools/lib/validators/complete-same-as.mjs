@@ -41,11 +41,11 @@ function canonicalMediaType(value) {
   }
 }
 
-function representationSources(file, startLine, endLine) {
-  const lines = file.content.split("\n");
+function representationSources(markdown, startLine, endLine) {
+  const lines = markdown.lines;
   let finalLine = endLine - 1;
-  while (finalLine > startLine && lines[finalLine - 1] === "") finalLine -= 1;
-  return lines.slice(startLine - 1, finalLine);
+  while (finalLine > startLine && lines[finalLine - 1]?.text === "") finalLine -= 1;
+  return lines.slice(startLine - 1, finalLine).map((line) => line.text);
 }
 
 function payloadRepresentations(file, markdown) {
@@ -103,7 +103,7 @@ function payloadRepresentations(file, markdown) {
           operation,
           path: file.path,
           reply,
-          sourceLines: representationSources(file, marker.line, endLine)
+          sourceLines: representationSources(markdown, marker.line, endLine)
         });
       }
     }
@@ -225,7 +225,8 @@ function analyzeFile(file) {
 
 function expandFile(file, replacements) {
   if (replacements.length === 0) return file;
-  const lines = file.content.split("\n");
+  // Match scanner logical lines in this derived view; original bytes are retained.
+  const lines = file.content.split(/\r\n|\n|\r/);
   let addedLines = 0;
   for (const replacement of [...replacements].sort((left, right) => right.line - left.line)) {
     lines.splice(replacement.line - 1, 1, ...replacement.sourceLines);
