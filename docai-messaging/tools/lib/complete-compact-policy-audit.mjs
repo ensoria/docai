@@ -5,7 +5,6 @@ import {
   collectPayloadRepresentations, validateCompleteSameAs
 } from "./validators/complete-same-as.mjs";
 
-const path = "channels/representations.md";
 const original = {
   operation: "r-json-original-operation", message: "json-original-message",
   reply: false, mediaType: "application/json"
@@ -24,10 +23,13 @@ function sameIdentity(actual, expected) {
 // This preserves representative fixture coverage, not a token-savings claim or
 // an additional conformance rule for arbitrary generated compact sets.
 export function auditCompleteCompactPolicy(documentSet) {
-  const file = documentSet.files.find((entry) => entry.path === path);
-  const representations = file ? collectPayloadRepresentations(file) : [];
-  const target = representations.find((entry) => entry.kind === "expanded"
-    && sameIdentity(entry, original));
+  const owner = documentSet.files.filter((file) => file.path.startsWith("channels/"))
+    .map((file) => ({ file, target: collectPayloadRepresentations(file)
+      .find((entry) => entry.kind === "expanded" && sameIdentity(entry, original)) }))
+    .find((entry) => entry.target !== undefined);
+  const file = owner?.file;
+  const path = file?.path;
+  const target = owner?.target;
   const defaults = validateCompleteFieldDefaults(documentSet);
   const sameAs = validateCompleteSameAs(defaults.expandedDocumentSet);
   const issues = [];

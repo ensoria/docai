@@ -1316,6 +1316,8 @@ for (const declaredPlacement of [false, true]) {
       const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
       manifest.publicationPolicy.catalogPlacement.operationShards
         .find((entry) => entry.details === "indexes/operations-broad.md").members.push("zz-operation");
+      manifest.publicationPolicy.channelPlacement
+        .find((entry) => entry.details === "channels/zeta.md").members.push("zz-operation");
       fs.writeFileSync(manifestPath, JSON.stringify(manifest));
     }
     rebindAndRestamp(candidatePath, "complete-contexts.json");
@@ -1378,6 +1380,10 @@ test("rejects missing operation inventory before malformed owner semantics", (t)
 test("accepts operation inventory after moving a routed channel file", (t) => {
   const candidatePath = copyVersionedCandidate(t);
   const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+  manifest.publicationPolicy.channelPlacement.find((entry) => entry.details === "channels/zeta.md")
+    .details = "channels/zz-routed.md";
+  fs.writeFileSync(manifestPath, JSON.stringify(manifest));
   for (const profile of ["full", "compact"]) {
     const root = path.join(candidatePath, profile);
     fs.renameSync(path.join(root, "channels", "zeta.md"), path.join(root, "channels", "zz-routed.md"));

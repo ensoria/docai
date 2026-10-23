@@ -22,6 +22,8 @@ The source-audit section extractor now shares fence-aware boundaries with repres
 
 The finite catalog-placement gate now checks `publicationPolicy.catalogPlacement`: the four current Source / Operation Shard paths and their exact source-ID / operation-name memberships are explicit publication decisions, not inferred from paired output. Policy-only and output-only mismatches fail; matching relocations or membership swaps and declaration-order changes remain valid. The source files/SHA values and projected bodies are unchanged; adding the manifest policy refreshes only the 34 identity trailers. It adds no general shard allocator, channel/Workflow/Reference path policy, prose-language classifier or token-benefit evidence. Those remaining MATRIX-002 boundaries, MATRIX-003–005 and Task 12/14 remain open; earlier checkpoint descriptions above retain their historical scope.
 
+The subsequent channel-placement gate declares the current five channel files and their operation memberships in `publicationPolicy.channelPlacement`, comparing both routing and definition owners. Representation source/compact audits resolve actual operation owners instead of requiring one fixed filename; explicit aligned relocations and regrouping are accepted while source contracts, direct same-file backward reuse, defaults, one-line JSON and retrieval metadata remain enforced. The four source files/SHA values and repository projected bodies are unchanged; only the manifest policy and 34 identity trailers change. This closes current channel allocation within MATRIX-002, not general Workflow/Reference paths, language, semantic grouping suitability, MATRIX-003–005, Tasks 12/14 or release readiness.
+
 Validate the current pair without modifying it:
 
 ```sh

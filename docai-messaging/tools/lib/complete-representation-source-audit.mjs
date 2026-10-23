@@ -70,9 +70,9 @@ export function auditSyntheticRepresentations(source, exactSource, core, operati
   const entries = source.representations;
   check(Array.isArray(entries) && isDeepStrictEqual(entries.map((entry) => entry.operation).sort(),
     [...forms.keys()].sort()), "synthetic representation inventory");
-  const projected = Object.entries(core.operationDefinitions.byName)
-    .filter(([, definition]) => definition.path === "channels/representations.md")
-    .map(([name]) => name).sort();
+  // Global source inventory owns declaration closure; placement policy owns files.
+  const projected = [...forms.keys()].filter((name) =>
+    Object.hasOwn(core.operationDefinitions.byName, name)).sort();
   check(isDeepStrictEqual(projected, [...forms.keys()].sort()), "projected representation inventory");
   const exactEntries = new Map((exactSource?.get("representations") ?? [])
     .map((entry) => [entry.get("operation"), entry]));
