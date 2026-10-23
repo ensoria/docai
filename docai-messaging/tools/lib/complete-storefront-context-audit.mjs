@@ -5,7 +5,7 @@ const sameSet = (left, right) => isDeepStrictEqual([...left].sort(), [...right].
 
 // Behavior facts attach context selection to declared AsyncAPI owners; omission
 // never establishes no required coordination in this finite candidate policy.
-export function auditStorefrontContextSelection(behavior, asyncapi, contexts, rows, check) {
+export function auditStorefrontContextSelection(behavior, asyncapi, contexts, rows, check, contextPaths) {
   const contracts = behavior.operationBehavior;
   const owners = Object.keys(asyncapi.operations);
   const validOwners = record(contracts) && sameSet(Object.keys(contracts), owners);
@@ -20,7 +20,9 @@ export function auditStorefrontContextSelection(behavior, asyncapi, contexts, ro
       const workflow = Object.hasOwn(contexts.workflows ?? {}, id);
       const reference = Object.hasOwn(contexts.referenceMaterials ?? {}, id);
       if ((workflow && reference) || (!workflow && (required || !reference))) return null;
-      paths.push(`${workflow ? "workflows" : "references"}/${id}.md`);
+      const resolved = contextPaths[workflow ? "workflows" : "referenceMaterials"].get(id);
+      if (resolved === undefined) return null;
+      paths.push(resolved);
     }
     return paths;
   };

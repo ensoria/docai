@@ -96,7 +96,8 @@ function checkCompleteFixtures(candidatePath) {
       .map((filename) => JSON.parse(fs.readFileSync(path.join(candidatePath, "source", filename), "utf8")));
     const relatedIssues = [["full", fullDocumentSet], ["compact", compactDocumentSet]]
       .flatMap(([profile, set]) => auditCompleteRelatedPolicy(
-        manifest.publicationPolicy?.relatedNavigation, syntheticSources, set, options
+        manifest.publicationPolicy?.relatedNavigation, syntheticSources, set, options,
+        manifest.publicationPolicy?.contextPlacement
       ).map((issue) => `${profile}: ${issue}`));
     if (relatedIssues.length > 0) {
       fail(relatedIssues.map((issue) => `Complete Related policy: ${issue}`));

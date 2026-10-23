@@ -1,14 +1,17 @@
 import { isDeepStrictEqual } from "node:util";
 import { scanMarkdown } from "./markdown.mjs";
 import { validateCompleteDocumentSet } from "./validators/complete.mjs";
+import { resolveCompleteContextPlacement } from "./complete-context-placement.mjs";
 
 // Finite generator navigation rule. The caller must first validate ordinary
 // structure, source bindings, inventory, context selection and Workflow facts.
 // In particular, a source-checked row is not authority before that preflight.
-export function auditCompleteRelatedPolicy(policy, syntheticSources, documentSet, options) {
+export function auditCompleteRelatedPolicy(policy, syntheticSources, documentSet, options, contextPolicy) {
   if (!isDeepStrictEqual(policy, { rule: "workflow-contexts-and-known-steps-v1" })) {
     return ["relatedNavigation requires exactly rule workflow-contexts-and-known-steps-v1."];
   }
+  const placement = resolveCompleteContextPlacement(contextPolicy, syntheticSources);
+  if (placement.issues.length > 0) return placement.issues;
   const core = validateCompleteDocumentSet(documentSet, options).facts.core;
   const definitions = Object.values(core.operationDefinitions.byName);
   const owners = new Map(definitions.map((entry) => [
@@ -23,7 +26,7 @@ export function auditCompleteRelatedPolicy(policy, syntheticSources, documentSet
       // This does not prove their absence; independently known contexts survive.
       if (Object.hasOwn(workflow, "sections") || !Array.isArray(workflow.steps)) continue;
       for (const step of workflow.steps) {
-        related.get(owners.get(step))?.add(`workflows/${id}.md`);
+        related.get(owners.get(step))?.add(placement.paths.workflows.get(id));
       }
     }
   }

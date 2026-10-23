@@ -12,7 +12,7 @@ const wholeFile = (selection) => selection?.wholeFile === true
   && sameSet(selection.sections ?? [], CONVENTION_HEADINGS);
 
 // Finite source-aware proof for this candidate, not a general prose dependency analyzer.
-export function auditConventionDependencies(contexts, representations, asyncapi, result, check) {
+export function auditConventionDependencies(contexts, representations, asyncapi, result, check, contextPaths) {
   const operations = new Map();
   const workflows = new Map();
   const sections = new Map();
@@ -111,7 +111,7 @@ export function auditConventionDependencies(contexts, representations, asyncapi,
         && ids.every((id) => typeof id === "string"
           && (workflows.has(id) || (!required && Object.hasOwn(contexts.referenceMaterials, id))))
         && new Set(ids).size === ids.length
-        ? ids.map((id) => `${workflows.has(id) ? "workflows" : "references"}/${id}.md`) : null;
+        ? ids.map((id) => contextPaths[workflows.has(id) ? "workflows" : "referenceMaterials"].get(id)) : null;
       const contextEntry = Object.hasOwn(contexts.operations, row.operation);
       const required = sourcePaths(contextEntry ? entry.requiredContexts : entry.requiredContexts ?? [], true);
       const supplemental = sourcePaths(contextEntry ? entry.supplementalContexts : entry.supplementalContexts ?? [], false);
@@ -138,7 +138,7 @@ export function auditConventionDependencies(contexts, representations, asyncapi,
     `${row.operation} convention closure fallback`);
   }
   check(sameSet(retrieval?.directWorkflows.map((workflow) => workflow.path) ?? [],
-    [...workflows.keys()].map((id) => `workflows/${id}.md`))
+    [...workflows.keys()].map((id) => contextPaths.workflows.get(id)))
     && retrieval.directWorkflows.every((workflow) => wholeFile(workflow)
       && workflow.reason === "direct-workflow"), "direct Workflow convention closure fallback");
 }

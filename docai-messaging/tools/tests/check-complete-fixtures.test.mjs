@@ -774,7 +774,7 @@ test("rejects Workflow labels on a projected path without a source owner", (t) =
       `${anchor}\n| Alpha supplemental | Extra workflow | workflows/alpha-extra.md |`);
     restampDocumentSet(root, path.join(candidatePath, "source", "projection-input-manifest.json"), { write: true });
   }
-  assertWorkflowLabelResult(candidatePath, 1, /Workflow labels routing paths/);
+  assertWorkflowLabelResult(candidatePath, 1, /contextPlacement workflows.*paths differ/);
 });
 
 test("accepts Workflow labels whose explicit display title equals its routing name", (t) => {
@@ -1179,7 +1179,7 @@ test("rejects storefront context selection with an ambiguous source ID", (t) => 
   const before = directorySnapshot(candidatePath);
   const result = runChecker([candidatePath]);
   assert.equal(result.status, 1, result.stdout);
-  assert.match(result.stderr, /storefront context selection/);
+  assert.match(result.stderr, /contextPlacement.*ambiguous source context owner/);
   assert.deepEqual(directorySnapshot(candidatePath), before);
 });
 
@@ -1517,7 +1517,8 @@ for (const [label, filename, mutate] of [
     const result = runChecker([candidatePath]);
 
     assert.equal(result.status, 1, result.stdout);
-    assert.match(result.stderr, /convention (?:closure|dependencies)/);
+    assert.match(result.stderr, label === "duplicate workflow dependency owner"
+      ? /contextPlacement.*ambiguous source context owner/ : /convention (?:closure|dependencies)/);
     assert.deepEqual(directorySnapshot(candidatePath), before);
   });
 }
@@ -3197,7 +3198,8 @@ for (const [fact, mutate] of [
     const result = runChecker([candidatePath]);
 
     assert.equal(result.status, 1, result.stdout);
-    assert.match(result.stderr, /Reference Material/);
+    assert.match(result.stderr, fact === "extra Reference Material"
+      ? /contextPlacement referenceMaterials owners differ/ : /Reference Material/);
     assert.deepEqual(directorySnapshot(candidatePath), before);
   });
 }

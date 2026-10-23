@@ -16,6 +16,7 @@ import { collectCompleteOperationInventory } from "./complete-operation-inventor
 import { auditStorefrontContextSelection } from "./complete-storefront-context-audit.mjs";
 import { auditOperationLabels } from "./complete-operation-label-audit.mjs";
 import { auditWorkflowLabels } from "./complete-workflow-label-audit.mjs";
+import { resolveCompleteContextPlacement, auditCompleteContextPaths } from "./complete-context-placement.mjs";
 import { extractSourceSection as section } from "./complete-source-sections.mjs";
 
 const sourceFiles = new Map([
@@ -120,12 +121,21 @@ export function auditCompleteCandidateSources(candidatePath, documentSets, optio
     [{ factDomain: "workflow-labels", sourceOrder: ["complete-contexts"] }])) {
     return ["Workflow labels authority differs from the candidate source policy"];
   }
+  const placement = resolveCompleteContextPlacement(manifest.publicationPolicy?.contextPlacement,
+    [contexts, representations]);
+  if (placement.issues.length > 0) return placement.issues;
+  const contextPaths = placement.paths;
   const profiles = Object.entries(documentSets).map(([profile, set]) => ({
     profile, set, result: validateCompleteDocumentSet(set, options)
   }));
   const checkFor = (profile) => (condition, label) => {
     if (!condition) issues.push(`${profile}: ${label} differs from authoritative source`);
   };
+  for (const { profile, set, result } of profiles) {
+    issues.push(...auditCompleteContextPaths(contextPaths, set, result.facts.complete)
+      .map((issue) => `${profile}: ${issue}`));
+  }
+  if (issues.length > 0) return issues;
   for (const { profile, set, result } of profiles) {
     const check = checkFor(profile);
     check(isDeepStrictEqual(result.facts.core.operations.rows.map((row) => row.operation).sort(),
@@ -139,10 +149,10 @@ export function auditCompleteCandidateSources(candidatePath, documentSets, optio
     [...new Set(result.facts.core.operations.rows.map((row) => row.channelPath))].sort()),
     "operation inventory channel coverage");
     auditStorefrontContextSelection(behavior, asyncapi, contexts,
-      result.facts.core.operations.rows, check);
+      result.facts.core.operations.rows, check, contextPaths);
     auditOperationLabels(contexts, representations, asyncapi, behavior,
       result.facts.core.operations.rows, check);
-    auditWorkflowLabels(contexts, result.facts.complete, check);
+    auditWorkflowLabels(contexts, result.facts.complete, check, contextPaths);
   }
   if (issues.length > 0) return issues;
   for (const { profile, set, result } of profiles) {
@@ -157,7 +167,7 @@ export function auditCompleteCandidateSources(candidatePath, documentSets, optio
     auditStorefrontMessageContracts(exactAsyncapi, expanded,
       result.facts.core.messageDefinitions, check);
     auditStorefrontLocalBindings(exactAsyncapi, expanded, result.facts.core, check);
-    auditConventionDependencies(contexts, representations, asyncapi, result, check);
+    auditConventionDependencies(contexts, representations, asyncapi, result, check, contextPaths);
     for (const file of set.files) {
       check(file.metadata.perspective === manifest.perspective.application,
         `${file.path} perspective`);
@@ -463,7 +473,7 @@ export function auditCompleteCandidateSources(candidatePath, documentSets, optio
     for (const id of ["alpha-delivery", "alpha-observability"]) {
       const source = contexts.workflows[id];
       const actual = result.facts.complete.workflowDefinitions
-        .find((workflow) => workflow.path === `workflows/${id}.md`);
+        .find((workflow) => workflow.path === contextPaths.workflows.get(id));
       check(actual?.introduction === source.purpose, `${id} introduction`);
       check(isDeepStrictEqual(actual?.sections.Preconditions.items, source.preconditions),
         `${id} Preconditions`);
@@ -480,7 +490,7 @@ export function auditCompleteCandidateSources(candidatePath, documentSets, optio
     ];
     for (const id of ["state-none", "state-unknown", "state-unsupported"]) {
       const source = contexts.workflows?.[id];
-      const workflowPath = `workflows/${id}.md`;
+      const workflowPath = contextPaths.workflows.get(id);
       const file = set.files.find((entry) => entry.path === workflowPath);
       const definition = result.facts.complete.workflowDefinitions
         .find((entry) => entry.path === workflowPath);
@@ -515,7 +525,7 @@ export function auditCompleteCandidateSources(candidatePath, documentSets, optio
           ? "requires-input" : "complete"), `${id} completeness`);
     }
     const referenceId = "middle-operations";
-    const referencePath = `references/${referenceId}.md`;
+    const referencePath = contextPaths.referenceMaterials.get(referenceId);
     const referenceSource = contexts.referenceMaterials?.[referenceId];
     const reference = result.facts.complete.referenceMaterials
       .find((entry) => entry.path === referencePath);
