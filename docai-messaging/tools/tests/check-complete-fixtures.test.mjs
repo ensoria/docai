@@ -11,6 +11,7 @@ import { loadDocumentSet } from "../lib/document-set.mjs";
 import { loadTrustedCompleteExampleAdapterOptions } from "../lib/complete-example-adapters.mjs";
 import { validateCompleteProfilePair } from "../lib/validators/complete-profiles.mjs";
 import { validateCompleteDocumentSet } from "../lib/validators/complete.mjs";
+import { scanUtf8Lines } from "../lib/identity.mjs";
 
 const repositoryRoot = fileURLToPath(new URL("../../../", import.meta.url));
 const checkerPath = fileURLToPath(new URL("../check-complete-fixtures.mjs", import.meta.url));
@@ -293,7 +294,7 @@ test("accepts Related navigation across shared-file same-as expansion drift", (t
   assertRelatedPolicyResult(candidatePath, 0);
 });
 
-function insertSourceAuditFence(candidatePath, profile, content, length = 3) {
+function insertSourceAuditFence(candidatePath, profile, content, length = 3, { stamp = true } = {}) {
   const file = path.join(candidatePath, profile, "channels", "representations.md");
   const text = fs.readFileSync(file, "utf8");
   const heading = "## SEND representations.json-original (r-json-original-operation)";
@@ -304,8 +305,98 @@ function insertSourceAuditFence(candidatePath, profile, content, length = 3) {
   const delimiter = "`".repeat(length);
   const extension = `\n\n##### x-Audit\n\n${delimiter}text\n${content}\n${delimiter}`;
   fs.writeFileSync(file, text.slice(0, at + anchor.length) + extension + text.slice(at + anchor.length));
-  restampDocumentSet(path.join(candidatePath, profile),
+  if (stamp) restampDocumentSet(path.join(candidatePath, profile),
     path.join(candidatePath, "source", "projection-input-manifest.json"), { write: true });
+}
+
+const fencedIdentityData = [
+  "> docai-identity: not-a-trailer — Caf\u0065\u0301",
+  "> docai-identity:",
+  "> docai-identity: set_id: b32:aaaaaaaaaaaaaaaaaaaaaaaaaa | projection_id: b32:aaaaaaaaaaaaaaaaaaaaaaaaaa"
+].join("\n");
+
+function withoutFinalIdentity(bytes) {
+  const line = scanUtf8Lines(bytes).lines.findLast((entry) => entry.end > entry.start);
+  assert.ok(line.text.startsWith("> docai-identity:"));
+  return Buffer.concat([bytes.subarray(0, line.start), bytes.subarray(line.end)]);
+}
+
+for (const profile of ["full", "compact"]) {
+  for (const [length, ending] of [[3, "LF"], [5, "mixed-CRLF"]]) {
+    test(`restamp fenced identity data ${profile} ${ending}: preserves bytes and becomes a no-op`, (t) => {
+      const candidatePath = copyVersionedCandidate(t);
+      const root = path.join(candidatePath, profile);
+      const manifest = path.join(candidatePath, "source", "projection-input-manifest.json");
+      const content = length === 5 ? `\`\`\`\n${fencedIdentityData}` : fencedIdentityData;
+      insertSourceAuditFence(candidatePath, profile, content, length, { stamp: false });
+      if (ending === "mixed-CRLF") {
+        const file = path.join(root, "channels", "representations.md");
+        const delimiter = "`".repeat(length);
+        const fence = `##### x-Audit\n\n${delimiter}text\n${content}\n${delimiter}\n`;
+        replaceExactlyOnce(file, fence, fence.replaceAll("\n", "\r\n"));
+      }
+      assert.deepEqual(loadDocumentSet(root).diagnostics, []);
+      const sets = ["full", "compact"].map((name) => loadDocumentSet(path.join(candidatePath, name)));
+      const options = loadTrustedCompleteExampleAdapterOptions(candidatePath, sets);
+      assert.deepEqual(validateCompleteDocumentSet(loadDocumentSet(root), { ...options, wholeSet: false }).diagnostics, []);
+      const before = directorySnapshot(candidatePath);
+      assert.equal(restampDocumentSet(root, manifest).changed, true);
+      assert.deepEqual(directorySnapshot(candidatePath), before);
+      assert.equal(restampDocumentSet(root, manifest, { write: true }).changed, true);
+      const after = directorySnapshot(candidatePath);
+      assert.deepEqual(Object.keys(after), Object.keys(before));
+      for (const [file, bytes] of Object.entries(before)) {
+        if (file.startsWith(`${profile}/`)) {
+          assert.deepEqual(withoutFinalIdentity(after[file]), withoutFinalIdentity(bytes), file);
+        } else assert.deepEqual(after[file], bytes, file);
+      }
+      assert.equal(restampDocumentSet(root, manifest).changed, false);
+      assert.equal(restampDocumentSet(root, manifest, { write: true }).changed, false);
+      assert.deepEqual(directorySnapshot(candidatePath), after);
+      assertSourceAuditFenceResult(candidatePath, 0);
+    });
+  }
+
+  test(`restamp fenced identity data ${profile}: rolls back an injected replacement failure`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    const root = path.join(candidatePath, profile);
+    const manifest = path.join(candidatePath, "source", "projection-input-manifest.json");
+    insertSourceAuditFence(candidatePath, profile, fencedIdentityData, 3, { stamp: false });
+    const before = directorySnapshot(candidatePath);
+    let replacements = 0;
+    assert.throws(() => restampDocumentSet(root, manifest, {
+      write: true,
+      replaceFile(from, to) {
+        replacements += 1;
+        if (replacements === 2) throw new Error("injected fenced-data replacement failure");
+        fs.renameSync(from, to);
+      }
+    }), /injected fenced-data replacement failure/);
+    assert.equal(replacements, 2);
+    assert.deepEqual(directorySnapshot(candidatePath), before);
+    assert.equal(restampDocumentSet(root, manifest, { write: true }).changed, true);
+    assertSourceAuditFenceResult(candidatePath, 0);
+  });
+
+  for (const mode of ["missing", "duplicate", "invalid", "non-final"]) {
+    test(`restamp fenced identity data ${profile}: still rejects ${mode} actual trailer without writing`, (t) => {
+      const candidatePath = copyVersionedCandidate(t);
+      const root = path.join(candidatePath, profile);
+      const manifest = path.join(candidatePath, "source", "projection-input-manifest.json");
+      insertSourceAuditFence(candidatePath, profile, fencedIdentityData, 3, { stamp: false });
+      const file = path.join(root, "channels", "representations.md");
+      const bytes = fs.readFileSync(file);
+      const line = scanUtf8Lines(bytes).lines.findLast((entry) => entry.end > entry.start);
+      const replacement = mode === "missing" ? "" : mode === "duplicate"
+        ? `${line.text}\n${line.text}` : mode === "non-final"
+          ? `${line.text}\nnot the final trailer` : "> docai-identity: invalid";
+      fs.writeFileSync(file, Buffer.concat([bytes.subarray(0, line.start),
+        Buffer.from(replacement), bytes.subarray(line.end)]));
+      const before = directorySnapshot(candidatePath);
+      assert.throws(() => restampDocumentSet(root, manifest, { write: true }), /DM-ID-001/);
+      assert.deepEqual(directorySnapshot(candidatePath), before);
+    });
+  }
 }
 
 function assertSourceAuditFenceResult(candidatePath, status, diagnostic) {

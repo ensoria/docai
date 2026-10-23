@@ -7,8 +7,10 @@ import { TextDecoder } from "node:util";
 import { fileURLToPath } from "node:url";
 import { resolveTrustedCompleteExampleAdapters } from "./lib/complete-example-adapters.mjs";
 import { loadDocumentSet } from "./lib/document-set.mjs";
+import { scanMarkdown } from "./lib/markdown.mjs";
 import {
   computeSetDigest,
+  decodeUtf8Bytes,
   deriveShortId,
   parseIdentityTrailer,
   scanUtf8Lines,
@@ -213,7 +215,11 @@ function stageFile(file, openFile) {
 
 function parsedIdentity(file) {
   const lines = scanUtf8Lines(file.bytes).lines;
-  const identityLines = lines.filter((line) => line.text.startsWith("> docai-identity:"));
+  const markdown = scanMarkdown({ text: decodeUtf8Bytes(file.bytes), file: file.path }).value;
+  if (markdown === null) throw new Error(`Staged file '${file.path}' has invalid fenced Markdown.`);
+  const fencedLines = new Set(markdown.lines.filter((line) => line.inFence).map((line) => line.line));
+  const identityLines = lines.filter((line) => !fencedLines.has(line.line)
+    && line.text.startsWith("> docai-identity:"));
   const finalNonEmpty = lines.findLast((line) => line.end > line.start);
   if (identityLines.length !== 1 || identityLines[0] !== finalNonEmpty) {
     throw new Error(`Staged file '${file.path}' has no unique final identity trailer.`);
