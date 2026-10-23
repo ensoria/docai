@@ -7,6 +7,7 @@ import { loadTrustedCompleteExampleAdapterOptions } from "./lib/complete-example
 import { auditCompleteCandidateSources } from "./lib/complete-candidate-source-audit.mjs";
 import { auditCompleteCompactPolicy } from "./lib/complete-compact-policy-audit.mjs";
 import { auditCompleteCatalogPolicy } from "./lib/complete-catalog-policy-audit.mjs";
+import { auditCompleteCatalogPlacement } from "./lib/complete-catalog-placement-audit.mjs";
 import { auditCompleteRelatedPolicy } from "./lib/complete-related-policy-audit.mjs";
 import { loadDocumentSet } from "./lib/document-set.mjs";
 import { validateCompleteProfilePair } from "./lib/validators/complete-profiles.mjs";
@@ -72,6 +73,14 @@ function checkCompleteFixtures(candidatePath) {
       ).map((issue) => `${profile}: ${issue}`));
     if (catalogIssues.length > 0) {
       fail(catalogIssues.map((issue) => `Complete catalog policy: ${issue}`));
+      return;
+    }
+    const placementIssues = [["full", fullDocumentSet], ["compact", compactDocumentSet]]
+      .flatMap(([profile, set]) => auditCompleteCatalogPlacement(
+        manifest.publicationPolicy?.catalogPlacement, set, options
+      ).map((issue) => `${profile}: ${issue}`));
+    if (placementIssues.length > 0) {
+      fail(placementIssues.map((issue) => `Complete catalog placement: ${issue}`));
       return;
     }
     const syntheticSources = ["complete-contexts.json", "complete-representations.json"]

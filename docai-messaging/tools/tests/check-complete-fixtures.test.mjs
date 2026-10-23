@@ -1302,23 +1302,36 @@ test("rejects duplicate operation owners before semantic source auditing", (t) =
   assert.deepEqual(directorySnapshot(candidatePath), before);
 });
 
-test("accepts an additional operation declared by its source inventory", (t) => {
-  const candidatePath = copyVersionedCandidate(t);
-  addInventoryOperation(candidatePath, "zeta");
-  const sourcePath = path.join(candidatePath, "source", "complete-contexts.json");
-  const source = JSON.parse(fs.readFileSync(sourcePath, "utf8"));
-  source.operations["zz-operation"] = { ...source.operations["z-operation"], message: "zz-message" };
-  source.conventionDependencies.operations["zz-operation"] = [];
-  fs.writeFileSync(sourcePath, JSON.stringify(source));
-  rebindAndRestamp(candidatePath, "complete-contexts.json");
-  ordinaryPairValid(candidatePath);
-  const before = directorySnapshot(candidatePath);
+for (const declaredPlacement of [false, true]) {
+  test(`${declaredPlacement ? "accepts" : "rejects"} an additional source operation with ${declaredPlacement ? "updated" : "stale"} placement policy`, (t) => {
+    const candidatePath = copyVersionedCandidate(t);
+    addInventoryOperation(candidatePath, "zeta");
+    const sourcePath = path.join(candidatePath, "source", "complete-contexts.json");
+    const source = JSON.parse(fs.readFileSync(sourcePath, "utf8"));
+    source.operations["zz-operation"] = { ...source.operations["z-operation"], message: "zz-message" };
+    source.conventionDependencies.operations["zz-operation"] = [];
+    fs.writeFileSync(sourcePath, JSON.stringify(source));
+    if (declaredPlacement) {
+      const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");
+      const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+      manifest.publicationPolicy.catalogPlacement.operationShards
+        .find((entry) => entry.details === "indexes/operations-broad.md").members.push("zz-operation");
+      fs.writeFileSync(manifestPath, JSON.stringify(manifest));
+    }
+    rebindAndRestamp(candidatePath, "complete-contexts.json");
+    ordinaryPairValid(candidatePath);
+    const before = directorySnapshot(candidatePath);
 
-  const result = runChecker([candidatePath]);
+    const result = runChecker([candidatePath]);
 
-  assert.equal(result.status, 0, result.stderr);
-  assert.deepEqual(directorySnapshot(candidatePath), before);
-});
+    assert.equal(result.status, declaredPlacement ? 0 : 1, result.stderr);
+    if (!declaredPlacement) {
+      assert.match(result.stderr, /Complete catalog placement: full: operationShards/);
+      assert.match(result.stderr, /Complete catalog placement: compact: operationShards/);
+    }
+    assert.deepEqual(directorySnapshot(candidatePath), before);
+  });
+}
 
 for (const identity of ["zz-operation", "z-operation"]) {
   test(`rejects an unrouted channel file containing ${identity}`, (t) => {

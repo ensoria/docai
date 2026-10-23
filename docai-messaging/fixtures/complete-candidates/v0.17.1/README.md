@@ -20,6 +20,8 @@ The Related-navigation gate now enforces the explicit manifest rule `publication
 
 The source-audit section extractor now shares fence-aware boundaries with representation Payload extraction. Permitted fenced `x-Audit` data cannot masquerade as an operation or standard-section heading, including after compact `same_as` expansion; true source mismatches remain rejected. The subsequent restamp correction also ignores fenced identity-prefix data during staged validation while preserving real-trailer validation, exact non-trailer bytes, and rollback guarantees. The compact logical-line correction now aligns `field_defaults` and `same_as` reconstruction with scanner LF/CRLF/CR handling, preserving input bytes while fixing the observed CRLF rejection. These corrections change no repository source, manifest, projected body or identity bytes and certify neither arbitrary extensions nor release readiness.
 
+The finite catalog-placement gate now checks `publicationPolicy.catalogPlacement`: the four current Source / Operation Shard paths and their exact source-ID / operation-name memberships are explicit publication decisions, not inferred from paired output. Policy-only and output-only mismatches fail; matching relocations or membership swaps and declaration-order changes remain valid. The source files/SHA values and projected bodies are unchanged; adding the manifest policy refreshes only the 34 identity trailers. It adds no general shard allocator, channel/Workflow/Reference path policy, prose-language classifier or token-benefit evidence. Those remaining MATRIX-002 boundaries, MATRIX-003–005 and Task 12/14 remain open; earlier checkpoint descriptions above retain their historical scope.
+
 Validate the current pair without modifying it:
 
 ```sh
