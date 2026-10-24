@@ -11,7 +11,7 @@
 - 一度に1コミット相当のcheckpointだけ進めて停止する。実装はTDD（RED→GREEN）、順序・scope変更は実装前に確認。完了済みcheckpointを再実装しない。
 - 判断が必要なら各案の利点・欠点・推奨理由を示す。変更量の少なさを推奨理由にせず、仕様・設計・品質を優先する。
 - 設計・影響・実測・残件を本TODOへ簡潔に記録する。終了時は変更概要、検証結果、review観点、残件、1行commit案を提示する。
-- 現在の次checkpointは下記設計の**承認待ち**。設計作成の承認は得ているが、設計本文の承認・実行計画・実装はまだ。今回の整理依頼はそれらの承認ではない。
+- 次checkpointは下記contributor closure。TODO整理後の「次に進めて下さい」を設計から実行計画へ進む承認として記録し、以下の計画を確認待ちとする。実装はまだ開始していない。
 
 ## 現在の到達点
 
@@ -97,9 +97,9 @@
 
 実行・独立review・ユーザー受入は完了。docs-only TDD例外を事前承認し、四sources / manifest / 両profile全34文書を読み、39 SHAと17 paired-path根拠をSOURCE-TRACEABILITYへ固定した。Critical / Important / Minor指摘なし。詳細設計・実行ログは `67cb116`、現在の認定範囲は同auditを参照。意味の自動回帰gateを追加したわけではなく、変更時の再reviewが必要。
 
-## 次checkpoint: Storefront Contributor Closure（設計本文の承認待ち）
+## 次checkpoint: Storefront Contributor Closure（実行計画の確認待ち）
 
-以下は `184066d` に記録した設計をそのまま保持する。今回の整理では承認・実行へ進めない。
+以下は `184066d` の設計原文。pending等は提案時点の表記で、現在の承認状態は上記と実行計画を参照。
 
 > **Proposed short design (storefront contributor closure checkpoint, 2026-10-24; design approval pending):** 起点main / `67cb116`、worktree clean。ユーザーはMATRIX-003の次checkpointとして、storefront channelとCONVENTIONSの二役割に対しsourceから寄与集合を導出し、明示listと`all`の適否を検証する推奨案の設計化を承認した。目的は、fixture assertionだけでCLIが見逃す過少申告を防ぎ、過剰申告や根拠のない`all`も正確な来歴として認定しないこと。README §3の`source_refs`定義と§8 / §6.1のrouting-provenance closureを正とし、既存出力やtest期待値を寄与sourceのauthorityにしない。
 >
@@ -112,6 +112,32 @@
 > **Impact / non-goals:** 実装予定は新candidate helperとsource-auditへの合成、focused / CLI regression、TODO / SOURCE-TRACEABILITYの境界記録。repository source四files / SHA・manifest / policy / projector `1.0.2`・full / compact全34 files / identities・Core corpus / 公開grammar / ordinary validatorsは不変、repository restampなし（testのtemporary candidateは既存手順で再stampしてordinary-validな入力を作る）。これによりMATRIX-002受入snapshotは変えない。storefrontを含まないsynthetic-only channel、root / operation shards、Workflow等の残るsemantic contributor closureは本checkpointで認定せず、既存Source-shard / Reference gateも変更しない。MATRIX-003全体、MATRIX-004–005、Task 12 / 14 / readinessは未完了を維持する。公開仕様を変えて`all`を万能escapeにすること、一般provenance推論器を作ることはanti-goal。
 >
 > **Execution / approval boundary:** この短い設計の承認後に実行計画を作成する。実装時はRED→GREEN、focused / 全suite / Core / Complete検証と独立read-only review、repository bytes不変確認を行い、結果・影響・既存test補正をTODOへ記録して1コミット相当で停止する。Git書込み・別worktreeなし。helperのexact API / test名・診断統合箇所は実行計画で確定する。現段階はTODOへの設計記録のみで、実装・test追加・matrix状態変更なし。
+
+---
+
+### Storefront Contributor Closure Implementation Plan — 2026-10-24
+
+> **For agentic workers:** REQUIRED SUB-SKILL: `superpowers:executing-plans`（主担当実行）またはユーザーが選択した場合の`superpowers:subagent-driven-development`。単一task / 1コミット相当、下記checkboxを追跡する。
+
+**Goal / Spec:** 直前のshort designとREADME §3 / §6.1 / §8どおり、CONVENTIONSとstorefrontを含むchannelのexact contributor refsをsource-aware CLIで検証する。
+
+**Architecture / Tech Stack:** Node.js ESM / `node:test`。既存source binding・inventory・fact比較を通過した入力から専用helperで寄与unionを導出し、両profileへ適用する。出力metadataから期待集合を逆算せず、既存placementの整合移動を維持する。
+
+**Global Constraints:** 起点main / `3a111b2`、開始時clean。Git read-only / 別worktreeなし。repository source四files / SHA、manifest / policy、projector `1.0.2`、全34 profile files / identities、Core / 公開grammar / ordinary validatorsは変更・restampしない。test temporary copiesだけ既存helperでrestampする。MATRIX-003全体 / MATRIX-004–005 / Task 12・14 / readinessはopen。
+
+**Files:** Create `tools/lib/complete-storefront-contributor-audit.mjs`、`tools/tests/complete-storefront-contributor-audit.test.mjs`。Modify `tools/lib/complete-candidate-source-audit.mjs`、既存`tools/tests/complete-channel-placement.test.mjs`と`complete-context-placement.test.mjs`のrefs期待、candidate `SOURCE-TRACEABILITY.md`と本TODO。pathsはすべて`docai-messaging/`相対。既存大規模CLI test fileの再構成はしない。
+
+**Interface:** `auditStorefrontContributorClosure(sources, sourceIds, documentSet, coreFacts) -> string[]`をexport。`sources`は既存のsource-ID→parsed JSON Map、`sourceIds`はbinding検証済みregistry ID配列、`coreFacts`は既存complete検証の`facts.core`、返値はprofile prefixを付ける前のcandidate audit issue文字列。`source_refs`への書込みなし。
+
+**Review Focus:** (1) filename固定を残さず移動 / 分割を受理、(2) 混在fileの全ownerとrow-only factsもunion、(3) `all`のreader fallbackとproducer exactnessを混同しない、(4) 参照先context本文のsourceを自動伝播しない、(5) source / ordinary一次診断時に新auditが例外やcascadeを起こさない。すべて下記testと最終独立reviewで確認する。
+
+- [ ] **1. RED: 実CLIの見逃しを先に固定。** 新test fileに既存CLI testのtemporary-copy / explicit-manifest restamp / ordinary pair検証 / checker bytes snapshot手順を使う。両profileを同じ値へ改変したCONVENTIONSとstorefront channelについて、片方source欠落・無関係ID追加・根拠なし`all`をtable-drivenに検査する。ordinary-valid / fresh identityを確認してから、`assert.equal(result.status, 1)`と`assert.match(result.stderr, /source_refs.*contributors/i)`を要求。`node --test docai-messaging/tools/tests/complete-storefront-contributor-audit.test.mjs`で現CLIのexit 0によるREDを確認し、setup失敗はREDと数えない。
+- [ ] **2. GREEN: 導出とsource-audit合成。** 上記helperを実装。owner registryはcontexts.operations / representations.representations / asyncapi.operationsを使い、重複・不明owner / registry欠落を失敗とし、registry順には依存しない。CONVENTIONSは検証済みstorefront二source、対象channelは二storefront operationsの実owner pathsを起点に全同居ownerを集約。storefront→二storefront IDs、context→complete-contexts、representation→complete-representationsを加え、registry全件なら`all`、それ以外はASCII順exact listを比較する。source auditの既存全fact比較後、issuesがないときだけ両profileへ呼び、`full:` / `compact:`付きの既存`Complete source traceability:`経路で報告する。RED testを同じcommandでGREENにする。
+- [ ] **3. 境界testをRED→GREEN。** 同fileへhelper / CLI testsを追加し、baseline二ID受理、片方だけのprofile改変（pair診断を維持）、移動・storefront分割、整合したcontext / representation混在を検証する。既存同file-backward reuseを壊さないよう六representationは一群で移動する。混在三sourceはexact三IDのみ、全四sourceを含むfileは`all`のみ受理し、四ID list・欠落・余分IDを拒否する。Task / Summary等row factのsource改訂＋対応row更新＋source再bindingでもbody不変で寄与を落とせないこと、context参照追加だけではcontext本文sourceを追加しないことを固定する。新helperは成功時`assert.deepEqual(issues, [])`、失敗時は対象pathとcontributors診断を要求。invalid source registry / 未所有operationは一次診断を保ちcrashしない。全CLI正負例でordinary validity（pair不一致testを除く）とchecker実行前後bytes一致を確認する。
+- [ ] **4. 既存integration補正とfocused検証。** channel/context placement testsの無条件`source_refs: all`を、そのtest source / owner unionのexact refsへ直す。test内temporary fixtureだけ変更しproductionのsource / placement / context gateを弱めない。`node --test docai-messaging/tools/tests/complete-storefront-contributor-audit.test.mjs docai-messaging/tools/tests/complete-channel-placement.test.mjs docai-messaging/tools/tests/complete-context-placement.test.mjs docai-messaging/tools/tests/check-complete-fixtures.test.mjs` → fail 0を確認する。
+- [ ] **5. 全体検証・独立review・停止。** 全suite、Core checker、Complete checkerを本TODO記載commandで実行しfail 0、Core 264 / 193 / one-invalidity 193/193 / unused 0 / gaps 0、Complete 17 paths等価を確認。既知Python 3.9 skipは別記する。SOURCE-TRACEABILITYに二役割だけの新gateと残るMATRIX-003範囲、過去`all`fallback前提との区別を短く記録する。fresh reviewer一名が設計 / 全差分 / 五Review Focusをread-only確認。最終`git diff --check`とread-only bytes比較でrepository source / manifest / profiles / Core不変を確認し、TODOへ最終結果・影響・残件を短く記録して停止。commit案: `test(messaging): enforce storefront contributor provenance`。
+
+**Plan self-review:** 単一helperと既存audit合成の一垂直slice。欠落 / 過剰 / `all`はStep 1–3、移動 / 混在 / row-only / context境界はStep 3–4、一次診断と不変性はStep 3 / 5が所有する。設計からのscope拡張なし。計画記録だけでtest / production / matrix状態は未変更。実行方式は主担当実行＋最後に独立reviewを推奨（他taskへ分割しない一貫した寄与導出を確認するため）。
 
 ---
 
@@ -253,7 +279,7 @@
 ## 再開手順と記録方針
 
 1. AGENTSを読み、Git status / logと正本の最新状態を確認する。完了済みTask 1–10へ戻らない。
-2. 次は上記contributor設計本文への承認を得る段階。承認後に実行計画を作成し、その確認後に1checkpointだけTDDで実装する。実装順序を変える場合は先に確認する。
+2. 次は上記contributor実行計画の確認を得る段階。その確認後に1checkpointだけTDDで実装する。実装順序を変える場合は先に確認する。
 3. Task 11–14はcomplete surface、Task 15はRC、Task 16はstable。前段のexit criteriaを満たさず後段の完了を宣言しない。
 4. 今後の各checkpoint記録は「変更・影響・最終検証・残件・commit案」の短い要約とし、途中runや解決済み試行錯誤を累積しない。詳しい根拠はcode / tests / versioned auditとGit履歴へ委ねる。
 
