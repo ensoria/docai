@@ -16,6 +16,7 @@ import { collectCompleteOperationInventory } from "./complete-operation-inventor
 import { auditStorefrontContextSelection } from "./complete-storefront-context-audit.mjs";
 import { auditOperationLabels } from "./complete-operation-label-audit.mjs";
 import { auditWorkflowLabels } from "./complete-workflow-label-audit.mjs";
+import { auditStorefrontContributorClosure } from "./complete-storefront-contributor-audit.mjs";
 import { resolveCompleteContextPlacement, auditCompleteContextPaths } from "./complete-context-placement.mjs";
 import { extractSourceSection as section } from "./complete-source-sections.mjs";
 
@@ -561,6 +562,12 @@ export function auditCompleteCandidateSources(candidatePath, documentSets, optio
       === contexts.sourceId, `${referenceId} Reference Material source_refs`);
     auditSyntheticRepresentations(representations, exactRepresentations, result.facts.core,
       operationBody, options, check);
+  }
+  if (issues.length === 0) {
+    for (const { profile, set, result } of profiles) {
+      issues.push(...auditStorefrontContributorClosure(sources, [...sourceFiles.keys()], set,
+        result.facts.core).map((issue) => `${profile}: ${issue}`));
+    }
   }
   return issues;
 }

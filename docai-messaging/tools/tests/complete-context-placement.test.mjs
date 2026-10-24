@@ -182,9 +182,7 @@ for (const [group, id] of [["workflows", "alpha-delivery"], ["referenceMaterials
       cells[8] = ` ${target} `;
       fs.writeFileSync(catalogFile, catalog.replace(row, cells.join("|")));
       const channelFile = path.join(root, "channels/orders.md");
-      const text = fs.readFileSync(channelFile, "utf8").replace(
-        "source_refs: storefront-asyncapi-3.1.0, storefront-behavior", "source_refs: all"
-      );
+      const text = fs.readFileSync(channelFile, "utf8");
       const at = text.indexOf("## RECEIVE orders.events (receiveOrderCreated)");
       assert.ok(at > 0);
       const next = text.indexOf("\n## ", at + 1);

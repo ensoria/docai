@@ -162,7 +162,7 @@ for (const declared of [false, true]) {
       const body = fs.readFileSync(from, "utf8");
       const operation = body.slice(body.indexOf("## RECEIVE"), body.lastIndexOf("> docai-identity:")).trimEnd();
       const text = fs.readFileSync(to, "utf8");
-      fs.writeFileSync(to, text.replace("source_refs: complete-representations", "source_refs: all")
+      fs.writeFileSync(to, text.replace("source_refs: complete-representations", "source_refs: complete-contexts, complete-representations")
         .replace("> docai-identity:", `${operation}\n\n> docai-identity:`));
       fs.rmSync(from);
       const index = path.join(root, "indexes/operations-broad.md");
