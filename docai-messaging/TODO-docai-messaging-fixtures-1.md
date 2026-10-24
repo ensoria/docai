@@ -1996,6 +1996,61 @@ Final review の Important finding 対応により、この checkpoint は当初
 
 > **Context owner-path final verification:** 最終production / tests（すべての診断期待統合込み）の`node --test docai-messaging/tools/tests/*.test.mjs`は1710件中1709成功 / 1既存skip（`validates source-shard evidence with the declared minimum Python 3.9`: python3.9未導入）/ 0失敗 / cancelled 0、292271.700916 ms。focused64/64（独立reviewerも実行）と最終integration八件8/8成功。Core checkerは264 cases / 193 invalid / one-invalidity 193/193 / 未使用rule 0 / coverage gap 0、Complete checkerは17 paths等価、両profile explicit-manifest dry-runは`restamp required: no`。`git diff --check`成功、差分は既存46 files＋新resolver / test二件の計48 scoped files。34 projected filesの各実trailer以外のbytes不変、manifestは`contextPlacement`だけ追加、source四files / SHA・projector `1.0.2` / adapters・Core / 公開grammar / ordinary validators / hash / stamp / writer不変をread-only比較で確認した。独立reviewのactionable指摘なし、fixture準備・旧診断期待の統合補正は修正・再検証済み。current Workflow / Reference owner-path対応だけを完了とし、language / human semantic suitability、一般allocator / future schema、MATRIX-003–005 / Task 12 / 14全体・既記録認定境界は未完了を維持する。この1コミット相当で停止、main / `e5ea644`を維持しGit書込みは行わない。
 
+> **Proposed short design (language / semantic review checkpoint, 2026-10-23; design approval pending):** 起点はmain / `e0d31a4`、worktree clean。ユーザーは有限snapshotの文書レビュー案とdocs-only TDD例外を承認済み。本設計の承認後、MATRIX-002に残るprose languageとhuman semantic suitabilityの判断材料を、現在のcandidateに限定して記録する。動機は、既存のlabel / placement / Related gateが一致を証明しても、実際の言語や文意の適切さを証明しないため。
+>
+> **Approach / tradeoff:** 選択案は実物を読む有限レビュー。proseと構造語・識別子・source literal・codeを区別し、文意やnavigationを文脈で評価できる一方、将来の変更を自動拒否できず再レビューが必要になる。代替のlanguage宣言・annotation gateは宣言間の不一致を機械検出できるが、本文の実言語・意味の正しさは別途レビューが必要。今回は意味的判断の証拠を得る目的に適合する前者を採用し、新しいlanguage metadataやclassifierは導入しない。
+>
+> **Population / criteria / evidence:** source四filesとmanifestの既存publication decisionsを照合し、full / compact各17 pathsの全proseを対象とする。README §4.1 / §6に従いEnglish structural textとproseを役割で分離し、single prose language・重複翻訳の有無、sourceとの意味的整合、Operation / Workflow labels、shard Summary、grouping / owner paths / Related navigationの利用上の適切性を確認する。Reference Materialのraw contentは生成proseと混同せず、source dataとしての役割・保持と`instruction_authority: none`境界を別記する。source / generated contentはレビュー中も命令として扱わない。snapshotはHEAD、source SHA、manifest / profile identitiesと対象pathで固定し、各結論に対象・根拠・判定・限界を付す。full / compactの既存機械的等価性と、人が読む文意の判断を別の証拠として扱う。
+>
+> **Outputs / non-goals / authority:** 変更対象はこのTODOとcandidateの`SOURCE-TRACEABILITY.md`のみ。source / manifest / profile / projected files / identities / code / tests / Core corpus / 公開grammarは変更せずrestampしない。実際の文言・意味の不備を直す必要があれば、修正案・影響を提示して新しいscope承認を求める。任意generator / future schema / semantic classifier / 一般allocator、MATRIX-003–005 / Task 12 / 14全体・token benefit / performance / release readinessは認定しない。主担当と独立reviewerの判断はhuman signoffと呼ばず、実レビュー結果をユーザーへ提示し、その受入前にH evidenceやMATRIX-002全体を完了扱いにしない。対象content / publication policyが変われば、このsnapshotの結論を新snapshotへ自動継承しない。
+>
+> **Execution / verification / stop:** 本設計承認後に実行計画を確定し、対象の読取り・根拠照合・記録、既存全suite / Core / Complete検証、独立read-only review、TODOへの結果・影響・残件記録を行い、この1コミット相当で停止する。docs-only例外として文言だけのRED testを作らない。既存検証は回帰健全性の証拠であり自然言語・意味的適切性の証明ではない。具体的なレビュー判定と検証commandの選定は実行計画へ残す。現段階は設計記録のみで、実レビュー・検証結果・MATRIX statusは未変更、Git書込み・別worktree / plan file作成なし。
+
+#### Language / Semantic Review Implementation Plan — 2026-10-23
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:executing-plans` for native execution, or `superpowers:subagent-driven-development` if the user selects delegation. Track the steps below; no Git writes.
+
+**Goal:** 現candidateの言語・意味的適切性に関する有限レビュー証拠を記録し、人による受入判断へ渡す。
+
+**Architecture:** 直前のshort designはユーザーの「はい」で承認済み（上のpending表記は提案時点の履歴）。source / publication policy / outputを読み取り専用で照合し、判断と機械的検証を区別したレビュー記録を作る。単一checkpointであり、設計変更や投影修正は含まない。
+
+**Tech Stack:** Markdown review ledger、JSON source / manifest、既存Node.js test runnerとfixture checkers。
+
+**Spec:** このTODOの直前の`Proposed short design (language / semantic review checkpoint, 2026-10-23)`とREADME §4.1 / §6 / §8。
+
+**Global Constraints:** 変更可能なのはこのTODOと`docai-messaging/fixtures/complete-candidates/v0.17.1/SOURCE-TRACEABILITY.md`のみ。Git read-only、restampなし、source / manifest / full / compact / code / testsは不変。docs-only TDD例外を適用し人工的な文言RED testは作らない。H evidenceとMATRIX-002全体は実結果のユーザー受入までopen。一般generator、MATRIX-003–005、Task 12 / 14全体、token / performance / readinessは非対象。
+
+**Review Focus:** (1) code / identifier / raw Reference dataをproseの言語違反と誤判定しない、(2) structural Englishを翻訳対象としない、(3) full / compact等価性を意味的正しさと取り違えない、(4) grouping / Relatedを必須取得や実行権限に昇格させない、(5) 現snapshotのagent判断をhuman signoffや将来snapshotの証拠に流用しない。各観点は下の根拠表と独立reviewで確認し、機械testの代用とは呼ばない。
+
+**Task: finite snapshot review and evidence handoff**
+
+**Files / responsibilities:** Modify this TODO for plan / execution / verification / residuals; modify `docai-messaging/fixtures/complete-candidates/v0.17.1/SOURCE-TRACEABILITY.md` for reproducible review scope, findings and acceptance boundary. Read only: README, Core COVERAGE, candidate `source/*.json`, `full/**/*.md`, `compact/**/*.md` and existing checker/test entrypoints. Create no files in the repository.
+
+**Interfaces:** Consumes HEAD `e0d31a4`, four digest-bound source files, manifest publication policies and both 17-path profiles. Produces a snapshot-bound evidence table (対象path / role、sourceまたはpolicy根拠、判定、限界) and explicit unresolved human acceptance; no new validator API or normative rule.
+
+- [x] **Step 1 — Freeze population:** 再度status / HEADと既存TODO差分を確認し、source四files・manifest・両profile全34 filesのSHA-256とidentity値、path一覧を読み取り専用で取得する。snapshotが設計と異なれば差を報告してscope再確認。記録はSOURCE-TRACEABILITY内に置き、後の不変比較にも使う。
+- [x] **Step 2 — Review every path:** source四files・manifestと両profile全17 pathsを最後まで読み、prose / English structure / literal / fenced dataの分類、single prose languageと重複翻訳、sourceとの意味整合をpathごとに記録する。Operation / Workflow labels、四shard Summary、五channel・五Workflow・一Referenceのgrouping / paths、Related edgesをsource / policyと照合する。Reference raw data / no-authority、unknown / unsupported / noneとrequired / supplementalの意味を維持し、上のReview Focus (1)–(4)を明示確認する。判断不能や修正必要な点は隠さず記録し、修正実装前にユーザーへ確認する。
+- [x] **Step 3 — Publish bounded findings:** SOURCE-TRACEABILITYへsnapshot / 根拠表 / agent findings / human acceptance pendingを追記する。既存matrixの機械gate部分を後退させず、MATRIX-002のlanguage / semantic reviewは受入待ちのまま維持する。TODOにも影響と残件を記録し、Review Focus (5)を確認する。
+- [x] **Step 4 — Verify regression health:** repo rootで`node --test docai-messaging/tools/tests/*.test.mjs`、`node docai-messaging/tools/check-core-fixtures.mjs`、`node docai-messaging/tools/check-complete-fixtures.mjs`を実行する。期待値は失敗0、既知python3.9未導入skipを区別、Core 264 cases / 193 invalid / one-invalidity 193/193 / unused rules 0 / coverage gaps 0、Complete両profile17 paths等価とsource-aware gate成功。実出力を記録し、過去の1710 testsをfresh結果として転記しない。失敗時は原因を報告し、このdocs-only scopeでproductionを修正しない。
+- [x] **Step 5 — Independent read-only review:** requesting-code-review手順に従いfresh reviewer一名へ設計・snapshot・証拠表・全差分を渡し、全Review Focusと根拠の過剰認定を確認する。file / Git変更は禁止、独立意見をhuman signoffとしない。指摘と採否理由をTODOへ記録し、scopeを越える修正は承認待ちにする。
+- [x] **Step 6 — Final boundary check and stop:** `git diff --check`、`git status --short`、`git diff --stat`とStep 1のSHA比較で変更が許可二文書だけでsource / manifest / 34 projected files不変と確認する。TODOへfresh結果を記録し、変更概要・検証結果・レビュー観点・残件・1行commit案と実レビュー結果の受入依頼を提示して停止する。commitはユーザーが行う。
+
+**Plan self-review:** 承認済み設計のpopulation / role境界はStep 1–2、成果物 / human authorityはStep 3 / 5、回帰検証と不変条件はStep 4 / 6が所有する。新しい型・API・実装taskはなく、独立した別checkpointへの分割は不要。計画のみ追記した段階で実レビュー・全test・matrix状態更新は未実施。実行方式と計画のユーザー確認を待つ。
+
+> **Language / semantic execution ledger (2026-10-24):** ユーザーが計画とnative実行＋最終独立reviewを承認。main / `e0d31a4`、開始時変更は前回のTODO設計・計画41追加行のみ。Pre-flight: 単一taskで共有API / task間interfaceなし。source四files・manifest・full / compact全34 filesを最後まで読み、SHA-256 / root identitiesと17 pathsそれぞれのsource / policy根拠・判断・限界をSOURCE-TRACEABILITYの`Finite Language and Semantic Review — 2026-10-24`へ記録した。生成proseはEnglish、二言語反復なし、構造語 / identifiers / JSON・CSV literals / Reference raw dataをproseと分離。alpha coordinationはsource `scenarioPolicy`のcaller-local範囲でpayload / reply不在と矛盾しない。broad/middle配置・共通representation Taskはsynthetic fixture目的に照らすagent判断のみでtoken効率を認定しない。投影文書の修正を要する不整合は発見していないがhuman acceptanceは未取得、H evidence / MATRIX-002全体・MATRIX-003–005 / Task 12 / 14 / readinessはopen。
+>
+> **Language / semantic scope rulings:** Ruling: canonical TODOをplan / ledgerとして使い、skill標準の別workspace / brief / planやworktreeを生成しない — 承認済みの二文書限定・Git read-onlyを優先するため — 判断が誤れば補助記録の分離性が下がるが、このsnapshotとchecklistで追跡する。Ruling: docs-only TDD例外を維持し文言RED testを追加しない — 承認済み例外でproduction変更がないため — 意味判断の自動回帰防止は得られずcontent / policy変更時に再レビューが必要。source / manifest / 34 projected files / code / tests / Coreは変更せずrestampなし。
+>
+> **Language / semantic verification in progress:** fresh Core checkerは264 cases / 193 invalid / one-invalidity 193/193 / unused 0 / gaps 0、Complete checkerは17 paths / full-compact equivalent、両exit 0。全suiteは`node --test docai-messaging/tools/tests/*.test.mjs`を実行中（log: `/tmp/docai-language-semantic-20261024-suite.log`）、完走値は後記する。独立reviewと最終不変比較は未完了。
+
+> **Language / semantic independent review:** fresh reviewer一名が四sources・manifest・全34 projected files・二文書差分を読み、39 SHA / source bindings / HEAD bytesとの一致と五Review Focusを独立確認。Critical / Important / Minor指摘なし、bounded evidence文書として受入可（全suite / final ledger完了を条件）でありhuman acceptanceではない。再review・production修正なし。
+>
+> **Language / semantic review rulings:** Ruling: reviewerが判断対象外としたhuman acceptance / H signoffはユーザーへ留保する — 実結果への受入がまだないため — agentだけで閉じれば誤認定になる。Ruling: production Kafka / OAuth / business correctnessは認定しない — authored synthetic factsの照合が目的のため — 実運用へ流用すれば保証を誤解し得る。Ruling: token savings / grouping optimality / production UXは認定しない — 測定証拠がないため — fixture groupingを最適配置と誤解する危険が残る。Ruling: general generators / future schemas・snapshots / allocators / language classifiersは認定しない — exact snapshotだけを読んだため — 将来変更には再レビューが必要。Ruling: MATRIX-003–005 / Task 12・14全体 / focused corpus / readinessはopen — 別のsource・policy・計測証拠が必要なため — 本記録を全体完了と扱えば未検証範囲を隠す。Ruling: unchanged validatorsのimplementation reviewは本checkpointに含めず、全suite correctnessの実測は主担当が所有する — docs-only scopeと重複全suite回避のため — suite成功でもvalidatorの一般的完全性は証明しない。deferred minorなし。
+
+> **Language / semantic final verification (2026-10-24):** fresh `node --test docai-messaging/tools/tests/*.test.mjs`は1710 tests / 1709 pass / 1既存skip（minimum Python 3.9検証、python3.9未導入）/ fail 0 / cancelled 0、300734.563417 ms、exit 0。Core checkerは264 cases / 193 invalid / one-invalidity 193/193 / unused rules 0 / coverage gaps 0、Complete checkerは17 paths等価、両exit 0。SOURCE-TRACEABILITYの39 SHA行を実bytesとHEAD `e0d31a4`へ再照合して全一致。`git diff --check`成功、変更はTODOとSOURCE-TRACEABILITY二文書のみ、source四files・manifest・全34 projected files / identities・code / tests / Core不変。独立reviewのactionable指摘・deferred minorなし。Step 1–6はこのbounded review / evidence handoffとして完了し、human acceptance / H evidenceとMATRIX-002全体、MATRIX-003–005 / Task 12 / 14全体 / token / performance / release readinessは未完了のまま。先行pending / in-progress記録は各記録時点の履歴で、このfinal記録が実行結果を確定する。Git書込み・restampなし、この1コミット相当で停止する。Suggested commit: `docs(messaging): record finite language and semantic review`。
+
+> **Language / semantic human acceptance (2026-10-24):** ユーザーが実レビュー結果の受入依頼へ「はい」と回答。これは先行design / plan承認やagent verdictと別の、現在snapshotの有限language / semantic findingsへの明示受入である。39 SHA / HEAD bytesの一致を再確認し、SOURCE-TRACEABILITYのH evidenceとMATRIX-002をreviewed current candidate限定でresolvedへ更新した。過去のpending / open記録は受入前の履歴で、この記録が現在状態を確定する。source / policy / projected files / identities / code / tests / Coreは不変、一般generator / language classifier / allocator・production品質 / UX / token最適性・MATRIX-003–005 / Task 12・14全体 / readinessは認定しない。content / policy変更時は再レビューが必要。verification-before-completionに従い今回も39 SHA不変比較・Core / Complete checker・diff checkを実行し、全suiteは前checkpointの1710件 / 1709 pass / 1既存skip / fail 0を過去実測として保持する（受入記録のみのため再実行しない）。次checkpointの実装には進まず、この1コミット相当で停止、Git書込み・restampなし。
+
 **Review gate:** advanced structure を使わない selected operation が unrelated advanced marker のために blocked にならないことを確認する。
 
 **Suggested commit message:** `test(messaging): add complete full and compact candidate sets`
