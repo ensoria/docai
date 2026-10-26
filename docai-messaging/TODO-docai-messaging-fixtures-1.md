@@ -11,7 +11,7 @@
 - 一度に1コミット相当のcheckpointだけ進めて停止する。実装はTDD（RED→GREEN）、順序・scope変更は実装前に確認。完了済みcheckpointを再実装しない。
 - 判断が必要なら各案の利点・欠点・推奨理由を示す。変更量の少なさを推奨理由にせず、仕様・設計・品質を優先する。
 - 設計・影響・実測・残件を本TODOへ簡潔に記録する。終了時は変更概要、検証結果、review観点、残件、1行commit案を提示する。
-- 最新checkpointのstorefront contributor closureは下記scopeで完了。未コミット差分を残して停止し、次scopeへ自動で進まない。
+- storefront contributor closureは`7a496bf`でコミット済み。次は下記all-channel contributor設計の本文承認待ちで、実装は未開始。
 
 ## 現在の到達点
 
@@ -97,7 +97,7 @@
 
 実行・独立review・ユーザー受入は完了。docs-only TDD例外を事前承認し、四sources / manifest / 両profile全34文書を読み、39 SHAと17 paired-path根拠をSOURCE-TRACEABILITYへ固定した。Critical / Important / Minor指摘なし。詳細設計・実行ログは `67cb116`、現在の認定範囲は同auditを参照。意味の自動回帰gateを追加したわけではなく、変更時の再reviewが必要。
 
-## 最新checkpoint: Storefront Contributor Closure（完了・未コミット）
+## 完了checkpoint: Storefront Contributor Closure（`7a496bf`）
 
 以下は `184066d` の設計原文。pending等は提案時点の表記で、現在の承認状態は上記と実行計画を参照。
 
@@ -146,6 +146,22 @@
 **Independent review:** fresh reviewer一名が新規二fileを含む全差分と五Review Focusを確認し、新規36/36を独立再実行。Critical / Important / Minor指摘なし、deferred minorなし、追加修正 / 再reviewなし。Rulings: (1) synthetic-only channels / root・operation shards / Workflowsの一般closureは未認定（有限二役割のscopeであり、全体へ外挿すると過剰認定）、(2) MATRIX-004–005 / Task 12・14 / readinessはopen（別証拠が必要）、(3) helperは検証済みsource / ordinary facts用の内部APIで任意JS値への公開API堅牢性を認定しない（直接の非契約入力には保証なし）、(4) 全suite / Core / Complete最終判定は主担当実測に置く（独立review成功だけでは全体回帰を証明しない）。
 
 **Final verification (2026-10-24):** focused四filesは820/820、338788.444167 ms。全suiteは1746件 / 1745 pass / 1既存Python 3.9 skip / fail 0 / cancelled 0、326797.302083 ms、exit 0。Core checkerは264 / 193 / one-invalidity 193/193 / unused 0 / gaps 0、Complete checkerは17 paths等価、両exit 0。新規二fileを含む7 scoped filesのみ、`git diff --check`成功。source / manifest / 34 profiles / Core計606 tracked filesはHEAD `1d880b6`からbytes不変、identity / public grammar / ordinary validatorsも変更なし。二役割だけを完了としMATRIX-003全体・004–005 / Task 12・14 / readinessはopen。Git書込み・repository restampなし、この1コミット相当で停止。commit案: `test(messaging): enforce storefront contributor provenance`。
+
+---
+
+## 次checkpoint: All-Channel Contributor Closure（設計本文の承認待ち）
+
+**Intent / scope（2026-10-27）:** main / `7a496bf`、開始時clean。ユーザーは「既存寄与導出を全channelへ広げ、synthetic三channelのmetadataも訂正する」推奨案の設計化を承認した。README §3 / §6.1 / §8を正とし、MATRIX-003のchannel役割だけを閉じる。source fact / routing-only factの寄与unionを使い、既存出力をauthorityにしない。
+
+**Approaches:** 採用案は検証拡張とcandidate訂正を同じ1コミット相当で行う。仕様と出力が一致する一方、metadata / identitiesとsnapshot証跡の更新が必要。代替の診断追加だけでは現positive candidateがchecker失敗状態になるため採用しない。producerのexact provenanceとreaderのload-all fallbackの区別は前checkpointから維持する。
+
+**Derivation / cases:** 既存helperのsource-owned operation寄与Mapを再利用し、storefrontを含むfileだけという対象条件を取り除く。validated routing / definition / channel file集合の一致を確認して全channelごとに全同居ownerをunionし、全四sourceなら`all`、それ以外はASCII順exact listを要求する。CONVENTIONSの既存二source検証は維持。filename / alpha等の固定pathへ依存せず、synthetic-onlyの移動 / 分割 / 混在、representation-only、storefront混在、source宣言順序非依存を扱う。context参照先の本文sourceやCONVENTIONS本文sourceを参照だけで自動伝播させず、行のselection fact自体の寄与は保持する。missing / extra / 根拠なし`all` / 全四ID明示list、不明・重複owner / 未登録fileを拒否し、既存一次診断とread-only性を維持する。
+
+**Candidate / identity impact:** full / compactの`channels/alpha.md`・`middle.md`・`zeta.md`の計六opening metadataだけを`source_refs: all`から`complete-contexts`へ訂正する。orders / representationsのrefsと全prose / contract bodies / source四files・SHA / Core / 公開仕様 / ordinary validatorsは不変。これは既存rendering承認の追加ではなくprojection metadataの訂正なのでprojectorを`1.0.2`→`1.0.3`にする提案。manifestの他のpolicy / precedence / adaptersとpublication-policy version `1.0.0`は変更しない（それらの規則変更ではないため）。新explicit manifestを指定して両profileを専用helperでrestampし、全34 filesの実identity trailers・root digests / IDsを更新、dry-run no-opとpair等価を確認する。手動hash調整は禁止。
+
+**Evidence / acceptance boundary:** candidate README / SOURCE-TRACEABILITYとTODOへ投影訂正・版変更・実測を短く記録する。過去のlanguage/semantic snapshot表とhuman受入は歴史的証拠として保持し、新snapshotのhash / identities・六metadata以外のprose不変比較を別記する。新snapshotのmetadata / retrieval影響を独立reviewし、その結果をユーザーへ提示する。旧snapshotのH evidenceを新hashへ自動継承したり、今回の設計承認を未実施のreview結果への受入と扱ったりしない。root / operation shards / Workflowsの寄与closure、MATRIX-003全体、MATRIX-004–005、Task 12 / 14、token benefit / performance / release readinessは未完了を維持する。
+
+**Execution / stop:** 設計本文承認後に実行計画を作る。実装時はsynthetic-onlyの不正refsを現CLIが通すREDと、訂正前candidateを新gateが拒否する証拠を先に確認し、helper一般化と六metadata訂正 / restampでGREENにする。focused / 全suite / Core / Complete checker、protected bytes比較、独立read-only reviewを行い1コミット相当で停止。Git書込み・別worktreeなし。helper名 / API・test配置・具体的commandは実行計画で確定する。今回は設計記録のみでcode / manifest / profile / matrix状態は変更しない。
 
 ---
 
@@ -287,7 +303,7 @@
 ## 再開手順と記録方針
 
 1. AGENTSを読み、Git status / logと正本の最新状態を確認する。完了済みTask 1–10へ戻らない。
-2. storefront contributor checkpointを再実装しない。次はMATRIX-003の残る役割から次の1checkpointを特定し、scope / 設計を確認してから進む。順序変更は先に確認する。
+2. storefront contributor checkpointを再実装しない。次は上記all-channel contributor設計本文の承認、続いて実行計画の作成・確認を経て1checkpointだけ実装する。順序変更は先に確認する。
 3. Task 11–14はcomplete surface、Task 15はRC、Task 16はstable。前段のexit criteriaを満たさず後段の完了を宣言しない。
 4. 今後の各checkpoint記録は「変更・影響・最終検証・残件・commit案」の短い要約とし、途中runや解決済み試行錯誤を累積しない。詳しい根拠はcode / tests / versioned auditとGit履歴へ委ねる。
 
