@@ -161,6 +161,14 @@ For this finite source policy, a proper subset of the four-source registry requi
 
 The tests exercise ordinary-valid, freshly restamped copies, both profiles, unchanged candidates, renamed/split synthetic and storefront owners, mixed files with two/three-source exact lists and four-source `all`, routing-only Task changes, link boundaries, malformed ownership and primary-diagnostic preservation. Checker execution is read-only. The all-channel correction changes only the six alpha/middle/zeta opening `source_refs` values from `all` to `complete-contexts`, plus all 34 identity trailers after projector `1.0.2` → `1.0.3`. The manifest changes only that generator version; four authoritative source files/SHA values, publication-policy `1.0.0`, adapter mappings, prose and contract bodies are unchanged. The refreshed snapshot below is separate from the accepted 2026-10-24 snapshot. Root/operation shards, Workflows and other semantic contributor domains remain open under MATRIX-003. This is not a general provenance engine, an extension of public grammar, or closure of Task 12.
 
+## Finite Operation-Index Shard Contributor Closure
+
+`tools/lib/complete-operation-shard-contributor-audit.mjs` compares each operation-index shard's exact `source_refs` after ordinary validation and source-to-output comparisons. It shares the finite source registry, inventory and operation contributor derivation with the channel gate through `complete-operation-contributors.mjs`. Context rows contribute `complete-contexts`, representation rows contribute `complete-representations`, and storefront rows contribute both AsyncAPI and behavior sources (including Task and context-selection facts). Root routes, actual standard-heading shard files, non-empty row groups and unique source inventory membership must close. Rows are grouped by their validated `indexPath`, not by filenames or linked channel aggregate refs. A proper subset requires its exact ASCII-ordered list; the full four-source union requires `all`.
+
+Links to channels, contexts and CONVENTIONS do not import their separately loaded body contributors. A channel subsection belongs to only one operation-index shard under the existing ordinary rule; tests preserve rejection of a shared channel split across shards rather than authorizing it. Ordinary-valid, freshly stamped CLI tests cover one/two/three-source unions, all four sources, missing/extra/wrong refs, rename/split/regrouping of whole channel groups and declaration-order independence. Malformed ownership has helper-level coverage; malformed shard structures are rejected by the writer and ordinary CLI without treating them as newly stamped valid inputs. Pair and ordinary routing diagnostics retain precedence. All checks are read-only.
+
+This correction changes only the two middle-shard opening refs to `complete-contexts`, manifest generator.version `1.0.3` → `1.0.4`, and all 34 real identity trailers. The broad shard retains `all`. Root INDEX's fixed `all` is already ordinary-validated, not reimplemented or claimed as a new proof of every root semantic fact. Four source files/SHA values, other manifest fields, publication-policy `1.0.0`, all prose/contracts, Core and public grammar are unchanged. Workflow and other remaining semantic contributor domains, MATRIX-003 as a whole, MATRIX-004–005, Tasks 12/14 and readiness remain open. The new snapshot below has its own metadata/retrieval review and pending human acceptance.
+
 ## Fact Matrix Review — 2026-10-19
 
 Review baseline: `dce8b3c`, with 17 paths per profile, 11 operations (three context, six representation, two storefront), five direct Workflows, and one Reference Material. This is a responsibility matrix for the currently emitted fact domains, not a complete-surface feature inventory or a claim that every source member is projected. The detailed schema/section comparisons above remain the leaf-level comparison contracts. A final audit pass has identified the open items below; it has **not** closed Task 12.
@@ -204,7 +212,7 @@ Implementation evidence: **A** = `tools/lib/complete-candidate-source-audit.mjs`
 | Compact examples/defaults/same-as/retrieval-unit metadata | Ordinary expansion and pair equality, source checks after expansion, P's retention of required representatives | S + O + F / candidate policy. No new source fact is supplied by a compact encoding. Token savings and optimality remain unmeasured. |
 | Related navigation | Manifest `publicationPolicy.relatedNavigation`; N unions source-checked Workflow context paths with known source Step participation by exact operation heading | S + G + O + F. Navigation-only known edges; no inference of absent unknown Steps, Reference Material inclusion, required retrieval or side-effect authority. |
 | Prose language and finite display/path-policy suitability | The snapshot and seventeen paired-path evidence rows below, accepted by the user on 2026-10-24; label and navigation gates certify only their stated finite roles | F + H for this snapshot's English prose and synthetic-fixture suitability. No general semantic/language classifier, naming generator or path/group allocator is certified. |
-| Contributor closure outside Source shards / Reference Material | A invokes the finite all-channel contributor helper after source comparisons: exact CONVENTIONS refs and source-owner/routing/body unions for every channel; other domains retain ordinary resolution / pair parity and F | S + O + F for CONVENTIONS and all channel roles, including relocated/mixed owners. Other semantic contributor domains remain H + U (MATRIX-003); blanket `all` is not certified as precise provenance. |
+| Contributor closure outside Source shards / Reference Material | A invokes finite channel and operation-shard audits after source comparisons: exact CONVENTIONS refs, source-owner/routing/body unions for every channel, and row-local unions for each operation-index shard | S + O + F for CONVENTIONS, channel and operation-index shard roles, including relocated/mixed owners. Root's fixed `all` has ordinary evidence only; other semantic contributor domains remain H + U (MATRIX-003). Blanket `all` is not certified as precise provenance. |
 
 ### Audit Items and Stop Boundary
 
@@ -214,7 +222,7 @@ These are review findings, not new normative rules. The current positive set is 
 |---|---|---|
 | MATRIX-001 (resolved for current candidate) | Whole-candidate inventory has exact source/output closure and unique declaration ownership. Synthetic context selection remains source-compared by D; the storefront context gate now compares explicit behavior arrays under a manifest-bound authority to each row/column. | Inventory and context evidence is implemented rather than inferred from pair equality or absence of generic AsyncAPI fields. This is a finite candidate proof, not a general coordination-source adapter or a Task 12 completion verdict. |
 | MATRIX-002 (2026-10-24 snapshot accepted; refreshed metadata accepted 2026-10-27) | Operation / Workflow labels, allocation and Related retain their finite gates. The user accepted the recorded language/semantic findings for projector `1.0.2`. Projector `1.0.3` corrects six refs with unchanged prose; the separately recorded metadata/retrieval findings and exact hashes below were accepted by the user on 2026-10-27. | Old H signoff is not automatically transferred to new hashes; refreshed-snapshot metadata acceptance is separate. Existing label/navigation/placement evidence stands. No general allocator, classifier, production UX, token benefit or Task 12 completion is certified. |
-| MATRIX-003 (all channel / CONVENTIONS exact refs resolved; remaining domains open) | A retains exact Source-shard / Reference checks and now invokes the contributor helper for every channel and CONVENTIONS. Both missing and extraneous contributors fail; actual four-source unions use `all`, otherwise exact lists. Root/operation shards and Workflows are not certified by this gate. | Define remaining semantic contributor closure and distinguish reader load-all safety from producer provenance accuracy. Do not infer complete attribution from parity or reuse Core's flat-catalog assumptions. |
+| MATRIX-003 (channel / CONVENTIONS / operation-index shard exact refs resolved; remaining domains open) | A retains exact Source-shard / Reference checks and invokes contributor audits for every channel, CONVENTIONS and operation-index shard. Both missing and extraneous contributors fail; actual four-source unions use `all`, otherwise exact lists. Root's fixed `all` has existing ordinary validation, not a new whole-root semantic proof. Workflows and remaining semantic contributor domains are not certified here. | Define remaining semantic contributor closure and distinguish reader load-all safety from producer provenance accuracy. Do not infer complete attribution from parity or reuse Core's flat-catalog assumptions. |
 | MATRIX-004 | Both primary storefront Channel sections currently say Parameters none; A/M do not compare their source `parameters` members. Ordinary checks enforce parameter names from the emitted static address, not every authoritative source declaration. | Decide the finite source known-absence preconditions (including malformed or unexpected source declarations) and test them independently of output address consistency. Do not claim a general parameter converter. |
 | MATRIX-005 | Exact manifest bytes bind declared precedence, perspective and adapters to projection identity. A validates source bindings/generator and the dependency/context-selection/operation-label/Workflow-label domains; C, L, FCP, CP and N check only their explicit catalog-summary, catalog/channel/context-placement and Related policy blocks; the trusted CSV helper validates its exact scope/mapping. This is not validation of every other precedence/adapter/perspective declaration or a general conflict-resolution policy. | Review the candidate's finite manifest policy contract and determine necessary mismatch/conflict rejection evidence. Generic precedence/counterpart/adapter feature coverage remains Task 13, not an automatic Task 12 guarantee. |
 
@@ -387,6 +395,63 @@ The main agent's judgment is that these six metadata corrections preserve contra
 | `source/complete-contexts.json` | `8b1d2ad744ed2950849a1182aaed15ecdbfb4da92f0ac2086b6cb92a9242771f` |
 | `source/complete-representations.json` | `4199393498f7aa3e81e69b5bb5842fc55c076365c082b75a129a8a4d336d677e` |
 | `source/projection-input-manifest.json` | `f04cb9a0dab3a15b5f4ae96c582e5d16ba9121e82379dde35e001a1848928168` |
+| `source/storefront-behavior.json` | `8a8bf42c303213a3d167a5c9cbd58acc682ccb38761b9e6bdd12d63531a3de43` |
+| `source/storefront.asyncapi.json` | `779c5c57a09c348ab398f22b558a474dfdccc509b74e83a38815f80cde6bdd97` |
+
+## Operation-Shard Contributor Snapshot — 2026-10-27
+
+Status: **agent findings submitted for human acceptance**. This projector `1.0.4` snapshot is separate from both earlier accepted snapshots. Exact comparison against `3b5ac4b` confirms four source files/SHA values unchanged, manifest equality except generator.version, and profile equality after accounting for the two middle-shard opening refs and each real final identity trailer. No prose, contract, context requirement, catalog allocation, completeness marker or publication-policy recipe changed.
+
+Metadata/retrieval finding: `indexes/operations-middle.md` contains only the context-source middle operation row, so its exact provenance is `complete-contexts`; the broad shard still has all four contributors and keeps `all`. This preserves routing and contract meaning while correcting attribution. Under §6.1 the root/operation-shard aggregate refs are not expanded solely for task-scoped provenance; selected contract files carry routing-provenance closure. Inclusive source bounds, fixed-point expansion, CONVENTIONS and context-file provenance still apply, and Workflow `all` can still require all-source retrieval. This correction neither removes required context nor grants side effects, and establishes no token/performance benefit.
+
+The actual metadata/retrieval findings and independent review are to be presented to the user; design/plan approval and the two prior H acceptances are not signoff for these new hashes. Only these finite findings and exact bytes are submitted. Content/policy changes require renewed review. MATRIX-003 overall, MATRIX-004–005, Tasks 12/14 and release readiness remain open.
+
+### Root identities
+
+- compact: `> docai-identity: set_id: b32:k7j6dn2ifngozs4vvbcvpjq5nu | projection_id: b32:z3mv5yb6siycc2cmkhg2buq2bu | set_digest: sha256:57d3e1b7482b4ceccb95a84557a61d6d296090b41b76d0031214c33d93d8713d | projection_digest: sha256:ced95ee03e923021684c51cda0d21a0d95ae4d0d8c690f0866bad8ca6610d8b8`
+- full: `> docai-identity: set_id: b32:bjztf5fw5csubbz7j7qhn5cm4e | projection_id: b32:z3mv5yb6siycc2cmkhg2buq2bu | set_digest: sha256:0a7332f4b6e8a540873f4fe076f44ce114c1560f5900fd5f9dd13ac2592af026 | projection_digest: sha256:ced95ee03e923021684c51cda0d21a0d95ae4d0d8c690f0866bad8ca6610d8b8`
+
+### Exact reviewed bytes
+
+| File (candidate-relative) | SHA-256 of exact bytes |
+|---|---|
+| `compact/CONVENTIONS.md` | `12397ac05f5b4c0589f36a59e7ca37768413d49160fcbd1b5de9504298b49b6e` |
+| `compact/INDEX.md` | `0c27e3e356dc185762e93f422c038eff486d368867c9b2caff1c45ea1a930be6` |
+| `compact/channels/alpha.md` | `ca8b9439f4c0dd30e4e91ccb836b218cf7035eb5258f199a4034aa33f0bbd26c` |
+| `compact/channels/middle.md` | `1e6800abf15880173a40b50c1a8b64bd1d9624a2cdbad2cfdf0fc6aa3a72839f` |
+| `compact/channels/orders.md` | `9ba006d2eff0f36249a2c15489e74f9731ac869e14846ecef9b73a2fd1c39d39` |
+| `compact/channels/representations.md` | `1b4bed94916dcb06837f1bb19bae78a30ff11c822b4258bbd818bec464514d9d` |
+| `compact/channels/zeta.md` | `f4cff5f350ea1b1620ba5f45fe5422699e1d906d46089d7632046822ac4bce4e` |
+| `compact/indexes/operations-broad.md` | `2f237371253a4b218af6f9b77dac5650d57586548dacf7bb193502e75744ad2d` |
+| `compact/indexes/operations-middle.md` | `48e20ef30b448618be9619cbc6e74b30231c939a8bee21e5e2d4271cab9efbbb` |
+| `compact/indexes/sources-asyncapi.md` | `7925f8a0cdf959267e7a7cad3d1a9bc24abcfe931220f8eedab1feba82bf999c` |
+| `compact/indexes/sources-contexts-behavior.md` | `85c79554c8cc6d09d60b694dbdc656088f8235019d23aa2caa8928942b8ebcf4` |
+| `compact/references/middle-operations.md` | `e4735db534406ee653e083a4ebdb6ff975e4376e65129127686913b4becf523c` |
+| `compact/workflows/alpha-delivery.md` | `90cd65fc73446ebd7ceaa0a2928dda6d290b35513a7c9e4429394ead0d485ae8` |
+| `compact/workflows/alpha-observability.md` | `3cfbc1ad3c7130d3e576d7d21d9f4055cfd12f88bfbbdb1e7a4f7ca290fa3223` |
+| `compact/workflows/state-none.md` | `a5f5ceec6f0aa08227079abd4ec4d0154609f2a2572d90fa2c56203163657be8` |
+| `compact/workflows/state-unknown.md` | `174e5f60edd293ecd0584d9db3d8c743f90fc3d0d69d5e2d9f47634e61bed031` |
+| `compact/workflows/state-unsupported.md` | `aceca236d44daeae3386f7c45741a1decae7223234ce3a936a1b518e0361ec12` |
+| `full/CONVENTIONS.md` | `2927ffe2ad3d96c4011d2aff9426a92aacef34349d0da99cdeb0d7e425917edb` |
+| `full/INDEX.md` | `b84aff1334de9295a8ea3f2801a867bbf6a61c807ab9d54146fc54d6ce7b3958` |
+| `full/channels/alpha.md` | `8644b20b7d13ba090b7c85ab34abee603d229d1d49c589ed538ac5fee299fe89` |
+| `full/channels/middle.md` | `2b5547532d79468771c684b9b2b31e04171aec1660fcfadcaafb509d7646feba` |
+| `full/channels/orders.md` | `56935e91d550502fb4daa96208840ad48faec2ef43932b28533d0315c81b793b` |
+| `full/channels/representations.md` | `7b31c21abc548ad2601ffcb726ac95632dcd370805d6e599cf6ce62d54100dd8` |
+| `full/channels/zeta.md` | `921a6e29d803790433aac7fec6341f565c334eaaeaadc42ff234cf46015626f2` |
+| `full/indexes/operations-broad.md` | `0cba7a80426d86fd8b65a85a7706fd759f846fb7a07a0c056187cc23b1414dd0` |
+| `full/indexes/operations-middle.md` | `f88ace6c6dfe5969bd633160ae322aca8c35a5dc473855b9055e1eac3a6709c9` |
+| `full/indexes/sources-asyncapi.md` | `8efae37b1a6669dd47790bdc367509abcb3f4ee676a5a156a2f0ce5d2950d231` |
+| `full/indexes/sources-contexts-behavior.md` | `07c6b5ee513a2dec1c3d2c6bcb91d87a8a8fde7067781ff239f6d89589eb9830` |
+| `full/references/middle-operations.md` | `986cc6069c797a87b98a0e80bac51c726622b60af2014946a173c0f88cd5b3cb` |
+| `full/workflows/alpha-delivery.md` | `1dc461750b9040cbfcd50efb91a08781727553a1fd9625d701b81360aa5b26e3` |
+| `full/workflows/alpha-observability.md` | `6f4524182d1ff384208bf98af663b1008352a9c62e36c792528c57718724dbf1` |
+| `full/workflows/state-none.md` | `55635d89f4220b12591348ee0e63c1c2fc79c881d083e95adc327c00983374a9` |
+| `full/workflows/state-unknown.md` | `1b77ffdba7166232a78d7e7093733767f36237bce4e3e45759721d2927741f04` |
+| `full/workflows/state-unsupported.md` | `4aeb0398103450593d9eb578cb7e98f8c08a9a0999d9d4dee04c0d1846a07294` |
+| `source/complete-contexts.json` | `8b1d2ad744ed2950849a1182aaed15ecdbfb4da92f0ac2086b6cb92a9242771f` |
+| `source/complete-representations.json` | `4199393498f7aa3e81e69b5bb5842fc55c076365c082b75a129a8a4d336d677e` |
+| `source/projection-input-manifest.json` | `ced95ee03e923021684c51cda0d21a0d95ae4d0d8c690f0866bad8ca6610d8b8` |
 | `source/storefront-behavior.json` | `8a8bf42c303213a3d167a5c9cbd58acc682ccb38761b9e6bdd12d63531a3de43` |
 | `source/storefront.asyncapi.json` | `779c5c57a09c348ab398f22b558a474dfdccc509b74e83a38815f80cde6bdd97` |
 

@@ -17,6 +17,7 @@ import { auditStorefrontContextSelection } from "./complete-storefront-context-a
 import { auditOperationLabels } from "./complete-operation-label-audit.mjs";
 import { auditWorkflowLabels } from "./complete-workflow-label-audit.mjs";
 import { auditCompleteChannelContributorClosure } from "./complete-channel-contributor-audit.mjs";
+import { auditCompleteOperationShardContributorClosure } from "./complete-operation-shard-contributor-audit.mjs";
 import { resolveCompleteContextPlacement, auditCompleteContextPaths } from "./complete-context-placement.mjs";
 import { extractSourceSection as section } from "./complete-source-sections.mjs";
 
@@ -566,6 +567,8 @@ export function auditCompleteCandidateSources(candidatePath, documentSets, optio
   if (issues.length === 0) {
     for (const { profile, set, result } of profiles) {
       issues.push(...auditCompleteChannelContributorClosure(sources, [...sourceFiles.keys()], set,
+        result.facts.core).map((issue) => `${profile}: ${issue}`));
+      issues.push(...auditCompleteOperationShardContributorClosure(sources, [...sourceFiles.keys()], set,
         result.facts.core).map((issue) => `${profile}: ${issue}`));
     }
   }
