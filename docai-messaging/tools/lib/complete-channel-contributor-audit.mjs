@@ -11,7 +11,7 @@ const record = (value) => value !== null && typeof value === "object" && !Array.
 // Finite contributor proof, after source-to-output fact comparisons succeed.
 // Source ownership includes routing-only Task/Summary/context/Conventions facts;
 // links do not import the referenced document's body contributors into this file.
-export function auditStorefrontContributorClosure(sources, sourceIds, documentSet, coreFacts) {
+export function auditCompleteChannelContributorClosure(sources, sourceIds, documentSet, coreFacts) {
   if (!(sources instanceof Map) || !Array.isArray(sourceIds)
       || !isDeepStrictEqual([...sourceIds].sort(), registry)
       || !isDeepStrictEqual([...sources.keys()].sort(), registry)) {
@@ -38,14 +38,19 @@ export function auditStorefrontContributorClosure(sources, sourceIds, documentSe
     return ["source_refs contributors require validated operation ownership"];
   }
   const issues = [];
-  const targets = new Set();
+  const channelFiles = documentSet.files.filter((file) => file.path.startsWith("channels/"));
+  const targets = [...new Set(rows.map((row) => row.channelPath))];
+  if (!isDeepStrictEqual(rows.map((row) => row.operation).sort(), inventory.operations)
+      || !isDeepStrictEqual(Object.keys(definitions).sort(), inventory.operations)
+      || rows.some((row) => typeof row.channelPath !== "string"
+        || definitions[row.operation]?.path !== row.channelPath)
+      || !isDeepStrictEqual(channelFiles.map((file) => file.path).sort(), [...targets].sort())) {
+    return ["channel source_refs contributors have unknown or inconsistent routing/definition/file ownership"];
+  }
   for (const name of Object.keys(asyncapi.operations)) {
-    const matches = rows.filter((row) => row.operation === name);
-    if (matches.length !== 1 || !Object.hasOwn(sources.get(behaviorId).operationBehavior, name)
-        || typeof matches[0].channelPath !== "string"
-        || definitions[name]?.path !== matches[0].channelPath) {
-      issues.push(`${name} source_refs contributors have ambiguous routing/definition ownership`);
-    } else targets.add(matches[0].channelPath);
+    if (!Object.hasOwn(sources.get(behaviorId).operationBehavior, name)) {
+      issues.push(`${name} source_refs contributors lack storefront behavior ownership`);
+    }
   }
   if (issues.length > 0) return issues;
 

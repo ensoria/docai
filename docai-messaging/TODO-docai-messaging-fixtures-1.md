@@ -11,7 +11,7 @@
 - 一度に1コミット相当のcheckpointだけ進めて停止する。実装はTDD（RED→GREEN）、順序・scope変更は実装前に確認。完了済みcheckpointを再実装しない。
 - 判断が必要なら各案の利点・欠点・推奨理由を示す。変更量の少なさを推奨理由にせず、仕様・設計・品質を優先する。
 - 設計・影響・実測・残件を本TODOへ簡潔に記録する。終了時は変更概要、検証結果、review観点、残件、1行commit案を提示する。
-- storefront contributor closureは`7a496bf`でコミット済み。次は下記all-channel contributor設計の本文承認待ちで、実装は未開始。
+- all-channel contributor実装・検証は完了し未コミット差分を残して停止。新snapshotのmetadata / retrieval実レビュー結果はユーザー受入待ち、次scopeへ自動で進まない。
 
 ## 現在の到達点
 
@@ -27,11 +27,11 @@
 
 ### 最新の検証済みbaseline（過去実測、今回の整理で再実行した結果ではない）
 
-- 全suite: `node --test docai-messaging/tools/tests/*.test.mjs` → 1746 tests / 1745 pass / 1既存skip / fail 0 / cancelled 0、326797.302083 ms（2026-10-24、storefront contributor checkpoint時）。
+- 全suite: `node --test docai-messaging/tools/tests/*.test.mjs` → 1781 tests / 1780 pass / 1既存skip / fail 0 / cancelled 0、301852.086875 ms（2026-10-27、all-channel contributor checkpoint時）。
 - skip: `validates source-shard evidence with the declared minimum Python 3.9`、python3.9未導入。Python最小版での実行成功を認定していない。
 - Core checker: 264 cases / 193 invalid / one-invalidity 193/193 / unused rules 0 / coverage gaps 0。
 - Complete checker: 17 paths、full/compact equivalent。pair一致だけでsource completeness / readinessを認定しない。
-- Candidate: source四files＋explicit manifest、projector `1.0.2`、publication policy `1.0.0`。[有限reviewのsnapshot / SHA記録](fixtures/complete-candidates/v0.17.1/SOURCE-TRACEABILITY.md#finite-language-and-semantic-review--2026-10-24)を参照。
+- Candidate: source四files＋explicit manifest、projector `1.0.3`、publication policy `1.0.0`。[新snapshot / SHA記録](fixtures/complete-candidates/v0.17.1/SOURCE-TRACEABILITY.md#refreshed-contributor-snapshot--2026-10-27)はmetadata / retrieval実レビュー結果の受入待ち。[旧snapshot](fixtures/complete-candidates/v0.17.1/SOURCE-TRACEABILITY.md#finite-language-and-semantic-review--2026-10-24)のH evidenceとは分離する。
 - language/semantic結果は2026-10-24にユーザーが受入（`67cb116`）。一般generator・将来snapshot・本番business / Kafka / OAuth品質、token効率・配置最適性の認定ではない。content / policy変更時は再reviewする。
 
 ## 共通の実装・公開制約
@@ -79,8 +79,8 @@
 - [x] 同explicit manifestでのsource SHA binding / identity / no-op restamp。
 - [x] source-aware有限gate: source / operation inventory、context selection、purpose / Behavior / Reply / failures、十五CONVENTIONS、Message schema / descriptions / examples、local binding absence、Workflow states、Reference、representations、compact representative policy、convention dependencies。
 - [x] MATRIX-001: 現candidateのwhole-operation inventoryとcontext selection。
-- [x] MATRIX-002: Operation / Workflow labels、四shard Summary、catalog / channel / context配置、Relatedの有限policy gate＋実結果へのhuman language/semantic受入。
-- [ ] MATRIX-003全体: Source shards / Referenceに加え、CONVENTIONSとstorefront-containing channelのexact contributor gateは実装済み。synthetic-only channels、root / operation shards、Workflows等のsemantic contributor closureは未完了。
+- [x] MATRIX-002の旧snapshot: labels / Summary / 配置 / Relatedの有限gateと2026-10-24のhuman受入。projector `1.0.3`への六metadata訂正後のsnapshotは別証跡で実結果の受入待ち（旧H evidenceを自動継承しない）。
+- [ ] MATRIX-003全体: Source shards / Reference / CONVENTIONS / 全channelのexact contributor gateまで実装。root / operation shards、Workflows等のsemantic contributor closureは未完了。
 - [ ] MATRIX-004: storefront primary Channel Parametersのsource known-absence前提（不正 / unexpected declarations含む）。static emitted addressだけからsource欠落を推測しない。
 - [ ] MATRIX-005: 残るfinite manifest precedence / perspective / adaptersの契約・conflict / mismatch拒否証拠。digest bindingと個別policy gateから全宣言検証を推論しない。
 - [ ] 残るmatrixを証拠または正当化した明示受入で解決し、Task 12 source-traceability全体を完了判定する。
@@ -149,7 +149,7 @@
 
 ---
 
-## 次checkpoint: All-Channel Contributor Closure（設計本文の承認待ち）
+## 最新checkpoint: All-Channel Contributor Closure（実装完了・snapshot受入待ち）
 
 **Intent / scope（2026-10-27）:** main / `7a496bf`、開始時clean。ユーザーは「既存寄与導出を全channelへ広げ、synthetic三channelのmetadataも訂正する」推奨案の設計化を承認した。README §3 / §6.1 / §8を正とし、MATRIX-003のchannel役割だけを閉じる。source fact / routing-only factの寄与unionを使い、既存出力をauthorityにしない。
 
@@ -162,6 +162,38 @@
 **Evidence / acceptance boundary:** candidate README / SOURCE-TRACEABILITYとTODOへ投影訂正・版変更・実測を短く記録する。過去のlanguage/semantic snapshot表とhuman受入は歴史的証拠として保持し、新snapshotのhash / identities・六metadata以外のprose不変比較を別記する。新snapshotのmetadata / retrieval影響を独立reviewし、その結果をユーザーへ提示する。旧snapshotのH evidenceを新hashへ自動継承したり、今回の設計承認を未実施のreview結果への受入と扱ったりしない。root / operation shards / Workflowsの寄与closure、MATRIX-003全体、MATRIX-004–005、Task 12 / 14、token benefit / performance / release readinessは未完了を維持する。
 
 **Execution / stop:** 設計本文承認後に実行計画を作る。実装時はsynthetic-onlyの不正refsを現CLIが通すREDと、訂正前candidateを新gateが拒否する証拠を先に確認し、helper一般化と六metadata訂正 / restampでGREENにする。focused / 全suite / Core / Complete checker、protected bytes比較、独立read-only reviewを行い1コミット相当で停止。Git書込み・別worktreeなし。helper名 / API・test配置・具体的commandは実行計画で確定する。今回は設計記録のみでcode / manifest / profile / matrix状態は変更しない。
+
+---
+
+### All-Channel Contributor Closure Implementation Plan — 2026-10-27
+
+> **For agentic workers:** REQUIRED SUB-SKILL: `superpowers:executing-plans`で主担当実行、最後に独立read-only review一名。委譲方式をユーザーが選ぶ場合だけ`superpowers:subagent-driven-development`。単一task / 1コミット相当。
+
+**Goal / Spec:** 直前のall-channel short design（`58606e0`、ユーザー承認済み）を実装し、全channelのexact source contributor gateと正しいcandidate metadataを同時に成立させる。
+
+**Architecture / Tech Stack:** Node.js ESM / `node:test`。source比較後の既存寄与Mapを全channelへ適用し、metadata訂正と専用writerによるidentity更新を分離する。既存storefront / CONVENTIONSの保証は維持し、新しいpublic validator API / source authorityは作らない。
+
+**Global Constraints:** 起点main / `58606e0`、開始時clean。Git read-only / 別worktreeなし。source四files / SHA、Core、公開仕様、ordinary validators、全prose / contract bodiesは不変。candidate差分は六opening refs、manifestのgenerator.version `1.0.3`、全34実identity trailers（rootのfull digests含む）と証跡に限定する。publication-policy `1.0.0` / 他manifest fieldsは不変。MATRIX-003全体・004–005 / Task 12・14 / readinessを閉じず、新snapshotのH evidenceはユーザー受入までpending。
+
+**Files / interface:** `tools/lib/complete-storefront-contributor-audit.mjs`を`complete-channel-contributor-audit.mjs`へ改名し、exportを`auditCompleteChannelContributorClosure(sources, sourceIds, documentSet, coreFacts) -> string[]`へ更新（入力・返値契約は既存と同じ）。source-auditのimport / callと既存`complete-storefront-contributor-audit.test.mjs`の直接importを更新しwrapperは残さない。新`tools/tests/complete-channel-contributor-audit.test.mjs`、必要な既存placement / candidate / CLI tests、candidate `source/projection-input-manifest.json`・`full/`・`compact/`・README / SOURCE-TRACEABILITYと本TODOが対象。rule catalog / 一般validatorを変更しない。
+
+**Review Focus:** (1) synthetic-onlyもfilename非依存で全ownerを検証、(2) routing / definition / actual channel filesの閉包と一次診断、(3) refs以外の本文・source / policy不変、(4) explicit-manifest restampとprofile別identity / no-op、(5) 過去human受入と新metadata/retrievalレビューを混同しない。Step 1–4で各境界を検査し最終reviewでも確認する。
+
+- [x] **1. RED: 不正refsを旧CLIが通すことを確認。** 新test fileでtemporary candidate copyの三context channelを一旦literal `complete-contexts`へ揃え、変更対象以外の根拠なし`all`が負例を偶然落とさないようにする。その後context-only / representation-onlyの各fileへ欠落・無関係ID・余分ID・`all`を両profile同値で与える。explicit manifestでfresh stampしordinary pair valid / checker bytes不変を確認後、`assert.equal(result.status, 1)`と対象pathを含む`/source_refs.*contributors/i`を要求。`node --test docai-messaging/tools/tests/complete-channel-contributor-audit.test.mjs`で旧CLI exit 0によるREDを確認し、setup例外をREDに数えない。
+- [x] **2. GREENへの実装と負のbaseline確認。** helperを上記APIへ改名・一般化。inventory operationsと全routing / definitions、実`channels/` filesの閉包を確認し、不明 / duplicate owner、未登録 / 空fileを拒否。対象を全channelにし、source unionと既存CONVENTIONS比較を共有、既存source比較成功後だけ呼ぶ。新testに加え、訂正前repository candidateが新gateでalpha / middle / zetaのrefsを拒否することをread-only CLIで確認する。この一時的REDを記録してから次へ進む。
+- [x] **3. Candidate訂正とidentity更新。** 六opening refsを`complete-contexts`にし、manifestはgenerator.versionだけ`1.0.3`へ変更。`node docai-messaging/tools/restamp-document-set.mjs --write --projection-manifest docai-messaging/fixtures/complete-candidates/v0.17.1/source/projection-input-manifest.json docai-messaging/fixtures/complete-candidates/v0.17.1/full`を実行し、最後のrootを`compact`に替えてもう一回実行する。`--write`なしの同commandが両方`restamp required: no`、Core / Complete checker成功、新test GREENを確認。repository restamp中はcandidate copyを作るtestsを並行実行しない。
+- [x] **4. 境界testsと証跡更新。** context / representation-onlyの整合移動、representation分割（original / reuseは同じretrieval unit）、synthetic混在のexact二ID、storefront混在の三ID / 全四source `all`、宣言順序差を受理。不正union、四ID明示list、unowned operation / output-only file、片profile差の既存pair診断を拒否し、context / CONVENTIONS参照だけから本文sourceを伝播しないことを確認する。期待値はliteral、失敗時はpath / diagnostic / read-only性まで検証する。既存storefront36件を維持し、既存fixtureの無条件`all`は各ownerのexact refsへ訂正してgateを緩めない。新snapshotの39 file SHA / root identitiesを旧表とは別に記録し、HEAD比で四source bytes / SHA、manifestのversion以外、六openingと全trailer以外のprofile bytesが不変と確認する。新snapshotのmetadata / source retrieval影響とhuman acceptance pendingを別記し、旧SHA表を上書きしない。
+- [x] **5. 全体検証・独立review・停止。** focusedは`node --test docai-messaging/tools/tests/complete-channel-contributor-audit.test.mjs docai-messaging/tools/tests/complete-storefront-contributor-audit.test.mjs docai-messaging/tools/tests/complete-channel-placement.test.mjs docai-messaging/tools/tests/complete-context-placement.test.mjs docai-messaging/tools/tests/check-complete-fixtures.test.mjs`。続けて全`tools/tests/*.test.mjs`、Core / Complete両checker、両profile no-op dry-run、`git diff --check`を実行しfail 0（既知Python 3.9 skipは別記）、Core 264 / 193 / one-invalidity 193/193 / unused 0 / gaps 0、Complete 17 paths等価を確認。fresh reviewer一名が全差分 / 五Review Focus / bytes比較をread-only確認し、結果・影響・残件をTODOへ短く記録する。新metadata / retrieval影響の実レビュー結果をユーザーへ提示して停止、Git書込みなし。commit案: `fix(messaging): enforce exact contributors for every channel`。
+
+**Plan self-review / handoff:** 一つの寄与closure修正であり他役割へのscope拡張なし。五Review Focusは各stepのtest / bytes比較 / 証跡境界に対応する。現段階は計画記録のみ、実装・test・manifest / profile / matrix変更なし。主担当実装＋最後に独立reviewを推奨（gateと投影訂正・identity更新を一貫して照合できるため）。
+
+**Execution ledger (2026-10-27):** 計画と主担当実装＋最終独立reviewをユーザー承認済み。開始main / `58606e0`、既存未コミット変更は承認済みTODO計画だけ。Pre-flight: 単一task、共有interface conflictなし。Git read-only / canonical TODOを優先してworktree / skill workspaceを作らない。test fixtureのcopy / restamp / read-only snapshot / regroup手順を共通test helperへ機械的に抽出し旧36casesのscenarioと期待を保持（新旧testのfixture構築を二重実装しないため、production scope変更なし）。
+
+**TDD / impact:** 新16casesは旧CLI exit 0で全RED→全channel合成後16/16 GREEN。訂正前candidateのalpha / middle / zeta両profile六refsを新gateが拒否することを確認後、六metadata・generator `1.0.3`と34identityを更新。両dry-run no-op、Core / Complete成功。境界testsは新35＋旧36の71/71成功。二件のtest構築補正: 同channelを二shardの別subsectionへ置く不正fixtureを正規の一subsectionへ修正、output-only channelは既存source inventoryが先に拒否する期待へ訂正（productionを弱めず）。HEAD比で四source不変、manifestのversion以外不変、profileの六openingと実trailer以外bytes不変を確認。過去SHA表を保持し新39SHA / identitiesとmetadata / retrieval評価・受入pendingを別記。focused / 全suite / 独立reviewと最終結果は後記。
+
+**Independent review:** fresh reviewer一名、新旧71/71再実行、五Review Focus・全差分・四source / manifest限定差分・六opening / 34実trailer限定・旧SHA表不変 / 新39SHAとroot identities・両no-opを独立確認。Critical / Important / Minorなし、deferred minorなし、再reviewなし。Rulings: root / operation shards / WorkflowsのclosureとMATRIX-004–005 / Task 12・14 / readinessは別証拠待ち（全体へ外挿すると過剰認定）；helperは検証済み内部facts向けで任意JS入力の公開API保証なし；測定なしにtoken / performance改善を認定しない；全suite / focused / Core最終結果は主担当実測を正としreview結果で代用しない；新snapshotのhuman受入はユーザーへ留保し旧H evidenceを転用しない。metadata訂正は既存contract / required-contextを保ち来歴を正確化するが、別loaded fileの`all`等によりtask全体のload削減を保証しない。
+
+**Final verification (2026-10-27):** 新35＋既存36の71/71（reviewerも独立再実行）、focused五filesは855/855 / fail 0 / cancelled 0、292526.063458 ms。全suiteは1781件 / 1780 pass / 1既存skip（minimum Python 3.9、python3.9未導入）/ fail 0 / cancelled 0、301852.086875 ms、exit 0。Core checkerは264 / 193 / one-invalidity 193/193 / unused 0 / gaps 0、Completeは17 paths等価、両exit 0。両profileのexplicit-manifest dry-runは`restamp required: no`。HEAD `58606e0`比でsource四files / SHA・Core / 公開仕様 / rules / ordinary validators不変、manifestはgenerator.versionだけ、profileは六opening refsと全34実trailer以外bytes不変。新39SHA・root identities一致、旧SHA表保持、`git diff --check`成功。scope外・human acceptanceの境界は直前review記録どおり。Git書込みなし、この1コミット相当で停止。commit案: `fix(messaging): enforce exact contributors for every channel`。
 
 ---
 
@@ -303,7 +335,7 @@
 ## 再開手順と記録方針
 
 1. AGENTSを読み、Git status / logと正本の最新状態を確認する。完了済みTask 1–10へ戻らない。
-2. storefront contributor checkpointを再実装しない。次は上記all-channel contributor設計本文の承認、続いて実行計画の作成・確認を経て1checkpointだけ実装する。順序変更は先に確認する。
+2. storefront / all-channel contributor checkpointを再実装しない。次は新snapshotのmetadata / retrieval実レビュー結果をユーザーが受入判断する段階。その後MATRIX-003のroot / operation shards / Workflows等から次scopeを確認する。順序変更は先に確認する。
 3. Task 11–14はcomplete surface、Task 15はRC、Task 16はstable。前段のexit criteriaを満たさず後段の完了を宣言しない。
 4. 今後の各checkpoint記録は「変更・影響・最終検証・残件・commit案」の短い要約とし、途中runや解決済み試行錯誤を累積しない。詳しい根拠はcode / tests / versioned auditとGit履歴へ委ねる。
 

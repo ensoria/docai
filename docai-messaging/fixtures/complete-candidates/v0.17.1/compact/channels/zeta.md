@@ -1,4 +1,4 @@
-> docai-messaging: 0.17.1 | profile: compact | perspective: storefront-service | coverage: complete | knowledge: complete | source_refs: all
+> docai-messaging: 0.17.1 | profile: compact | perspective: storefront-service | coverage: complete | knowledge: complete | source_refs: complete-contexts
 
 ## RECEIVE z.events (z-operation)
 
@@ -48,4 +48,4 @@ none
 
 none
 
-> docai-identity: set_id: b32:qbmoau4nwpkctvr6y5lgkioesq | projection_id: b32:fhpgrvvanncax3sheoynr6guva
+> docai-identity: set_id: b32:iko3emgwpuxgtidryxodnmamlq | projection_id: b32:6bgltig2woqvwx2k5fwfqls5cy
