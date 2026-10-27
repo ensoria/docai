@@ -199,6 +199,46 @@
 
 ---
 
+## 次checkpoint設計: Operation-Index Shard Contributor Closure（設計承認済み）
+
+**Intent / approaches（2026-10-27）:** main / `fbd900f`、開始時clean。ユーザーは次scopeとしてoperation-index shardを先に進める推奨案の設計化を承認した。Workflow先行案は直接取得文書の来歴を改善する一方、Workflow自身の事実と参照先operationの寄与境界の定義が必要。採用案は既存operation所有元とsource比較済みrouting factsを基にshardの寄与集合を導出し、channelのrouting-provenance closureと整合させる。既存出力のrefsやfilenameをauthorityにせず、README §3 / §3.2 / §6.1 / §8を正とする。
+
+**Scope / design:** candidate-only source auditへoperation-index shardのexact contributor gateを追加する。source四種のregistry・inventory・operation所有元導出は既存channel gateと共有し、二重のowner規則を持たない。context operationの行は`complete-contexts`、representation operationの行は`complete-representations`、storefront行はAsyncAPIのrouting / Summary / MessageとbehaviorのTask / context selectionから`storefront-asyncapi-3.1.0`＋`storefront-behavior`が寄与する。source比較成功後、検証済みrowsの`indexPath`で各shardの行を集め、root shard routes・実operation-index files・非空の行集合・inventoryの一意な所属の閉包を確認する。各shardはその行に寄与するsourceのunionをASCII順のexact listとし、全四sourceの場合に限り`all`を要求する。channel file全体のrefsを転用せず、そのshardに属する行だけを対象にする。context / CONVENTIONS / channelへの参照は参照先本文のsourceを自動伝播しない。manifestの配置policyは配置のauthorityであり第五のSources行ではない。
+
+**Root / non-goals:** root INDEXは仕様上固定の`all`を既存ordinary validatorが検証済みであり、同じ規則を再実装しない。本checkpointはrootの全semantic factsのsource照合を新たに認定しない。flat routingにshard gateを誤適用せず、既存candidateのsharded publication policyを緩めない。Workflow contributor closure、MATRIX-003全体、MATRIX-004–005、Task 12 / 14 / readiness、一般generator・任意JS入力の公開API・token / performance改善は対象外。
+
+**Candidate / identity impact:** 現candidateでは両profileの`indexes/operations-middle.md`の二opening refsだけを`all`→`complete-contexts`へ訂正し、全四sourceの行があるbroad shardは`all`を維持する。投影metadata訂正としてprojector `1.0.3`→`1.0.4`を提案し、manifestの他fields・publication-policy `1.0.0`・source四files / SHA・全prose / contract bodies・Core / 公開仕様 / ordinary validatorsは不変。両profileを同一explicit manifest指定の専用writerでrestampし全34実identity trailersとroot digestsを更新する。手動hash調整はしない。新snapshotの39SHA / root identitiesとmetadata / retrieval評価を別記し、旧二snapshotのhuman受入を自動転用しない。§6.1はoperation shardのaggregate refsをtask-scoped provenanceのためだけには展開しないため、この訂正だけでtask全体のload削減を主張しない。
+
+**TDD / verification:** ordinary-valid・fresh-stamped pairでcontext-only / representation-only / storefront-only / mixed shardの過少・過剰refs、根拠なし`all`を旧CLIが通すREDを確認してから実装する。exact一・二・三IDと全四sourceの`all`、移動 / 分割 / regrouping、同channelの行が別shardにある場合の非伝播、宣言順序差を検証する。不明owner・duplicate / missing / extra shard・片profile不一致等は既存一次診断を維持し、checker前後bytes不変を確認する。配置変更testsは対応するplacement / summary policyとroot routingも整合させ、別gateの失敗を新gateの証拠にしない。既存channel / storefront / catalog-placement tests、全suite、Core / Complete checker、両profile no-op dry-run、source / manifest / profile限定差分と新SHA照合、`git diff --check`で完了確認する。
+
+**Review / stop boundary:** review観点は行単位のsource authority、routing / shard閉包、既存channel gateの非退行、二opening＋version＋実trailers以外のbytes不変、旧受入との分離。scope拡張や別の投影訂正が必要なら実装前に確認する。実装結果はTODO / candidate README / SOURCE-TRACEABILITYへ簡潔に記録し、新snapshotの実レビュー結果をユーザーへ提示して1コミット相当で停止する。Gitはread-only。今回はTODOへの設計記録だけで、設計承認後に実行計画へ進む。
+
+---
+
+### Operation-Index Shard Contributor Closure Implementation Plan — 2026-10-27
+
+> **For agentic workers:** 実装時は `superpowers:executing-plans`（主担当実装）または `superpowers:subagent-driven-development` を使用する。ユーザーのGit read-only / canonical TODOを優先し、別worktreeや計画専用file・commitを作らない。実行方法は計画確認時に選択する。
+
+**Goal / Spec:** 直前の短い設計（2026-10-27にユーザー承認）に従い、全operation-index shardの行単位exact contributor gateと正しいcandidate metadataを成立させる。
+
+**Architecture / Tech Stack:** 既存Node.js ESM / `node:test`、source inventoryとvalidated core factsを使用する。operation所有元導出を共有helperへ抽出し、channelとshardの別auditが同じsource規則を使う。ordinary/source比較後に合成し、公開validatorや新dependencyは追加しない。
+
+**Global Constraints:** HEAD `fbd900f`、既存差分は承認済みTODO設計だけ。Git read-only。source四files / SHA、Core / 公開仕様 / ordinary validators、全prose / contract bodiesは不変。candidate変更はmiddle両profileの二opening refs、manifest generator.version `1.0.4`、全34実identity trailersとroot digestsに限定する。他manifest fields / publication-policy `1.0.0`は不変。新snapshot受入は別途ユーザー判断、MATRIX-003全体・004–005 / Task 12・14 / readinessは閉じない。
+
+**Files / Interfaces:** 新`tools/lib/complete-operation-contributors.mjs`の`collectCompleteOperationContributors(sources, sourceIds) -> { issues: string[], contributors: Map<string, string[]>, operations: string[] }`が四source registry / inventory / behavior所有元とoperationごとの寄与集合を提供する（失敗時issues非空、呼出側は集合を使わない）。既存`complete-channel-contributor-audit.mjs`はこのhelperを利用しexport/signatureと診断意図を保持。新`complete-operation-shard-contributor-audit.mjs`の`auditCompleteOperationShardContributorClosure(sources, sourceIds, documentSet, coreFacts) -> string[]`を`complete-candidate-source-audit.mjs`へ合成する。新testは`tools/tests/complete-operation-shard-contributor-audit.test.mjs`、既存fixture helperとcatalog-placement / channel / storefront / check-complete testsを必要に応じ調整。candidate manifest / 両profiles / README / SOURCE-TRACEABILITYと本TODOが証跡対象。
+
+**Review Focus:** (1) channel aggregateでなくshard内の行だけを集計、(2) root routes / 実shard / 行所有の一意・非空閉包、(3) source比較・pair・placement一次診断と既存channel gateの維持、(4) 二opening＋version＋実trailer限定差分とno-op、(5) 旧human受入と新metadata/retrieval評価の分離。以下の境界test・bytes比較・証跡でそれぞれ確認する。
+
+- [ ] **1. REDを固定。** temporary candidateのmiddle refsをまずliteral `complete-contexts`へ正規化し、context-only shardの余分ID・wrong ID・`all`を両profile同値で設定する。`check(directory, 1, /operations-middle\.md.*source_refs.*contributors/i)`でordinary-valid / fresh stamp / checker read-onlyを要求。`node --test docai-messaging/tools/tests/complete-operation-shard-contributor-audit.test.mjs`が旧CLI exit 0で失敗することを確認する。単一IDの削除による空listはordinary-invalidなので新gateのREDに数えず、過少申告は複数source shardで検証する。
+- [ ] **2. GREENと共有化。** 上記共有helperを抽出し既存channel gateを移行、新shard auditを追加する。`coreFacts.operations.rows[].indexPath`、`operations.shards[].path`、実文書の標準root headingでshardを識別しfilenameに依存しない。非empty route集合でsharded formと判断し、flat formは既存ordinary/source/policy検証へ委ねる。source inventoryの全operationが一意に属し、route / 実file / rowsが一致することを確認し、行ownerのunionをexact listまたは全四sourceの`all`と比較する。source比較成功後、既存channel gateと同じ合成段階で実行する。新test GREENと旧channel / storefront tests成功を確認し、未訂正repository candidateは新gateがmiddle両refsを拒否することをread-onlyで確認する。
+- [ ] **3. 境界tests。** representation-onlyは`complete-representations`、storefront-onlyは`storefront-asyncapi-3.1.0, storefront-behavior`、context＋representationは`complete-contexts, complete-representations`、context＋storefrontは`complete-contexts, storefront-asyncapi-3.1.0, storefront-behavior`、全四sourceは`all`をliteral期待値とする。各missing / extra / wrong / 不適切allと全四ID明示listを拒否し、整合したrename / split / regrouping・宣言順序差は受理する。同channelのoperationを二shardへ分け、一方のみに他sourceの行を置き、channel aggregateを他方へ伝播しないことを検証する。配置・Summary policyとrootの実bounds / Tasksを整合させ、失敗が別gateの偶然でないことを確認。helper-levelでunknown owner / route-file-row不一致・flat非適用、CLIでduplicate / missing / extra shardと片profile差の既存一次診断を確認し、既存gateを弱めない。
+- [ ] **4. Candidate訂正・stamp・証跡。** middle両openingだけを訂正、manifest generator.versionだけを`1.0.4`へ変更。`node docai-messaging/tools/restamp-document-set.mjs --write --projection-manifest docai-messaging/fixtures/complete-candidates/v0.17.1/source/projection-input-manifest.json docai-messaging/fixtures/complete-candidates/v0.17.1/full`を実行し、最後のrootを`compact`に替えてもう一回実行する。同commandの`--write`なしで両方`restamp required: no`を確認。repository stamp中はcandidate copy testsを並行しない。旧snapshot表を保持し、新39 SHA / roots、限定bytes比較、§6.1 aggregate非展開とtoken効果非認定、新human受入pendingをREADME / SOURCE-TRACEABILITYへ記録する。既存temporary fixturesで整合移動後のrefs更新が必要なら正しい行unionへ修正し、不正期待を温存するためにgateを緩めない。
+- [ ] **5. 最終検証・review・停止。** focusedは`node --test docai-messaging/tools/tests/complete-operation-shard-contributor-audit.test.mjs docai-messaging/tools/tests/complete-channel-contributor-audit.test.mjs docai-messaging/tools/tests/complete-storefront-contributor-audit.test.mjs docai-messaging/tools/tests/complete-catalog-placement.test.mjs docai-messaging/tools/tests/check-complete-fixtures.test.mjs`。全suiteは`node --test docai-messaging/tools/tests/*.test.mjs`、Coreは`node docai-messaging/tools/check-core-fixtures.mjs`、Completeは`node docai-messaging/tools/check-complete-fixtures.mjs`。fail 0 / Core 264 cases・193 invalid・193/193 one-invalidity・unused 0・gaps 0 / Complete 17 paths等価を確認し、既存Python 3.9 skipは別記する。両no-op、新39SHAとroot identities、HEAD比の四source・他manifest fields・二openingと実trailer以外のprofile bytes不変、`git diff --check`を確認。五Review Focusと全差分をreviewし、実測 / 影響 / 残件を短くTODOへ記録、新snapshotの実結果をユーザーへ提示して停止。commit案: `fix(messaging): enforce exact operation shard contributors`。
+
+**Self-review / handoff:** 単一のshard寄与closure修正として五stepへ集約。source集合APIと既存audit API、行pathとroute path、各Review Focusのtest / bytes確認を設計と照合済み。主担当実装＋最後に独立reviewを推奨（共有owner規則から投影訂正・identityまでの依存関係を一貫して確認できる）。taskごとの独立実装・review方式は各段階を別担当で検証できるが、同じhelper / fixture / candidateの引継ぎが増える。実行方法と本計画の確認待ち。今回の変更はTODOのみ、実装・test・stamp未実施。
+
+---
+
 ### Task 13: Complete Surface Focused Corpus を完成させる
 
 **Files:**
