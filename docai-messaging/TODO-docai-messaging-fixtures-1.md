@@ -11,7 +11,7 @@
 - 一度に1コミット相当のcheckpointだけ進めて停止する。実装はTDD（RED→GREEN）、順序・scope変更は実装前に確認。完了済みcheckpointを再実装しない。
 - 判断が必要なら各案の利点・欠点・推奨理由を示す。変更量の少なさを推奨理由にせず、仕様・設計・品質を優先する。
 - 設計・影響・実測・残件を本TODOへ簡潔に記録する。終了時は変更概要、検証結果、review観点、残件、1行commit案を提示する。
-- all-channel contributor実装・検証は完了し未コミット差分を残して停止。新snapshotのmetadata / retrieval実レビュー結果はユーザー受入待ち、次scopeへ自動で進まない。
+- all-channel contributor実装・検証は完了。新snapshotのmetadata / retrieval実レビュー結果は2026-10-27にユーザー受入済み。次scopeへ自動で進まない。
 
 ## 現在の到達点
 
@@ -31,7 +31,7 @@
 - skip: `validates source-shard evidence with the declared minimum Python 3.9`、python3.9未導入。Python最小版での実行成功を認定していない。
 - Core checker: 264 cases / 193 invalid / one-invalidity 193/193 / unused rules 0 / coverage gaps 0。
 - Complete checker: 17 paths、full/compact equivalent。pair一致だけでsource completeness / readinessを認定しない。
-- Candidate: source四files＋explicit manifest、projector `1.0.3`、publication policy `1.0.0`。[新snapshot / SHA記録](fixtures/complete-candidates/v0.17.1/SOURCE-TRACEABILITY.md#refreshed-contributor-snapshot--2026-10-27)はmetadata / retrieval実レビュー結果の受入待ち。[旧snapshot](fixtures/complete-candidates/v0.17.1/SOURCE-TRACEABILITY.md#finite-language-and-semantic-review--2026-10-24)のH evidenceとは分離する。
+- Candidate: source四files＋explicit manifest、projector `1.0.3`、publication policy `1.0.0`。[新snapshot / SHA記録](fixtures/complete-candidates/v0.17.1/SOURCE-TRACEABILITY.md#refreshed-contributor-snapshot--2026-10-27)のmetadata / retrieval実レビュー結果は2026-10-27にユーザー受入済み。[旧snapshot](fixtures/complete-candidates/v0.17.1/SOURCE-TRACEABILITY.md#finite-language-and-semantic-review--2026-10-24)のH evidenceとは分離する。
 - language/semantic結果は2026-10-24にユーザーが受入（`67cb116`）。一般generator・将来snapshot・本番business / Kafka / OAuth品質、token効率・配置最適性の認定ではない。content / policy変更時は再reviewする。
 
 ## 共通の実装・公開制約
@@ -79,7 +79,7 @@
 - [x] 同explicit manifestでのsource SHA binding / identity / no-op restamp。
 - [x] source-aware有限gate: source / operation inventory、context selection、purpose / Behavior / Reply / failures、十五CONVENTIONS、Message schema / descriptions / examples、local binding absence、Workflow states、Reference、representations、compact representative policy、convention dependencies。
 - [x] MATRIX-001: 現candidateのwhole-operation inventoryとcontext selection。
-- [x] MATRIX-002の旧snapshot: labels / Summary / 配置 / Relatedの有限gateと2026-10-24のhuman受入。projector `1.0.3`への六metadata訂正後のsnapshotは別証跡で実結果の受入待ち（旧H evidenceを自動継承しない）。
+- [x] MATRIX-002の旧snapshot: labels / Summary / 配置 / Relatedの有限gateと2026-10-24のhuman受入。projector `1.0.3`への六metadata訂正後のsnapshotは別証跡で2026-10-27に実結果をユーザー受入（旧H evidenceの自動継承ではない）。
 - [ ] MATRIX-003全体: Source shards / Reference / CONVENTIONS / 全channelのexact contributor gateまで実装。root / operation shards、Workflows等のsemantic contributor closureは未完了。
 - [ ] MATRIX-004: storefront primary Channel Parametersのsource known-absence前提（不正 / unexpected declarations含む）。static emitted addressだけからsource欠落を推測しない。
 - [ ] MATRIX-005: 残るfinite manifest precedence / perspective / adaptersの契約・conflict / mismatch拒否証拠。digest bindingと個別policy gateから全宣言検証を推論しない。
@@ -149,7 +149,9 @@
 
 ---
 
-## 最新checkpoint: All-Channel Contributor Closure（実装完了・snapshot受入待ち）
+## 最新checkpoint: All-Channel Contributor Closure（実装完了・snapshot受入済み）
+
+**Human acceptance — 2026-10-27:** 実結果への受入確認に対するユーザーの「はい」を受け、下記設計・実行時のpendingを解消。受入記録前に新snapshotの39 SHAを再照合し39/39一致。今回の変更はTODO / candidate README / SOURCE-TRACEABILITYの承認状態だけで、code・source・manifest・両profileは不変。全suiteは前回実測を保持し再実行していない。MATRIX-003全体・004–005 / Task 12・14 / readinessを閉じず、次scopeの実装は開始しない。
 
 **Intent / scope（2026-10-27）:** main / `7a496bf`、開始時clean。ユーザーは「既存寄与導出を全channelへ広げ、synthetic三channelのmetadataも訂正する」推奨案の設計化を承認した。README §3 / §6.1 / §8を正とし、MATRIX-003のchannel役割だけを閉じる。source fact / routing-only factの寄与unionを使い、既存出力をauthorityにしない。
 
@@ -335,7 +337,7 @@
 ## 再開手順と記録方針
 
 1. AGENTSを読み、Git status / logと正本の最新状態を確認する。完了済みTask 1–10へ戻らない。
-2. storefront / all-channel contributor checkpointを再実装しない。次は新snapshotのmetadata / retrieval実レビュー結果をユーザーが受入判断する段階。その後MATRIX-003のroot / operation shards / Workflows等から次scopeを確認する。順序変更は先に確認する。
+2. storefront / all-channel contributor checkpointを再実装しない。新snapshotのmetadata / retrieval実レビュー結果はユーザー受入済み。次はMATRIX-003のroot / operation shards / Workflows等から次scopeを確認する。順序変更は先に確認する。
 3. Task 11–14はcomplete surface、Task 15はRC、Task 16はstable。前段のexit criteriaを満たさず後段の完了を宣言しない。
 4. 今後の各checkpoint記録は「変更・影響・最終検証・残件・commit案」の短い要約とし、途中runや解決済み試行錯誤を累積しない。詳しい根拠はcode / tests / versioned auditとGit履歴へ委ねる。
 
