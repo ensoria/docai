@@ -80,7 +80,7 @@
 - [x] source-aware有限gate: source / operation inventory、context selection、purpose / Behavior / Reply / failures、十五CONVENTIONS、Message schema / descriptions / examples、local binding absence、Workflow states、Reference、representations、compact representative policy、convention dependencies。
 - [x] MATRIX-001: 現candidateのwhole-operation inventoryとcontext selection。
 - [x] MATRIX-002の旧snapshot: labels / Summary / 配置 / Relatedの有限gateと2026-10-24のhuman受入。projector `1.0.3`への六metadata訂正後のsnapshotは別証跡で2026-10-27に実結果をユーザー受入（旧H evidenceの自動継承ではない）。
-- [ ] MATRIX-003全体: Source shards / Reference / CONVENTIONS / 全channel / operation-index shard / source比較済み五Workflowのexact contributor gateまで実装。rootの固定`all`は既存ordinary検証のみでwhole-root semantic proofの追加ではない。残るsemantic contributor domainsは別判断とし、一般Workflow合成や新ownerを認定しない。
+- [ ] MATRIX-003全体: 現projector `1.0.5`の両profile全17役割を有限監査し、source / policy / gate対応とcatalog cell / marker・root集約の根拠を記録。現attribution mismatch・未対応emitted roleなしのclosure findingは実結果へのhuman受入待ち。root固定`all`のordinary検証をwhole-root semantic proofと扱わず、将来owner / source合成・source completenessは認定しない。
 - [ ] MATRIX-004: storefront primary Channel Parametersのsource known-absence前提（不正 / unexpected declarations含む）。static emitted addressだけからsource欠落を推測しない。
 - [ ] MATRIX-005: 残るfinite manifest precedence / perspective / adaptersの契約・conflict / mismatch拒否証拠。digest bindingと個別policy gateから全宣言検証を推論しない。
 - [ ] 残るmatrixを証拠または正当化した明示受入で解決し、Task 12 source-traceability全体を完了判定する。
@@ -303,6 +303,51 @@
 
 ---
 
+## 次checkpoint設計: MATRIX-003 Finite Closure Audit（2026-10-29設計・TDD例外承認済み）
+
+**Intent / approaches（2026-10-29）:** main / `e9816e7`、開始時clean。ユーザーは、現candidateの全ファイル役割と既存gateの証拠を対応づけ、MATRIX-003を有限scopeで閉じられるか判定する監査案の設計化を承認した。別案のroot全体source-aware gate新設は集約事実の自動回帰を強化できるが、既存catalog / label / placement gateやMATRIX-005のpolicy責務との整理が必要。採用案はrootの規範的な固定`all`と非rootの事実寄与を区別し、残件を曖昧な「domains」のまま残したり、新しい検証責務を推測で増やしたりしない。README §3 / §3.2 / §5 / §6.1 / §8を正とする。
+
+**Scope / evidence:** projector `1.0.5`の同一snapshotを対象とし、両profile各17 paths（root 1、CONVENTIONS 1、Source indexes 2、Operation indexes 2、channels 5、Workflows 5、Reference 1）を全件列挙する。SOURCE-TRACEABILITYへpath / file role / exact refs / 事実を供給するsourceまたは明示publication policy / 既存gate・test / 証拠境界を対応させる。四source inputs・manifest・全34profile文書と該当audit / ordinary validator / testsを照合し、出力refs同士の一致だけで正確さを認定しない。Source indexesは単なる行ID unionではなく現行catalog cells / markerの供給元を確認し、別sourceが寄与する可能性をCoreのflat例から否定しない。manifestのbinding / publication事実はSourcesの第五rowを作らないが、MATRIX-005全宣言検証の証拠には外挿しない。
+
+**Root / boundary:** root INDEXの`source_refs: all`はREADMEの固定要件と既存`DM-SRC-005`で扱う。rootのSources / operation-shard / Workflow routingとaggregate状態については対応する既存source比較・publication policy・ordinary集約検証へtraceし、新たなwhole-root semantic proofを主張しない。MATRIX-003の判定対象は現17 filesの寄与元attributionだけで、source事実の欠落一般、未出力機能、root全意味の独立検証とは区別する。未出力のWorkflow / Unprojected shards、将来owner / source合成、任意schema / binding変換・一般generatorは対象外として明示する。Parameters known-absenceはMATRIX-004、残manifest policy / conflictはMATRIX-005、complete negative corpusはTask 13、token / retrieval効果はTask 14に残し、現在の寄与元gate成功からそれらを閉じない。
+
+**Deliverable / acceptance:** 成果物はSOURCE-TRACEABILITYの有限role inventoryとclosure判定、candidate READMEとTODOの状態・残件更新だけ。各emitted roleのattributionに未解決の具体的factまたはgate不足があれば、path・fact・必要authorityを明示してMATRIX-003をopenのまま報告し、無条件の人手受入で誤ったrefsを正当化しない。全役割の証拠が揃った場合は「このsnapshotのemitted rolesに限定したclosure」を実結果として提示する。設計承認や既存snapshotのmetadata受入を、この新しい全役割closure判断へのhuman受入と扱わず、最終受入まではMATRIX-003の全体checkboxを自動完了にしない。Task 12全体・readinessはどちらの結果でも未完了。
+
+**Impact / verification:** docs-only監査のため新規実装のRED→GREENは適用せず、TDD例外として設計承認を求める。code / tests / source四files / manifest / publication-policy `1.0.0` / projector `1.0.5` / 両profile全34 files / identities / Core / 公開仕様を変更しない。repository restamp writeは禁止し、既存writerのdry-runだけを使う。受入済みWorkflow snapshotの39SHAとroots・過去四snapshot表を保持し、監査対象bytes不変を確認する。既存寄与元・source traceabilityに関するtests、Core / Complete checker、両no-op、全17 paths対応・local link・差分checkをread-onlyで検証し、fresh結果と過去の全suite baselineを区別して記録する。codeまたは投影訂正が必要なら本checkpointで修正せず、実装前にscope変更を確認する。
+
+**Review / stop boundary:** review観点は全17 pathsの漏れ / 重複、refsのauthorityが出力から循環していないこと、root固定`all`とsource completeness / policy検証の分離、snapshot bytes / 既存H evidenceの保持、closure範囲と対象外の正確さ。監査実行後の独立reviewで証拠対応と限定判定を確認し、その実結果へのユーザー受入を求めて1コミット相当で停止する。Git read-only。今回はTODOへの短い設計記録だけで、監査・MATRIX-003完了判定・新実装には着手していない。設計承認後に実行計画へ進む。
+
+---
+
+### MATRIX-003 Finite Closure Audit Execution Plan — 2026-10-29
+
+> **For agentic workers:** `superpowers:executing-plans`（主担当監査）または `superpowers:subagent-driven-development` に従う。docs-only / TDD例外は承認済み。canonical TODOとGit read-onlyを優先し、別worktree・計画専用file・commitは作らない。本計画と実行方法の確認後に監査を開始する。
+
+**Goal / Spec:** 直前の短い設計に基づき、projector `1.0.5`現snapshotの全17 emitted rolesについてMATRIX-003の有限attribution closureを判定し、根拠と対象外を固定する。実結果へのhuman受入前はMATRIX-003全体checkboxを完了にしない。
+
+**Architecture / Tech Stack:** 既存Node.js ESM audit / ordinary validators / `node:test`とread-only検証を使う文書監査。新API・code・testsは作らない。各profileの同じpathを一行で表す17行のrole inventoryをSOURCE-TRACEABILITYへ追加し、authority・source比較・ordinary / fixture / human evidenceを分ける。source inputsとpolicyがauthorityであり、既存refsやtest literalだけから判定しない。
+
+**Global Constraints / Files:** HEAD `e9816e7`、既存差分は承認済みTODO設計のみ。編集は本TODOと`fixtures/complete-candidates/v0.17.1/README.md` / `SOURCE-TRACEABILITY.md`の三文書に限定。source四files / SHA、manifest全bytes、publication-policy `1.0.0`、projector `1.0.5`、両profile全34 files / identities、Core / 公開仕様 / code / testsは不変。repository writer `--write`禁止（既存testsが自己所有temporary copyを作りstampすることは許可）。過去四snapshotの156SHA行・root identity記録と既存human受入は保持する。MATRIX-004–005 / Task 12・13・14 / readiness、未出力機能・一般generatorは閉じない。full suite baselineは過去1875 / 1874 pass / 1既存skipを保持し、今回のfresh実行と混同しない。
+
+**Review Focus:** (1) 全17 paths / 両profileの漏れ・重複とrole数、(2) Source catalog cell / markerやrouting-only factの寄与を出力由来の循環で正当化しないこと、(3) root固定`all`とwhole-root semantics・MATRIX-004 / 005の分離、(4) 同一snapshot bytes / 既存H evidence保持、(5) finite closureの実結果とhuman受入・対象外の正確さ。各stepで対応する検査を行い、最後の独立reviewでも確認する。
+
+- [x] **1. Snapshotと全roleを固定する。** 四source inputs・explicit manifest・両profile全34文書を読み、既存Workflow snapshotの39SHA / 両rootsを現在bytesと照合する。profile別path集合が一致し各17、role数がroot 1 / CONVENTIONS 1 / Source indexes 2 / Operation indexes 2 / channels 5 / Workflows 5 / Reference 1であることを確認。SOURCE-TRACEABILITYの新有限監査sectionに17行の`Path (both profiles) | Role / expected refs | Authority / contributing facts | Existing gate / test evidence | Boundary`表を作る。期待refsはsourceから手作業で導出し、同値なfull / compact出力のコピーをauthorityにしない。新hashを作り直さず受入済みWorkflow snapshotへlinkし、同一bytesの監査であることを記す。
+- [x] **2. Authorityとgateの対応を全件監査する。** Source indexesはsource auditの`expectedSourceRows` / row比較 / exact refsとsource binding・各source metadataを照合し、API identity / version / revision / location / kind / specification・局所markerの供給元を明記する。現candidateの自source行だけの証拠を一般的なcross-source寄与否定にしない。CONVENTIONSは比較済み十五sectionsと両storefront source、channel / operation shardは共有operation contributor authorityとrouting/body / indexPath union、Workflowsは五source比較済みowner、ReferenceはrawContent / info / wrapper / sole-owner gateへtraceする。rootはREADME固定`all` / `DM-SRC-005`に加え、Sources・operation bounds / Tasks / Actions・Workflow labels・summary / placement / aggregate状態を各既存gateへ対応づける。manifest由来のpublication decisionsとsource由来のfactを分離し、全precedence / conflict対応とは呼ばない。具体的gapを発見した場合はpath / fact / authority / 不足evidenceを列記し、codeやprojectionは修正しない。
+- [x] **3. Fresh検証と限定結論を記録する。** `node --test docai-messaging/tools/tests/complete-channel-contributor-audit.test.mjs docai-messaging/tools/tests/complete-storefront-contributor-audit.test.mjs docai-messaging/tools/tests/complete-operation-shard-contributor-audit.test.mjs docai-messaging/tools/tests/complete-workflow-contributor-audit.test.mjs docai-messaging/tools/tests/complete-candidate.test.mjs docai-messaging/tools/tests/complete-source-projection.test.mjs docai-messaging/tools/tests/complete-catalog-placement.test.mjs docai-messaging/tools/tests/complete-context-placement.test.mjs docai-messaging/tools/tests/complete-convention-retrieval.test.mjs`を実行しfail 0を確認。Source catalogのCLI証拠は`node --test --test-name-pattern='Sources|source_ref' docai-messaging/tools/tests/check-complete-fixtures.test.mjs`でfresh確認し、意図的なname-filter skipを未導入Python skipや全suite結果と区別する。Core / Completeは`node docai-messaging/tools/check-core-fixtures.mjs` / `node docai-messaging/tools/check-complete-fixtures.mjs`で264 / 193 invalid / 193/193 one-invalidity / unused 0 / gaps 0、17 paths等価を確認。両profileへ`node docai-messaging/tools/restamp-document-set.mjs --projection-manifest docai-messaging/fixtures/complete-candidates/v0.17.1/source/projection-input-manifest.json <fullまたはcompactの絶対path>`を実行し、両`restamp required: no`を確認。gapなしなら現17 roles限定のclosure finding、gapありならopen findingと不足を記し、どちらも新しいhuman受入はpendingとする。README / TODOとMATRIX-003 rowの説明を実結果に合わせ、checkboxは未完了を維持する。MATRIX-004–005 / Task 12全体を連動完了にしない。
+- [x] **4. 独立review・最終差分確認・停止。** fresh reviewer一名が17行のcoverageとauthority、五Review Focus、限定結論と対象外、過去H evidenceの非転用をread-onlyで確認する。code / projection修正が必要な指摘はdocs-only scopeで実装せずユーザーへ確認。主担当はHEAD比の三文書限定差分、四source / manifest / 34profiles全bytes不変、新旧四表156SHA行保持と39SHA / roots一致、local links、`git diff --check`を確認する。TODOへ実測・review結果・影響・残件を短く記録し、実結果へのhuman受入を求めて停止。Git書込みなし。commit案: `docs(messaging): audit finite contributor closure`。
+
+**Self-review / handoff:** 全17役割のauthority照合・Source catalog特例・root境界・same-snapshot証拠・gap時停止・human受入待ちの各設計条件をstep 1–4へ対応済み。read-only repository検証とtemporary-copy testsを区別し、docsへ新たなtestやREDを要求しない。主担当監査＋最後に独立reviewを推奨（横断するauthority対応を一つの表へ整合させ、最後に別視点で漏れを検査できるため）。role別の別担当監査も可能だが、共通のroot / policy境界の引継ぎが必要になる。本計画と実行方法の確認待ち。今回はTODOのみ変更、監査・tests・MATRIX-003完了判定は未実施。
+
+**Execution ledger（2026-10-29）:** 本計画・主担当監査＋最終独立review・docs-only TDD例外をユーザー承認済み。開始main / `e9816e7`、既存差分は承認済みTODO設計・実行計画だけ。Git read-only / canonical TODOを優先し、別worktree・skill作業dir・commitを作らない。四inputs / manifest・両profile全34文書とrole別audit / root集約codeを読み、39SHA / roots・両17 paths・過去四表156SHA行を確認。Pre-flight: 表の17 pathとsource / policy / gate識別子に新APIや共有code変更なし。17行の有限inventoryを追加し、root fixed allと各leaf・catalog cell / markerのauthorityを分離した。現bytesのattribution mismatchは未検出、fresh検証・独立review・human受入は未完了。
+
+**Fresh verification:** 計画の九test filesは341/341（43576.29575 ms）、Sources / source_ref絞込みは6/6（6133.808708 ms）、いずれもfail / cancelled / skip 0、exit 0。name対象外は未実行でPython skipとは別。Core 264 / 193 invalid / one-invalidity 193/193 / unused 0 / gaps 0、Complete 17 paths等価、両explicit-manifest dry-run no-op。現39SHA / roots・過去156SHA行 / root記録保持、両17 pathsとinventory一致、local file links・三文書限定差分・`git diff --check`を確認。code / tests / source / manifest / 全34profiles / Core / 公開仕様はHEADから不変。全suiteは再実行せず、過去1875 / 1874 pass / 1既存Python 3.9 skipをbaselineとして区別する。独立reviewと実結果human受入はpending。
+
+**Final independent review / rulings:** fresh reviewer一名が五Review Focus・全差分・source / policy / gate対応をread-only確認。Critical / Important / Minorなし、deferred minorなし、修正pass・再reviewなし。39SHA / roots、156歴史SHA行、過去language review以降のH証拠bytes、34profiles不変、17役割・33local file links / 8anchors・三文書限定差分を独立確認。Declined九項目は全て境界を保持する判断: (1) 新human受入はユーザー判断（誤れば無断完了）、(2) whole-root全意味は独立証明でない（誤ればsemantic過大認定）、(3) primary Parameters前提はMATRIX-004（誤ればsource欠落見逃し）、(4) 残policy / conflictはMATRIX-005（誤れば未検証policy認定）、(5) cross-source Step testを将来Related寄与一般へ外挿しない（誤れば寄与漏れ）、(6) 将来owner / catalog identity・marker supplier / provenance chain / 一般converterは対象外（誤れば未比較入力の誤認定）、(7) source completeness・全assertion正確さは別（誤れば欠落・誤内容の見逃し）、(8) Task 12全体 / 13 / 14・production / readinessを閉じない（誤れば早すぎる公開）、(9) fresh全suite / Python 3.9成功・reviewerによる主担当検証再実行は未認定（誤れば実行証拠の過大表示）。主担当のfresh実測とreviewerの独立bytes検証を混同しない。
+
+**Final result / stop:** 現projector `1.0.5`の全17役割・両profileに未解決attribution mismatch / 未対応emitted roleなしという有限closure findingを提出。成果物は三文書のみ、source / manifest / profile / identity / code / tests不変、Git書込み・restamp writeなし。docs-only TDD例外を維持。実結果human受入待ちのためMATRIX-003全体checkboxはopen、MATRIX-004–005 / Task 12–14 / readinessも未完了のまま、この1コミット相当で停止する。commit案: `docs(messaging): audit finite contributor closure`。
+
+---
+
 ### Task 13: Complete Surface Focused Corpus を完成させる
 
 **Files:**
@@ -441,7 +486,7 @@
 ## 再開手順と記録方針
 
 1. AGENTSを読み、Git status / logと正本の最新状態を確認する。完了済みTask 1–10へ戻らない。
-2. storefront / all-channel / operation-index shard / 五Workflow contributor checkpointを再実装しない。projector `1.0.5` snapshotの実結果は受入済み。次は残るMATRIX-003の認定境界等から次scopeを確認する。root固定`all`の再実装はしない。順序変更は先に確認する。
+2. storefront / all-channel / operation-index shard / 五Workflow contributor checkpointを再実装しない。projector `1.0.5` metadata snapshotは受入済み。全17役割のMATRIX-003有限closure監査は別の実結果として受入待ちで、全体checkboxはopen。受入後に次scopeを確認する。root固定`all`の再実装はしない。順序変更は先に確認する。
 3. Task 11–14はcomplete surface、Task 15はRC、Task 16はstable。前段のexit criteriaを満たさず後段の完了を宣言しない。
 4. 今後の各checkpoint記録は「変更・影響・最終検証・残件・commit案」の短い要約とし、途中runや解決済み試行錯誤を累積しない。詳しい根拠はcode / tests / versioned auditとGit履歴へ委ねる。
 
