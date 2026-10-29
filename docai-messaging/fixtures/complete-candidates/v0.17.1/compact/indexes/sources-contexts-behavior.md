@@ -10,4 +10,4 @@
 | complete-representations | behavior-configuration | none | none | none | complete-representations.json | fixture-1 |
 | storefront-behavior | behavior-configuration | none | none | none | storefront-behavior.json | fixture-1 |
 
-> docai-identity: set_id: b32:k7j6dn2ifngozs4vvbcvpjq5nu | projection_id: b32:z3mv5yb6siycc2cmkhg2buq2bu
+> docai-identity: set_id: b32:54exbpg7qfzv2icycgrmwdmxnq | projection_id: b32:vjb6ukulldji3iam5c3fgnte3e

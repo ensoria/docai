@@ -169,6 +169,16 @@ Links to channels, contexts and CONVENTIONS do not import their separately loade
 
 This correction changes only the two middle-shard opening refs to `complete-contexts`, manifest generator.version `1.0.3` → `1.0.4`, and all 34 real identity trailers. The broad shard retains `all`. Root INDEX's fixed `all` is already ordinary-validated, not reimplemented or claimed as a new proof of every root semantic fact. Four source files/SHA values, other manifest fields, publication-policy `1.0.0`, all prose/contracts, Core and public grammar are unchanged. Workflow and other remaining semantic contributor domains, MATRIX-003 as a whole, MATRIX-004–005, Tasks 12/14 and readiness remain open. The separate metadata/retrieval findings for the snapshot below were accepted by the user on 2026-10-27.
 
+## Finite Workflow Contributor Closure
+
+`tools/lib/complete-workflow-contributor-audit.mjs` runs after source-to-output comparisons and checks the five already compared Workflow roles: alpha-delivery, alpha-observability, state-none, state-unknown and state-unsupported. Their titles, purposes, expanded coordination and section-state facts all come from `complete-contexts.workflows`; an unknown requirement or unsupported feature/location remains a fact supplied by that source, not provenance from an imaginary missing input. The gate checks the four-source registry, the exact compared owner scope, resolved context-placement paths, routing rows, definitions and actual Workflow files, including duplicates. It follows source owners and explicit paths, not filenames, titles or existing output refs. Unexamined additional owners or ownership added/transferred to another source are not automatically certified by a registry lookup.
+
+Each of these five files requires exact `source_refs: complete-contexts`. A source-authored Step identity is a Workflow input, not an automatic copy of the referenced channel's body. Links, Related navigation and convention-dependency edges do not import referenced documents' body contributors. Existing Step identity/source comparison, dependency closure, required/supplemental context, direct-Workflow whole-CONVENTIONS fallback, incomplete-state stopping and trust/side-effect boundaries remain unchanged.
+
+CLI tests use ordinary-valid, freshly stamped pairs for wrong/extra/all refs across all five owners, explicit owner relocations, declaration order changes, expanded/none/unknown/unsupported roles, shadow Steps, a referenced multi-source channel and a source-authored storefront Step with aligned Related navigation. Helper tests reject missing/duplicate/extra owner/path/routing/definition/file closure and unexamined source ownership. Primary source/profile diagnostics retain precedence. Intentionally malformed structures and empty refs are tested as writer rejection plus unstamped ordinary CLI rejection, not as valid stamped candidates. Writer/checker byte immutability is asserted.
+
+The measured candidate correction changes four opening refs, not ten: the two alpha Workflows in both profiles previously used `all`; the three section-state Workflows already had the correct refs and retain them. Projector `1.0.4` → `1.0.5` and all 34 real identity trailers are refreshed. The four authoritative sources/SHA values, other manifest fields/publication-policy `1.0.0`, all prose/contracts, Core/public grammar and ordinary validators are unchanged. Only the five Workflow roles are certified; whole-root semantic proof, other remaining contributor domains, MATRIX-003 overall, MATRIX-004–005, Tasks 12/14 and readiness remain open. The new snapshot below has separate metadata/retrieval findings pending human acceptance, without a token/performance claim.
+
 ## Fact Matrix Review — 2026-10-19
 
 Review baseline: `dce8b3c`, with 17 paths per profile, 11 operations (three context, six representation, two storefront), five direct Workflows, and one Reference Material. This is a responsibility matrix for the currently emitted fact domains, not a complete-surface feature inventory or a claim that every source member is projected. The detailed schema/section comparisons above remain the leaf-level comparison contracts. A final audit pass has identified the open items below; it has **not** closed Task 12.
@@ -212,7 +222,7 @@ Implementation evidence: **A** = `tools/lib/complete-candidate-source-audit.mjs`
 | Compact examples/defaults/same-as/retrieval-unit metadata | Ordinary expansion and pair equality, source checks after expansion, P's retention of required representatives | S + O + F / candidate policy. No new source fact is supplied by a compact encoding. Token savings and optimality remain unmeasured. |
 | Related navigation | Manifest `publicationPolicy.relatedNavigation`; N unions source-checked Workflow context paths with known source Step participation by exact operation heading | S + G + O + F. Navigation-only known edges; no inference of absent unknown Steps, Reference Material inclusion, required retrieval or side-effect authority. |
 | Prose language and finite display/path-policy suitability | The snapshot and seventeen paired-path evidence rows below, accepted by the user on 2026-10-24; label and navigation gates certify only their stated finite roles | F + H for this snapshot's English prose and synthetic-fixture suitability. No general semantic/language classifier, naming generator or path/group allocator is certified. |
-| Contributor closure outside Source shards / Reference Material | A invokes finite channel and operation-shard audits after source comparisons: exact CONVENTIONS refs, source-owner/routing/body unions for every channel, and row-local unions for each operation-index shard | S + O + F for CONVENTIONS, channel and operation-index shard roles, including relocated/mixed owners. Root's fixed `all` has ordinary evidence only; other semantic contributor domains remain H + U (MATRIX-003). Blanket `all` is not certified as precise provenance. |
+| Contributor closure outside Source shards / Reference Material | A invokes finite channel, operation-shard and Workflow audits after source comparisons: exact CONVENTIONS refs, channel unions, row-local shard unions and exact provenance for the five compared Workflow owners | S + O + F for these finite roles, including relocated owners. Root's fixed `all` has ordinary evidence only; remaining semantic contributor domains retain MATRIX-003's open boundary. Unexamined Workflow owners and blanket `all` are not certified as precise provenance. |
 
 ### Audit Items and Stop Boundary
 
@@ -222,7 +232,7 @@ These are review findings, not new normative rules. The current positive set is 
 |---|---|---|
 | MATRIX-001 (resolved for current candidate) | Whole-candidate inventory has exact source/output closure and unique declaration ownership. Synthetic context selection remains source-compared by D; the storefront context gate now compares explicit behavior arrays under a manifest-bound authority to each row/column. | Inventory and context evidence is implemented rather than inferred from pair equality or absence of generic AsyncAPI fields. This is a finite candidate proof, not a general coordination-source adapter or a Task 12 completion verdict. |
 | MATRIX-002 (2026-10-24 snapshot accepted; refreshed metadata accepted 2026-10-27) | Operation / Workflow labels, allocation and Related retain their finite gates. The user accepted the recorded language/semantic findings for projector `1.0.2`. Projector `1.0.3` corrects six refs with unchanged prose; the separately recorded metadata/retrieval findings and exact hashes below were accepted by the user on 2026-10-27. | Old H signoff is not automatically transferred to new hashes; refreshed-snapshot metadata acceptance is separate. Existing label/navigation/placement evidence stands. No general allocator, classifier, production UX, token benefit or Task 12 completion is certified. |
-| MATRIX-003 (channel / CONVENTIONS / operation-index shard exact refs resolved; remaining domains open) | A retains exact Source-shard / Reference checks and invokes contributor audits for every channel, CONVENTIONS and operation-index shard. Both missing and extraneous contributors fail; actual four-source unions use `all`, otherwise exact lists. Root's fixed `all` has existing ordinary validation, not a new whole-root semantic proof. Workflows and remaining semantic contributor domains are not certified here. | Define remaining semantic contributor closure and distinguish reader load-all safety from producer provenance accuracy. Do not infer complete attribution from parity or reuse Core's flat-catalog assumptions. |
+| MATRIX-003 (channel / CONVENTIONS / operation-index shard / five Workflow exact refs resolved; remaining domains open) | A retains exact Source-shard / Reference checks and invokes contributor audits for every channel, CONVENTIONS, operation-index shard and the five source-compared Workflows. Missing and extraneous contributors fail; four-source unions use `all`, otherwise exact lists. Root's fixed `all` has existing ordinary validation, not a new whole-root semantic proof. Unexamined Workflow owners and remaining semantic contributor domains are not certified here. | Define remaining semantic contributor closure and distinguish reader load-all safety from producer provenance accuracy. Do not infer complete attribution from parity or reuse Core's flat-catalog assumptions. |
 | MATRIX-004 | Both primary storefront Channel sections currently say Parameters none; A/M do not compare their source `parameters` members. Ordinary checks enforce parameter names from the emitted static address, not every authoritative source declaration. | Decide the finite source known-absence preconditions (including malformed or unexpected source declarations) and test them independently of output address consistency. Do not claim a general parameter converter. |
 | MATRIX-005 | Exact manifest bytes bind declared precedence, perspective and adapters to projection identity. A validates source bindings/generator and the dependency/context-selection/operation-label/Workflow-label domains; C, L, FCP, CP and N check only their explicit catalog-summary, catalog/channel/context-placement and Related policy blocks; the trusted CSV helper validates its exact scope/mapping. This is not validation of every other precedence/adapter/perspective declaration or a general conflict-resolution policy. | Review the candidate's finite manifest policy contract and determine necessary mismatch/conflict rejection evidence. Generic precedence/counterpart/adapter feature coverage remains Task 13, not an automatic Task 12 guarantee. |
 
@@ -452,6 +462,63 @@ The user accepted these actual metadata/retrieval findings after independent rev
 | `source/complete-contexts.json` | `8b1d2ad744ed2950849a1182aaed15ecdbfb4da92f0ac2086b6cb92a9242771f` |
 | `source/complete-representations.json` | `4199393498f7aa3e81e69b5bb5842fc55c076365c082b75a129a8a4d336d677e` |
 | `source/projection-input-manifest.json` | `ced95ee03e923021684c51cda0d21a0d95ae4d0d8c690f0866bad8ca6610d8b8` |
+| `source/storefront-behavior.json` | `8a8bf42c303213a3d167a5c9cbd58acc682ccb38761b9e6bdd12d63531a3de43` |
+| `source/storefront.asyncapi.json` | `779c5c57a09c348ab398f22b558a474dfdccc509b74e83a38815f80cde6bdd97` |
+
+## Workflow Contributor Snapshot — 2026-10-29
+
+Status: **actual metadata/retrieval findings submitted for human acceptance**. This projector `1.0.5` snapshot is separate from all three previously accepted snapshots. Exact comparison against `870a809` confirms four source files/SHA values unchanged, manifest equality except generator.version, and all profile bytes unchanged except the four alpha-Workflow opening refs and each actual final identity trailer. The six section-state Workflow refs were already `complete-contexts` and remain unchanged. No prose, example, contract, context requirement, allocation, completeness state or publication-policy recipe changed.
+
+Metadata/retrieval finding: all five compared Workflows receive their own facts from the context source, including the none/unknown/unsupported evidence and source-authored Step identities. Correcting the two alpha owners preserves contract and coordination meaning while removing unsupported producer-wide attribution. A referenced operation can have multiple body sources without adding them to the Workflow; contracts and source-authored coordination remain separately loaded. Whole-CONVENTIONS fallback for direct/supplemental Workflow retrieval, required contexts, incomplete-state stopping and source-index inclusive bounds/fixed-point expansion remain in force. The removal of Workflow `all` does not prove fewer whole-task loads or tokens: other loaded provenance and shard rows can still reach all sources. No performance, side-effect authority or runtime readiness is granted.
+
+Independent review and verification are recorded in the canonical TODO. Only these finite metadata/retrieval findings and exact bytes are submitted to the user; design/plan approval and earlier H signoff are not acceptance of the new hashes. Content/policy changes require renewed review. MATRIX-003 overall, MATRIX-004–005, Tasks 12/14 and release readiness remain open.
+
+### Root identities
+
+- compact: `> docai-identity: set_id: b32:54exbpg7qfzv2icycgrmwdmxnq | projection_id: b32:vjb6ukulldji3iam5c3fgnte3e | set_digest: sha256:ef0970bcdf81735d205811a2cb0d976cc72fc9fb9605aa8ab83d68a28c71dc0e | projection_digest: sha256:aa43ea2a8b58d28da00ce8b6533664d9bd4614ac8b4f3e3711aa0cb179396628`
+- full: `> docai-identity: set_id: b32:gfmi3or2obeyzaibo5dxqqyn6q | projection_id: b32:vjb6ukulldji3iam5c3fgnte3e | set_digest: sha256:31588dba3a70498c8101774778430df45d3f2dc92af95318452de3444a50aed8 | projection_digest: sha256:aa43ea2a8b58d28da00ce8b6533664d9bd4614ac8b4f3e3711aa0cb179396628`
+
+### Exact reviewed bytes
+
+| File (candidate-relative) | SHA-256 of exact bytes |
+|---|---|
+| `compact/CONVENTIONS.md` | `e947648e02102b1e40ce26ac5a6ad78207b64a6d155f4d0c4942dfbdd0522946` |
+| `compact/INDEX.md` | `ba7f59b89aaf16be257f5ff069990f2414edbba92b8cc7b5033f1821be29d01c` |
+| `compact/channels/alpha.md` | `b5d254d8ffe0e4ce7f90a21d7b087b10edc551bac903e8355e16f28fb43f054d` |
+| `compact/channels/middle.md` | `4041f02eb8a84c11c5df26e36f9f2e1eebc8b9ad3b8d49b4940d6b7b087b9c5b` |
+| `compact/channels/orders.md` | `f1d8612f008dbc9be74c54fa3e127006bac0b0ecc7e379a0bdae6b5232e87dd4` |
+| `compact/channels/representations.md` | `3445755f8bd59ccb396bb5d98966828ccee102c6d79d026acaa22431f786e1ae` |
+| `compact/channels/zeta.md` | `b17d715b19dde6c6e4e82fbcda8b7f5ba16a28385e0fcab81247609f1b23e5ea` |
+| `compact/indexes/operations-broad.md` | `9b2473f0bc0ef50be52f32ecaca5c95109cd256cdfe9d61747ef025ac2d27f65` |
+| `compact/indexes/operations-middle.md` | `1f0da141703cf807bba803d4345d600bb4b25f52d5320d8f2d820e334a58ec03` |
+| `compact/indexes/sources-asyncapi.md` | `51d1ba7207a0dc0aa309325d09c023ad842de887a6c902968bb6b65f0bd5206e` |
+| `compact/indexes/sources-contexts-behavior.md` | `cfabb85ba795db482dda5a28db4c00a50b4f3f60c546deaa399417c325bcd035` |
+| `compact/references/middle-operations.md` | `6f702ff539c925d6b21c7c59e595df1586e052e30f9aa63244a356454f3fd767` |
+| `compact/workflows/alpha-delivery.md` | `ae1a909ce5e01a55f08eaaad798ac047c3af990e0a06346beca44f35ba00897f` |
+| `compact/workflows/alpha-observability.md` | `160be83bff7bcfdf729de2551f72a929a3e9cebc64e271b0f098439d01a6235d` |
+| `compact/workflows/state-none.md` | `b5cd2883d66241ed7f38a9dfe24cba6e0f6003e0fa7cd398532ccd6a10126f53` |
+| `compact/workflows/state-unknown.md` | `c7222ebe00fe83e139b6f1d9d72143bc0539d711bb5522cb3493df166a657aa3` |
+| `compact/workflows/state-unsupported.md` | `50dbfbc86344a4b94eb29bd214a69a6a63e0ae27e5d50faa767779614cbbfc86` |
+| `full/CONVENTIONS.md` | `499790d8895c1d1e6fc5c87d0a23baca3d711e6b7cac6f0687a438dddcf3cfc6` |
+| `full/INDEX.md` | `70580cc2b27ed0c309f86b265da5b5ab529f1c9584d3d9543d21db75e429f1be` |
+| `full/channels/alpha.md` | `6ffe1034c3a0c1cabbf8a587fe2ae8d30d1d8963248018084e98c7799e6fb3aa` |
+| `full/channels/middle.md` | `fc152c8e702bc83e793087f0137c538eca60d4f9ecbfea90a7fa95e782923022` |
+| `full/channels/orders.md` | `d01ee52fd8aaa5fa97a84e003a648fe8700cbcec9c8786f1268325bd5a7bcd42` |
+| `full/channels/representations.md` | `e68ed8ca1c1c0d069aea9ad47a6d9a4bdfa89151d4224915fdd575ddfcb176fe` |
+| `full/channels/zeta.md` | `710dcc11e51d73409c1dbc97bf843aa627f1fb930e810c01294ba49bd870b7c6` |
+| `full/indexes/operations-broad.md` | `b9e08a0e85da742ee400516aa7e3d40547a54ff46b68dabacb996719edc31b2b` |
+| `full/indexes/operations-middle.md` | `ffec07cd02e8a45fa13ff4486b915bcba179b364bbd14c542fceea4f0812857b` |
+| `full/indexes/sources-asyncapi.md` | `a7037c79aaaadbe6298268f32476f14f4be262178443d98433fc6177e3a0eb41` |
+| `full/indexes/sources-contexts-behavior.md` | `ba1dafefadb18ceb5758c987a6cbb2fe03b9e53fcdaa9c64290bec321804b1b3` |
+| `full/references/middle-operations.md` | `b4505e65d4d1e8a19ff897b52779b4ef768e24f1374c3873d9fa6f228bfcaad3` |
+| `full/workflows/alpha-delivery.md` | `b2e6f73153e363a6365c445f783680dc2d41a48f0cab405509fbabad07496110` |
+| `full/workflows/alpha-observability.md` | `5c0a09252b31a2392d09ab0a6e7828d6016e7b3a1453880c9ab56e02df3a99af` |
+| `full/workflows/state-none.md` | `5a22c3a17e69940c3bd4264cd0697a58fcb0c0b95c276ca8bee4fcaae5d2f8ca` |
+| `full/workflows/state-unknown.md` | `56fd3944bd6f0dffeb4ee4ee1b9f5032fb4d2674a098f5b04c311e56868b6410` |
+| `full/workflows/state-unsupported.md` | `e3c172ee7319daa2c1d9b031b126381aed38920f8047eccfa92709db2d98b266` |
+| `source/complete-contexts.json` | `8b1d2ad744ed2950849a1182aaed15ecdbfb4da92f0ac2086b6cb92a9242771f` |
+| `source/complete-representations.json` | `4199393498f7aa3e81e69b5bb5842fc55c076365c082b75a129a8a4d336d677e` |
+| `source/projection-input-manifest.json` | `aa43ea2a8b58d28da00ce8b6533664d9bd4614ac8b4f3e3711aa0cb179396628` |
 | `source/storefront-behavior.json` | `8a8bf42c303213a3d167a5c9cbd58acc682ccb38761b9e6bdd12d63531a3de43` |
 | `source/storefront.asyncapi.json` | `779c5c57a09c348ab398f22b558a474dfdccc509b74e83a38815f80cde6bdd97` |
 
