@@ -11,7 +11,7 @@
 - 一度に1コミット相当のcheckpointだけ進めて停止する。実装はTDD（RED→GREEN）、順序・scope変更は実装前に確認。完了済みcheckpointを再実装しない。
 - 判断が必要なら各案の利点・欠点・推奨理由を示す。変更量の少なさを推奨理由にせず、仕様・設計・品質を優先する。
 - 設計・影響・実測・残件を本TODOへ簡潔に記録する。終了時は変更概要、検証結果、review観点、残件、1行commit案を提示する。
-- all-channel / operation-index shard / 比較済み五Workflow contributorの実装・検証は完了。projector `1.0.5` snapshotのmetadata / retrieval実レビュー結果はhuman受入待ち、次scopeへ自動で進まない。
+- all-channel / operation-index shard / 比較済み五Workflow contributorの実装・検証は完了。projector `1.0.5` snapshotのmetadata / retrieval実レビュー結果は2026-10-29にユーザー受入済み。次scopeへ自動で進まない。
 
 ## 現在の到達点
 
@@ -31,7 +31,7 @@
 - skip: `validates source-shard evidence with the declared minimum Python 3.9`、python3.9未導入。Python最小版での実行成功を認定していない。
 - Core checker: 264 cases / 193 invalid / one-invalidity 193/193 / unused rules 0 / coverage gaps 0。
 - Complete checker: 17 paths、full/compact equivalent。pair一致だけでsource completeness / readinessを認定しない。
-- Candidate: source四files＋explicit manifest、projector `1.0.5`、publication policy `1.0.0`。[Workflow snapshot / SHA記録](fixtures/complete-candidates/v0.17.1/SOURCE-TRACEABILITY.md#workflow-contributor-snapshot--2026-10-29)のmetadata / retrieval実結果はhuman受入待ち。受入済みの[operation-shard snapshot](fixtures/complete-candidates/v0.17.1/SOURCE-TRACEABILITY.md#operation-shard-contributor-snapshot--2026-10-27)・[projector 1.0.3 snapshot](fixtures/complete-candidates/v0.17.1/SOURCE-TRACEABILITY.md#refreshed-contributor-snapshot--2026-10-27)・[旧language/semantic snapshot](fixtures/complete-candidates/v0.17.1/SOURCE-TRACEABILITY.md#finite-language-and-semantic-review--2026-10-24)のH evidenceを自動継承しない。
+- Candidate: source四files＋explicit manifest、projector `1.0.5`、publication policy `1.0.0`。[Workflow snapshot / SHA記録](fixtures/complete-candidates/v0.17.1/SOURCE-TRACEABILITY.md#workflow-contributor-snapshot--2026-10-29)のmetadata / retrieval実結果は2026-10-29にユーザー受入済み。受入済みの[operation-shard snapshot](fixtures/complete-candidates/v0.17.1/SOURCE-TRACEABILITY.md#operation-shard-contributor-snapshot--2026-10-27)・[projector 1.0.3 snapshot](fixtures/complete-candidates/v0.17.1/SOURCE-TRACEABILITY.md#refreshed-contributor-snapshot--2026-10-27)・[旧language/semantic snapshot](fixtures/complete-candidates/v0.17.1/SOURCE-TRACEABILITY.md#finite-language-and-semantic-review--2026-10-24)のH evidenceを自動継承しない。
 - language/semantic結果は2026-10-24にユーザーが受入（`67cb116`）。一般generator・将来snapshot・本番business / Kafka / OAuth品質、token効率・配置最適性の認定ではない。content / policy変更時は再reviewする。
 
 ## 共通の実装・公開制約
@@ -251,7 +251,9 @@
 
 ---
 
-## 最新checkpoint: Workflow Contributor Closure（実装完了・snapshot受入待ち）
+## 最新checkpoint: Workflow Contributor Closure（実装完了・snapshot受入済み）
+
+**Human acceptance — 2026-10-29:** 実レビュー結果への受入確認に対するユーザーの「はい」を受け、projector `1.0.5` snapshotの有限metadata / retrieval結果を受入済みと記録。main / `fab548a`、開始時clean、39 SHAと両root identitiesを再照合して一致。今回の変更はTODO / candidate README / SOURCE-TRACEABILITYの承認状態だけで、code・source・manifest・両profileは不変。下記実行時pendingを解消するが、残matrix・Task 12 / 14 / readinessは閉じない。全suiteは前回実測を保持し再実行せず、次scopeの設計・実装にも進まない。
 
 **Intent / approaches（2026-10-27）:** main / `675da3f`。開始時の既存差分は直前のprojector `1.0.4`受入記録三文書だけで、保持する。ユーザーはWorkflowのsource所有元と比較済み事実から寄与を導出する推奨案の設計化を承認した。別案のWorkflow別contributor宣言は複数source合成を明示できるが、宣言と実際のfact authorityの二重管理・乖離を検証する必要がある。採用案は既存のsource / 本文比較をauthorityにし、有限candidateで未導入の合成modelを先取りしない。README §3 / §5 / §6.1 / §8を正とする。
 
@@ -439,7 +441,7 @@
 ## 再開手順と記録方針
 
 1. AGENTSを読み、Git status / logと正本の最新状態を確認する。完了済みTask 1–10へ戻らない。
-2. storefront / all-channel / operation-index shard / 五Workflow contributor checkpointを再実装しない。次はprojector `1.0.5` snapshotのmetadata / retrieval実レビュー結果をユーザーが受入判断する段階。その後、残るMATRIX-003の認定境界等から次scopeを確認する。root固定`all`の再実装はしない。順序変更は先に確認する。
+2. storefront / all-channel / operation-index shard / 五Workflow contributor checkpointを再実装しない。projector `1.0.5` snapshotの実結果は受入済み。次は残るMATRIX-003の認定境界等から次scopeを確認する。root固定`all`の再実装はしない。順序変更は先に確認する。
 3. Task 11–14はcomplete surface、Task 15はRC、Task 16はstable。前段のexit criteriaを満たさず後段の完了を宣言しない。
 4. 今後の各checkpoint記録は「変更・影響・最終検証・残件・commit案」の短い要約とし、途中runや解決済み試行錯誤を累積しない。詳しい根拠はcode / tests / versioned auditとGit履歴へ委ねる。
 
