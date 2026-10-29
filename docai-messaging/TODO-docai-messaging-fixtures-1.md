@@ -8,10 +8,10 @@
 
 - 規範仕様は[README](README.md)、Core coverageは[Core COVERAGE](fixtures/core/v0.17.1/COVERAGE.md)、candidateのfact別根拠と認定範囲は[Complete SOURCE-TRACEABILITY](fixtures/complete-candidates/v0.17.1/SOURCE-TRACEABILITY.md)。実装・期待値と衝突したらREADMEの意味を先に確認する。
 - [リポジトリAGENTS](../AGENTS.md)を守り、Gitは読取り専用。add / commit / stash / checkout / reset / fetch / pull / push / tag / config / worktree変更は行わない。コミットはユーザーが行う。
-- 一度に1コミット相当のcheckpointだけ進めて停止する。実装はTDD（RED→GREEN）、順序・scope変更は実装前に確認。完了済みcheckpointを再実装しない。
+- 一度に1つの完了成果物をcheckpointとして進めて停止する。2026-10-29のユーザー要望により、次回から関連する複数gate・tests・証跡・完了判定をまとめ、原則1コミット相当とする。設計・計画・実装・受入をそれぞれ必ず別コミットにする運用は要求しない。同じ責務としてreview可能な範囲を保ち、独立した不具合や異なるrelease段階は無理に混ぜない。実装はTDD（RED→GREEN）、具体的な順序・scope変更は実装前に確認。完了済みcheckpointを再実装しない。
 - 判断が必要なら各案の利点・欠点・推奨理由を示す。変更量の少なさを推奨理由にせず、仕様・設計・品質を優先する。
 - 設計・影響・実測・残件を本TODOへ簡潔に記録する。終了時は変更概要、検証結果、review観点、残件、1行commit案を提示する。
-- all-channel / operation-index shard / 比較済み五Workflow contributorの実装・検証は完了。projector `1.0.5` snapshotのmetadata / retrieval実レビュー結果は2026-10-29にユーザー受入済み。次scopeへ自動で進まない。
+- all-channel / operation-index shard / 比較済み五Workflow contributorの実装・検証は完了。projector `1.0.5` snapshotのmetadata / retrieval実レビュー結果と、全17役割のMATRIX-003有限closure監査結果は2026-10-29にそれぞれユーザー受入済み。次scopeの実装へ自動で進まない。
 
 ## 現在の到達点
 
@@ -22,7 +22,7 @@
 | Task 8–9: Core source / set / focused corpus | 完了。264 cases（193 invalid / 71 valid）、one-invalidity 193/193、unused Core rules 0、coverage gaps 0。`R8-CORE-001`–`049`はcovered、Remaining Core Inventoryに適用可能な未対応clauseなし。古い埋込み計画の未チェックstepを再開しない。 |
 | Task 10: Core publication gate | 完了。[PUBLICATION.json](fixtures/core/v0.17.1/PUBLICATION.json)と[PUBLICATION-REVIEW](fixtures/core/v0.17.1/PUBLICATION-REVIEW.md)でscope / manifest / adaptersをbindingし、read-only CLIと人手reviewを公開gateにした。 |
 | Task 11: complete validators | 下記の機能は実装済み。元計画のcomplete-scope一括完了判定は未完了として保持し、整理だけでTask全体を完了へ変えない。 |
-| Task 12: complete positive candidate | 両profile各17 paths、11 operations、5 Workflows、1 Reference。positive advanced structuresは作成済み。source traceability全体はMATRIX-003–005が残る。 |
+| Task 12: complete positive candidate | 両profile各17 paths、11 operations、5 Workflows、1 Reference。positive advanced structuresは作成済み。MATRIX-003の現snapshot有限closureは受入済み。source traceability全体はMATRIX-004–005が残る。 |
 | Task 13–16 | complete focused corpus、token evidence、RC、stable freezeは未完了。後掲checklistを使う。 |
 
 ### 最新の検証済みbaseline（過去実測、今回の整理で再実行した結果ではない）
@@ -33,6 +33,22 @@
 - Complete checker: 17 paths、full/compact equivalent。pair一致だけでsource completeness / readinessを認定しない。
 - Candidate: source四files＋explicit manifest、projector `1.0.5`、publication policy `1.0.0`。[Workflow snapshot / SHA記録](fixtures/complete-candidates/v0.17.1/SOURCE-TRACEABILITY.md#workflow-contributor-snapshot--2026-10-29)のmetadata / retrieval実結果は2026-10-29にユーザー受入済み。受入済みの[operation-shard snapshot](fixtures/complete-candidates/v0.17.1/SOURCE-TRACEABILITY.md#operation-shard-contributor-snapshot--2026-10-27)・[projector 1.0.3 snapshot](fixtures/complete-candidates/v0.17.1/SOURCE-TRACEABILITY.md#refreshed-contributor-snapshot--2026-10-27)・[旧language/semantic snapshot](fixtures/complete-candidates/v0.17.1/SOURCE-TRACEABILITY.md#finite-language-and-semantic-review--2026-10-24)のH evidenceを自動継承しない。
 - language/semantic結果は2026-10-24にユーザーが受入（`67cb116`）。一般generator・将来snapshot・本番business / Kafka / OAuth品質、token効率・配置最適性の認定ではない。content / policy変更時は再reviewする。
+
+## 初版完成までの見通し — 2026-10-29暫定棚卸し
+
+完成とは既存Task 11–16のexit criteriaを満たすstable `v1.0.0` conformance corpusであり、任意入力の汎用generator / converterや全将来機能の実装ではない。Coreは完了、complete validators / 回帰testsとpositive pairは既存。candidateにはまだversioned focused corpus / cases.json / COVERAGE.md / 総task token evidenceがなく、RC / stable corpus・conformance / release-readiness CLIも未作成。Task 13の未チェック15機能群は全て未実装という意味ではなく、既存code / testsを再利用して公開可能な証跡へ対応させ、不足だけをTDDで補う。
+
+| 残る成果物 | 暫定checkpoint数 | 主な不確実性 |
+|---|---|---|
+| Task 12残MATRIX-004–005・既知validator gapsの処置・Task 11/12完了判断 | 2–3 | source / manifest契約と既知gapの影響範囲 |
+| Task 13 complete / first-1.x compatibility corpus・coverage / checker統合 | 4–6 | §8対既存証跡の一対一inventoryで判明する実装不足 |
+| Task 14 総task token測定・公平なbaseline・再現性 / regression証跡 | 2–3 | retrieval会計とbaselineの同一contract化 |
+| Task 15 RC corpus・version移行・source / semantic / independent review | 1–2 | hardcoded version境界とreview blocker / 追加RC |
+| Task 16 stable freeze・readiness gate・最終検証 / 公開文書 | 1 | final RCがblockerなしであること |
+
+合計10–15のまとまったcheckpointを仮置きする。1単位は関連する設計・実装・tests・review・証跡まで揃えた成果物で、返信回数や既存の細分化commit数ではない。実測生産性に基づく納期や上限ではなく、重要な新規gap / RCやり直し・利用制限・人手待ちで増える。現時点では経過日数 / 時間を確約しない。Task 12残件完了とTask 13 coverage inventory確定時に再見積もり、各checkpoint終了時に成果物・残gap・見積変動を報告する。未検証を完了扱いせず、将来一般化だけの懸念を理由なく初版blockerへ追加しない。
+
+**次scopeの提案（実装未承認・未着手）:** MATRIX-004 / 005を個別gateではなく「現candidateのsource / manifest contract閉包」としてまとめて設計し、両者が同じ責務でreviewできるなら実装・tests・証跡・Task 12完了判断まで一体で進める。独立した一般validator不具合やversion変更が必要な項目は別checkpointへ明示的に切り分ける。細粒度継続は原因を追いやすい反面handoffが多い；全残件一括は横断整合を見やすい反面review / 退行切分けと途中状態の検証が困難。推奨は成果物単位の集約で、具体scope・完了条件は実装前に確認する。
 
 ## 共通の実装・公開制約
 
@@ -80,7 +96,7 @@
 - [x] source-aware有限gate: source / operation inventory、context selection、purpose / Behavior / Reply / failures、十五CONVENTIONS、Message schema / descriptions / examples、local binding absence、Workflow states、Reference、representations、compact representative policy、convention dependencies。
 - [x] MATRIX-001: 現candidateのwhole-operation inventoryとcontext selection。
 - [x] MATRIX-002の旧snapshot: labels / Summary / 配置 / Relatedの有限gateと2026-10-24のhuman受入。projector `1.0.3`への六metadata訂正後のsnapshotは別証跡で2026-10-27に実結果をユーザー受入（旧H evidenceの自動継承ではない）。
-- [ ] MATRIX-003全体: 現projector `1.0.5`の両profile全17役割を有限監査し、source / policy / gate対応とcatalog cell / marker・root集約の根拠を記録。現attribution mismatch・未対応emitted roleなしのclosure findingは実結果へのhuman受入待ち。root固定`all`のordinary検証をwhole-root semantic proofと扱わず、将来owner / source合成・source completenessは認定しない。
+- [x] MATRIX-003（現snapshot有限scope）: 現projector `1.0.5`の両profile全17役割を監査し、source / policy / gate対応とcatalog cell / marker・root集約の根拠を記録。現attribution mismatch・未対応emitted roleなしの実結果を2026-10-29にユーザー受入。root固定`all`のordinary検証をwhole-root semantic proofと扱わず、将来owner / source合成・source completenessは認定しない。
 - [ ] MATRIX-004: storefront primary Channel Parametersのsource known-absence前提（不正 / unexpected declarations含む）。static emitted addressだけからsource欠落を推測しない。
 - [ ] MATRIX-005: 残るfinite manifest precedence / perspective / adaptersの契約・conflict / mismatch拒否証拠。digest bindingと個別policy gateから全宣言検証を推論しない。
 - [ ] 残るmatrixを証拠または正当化した明示受入で解決し、Task 12 source-traceability全体を完了判定する。
@@ -346,6 +362,8 @@
 
 **Final result / stop:** 現projector `1.0.5`の全17役割・両profileに未解決attribution mismatch / 未対応emitted roleなしという有限closure findingを提出。成果物は三文書のみ、source / manifest / profile / identity / code / tests不変、Git書込み・restamp writeなし。docs-only TDD例外を維持。実結果human受入待ちのためMATRIX-003全体checkboxはopen、MATRIX-004–005 / Task 12–14 / readinessも未完了のまま、この1コミット相当で停止する。commit案: `docs(messaging): audit finite contributor closure`。
 
+**Human acceptance / batching request — 2026-10-29:** 上記実結果への問いにユーザーが「はい」と回答。受入記録前のmain / `7872b8b`はcleanで、現39SHA / 両rootsを再確認。MATRIX-003を現17役割・同snapshotに限定して完了とし、設計承認 / 過去Hの自動継承ではなく今回の実結果への受入として三文書へ記録。MATRIX-004–005 / Task 12–16全体・readinessは閉じない。ユーザーは品質を維持しつつ次回以降の作業・commit単位拡大と完成見通しを要求したため、冒頭に暫定棚卸し / 推奨単位を追加。具体的な次scopeは提案のみで実装・tests・stamp未実施、全suite baselineは過去実測のまま。Git書込みなし。
+
 ---
 
 ### Task 13: Complete Surface Focused Corpus を完成させる
@@ -486,7 +504,7 @@
 ## 再開手順と記録方針
 
 1. AGENTSを読み、Git status / logと正本の最新状態を確認する。完了済みTask 1–10へ戻らない。
-2. storefront / all-channel / operation-index shard / 五Workflow contributor checkpointを再実装しない。projector `1.0.5` metadata snapshotは受入済み。全17役割のMATRIX-003有限closure監査は別の実結果として受入待ちで、全体checkboxはopen。受入後に次scopeを確認する。root固定`all`の再実装はしない。順序変更は先に確認する。
+2. storefront / all-channel / operation-index shard / 五Workflow contributor checkpointを再実装しない。projector `1.0.5` metadata snapshotと、別判断として全17役割のMATRIX-003有限closure監査は受入済み。次は冒頭の成果物単位 / 暫定見通しを使ってTask 12残MATRIX-004–005の具体scopeを確認する。root固定`all`の再実装はしない。順序変更は先に確認する。
 3. Task 11–14はcomplete surface、Task 15はRC、Task 16はstable。前段のexit criteriaを満たさず後段の完了を宣言しない。
 4. 今後の各checkpoint記録は「変更・影響・最終検証・残件・commit案」の短い要約とし、途中runや解決済み試行錯誤を累積しない。詳しい根拠はcode / tests / versioned auditとGit履歴へ委ねる。
 
