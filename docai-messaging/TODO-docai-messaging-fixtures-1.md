@@ -11,7 +11,7 @@
 - 一度に1コミット相当のcheckpointだけ進めて停止する。実装はTDD（RED→GREEN）、順序・scope変更は実装前に確認。完了済みcheckpointを再実装しない。
 - 判断が必要なら各案の利点・欠点・推奨理由を示す。変更量の少なさを推奨理由にせず、仕様・設計・品質を優先する。
 - 設計・影響・実測・残件を本TODOへ簡潔に記録する。終了時は変更概要、検証結果、review観点、残件、1行commit案を提示する。
-- all-channel contributorとoperation-index shardの実装・検証は完了。projector `1.0.3` snapshotのユーザー受入は完了し、`1.0.4` snapshotの実レビュー結果は別途受入待ちで、次scopeへ自動で進まない。
+- all-channel contributorとoperation-index shardの実装・検証は完了。projector `1.0.3` / `1.0.4`各snapshotの実レビュー結果は2026-10-27にユーザー受入済み。次scopeはWorkflow contributor closureを提案中で、未承認の実装へ自動で進まない。
 
 ## 現在の到達点
 
@@ -31,7 +31,7 @@
 - skip: `validates source-shard evidence with the declared minimum Python 3.9`、python3.9未導入。Python最小版での実行成功を認定していない。
 - Core checker: 264 cases / 193 invalid / one-invalidity 193/193 / unused rules 0 / coverage gaps 0。
 - Complete checker: 17 paths、full/compact equivalent。pair一致だけでsource completeness / readinessを認定しない。
-- Candidate: source四files＋explicit manifest、projector `1.0.4`、publication policy `1.0.0`。[operation-shard snapshot / SHA記録](fixtures/complete-candidates/v0.17.1/SOURCE-TRACEABILITY.md#operation-shard-contributor-snapshot--2026-10-27)のmetadata / retrieval実レビュー結果は別途受入待ち。[projector 1.0.3 snapshot](fixtures/complete-candidates/v0.17.1/SOURCE-TRACEABILITY.md#refreshed-contributor-snapshot--2026-10-27)の2026-10-27受入と、[旧language/semantic snapshot](fixtures/complete-candidates/v0.17.1/SOURCE-TRACEABILITY.md#finite-language-and-semantic-review--2026-10-24)のH evidenceを自動継承しない。
+- Candidate: source四files＋explicit manifest、projector `1.0.4`、publication policy `1.0.0`。[operation-shard snapshot / SHA記録](fixtures/complete-candidates/v0.17.1/SOURCE-TRACEABILITY.md#operation-shard-contributor-snapshot--2026-10-27)のmetadata / retrieval実レビュー結果は2026-10-27にユーザー受入済み。[projector 1.0.3 snapshot](fixtures/complete-candidates/v0.17.1/SOURCE-TRACEABILITY.md#refreshed-contributor-snapshot--2026-10-27)と[旧language/semantic snapshot](fixtures/complete-candidates/v0.17.1/SOURCE-TRACEABILITY.md#finite-language-and-semantic-review--2026-10-24)のH evidenceの自動継承ではない。
 - language/semantic結果は2026-10-24にユーザーが受入（`67cb116`）。一般generator・将来snapshot・本番business / Kafka / OAuth品質、token効率・配置最適性の認定ではない。content / policy変更時は再reviewする。
 
 ## 共通の実装・公開制約
@@ -199,7 +199,9 @@
 
 ---
 
-## 最新checkpoint: Operation-Index Shard Contributor Closure（実装完了・snapshot受入待ち）
+## 最新checkpoint: Operation-Index Shard Contributor Closure（実装完了・snapshot受入済み）
+
+**Human acceptance — 2026-10-27:** 実レビュー結果への受入確認に対するユーザーの「はい。続きを進めてください」を受け、projector `1.0.4` snapshotの有限metadata / retrieval結果を受入済みと記録。main / `675da3f`、開始時clean、39 SHAと両root identitiesを再照合して一致。承認状態だけをTODO / README / SOURCE-TRACEABILITYへ記録し、code / source / manifest / profilesは不変、全suite再実行なし。下記実行時pendingを解消するが、残matrix・Task 12 / 14 / readinessは閉じない。次はWorkflowのsource所有元から寄与を導く有限gateを提案し、設計・実装は未着手。
 
 **Intent / approaches（2026-10-27）:** main / `fbd900f`、開始時clean。ユーザーは次scopeとしてoperation-index shardを先に進める推奨案の設計化を承認した。Workflow先行案は直接取得文書の来歴を改善する一方、Workflow自身の事実と参照先operationの寄与境界の定義が必要。採用案は既存operation所有元とsource比較済みrouting factsを基にshardの寄与集合を導出し、channelのrouting-provenance closureと整合させる。既存出力のrefsやfilenameをauthorityにせず、README §3 / §3.2 / §6.1 / §8を正とする。
 
@@ -246,6 +248,22 @@
 **Independent review / rulings:** fresh reviewer一名が未追跡新3filesを含む全差分と五Review Focusをread-only検証。113/113、新39SHA / roots・四source / manifest限定差分・二openingと34実trailer限定・両no-opを独立確認。Critical / Important / Minorなし、deferred minorなし、再reviewなし。Declined項目への主担当判断: focused / 全suiteの最終判定は下記の主担当実測で行いreviewに代替させない；旧CLI REDは主担当が実際に観測した3casesとledgerを正とする；Python 3.9最小版成功は未認定；新snapshotのhuman受入はユーザーへ留保；Workflow / whole-root semantic proof / 残matrix / Task 12・14 / readinessは別証拠待ち；任意JS公開API・一般generator・本番business/Kafka/OAuth品質・token/performance/配置最適性は有限candidate監査から認定しない。各境界を越える外挿は過剰認定になるため採用しない。
 
 **Final verification（2026-10-27）:** focused五filesは858/858 / fail 0 / cancelled 0 / skip 0、347702.351375 ms。全suiteは1823件 / 1822 pass / 1既存Python 3.9 skip / fail 0 / cancelled 0、338206.051334 ms、両exit 0。Coreは264 / 193 / one-invalidity 193/193 / unused 0 / gaps 0、Completeは17 paths等価。両explicit-manifest dry-run no-op。新39SHA / roots一致、旧二snapshotの78 SHA行を保持、HEAD `3b5ac4b`比のsource / manifest / profile限定差分とCore / 公開仕様 / rules / ordinary validators不変を確認。`git diff --check`成功。実装と技術reviewは完了、新metadata / retrieval実結果のhuman受入は未完了。Git書込みなし、1コミット相当で停止。commit案: `fix(messaging): enforce exact operation shard contributors`。
+
+---
+
+## 次checkpoint設計: Workflow Contributor Closure（設計承認待ち）
+
+**Intent / approaches（2026-10-27）:** main / `675da3f`。開始時の既存差分は直前のprojector `1.0.4`受入記録三文書だけで、保持する。ユーザーはWorkflowのsource所有元と比較済み事実から寄与を導出する推奨案の設計化を承認した。別案のWorkflow別contributor宣言は複数source合成を明示できるが、宣言と実際のfact authorityの二重管理・乖離を検証する必要がある。採用案は既存のsource / 本文比較をauthorityにし、有限candidateで未導入の合成modelを先取りしない。README §3 / §5 / §6.1 / §8を正とする。
+
+**Scope / authority:** candidate-only source auditへWorkflowのexact contributor gateを追加する。現在の五owner（`alpha-delivery` / `alpha-observability` / `state-none` / `state-unknown` / `state-unsupported`）はすべて`complete-contexts.workflows`がtitle / purpose / 各sectionの事実を供給し、既存auditがそれぞれsource比較済みであることを前提にする。`none`の非該当、unknownの必要入力、unsupportedのfeature / source locationもそのsourceの事実であり、未取得の仮想sourceを寄与集合へ加えない。現registryでは五filesすべてexact `complete-contexts`を要求し、他ID・余分ID・根拠のない`all`を拒否する。新たなcontributor宣言や第五のSources行は追加しない。未比較の新Workflow ownerや複数source合成を、このgateの所有元lookupだけで自動認定しない。
+
+**Ownership / reference boundary:** 既存context-placement解決結果を再利用し、source ownerと配置path、Workflows routing、実file、検証済みdefinitionの一意・完全な対応を確認する。filename / display title / 出力refsからsourceを推測しない。Workflow sourceが明記するStepのaction / address / operation identityは同sourceからの入力であり、参照先channelの契約本文を自動合成したものではない。参照先operation / Related / CONVENTIONSやconvention-dependency edgeの存在だけで、その参照先本文の寄与元をWorkflowへ伝播しない。Step identityの整合性確認・source比較・dependency closureは引き続き各既存gateの責務。直接Workflow取得時のwhole-CONVENTIONS fallback、required / supplemental context、unknown / unsupportedの停止境界、trust / side-effect authorityは変更しない。
+
+**Candidate / identity impact:** 五Workflowsのfull / compact、計十opening refsだけを`all`→`complete-contexts`へ訂正する。投影metadata訂正としてprojector `1.0.4`→`1.0.5`を提案し、manifestの他fields・publication-policy `1.0.0`・source四files / SHA・全prose / contract bodies・Core / 公開仕様 / ordinary validatorsは不変。両profileを同じexplicit manifest指定の専用writerでrestampし、全34実identity trailersとroot digests / IDsを更新する。手動hash調整は禁止。過去三snapshotのSHA表とhuman受入は保持し、新39 SHA / rootsとmetadata / retrieval評価を別記する。Workflowの無条件`all`が外れても、CONVENTIONS・source-indexのinclusive bounds / fixed-point・他loaded filesが必要sourceを決めるため、task全体のload / token削減を認定しない。
+
+**TDD / verification:** temporary candidateでは他Workflowをexact refsへ正規化して負例を隔離し、五ownerの各wrong / extra / `all`がordinary-valid・fresh-stamped pairとして旧CLIを通るREDを確認してから実装する。単一IDを消した空listはordinary grammarの負例として分離する。十refs訂正前のrepository candidateを新gateが拒否することも確認する。整合したpath relocation、source宣言順序差、四sectionの各state、参照先channelが複数sourceを持つ場合とsourceで明記したcross-source Stepがある場合の非伝播、shadow Stepsの非採用を検証する。source本文変更やidentity不整合、片profile差、欠落 / duplicate / extra owner-pathの既存一次拒否を維持し、writerで拒否される不正構造をfresh-stamped positiveと扱わない。checkerはread-only。新testと既存contributor / context-placement / Workflow / candidate tests、全suite、Core / Complete、両no-op、限定bytes比較と新SHA / roots、`git diff --check`を確認する。
+
+**Review / stop boundary:** review観点はsource比較済み五ownerの閉包、参照先本文の非伝播、incomplete state / 既存一次診断の維持、十opening＋version＋実trailers以外のbytes不変、旧human受入との分離。MATRIX-003のWorkflow役割だけを対象にし、whole-root semantic proof・MATRIX-003全体・004–005・Task 12 / 14 / readiness、一般generator / 公開API / 本番品質は認定しない。新owner対応や別の投影訂正・source / policy変更が必要なら実装前に確認する。TODO / candidate README / SOURCE-TRACEABILITYへ結果を簡潔に記録し、新metadata / retrieval実レビュー結果をユーザーへ提示して1コミット相当で停止する。Git read-only。今回はTODOへの短い設計記録だけで、設計承認後に実行計画へ進む。
 
 ---
 
@@ -387,7 +405,7 @@
 ## 再開手順と記録方針
 
 1. AGENTSを読み、Git status / logと正本の最新状態を確認する。完了済みTask 1–10へ戻らない。
-2. storefront / all-channel / operation-index shard contributor checkpointを再実装しない。次はprojector `1.0.4` snapshotのmetadata / retrieval実レビュー結果をユーザーが受入判断する段階。その後MATRIX-003のWorkflow等から次scopeを確認する。root固定`all`の再実装はしない。順序変更は先に確認する。
+2. storefront / all-channel / operation-index shard contributor checkpointを再実装しない。projector `1.0.4` snapshotの実結果は受入済み。次はMATRIX-003のWorkflow contributor closureの方式・scopeを確認する。root固定`all`の再実装はしない。順序変更は先に確認する。
 3. Task 11–14はcomplete surface、Task 15はRC、Task 16はstable。前段のexit criteriaを満たさず後段の完了を宣言しない。
 4. 今後の各checkpoint記録は「変更・影響・最終検証・残件・commit案」の短い要約とし、途中runや解決済み試行錯誤を累積しない。詳しい根拠はcode / tests / versioned auditとGit履歴へ委ねる。
 
