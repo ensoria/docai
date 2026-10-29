@@ -190,6 +190,22 @@ export function auditStorefrontLocalBindings(source, set, core, check) {
   }
 }
 
+export function auditStorefrontPrimaryParameters(source, set, core, check) {
+  for (const name of ["receiveOrderCreated", "sendCreateOrder"]) {
+    const operation = resolveLocalReference(source, source?.get("operations")?.get(name));
+    const channel = resolveLocalReference(source, operation?.get("channel"));
+    const parameters = channel?.get("parameters");
+    const content = canonicalSection(childSections(set, core.operationDefinitions.byName[name], ["Channel"]).Channel);
+    const boundary = content?.findIndex(line => line === "#### Bindings" || line === "- Bindings: none") ?? -1;
+    const actual = boundary >= 0 ? content.slice(0, boundary) : null;
+    check(channel instanceof Map && (!channel.has("parameters")
+      || (parameters instanceof Map && parameters.size === 0))
+      && (isDeepStrictEqual(actual, ["- Parameters: none"])
+        || isDeepStrictEqual(actual, ["#### Parameters", "none"])),
+    `storefront operation ${name} primary Channel Parameters`);
+  }
+}
+
 export function auditStorefrontMessageContracts(source, set, definitions, check) {
   for (const [operation, name, reply] of storefrontMessages) {
     const message = selectedStorefrontMessage(source, operation, reply);

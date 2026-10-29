@@ -22,12 +22,12 @@
 | Task 8–9: Core source / set / focused corpus | 完了。264 cases（193 invalid / 71 valid）、one-invalidity 193/193、unused Core rules 0、coverage gaps 0。`R8-CORE-001`–`049`はcovered、Remaining Core Inventoryに適用可能な未対応clauseなし。古い埋込み計画の未チェックstepを再開しない。 |
 | Task 10: Core publication gate | 完了。[PUBLICATION.json](fixtures/core/v0.17.1/PUBLICATION.json)と[PUBLICATION-REVIEW](fixtures/core/v0.17.1/PUBLICATION-REVIEW.md)でscope / manifest / adaptersをbindingし、read-only CLIと人手reviewを公開gateにした。 |
 | Task 11: complete validators | 下記の機能は実装済み。元計画のcomplete-scope一括完了判定は未完了として保持し、整理だけでTask全体を完了へ変えない。 |
-| Task 12: complete positive candidate | 両profile各17 paths、11 operations、5 Workflows、1 Reference。positive advanced structuresは作成済み。MATRIX-003の現snapshot有限closureは受入済み。source traceability全体はMATRIX-004–005が残る。 |
+| Task 12: complete positive candidate | 完了（現candidateの有限scope）。両profile各17 paths、11 operations、5 Workflows、1 Reference。MATRIX-001–005の有限gate / reviewとsource traceabilityを完了。汎用generator・whole-source completenessや公開readinessの認定ではない。 |
 | Task 13–16 | complete focused corpus、token evidence、RC、stable freezeは未完了。後掲checklistを使う。 |
 
-### 最新の検証済みbaseline（過去実測、今回の整理で再実行した結果ではない）
+### 最新の検証済みbaseline（2026-10-29、Source / Manifest Contract Closure）
 
-- 全suite: `node --test docai-messaging/tools/tests/*.test.mjs` → 1875 tests / 1874 pass / 1既存skip / fail 0 / cancelled 0、374427.129708 ms（2026-10-29、Workflow contributor checkpoint時）。
+- 全suite: `node --test docai-messaging/tools/tests/*.test.mjs` → 2065 tests / 2064 pass / 1既存skip / fail 0 / cancelled 0、312904.712583 ms（2026-10-29、Source / Manifest Contract Closureのreview修正後）。
 - skip: `validates source-shard evidence with the declared minimum Python 3.9`、python3.9未導入。Python最小版での実行成功を認定していない。
 - Core checker: 264 cases / 193 invalid / one-invalidity 193/193 / unused rules 0 / coverage gaps 0。
 - Complete checker: 17 paths、full/compact equivalent。pair一致だけでsource completeness / readinessを認定しない。
@@ -40,15 +40,15 @@
 
 | 残る成果物 | 暫定checkpoint数 | 主な不確実性 |
 |---|---|---|
-| Task 12残MATRIX-004–005・既知validator gapsの処置・Task 11/12完了判断 | 2–3 | source / manifest契約と既知gapの影響範囲 |
+| 既知ordinary validator gapsの処置・Task 11完了判断への引継ぎ | 1–2 | Headers duplicate / binding none後x-markerの影響・version境界 |
 | Task 13 complete / first-1.x compatibility corpus・coverage / checker統合 | 4–6 | §8対既存証跡の一対一inventoryで判明する実装不足 |
 | Task 14 総task token測定・公平なbaseline・再現性 / regression証跡 | 2–3 | retrieval会計とbaselineの同一contract化 |
 | Task 15 RC corpus・version移行・source / semantic / independent review | 1–2 | hardcoded version境界とreview blocker / 追加RC |
 | Task 16 stable freeze・readiness gate・最終検証 / 公開文書 | 1 | final RCがblockerなしであること |
 
-合計10–15のまとまったcheckpointを仮置きする。1単位は関連する設計・実装・tests・review・証跡まで揃えた成果物で、返信回数や既存の細分化commit数ではない。実測生産性に基づく納期や上限ではなく、重要な新規gap / RCやり直し・利用制限・人手待ちで増える。現時点では経過日数 / 時間を確約しない。Task 12残件完了とTask 13 coverage inventory確定時に再見積もり、各checkpoint終了時に成果物・残gap・見積変動を報告する。未検証を完了扱いせず、将来一般化だけの懸念を理由なく初版blockerへ追加しない。
+残り合計9–14のまとまったcheckpointを仮置きする（Source / Manifest Contract Closureを1成果物として完了し、前回10–15から更新）。1単位は関連する設計・実装・tests・review・証跡まで揃えた成果物で、返信回数や既存の細分化commit数ではない。実測生産性に基づく納期や上限ではなく、重要な新規gap / RCやり直し・利用制限・人手待ちで増える。現時点では経過日数 / 時間を確約しない。次はTask 13 coverage inventory確定時に再見積もり、各checkpoint終了時に成果物・残gap・見積変動を報告する。未検証を完了扱いせず、将来一般化だけの懸念を理由なく初版blockerへ追加しない。
 
-**次scopeの提案（実装未承認・未着手）:** MATRIX-004 / 005を個別gateではなく「現candidateのsource / manifest contract閉包」としてまとめて設計し、両者が同じ責務でreviewできるなら実装・tests・証跡・Task 12完了判断まで一体で進める。独立した一般validator不具合やversion変更が必要な項目は別checkpointへ明示的に切り分ける。細粒度継続は原因を追いやすい反面handoffが多い；全残件一括は横断整合を見やすい反面review / 退行切分けと途中状態の検証が困難。推奨は成果物単位の集約で、具体scope・完了条件は実装前に確認する。
+**次scopeの候補（実装未承認・未着手）:** 一般Headers duplicate / binding none後x-markerの既知問題をordinary validator仕上げとしてまとめ、Task 13公開用coverage棚卸しへ進む。異なるversion判断が必要なら分ける。MATRIX-004 / 005とReference二branchは今回一体で完了し、再実装しない。具体scope・完了条件は実装前に確認する。
 
 ## 共通の実装・公開制約
 
@@ -97,16 +97,16 @@
 - [x] MATRIX-001: 現candidateのwhole-operation inventoryとcontext selection。
 - [x] MATRIX-002の旧snapshot: labels / Summary / 配置 / Relatedの有限gateと2026-10-24のhuman受入。projector `1.0.3`への六metadata訂正後のsnapshotは別証跡で2026-10-27に実結果をユーザー受入（旧H evidenceの自動継承ではない）。
 - [x] MATRIX-003（現snapshot有限scope）: 現projector `1.0.5`の両profile全17役割を監査し、source / policy / gate対応とcatalog cell / marker・root集約の根拠を記録。現attribution mismatch・未対応emitted roleなしの実結果を2026-10-29にユーザー受入。root固定`all`のordinary検証をwhole-root semantic proofと扱わず、将来owner / source合成・source completenessは認定しない。
-- [ ] MATRIX-004: storefront primary Channel Parametersのsource known-absence前提（不正 / unexpected declarations含む）。static emitted addressだけからsource欠落を推測しない。
-- [ ] MATRIX-005: 残るfinite manifest precedence / perspective / adaptersの契約・conflict / mismatch拒否証拠。digest bindingと個別policy gateから全宣言検証を推論しない。
-- [ ] 残るmatrixを証拠または正当化した明示受入で解決し、Task 12 source-traceability全体を完了判定する。
-- [ ] 最終gateでCore / Complete checkerを再実行する。positive pairの成功だけでTask 13のcoverage gaps 0と扱わない。
+- [x] MATRIX-004: 二primary Channel ownerの実source Parametersは省略 / 空objectだけを既知不在とし、missing owner / 非空 / malformedを拒否。両profileのbounded none比較を実装・検証。
+- [x] MATRIX-005: 現13 domains / 8 descriptors / versions / perspective / empty mappingsの有限契約と実target / encoding / binding整合を検証。既存policy gates・正当な更新・Unicode値・一次診断を保持し、一般conflict resolverとは区別。
+- [x] MATRIX-001–005の有限証拠・既存human受入・最終独立reviewの修正結果を合わせ、現candidateのTask 12 source-traceabilityを完了。全source memberや将来入力の一般変換を認定しない。
+- [x] 最終gateでCore / Complete checkerを再実行。Core 264 / 193 invalid / unused 0 / gaps 0、Complete 17 paths等価。Task 13のcoverage gaps 0とは扱わない。
 
 既知の別残件（順序・scope変更時は先に確認）:
 
 - 一般Headers validatorのduplicate name gap。candidate storefront inventory gateの拒否は一般validatorの修正ではない。
 - binding `none`後の`x-` markerをordinary validatorが拒否するextension gap。version impactも別途検討する。
-- Reference sourceのfinal LFなし正例、source consumer除去の単独mutationという追加branch-evidence候補。
+- Reference sourceのfinal LFなし正例・source consumer除去の単独mutationは本checkpointで追加済み。再実装しない。
 - Reference structural escape / non-UTF-8のversioned focused corpus、任意schema / adapter / extensionの一般的網羅性は後続Task 13。
 
 ### Language / Semantic Review Implementation Plan — 2026-10-23
@@ -366,6 +366,80 @@
 
 ---
 
+## Candidate Source / Manifest Contract Closure — 2026-10-29（設計・連続実行承認済み）
+
+**Intent / unit:** 起点main / `85dfe27`、開始時clean。前回の成果物単位拡大の提案に対する「続きを進めてください」を受け、MATRIX-004と005の具体scopeをまとめて設計する。目的は現candidateのsource / manifest契約に残る穴を塞ぎ、TDD・回帰検証・証跡更新・Task 12 source-traceability完了判断までを1つの実装checkpointとすること。今回は設計のみで、実装開始や完了扱いの承認ではない。設計だけの別コミットは必須とせず、承認後の実行計画・実装・証跡と一つの成果物へまとめられる。
+
+**Approaches / recommendation:** 推奨はcandidate固有の有限契約gate。sourceの不在条件と、既存auditが実際に採用するmanifestのauthority / settingsを検証し、未知の設定を検証済みと扱わない。manifest全bytesの固定hash照合だけなら宣言と実装の対応を証明できず、整合したsource更新やplacement変更も拒否する。汎用precedence / counterpart / adapter変換器を新設する案は一般入力への対応力を増すが、現在のpositive candidateのsource traceabilityとは異なる責務・公開契約になるため採らない。二gateは一緒に統合・reviewするが、failure原因とmodule責務は分離する。
+
+**MATRIX-004 / primary Parameters:** `sendCreateOrder` / `receiveOrderCreated`のsource operationが参照する実Channel ownerを確認し、`parameters`の省略または空objectだけを既知の不在とする。missing owner / unresolved referenceやnull / 配列 / scalarを不在と解釈せず、非空objectはaddressがstaticでも拒否する。両profileの対応operationのprimary ChannelでParametersが`none`であることを確認し、collapsed / headedの規範的に同値な形と既存のowner移動を維持する。file名やemitted addressからsourceの不在を導出しない。既存exact JSON / bounded section / ordinary validationを再利用し、一般parameter変換やReply Channel既存gateの再実装はしない。
+
+**MATRIX-005 / finite manifest contract:** 対象は現`manifestVersion: 1.0.0`、DocAI `0.17.1`、projector `docai-messaging-complete-fixture-projector@1.0.5`、publication `docai-messaging-complete-fixture-publication@1.0.0`。code-ownedの認定契約として、下記13 domainsの一意性・exact `sourceOrder`、現8 adapter descriptorsのclass / target / ruleVersionの一意な集合、carry-through perspective、空counterpartMappings / stableNameOverridesを検証する。現四sourceのbindingは既存digest / metadata比較へ接続する。privateな`source` / `behavior-source` descriptorsを規範の四adapter classesと混同しない。adapters / precedence / sourcesの宣言順序やJSON member順は意味のない差として許容する一方、domain内部のsourceOrderは意味を持つ。missing / duplicate / extra / malformed / unknown source ID / wrong order / wrong rule-versionを拒否し、非対応versionや設定を一般的なDocAI非準拠と呼ばず、このcandidateの認定契約外と診断する。
+
+| Fact domain | Exact authority order (C=contexts, R=representations, A=AsyncAPI, B=behavior) | 実際のfact比較 / 解決境界 |
+|---|---|---|
+| api-identity | A, B | Aのid / versionとB schemaEvolutionの明示corroboration、Sources / CONVENTIONS比較。一般fallback engineではない |
+| authorization | A, B | A security scheme / scopesとB authorization / Behaviorの整合 |
+| behavior-and-failure-handling | B | purpose / Behavior / failures / Reply behavior |
+| complete-contexts | C | synthetic operation / Workflow / Referenceのsource facts |
+| convention-dependencies | C, R | source owner別dependencyとrequired closure、既存gate維持 |
+| conventions | B, A | 十五sectionのbehavior事実と選択されたnative事実の比較 |
+| environment-and-protocol | A, B | selected server / host / protocol / versionとbehavior選択の整合 |
+| message-contracts-and-examples | R, A | representationとstorefrontのowner別contract / examples比較 |
+| operation-routing-and-message-selection | C, R, A | owner registry・routing / definition inventoryと選択Message比較 |
+| operation-summaries | C, R, A | owner別Summary、既存label gate維持 |
+| operation-tasks | C, R, B | owner別Task、既存label gate維持 |
+| storefront-context-selection | B | 二ownerの明示required / supplemental arrays |
+| workflow-labels | C | 五ownerのname / summary / displayTitle |
+
+**Settings / no circular authority:** manifestの10 top-level fieldsと既知nested resolution fieldsをclosedなcandidate契約として扱う。未知のoutput-affecting設定をdigest一致だけで黙認せず、未解釈keyを拒否する（private manifestへruntimeの`x-`文法を自動適用しない）。既存catalog summaries / placement / context paths / Related policyは各gateのsemantic authorityに残し、それらの値を現pathやproseへ全固定しない。8 adapter descriptorsは現behavior-source三件、source一件、header-encoding一件、payload-wire二件、schema一件の認定されたexact targets / rule versionsを定義し、CSV実解釈は既存trusted helperに残す。`perspective.mode`はsource-application-carry-through、application / sourceApplication / B.perspectiveは同一の非空値、各file perspectiveは同値とし、source actionを反転しない。整合したapplicationラベル変更は受理し、API titleやAPI idからapplicationを推測しない。別application向けconversion・nonempty mapping / override・新descriptorは新しい認定契約が必要で、本gateは生成器ではなく拒否証拠を提供する。
+
+**Adapter / binding cross-check:** descriptorsが現manifestのliteral集合に一致するだけでは十分でなく、sourceの実native version・有効schema / wire target・header encodingと適用中のcode-owned ruleへ対応させる。representation側のexact schemaFormat / mediaType / CSV mapping比較は既存gate、storefront側の選択Message / local bindings / protocol比較は既存gateを使い、未比較のsource adapter target（例: source AsyncAPI versionだけを変更しdescriptorを据置く）やbinding type / specificationの食違いは今回のguardで拒否する。一般的なschema keyword / native source全体のvalidationへ広げず、未対応targetはこのcandidate契約外とする。
+
+**Conflicts / diagnostics:** authority source同士のidentity/version・authorization・protocol・Reply等の現corroborationが矛盾すれば、両profileを一致させfresh stampしても既存source比較または新contract gateで拒否する。非authorityなshadow Task / Summaryの相違は既存どおり正当なauthoritative値で受理し、「値が異なるものを全拒否」にしない。未解決conflictをunknown / unsupportedに置換したまま合格させない。owner partition・必須のcorroboration・非authority shadowを区別し、13宣言一致を任意入力のfallback / equal-priority conflict解決能力と称さない。ordinary-invalid pair / CSV adapter解釈不能 / stale source digest等の既存一次診断を保ち、malformed contractを偶発TypeErrorで処理しない。generic pair（candidate manifestなし）の既存CLI用途とordinary readerの責務は変更しない。
+
+**Implementation boundary:** source比較本体と`complete-storefront-message-audit.mjs`に接続するcandidate-only helpers / testsを追加または拡張する。新manifest preflightは構造の安全確認とbinding後のsource整合を分け、existing source / policy / contributor gatesを置換・弱体化しない。schema / adapterの一般converter、公開rule追加、ordinary validator / writer変更は対象外。必要なら別scopeとして確認する。既存helperのtemporary copy / source rebind / explicit-manifest stamp / ordinary validation / checker bytes snapshotを再利用し、source mutationとrepository更新を区別する。
+
+**TDD / evidence contract:** 二primary ownerそれぞれの非空・malformed Parameters、sourceとmanifest perspectiveの矛盾、未検証precedence domainの欠落 / 重複 / order変更、non-CSV adapter descriptor変更、mapping / override追加等について、ordinary-valid・freshly stampedなtemporary pairを旧checkerが受理するREDを先に観測する。既存gateが既に拒否するケースは新REDと偽らず継続regressionとする。全13 domains / 8 descriptorsの表駆動missing・duplicate・extra・malformed変異、内部sourceOrder差と宣言順差、局所corroboration conflictとnon-authority shadow、両profile出力の一致した不正変更を固定する。新pure helperのmissing/null境界、source / ordinary / CSV一次診断、checker read-onlyも確認する。正例はrepository unchanged、空Parameters object、headed none、source / manifest宣言順差、同じauthorityからの整合fact更新、applicationラベル変更、既存channel / shard / Workflow / Referenceの整合relocationを含む。
+
+**Verification / bytes / review:** 実行計画で関連CLI・source projection・example adapter・全contributors・placement・context・profile testsを指定し、RED→GREEN後に全suite、Core / Complete、両explicit-manifest dry-runを実行する。既存Python 3.9 skipは別記。repository四sources / manifest / 全34profiles / identities / Core / 公開仕様はHEAD比で全bytes不変、current39SHA / roots・歴史156SHA行 / H evidence保持を要求する。projection訂正やrestamp writeは不要という設計で、必要になれば実装前にscope変更確認。source audit / new gateの最終独立reviewで、Parameters owner不在との区別、全manifest domain / settingsのauthority対応、正当な変更の非退行、一次診断・read-only、有限closureの過大認定なしを確認する。
+
+**Completion / estimate:** M004 / M005の証拠と、既存M001–003・source fact matrixの有限scopeをまとめてTask 12 source-traceabilityを判定する。Referenceのfinal-LFなし正例・consumer除去の単独mutationという既存branch候補も今回の有限candidate比較の仕上げに含める。一般Headers duplicate / binding none後のx-marker不具合は別のvalidator checkpoint、versioned complete / first-1.x corpusはTask 13、token証拠はTask 14に残し、Task 11–16全体 / readinessは閉じない。新human semantic / metadata受入はsource / snapshot不変から捏造せず、新gateの技術結果と現在scopeでのTask 12完了判断を提示する。残10–15の暫定見通しは据置き、本成果物完了後に再見積もる。Git read-only、主担当実装＋最終独立reviewを推奨。設計の実装者視点check後にユーザー承認を求め、承認後は実行計画からTDD・最終検証までを同じcheckpointとして進める。commit案（実装までまとめる場合）: `test(messaging): close candidate source and manifest contracts`。
+
+**Design check / verification:** freshな実装者視点check一名から、計画化前に回答が必要な重要質問なし。主担当はadapter宣言とsourceの実targetを照合する責務も明記し、宣言literal一致だけの証明と区別した。Core checker 264 / 193 invalid / one-invalidity 193/193 / unused 0 / gaps 0、Complete checker 17 paths等価で成功。今回はTODOの設計だけを変更し、code / tests / source / manifest / profiles / identities・既存受入 / 完了checkboxは不変。全suite・新RED / GREENは実行していない。M004 / M005の実装scopeとしてこの設計の承認待ち。
+
+---
+
+### Source / Manifest Contract Closure Implementation Plan
+
+> **For agentic workers:** `superpowers:executing-plans`で主担当実装＋最終独立review。Specは直前の承認済み設計。ユーザーの「実行計画からTDD・全suite・独立review・完了判断まで同checkpoint」への承認を受領し、scope内は途中の独立commit / 確認待ちを挟まず実行する。
+
+**Goal / Architecture / Tech Stack:** source Parameters absenceとfinite manifest契約をcandidate専用Node ESM helpersで検証し、既存source / pair gatesに合成する。公的なgrammar / ordinary validatorを変更しない。
+
+**Global Constraints:** 起点main / `85dfe27`、開始差分は承認済みTODO設計だけ。Git read-only、別worktree / skill作業dir / commitなし。repository四sources・manifest全bytes・projector `1.0.5` / publication `1.0.0`・全34profiles / identities・Core / 公開仕様不変、repository writer write禁止。temporary test copiesのみ既存helperでstamp可。既存Hは保持、一般generator / Task 11・13–16 / readinessを認定しない。
+
+**Files / Interfaces:** 新`tools/lib/complete-manifest-contract.mjs`から`auditCompleteManifestShape(manifest) -> string[]`と`auditCompleteManifestSources(manifest, sources: Map<string,object>) -> string[]`をexport。shapeはsource binding前、sourcesはbinding後に`complete-candidate-source-audit.mjs`へ合成。前者はclosed shapes / 13 ordered authorities / 8 exact descriptors / versions / empty settings、後者はnative version / binding metadata / perspective等のsource整合を扱う。`complete-storefront-message-audit.mjs`へ`auditStorefrontPrimaryParameters(source: exactJsonMap, set, core, check)`を追加してsource比較へ合成。新`tools/tests/complete-candidate-contract.test.mjs`は既存contributor fixture helperのcopy / mutateSource / checkを使う。candidate README / SOURCE-TRACEABILITY / 本TODOの有限証拠・完了状態を更新する。
+
+**Review Focus:** (1) missing ownerやmalformed Parametersを不在扱いしない、(2) 13 domains / 8 descriptorsとsource実target・code ruleの対応をdigest一致で代替しない、(3) 既存のsource更新 / relocation / non-authority shadowの正当性を保持、(4) ordinary / CSV / source一次診断とchecker read-only、(5) 同一snapshot / H evidence保持とTask 12限定完了・Task 13以降との分離。
+
+- [x] **1. RED:** 新CLI testsで二primary owner × nonempty / null / array / scalar Parameters、未検証authority domain変更、non-CSV descriptor変更、mode / sourceApplication / B.perspective不整合、mapping / override・unknown field追加をordinary-valid / freshly stampedで作り、`check(dir, 1, /Parameters|manifest contract/i)`。`node --test docai-messaging/tools/tests/complete-candidate-contract.test.mjs`が旧CLI exit 0で失敗することを観測。既存拒否ケースは別regressionにする。
+- [x] **2. GREEN:** 上記三APIを実装しsource auditへ合成、RED command成功。manifest shapeは10root fieldsと既知nested shapesをclosedにし、publication paths / summariesの値は各既存gateへ残す。sourceOrder内部のみ順序依存、descriptor / declaration順は無関係。Parametersは実owner＋省略/空Mapとbounded出力noneを比較する。
+- [x] **3. 境界・非退行:** 13 domains / 8 descriptorsのmissing / duplicate / extra / malformed・order差、closed settings各shape、source metadata / adapter target差、helper null入力を固定。正例は空Map / headed none・宣言順差・整合application変更・正当なsource fact変更・全既存relocation、負例はcorroboration conflict、source/ordinary/CSV一次診断。Reference final LFなし正例とsole consumer除去負例を追加。各CLIでfresh stamp / ordinary-valid / bytes不変、ordinary-invalidは先行診断を区別する。
+- [x] **4. 全検証・証跡:** focusedは新testと`check-complete-fixtures` / `complete-source-projection` / `complete-example-adapters` / `complete-context-placement` / `complete-profile-pair` / 四contributor files / catalog・channel placement tests。全suiteは`node --test docai-messaging/tools/tests/*.test.mjs`、Core / Complete checker、両explicit-manifest dry-runを実行。fail 0、既存Python 3.9 skip別記、no-op、39SHA / roots・歴史156SHA / H保持、source / manifest / profiles / Core / 公開仕様不変・diffcheckを確認。三docsへM004/005・Task 12有限完了結果と残件を記録する。
+- [x] **5. 独立review・停止:** fresh reviewer一名へ承認設計・本計画・全差分と五Review Focusを渡す。Critical / Importantは一回のTDD修正pass、Minorは記録、declined項目は判断と理由を記録。再reviewなし。最終bytes / 差分確認、Task 12結果と見積更新を提示し1成果物で停止。Git書込みなし。commit案: `test(messaging): close candidate source and manifest contracts`。
+
+**Self-review / execution ledger:** 設計の二gate・全manifest domains・source target整合・Reference二branch・五Review Focusをstep 1–5へ対応。shape→binding→source整合→既存semantic比較の依存があり、manifest shapeがsource registryのnull / arrayを先に拒否する必要があるためAPIを二段に分離した。source helpersは既存exact Map / plain parsed sourceの役割を維持する。scope・実行方法はユーザー承認済み。主担当実装中、RED以降は未完了。
+
+**Execution progress:** 旧CLIが受理したordinary-valid / freshly stampedな29負例をRED観測し、二primary ownerのParametersとmanifest shape / source整合gateを合成して初回139/139 GREEN。追加の非文字列domain / null manifest境界もRED→GREEN、UTF-8 descriptorを据置いたままsourceと出力をbase64へ一致変更するCLI負例とheader rule三helper負例もRED→GREENにした。headed ParametersはBindingsもheadedにする規範形へ、Reference final LFなし正例は元sourceの末尾空行を保持したままと誤認せず新sourceに合う出力へfixtureを補正した。production grammar・既存診断を緩めない。175/175成功後、null manifestとmissing owner / reference境界を加えた最終新test・既存focused・全suiteを実行中。Core 264 / 193 / one-invalidity 193/193 / unused 0 / gaps 0、Complete 17 paths等価、両explicit-manifest dry-run no-op。独立reviewとTask 12最終判断は未完了。
+
+**Independent review / one fix pass:** reviewer一名が全差分・五Review Focusをread-only確認。Critical / Minorなし、Important二件（storefront payload-wireのsource target / encoding照合不足、Unicode edge whitespaceの過剰拒否）を採用。新CLI四件でRED観測し、selected Messageだけのeffective target / UTF-8 contract確認とASCII edge判定へ修正。新190/190（20495.287 ms）・一次診断 / Serialization focused10/10（3450.388292 ms）、fail / cancelled / skip 0でGREEN。初回focusedの既知設定block欠落 / convention診断の退行は、既存testsを変更せず各gateへ責務を戻して解消。修正前の全suite runは中断し、post-review全suiteで最終証拠を採る。再reviewなし、deferred minorなし。
+
+**Final review rulings（declined九項目）:** (1) post-fix全suite / Core / Complete結果は主担当実測を正とする（誤れば未検証成功表示）；(2) 初回RED履歴は主担当観測を正とし独立再実行と称さない（誤れば証拠の水増し）；(3) Python 3.9は未導入skipで成功未認定（誤れば環境保証）；(4) 一般converter / 任意precedence・fallback / future formatsは認定外（誤れば未対応入力の誤処理）；(5) helperはinternal parsed-source APIで任意hostile JS object対応を公称しない（誤れば公開API誤認）；(6) whole-source全memberの意味 / completenessは別で、無効なMessage-level schemaFormat keyの推測を有効target差と扱わない（誤れば過大認定または架空blocker）；(7) 新human semantic / metadata受入を技術reviewから捏造しない（誤れば無断承認）；(8) Task 11全体 / 13–16 / readiness / token・performanceは未完了（誤れば早すぎる公開）；(9) 最終docsは修正後検証を受けて現candidateのTask 12 traceabilityだけ完了とする（誤れば認定範囲拡大）。この順序で境界を保持する。
+
+**Final verification / result:** post-review全suiteは2065件 / 2064 pass / 1既存Python 3.9 skip / fail 0 / cancelled 0、312904.712583 ms、exit 0。新190/190・focused10/10もfail 0。Core 264 / 193 invalid / one-invalidity 193/193 / unused 0 / gaps 0、Complete 17 paths等価、両explicit-manifest dry-run no-op。現39SHA / 両roots・歴史156SHA行 / root記録とlanguage review以降のH証拠全文をHEAD `85dfe27`比で保持。repository source / manifest / profiles / Core / 公開仕様 / ordinary validators / writerは不変。新二filesを含む七scoped filesだけ、local links / anchorsと`git diff --check`を確認。M004 / M005・Reference二branch・Task 12有限traceabilityを1成果物として完了し、残見通しを9–14へ更新。一般validator gaps・Task 11全体 / 13–16・readinessは残す。Git書込みなし、この1コミット相当で停止。commit案: `test(messaging): close candidate source and manifest contracts`。
+
+---
+
 ### Task 13: Complete Surface Focused Corpus を完成させる
 
 **Files:**
@@ -504,7 +578,7 @@
 ## 再開手順と記録方針
 
 1. AGENTSを読み、Git status / logと正本の最新状態を確認する。完了済みTask 1–10へ戻らない。
-2. storefront / all-channel / operation-index shard / 五Workflow contributor checkpointを再実装しない。projector `1.0.5` metadata snapshotと、別判断として全17役割のMATRIX-003有限closure監査は受入済み。次は冒頭の成果物単位 / 暫定見通しを使ってTask 12残MATRIX-004–005の具体scopeを確認する。root固定`all`の再実装はしない。順序変更は先に確認する。
+2. contributor checkpoint / MATRIX-001–005 / Reference追加branchを再実装しない。projector `1.0.5` snapshotと全17役割の寄与元監査は受入済み、Task 12有限traceabilityは完了。次は冒頭の成果物単位 / 暫定見通しで既知ordinary validator gapsとTask 13 coverageの具体scopeを確認する。root固定`all`の再実装はしない。順序変更は先に確認する。
 3. Task 11–14はcomplete surface、Task 15はRC、Task 16はstable。前段のexit criteriaを満たさず後段の完了を宣言しない。
 4. 今後の各checkpoint記録は「変更・影響・最終検証・残件・commit案」の短い要約とし、途中runや解決済み試行錯誤を累積しない。詳しい根拠はcode / tests / versioned auditとGit履歴へ委ねる。
 

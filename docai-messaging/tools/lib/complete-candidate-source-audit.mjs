@@ -8,7 +8,7 @@ import { validateCompleteSameAs } from "./validators/complete-same-as.mjs";
 import { parsePipeTable } from "./tables.mjs";
 import { parseExactJson } from "./json-value.mjs";
 import {
-  auditStorefrontLocalBindings, auditStorefrontMessageContracts
+  auditStorefrontLocalBindings, auditStorefrontMessageContracts, auditStorefrontPrimaryParameters
 } from "./complete-storefront-message-audit.mjs";
 import { auditSyntheticRepresentations } from "./complete-representation-source-audit.mjs";
 import { auditConventionDependencies } from "./complete-convention-source-audit.mjs";
@@ -21,6 +21,7 @@ import { auditCompleteOperationShardContributorClosure } from "./complete-operat
 import { auditCompleteWorkflowContributorClosure } from "./complete-workflow-contributor-audit.mjs";
 import { resolveCompleteContextPlacement, auditCompleteContextPaths } from "./complete-context-placement.mjs";
 import { extractSourceSection as section } from "./complete-source-sections.mjs";
+import { auditCompleteManifestShape, auditCompleteManifestSources } from "./complete-manifest-contract.mjs";
 
 const sourceFiles = new Map([
   ["complete-contexts", "complete-contexts.json"],
@@ -33,9 +34,12 @@ export function auditCompleteCandidateSources(candidatePath, documentSets, optio
   const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");
   if (!fs.existsSync(manifestPath)) return [];
   const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
-  if (manifest.generator?.id !== "docai-messaging-complete-fixture-projector") {
+  if (manifest?.generator?.id !== "docai-messaging-complete-fixture-projector") {
     return ["generator identity differs from the complete candidate projection policy"];
   }
+
+  const shapeIssues = auditCompleteManifestShape(manifest);
+  if (shapeIssues.length > 0) return shapeIssues;
 
   const issues = [];
   const sources = new Map();
@@ -76,6 +80,8 @@ export function auditCompleteCandidateSources(candidatePath, documentSets, optio
   const representations = sources.get("complete-representations");
   const asyncapi = sources.get("storefront-asyncapi-3.1.0");
   const behavior = sources.get("storefront-behavior");
+  const manifestIssues = auditCompleteManifestSources(manifest, sources);
+  if (manifestIssues.length > 0) return manifestIssues;
   const expectedSourceRows = new Map();
   for (const [id] of sourceFiles) {
     const binding = manifest.sources.find((entry) => entry.sourceId === id);
@@ -170,6 +176,7 @@ export function auditCompleteCandidateSources(candidatePath, documentSets, optio
     auditStorefrontMessageContracts(exactAsyncapi, expanded,
       result.facts.core.messageDefinitions, check);
     auditStorefrontLocalBindings(exactAsyncapi, expanded, result.facts.core, check);
+    auditStorefrontPrimaryParameters(exactAsyncapi, expanded, result.facts.core, check);
     auditConventionDependencies(contexts, representations, asyncapi, result, check, contextPaths);
     for (const file of set.files) {
       check(file.metadata.perspective === manifest.perspective.application,
