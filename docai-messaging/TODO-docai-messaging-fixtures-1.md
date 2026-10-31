@@ -36,7 +36,7 @@
 
 ## 初版完成までの見通し — 2026-10-31暫定棚卸し
 
-完成とは既存Task 11–16のexit criteriaを満たすstable `v1.0.0` conformance corpusであり、任意入力の汎用generator / converterや全将来機能の実装ではない。Coreは完了、complete validators / 回帰testsとpositive pairは既存。candidateにはまだversioned focused corpus / cases.json / COVERAGE.md / 総task token evidenceがなく、RC / stable corpus・conformance / release-readiness CLIも未作成。Task 13の未チェック機能群は全て未実装という意味ではなく、既存code / testsを再利用して公開可能な証跡へ対応させ、不足だけをTDDで補う。
+完成とは既存Task 11–16のexit criteriaを満たすstable `v1.0.0` conformance corpusであり、任意入力の汎用generator / converterや全将来機能の実装ではない。Coreは完了、complete validators / 回帰testsとpositive pairは既存。candidateには要件棚卸し用COVERAGE.mdがあるが、実行可能なversioned focused corpus / cases.json / 総task token evidenceがなく、RC / stable corpus・conformance / release-readiness CLIも未作成。Task 13の未チェック機能群は全て未実装という意味ではなく、既存code / testsを再利用して公開可能な証跡へ対応させ、不足だけをTDDで補う。
 
 | 残る成果物 | 暫定checkpoint数 | 主な不確実性 |
 |---|---|---|
@@ -48,7 +48,7 @@
 
 残り合計8–12のまとまったcheckpointを仮置きする（Bindings grammar / source比較を1成果物として完了し、前回9–13から更新。Headers新規範はTask 13 / 15のversion移行と統合）。1単位は関連する設計・実装・tests・review・証跡まで揃えた成果物で、返信回数や既存の細分化commit数ではない。実測生産性に基づく納期や上限ではなく、重要な新規gap / RCやり直し・利用制限・人手待ちで増える。現時点では経過日数 / 時間を確約しない。次はTask 13 coverage inventory確定時に再見積もり、各checkpoint終了時に成果物・残gap・見積変動を報告する。未検証を完了扱いせず、将来一般化だけの懸念を理由なく初版blockerへ追加しない。
 
-**次scopeの候補（実装未承認・未着手）:** Task 13のREADME §8 complete / first-1.x要求と既存code / tests / candidateの対応を棚卸しし、versioned focused corpus・cases.json・COVERAGE.md・checker統合の完了条件を固定する。既存機能を再実装せず、Headers一意性は1.0.0規範 / corpus / checker同期項目として扱う。完了済みBindings境界とMATRIX-001–005は再実装しない。具体scope・完了条件は実装前に確認する。
+**次scopeの候補（実装未承認・未着手）:** [Complete COVERAGE inventory](fixtures/complete-candidates/v0.17.1/COVERAGE.md)の最初の実装群（manifest / dispatcher / coverage gateとprofile・Workflow・Reference・convention fixtures）を具体設計する。38 complete要求・first-1.x二条件・Headers新規範を公開用case IDsへ結び、Core既存証拠と新caseの責任を分ける。棚卸しだけでschema / naming等の未確認証拠や公開readinessを完了扱いにしない。実装scope・schema・完了条件は事前確認する。
 
 ## 共通の実装・公開制約
 
@@ -506,11 +506,15 @@
 
 ### Task 13: Complete Surface Focused Corpus を完成させる
 
+**2026-10-31 inventory checkpoint:** main / `c0faa61`、開始clean。前Bindings checkpointはcommit済みで再実装せず、README §8・Core Remaining Inventory・67 Core / 15 complete rules・validator / runner / tests / candidateをread-only棚卸し。[COVERAGE](fixtures/complete-candidates/v0.17.1/COVERAGE.md)を新設し、complete要求38行・first-1.x二条件・承認済みHeaders一意性を独立追跡。全complete publication行はopen。既存unit / Core versioned証拠 / 有限positive candidateを区別し、stable-name override / collision、Server Variable / Channel Parameter default、schema feature認識・polymorphic欠落・Workflow generation failureの専用証拠未確認を明示した。現CLIは一pair＋finite source/policy gateであり、manifest corpus runner / complete coverage gateは未実装。新規規範・fixture schema・validatorは変更せず、TDD対象のcode変更なし。candidate READMEからinventoryへlink。次実装群は文書の提案であり未承認、残Task 13は4–6・全体8–12を据置き（棚卸し完了と、明示された実装不確実性を相殺して機械的に減算しない）。検証結果は下記に追記する。
+
 **Files:**
 
 - Create: complete candidate `focused/valid/*.md`
 - Create: complete candidate `focused/invalid/*.md`
 - Modify: complete candidate `cases.json` and `COVERAGE.md`
+
+**Inventory verification / review:** 関連七test filesは134/134成功、fail / cancelled / skip0（271.226792 ms）。Core264 / invalid193 / one-invalidity193/193 / unused0 / gaps0、Complete17 paths等価。要件ID41件の一意性と38 / 2 / 1の内訳、local link targets49件、39SHA / 両roots・全156SHA行 / H review全文保持、code / Core / 公開README不変を確認。独立review一名がREADME clauses・三docs・関連code / testsをread-only照合。Criticalなし、Important一件（名前生成の拡張後衝突失敗の明示漏れ）を採用し、128→256 bit / 26→52文字と、完全digest一致とは別の拡張後一意性失敗を追記。Minor一件のmapping checkbox状態は今回の要件対応完了を反映し、公開corpus項目はopenのまま。declined-to-judgeなし。docsのみのため新tests / 全suite再実行は行わず、2194件 / 2193 pass / Python3.9 skip1は前checkpoint実測として保持。三doc filesだけを変更しGit書込みなし、この1成果物で停止。commit案: `docs(messaging): inventory complete surface publication coverage`。
 
 - [ ] Profile fallback、unknown profiles、full/compact path/routing parity。
 - [ ] Direct/sharded workflows、routing name/display title、exact/semantic/load-all selection。
@@ -528,7 +532,7 @@
 - [ ] complete workflow section states と expanded list/table invalid forms。
 - [ ] future-minor synthetic reader compatibility fixtures（metadata key、table suffix、`x-` order）。
 - [ ] 初版1.0.0のHeaders Name一意性について、同一logical table内の同名同値 / 矛盾行、SEND / RECEIVE / Reply / failure-shape・compact復元、別Message同名許可とexact比較のvalid / invalid証拠を用意する。適用開始versionを明示し、現0.17.1へ新しい一般禁止を混入させない（2026-10-31案A承認、Task 15で規範 / checkerと同期して有効化）。
-- [ ] `docai-messaging/README.md` §8 の complete-surface corpus 要件（現在の 1045–1049 行）を `COVERAGE.md` に一対一対応させる。
+- [x] `docai-messaging/README.md` §8 の complete-surface corpus 要件（現在の 1045–1049 行）を `COVERAGE.md` に一対一対応させる（要件inventoryのみ完了。各publication行・実行可能corpus / coverage gap 0は未完了）。
 - [ ] Run: `node docai-messaging/tools/check-complete-fixtures.mjs`
 - [ ] Expected: coverage gap 0、全 cases PASS。
 
