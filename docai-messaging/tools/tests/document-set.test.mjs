@@ -4496,6 +4496,43 @@ for (const [name, shape] of [
   });
 }
 
+for (const scope of ["inline", "common"]) {
+  const rule = scope === "inline" ? "DM-FAIL-003" : "DM-CONV-004";
+  task6Test(`${rule} ${scope} failure-shape Bindings accept trailing extensions`, (t) => {
+    const shape = failureShape("binding-note", { content: [
+      "- Headers: none", "#### Bindings", "", "none", "",
+      "**x-z**: note", "", "**x-a**: another note", "",
+      "#### Payload", "", "none"
+    ] });
+    const root = createFlatOperationSet(t, scope === "inline" ? {
+      channelBody: operationBody(BASIC_OPERATION_ROW, { failureHandling: [
+        ...failureTable([["encoded", "inline:binding-note", "Failure received", "Escalate"]]), "", ...shape
+      ] })
+    } : {});
+    if (scope === "common") write(root, "CONVENTIONS.md", documentSource({ body: conventionsBody({
+      "Error Handling": ["Common failure signals are defined below.", "", ...shape]
+    }) }));
+    const result = ruleIds(taskScoped(root));
+    assert.ok(!result.includes(scope === "inline" ? "DM-FAIL-003" : "DM-CONV-004"), result.join(", "));
+  });
+  task6Test(`${rule} ${scope} failure-shape collapsed Bindings reject core after extension`, (t) => {
+    const shape = failureShape("binding-note", { content: [
+      "- Headers: none", "- Bindings: none", "**x-a**: note", "none",
+      "#### Payload", "", "none"
+    ] });
+    const root = createFlatOperationSet(t, scope === "inline" ? {
+      channelBody: operationBody(BASIC_OPERATION_ROW, { failureHandling: [
+        ...failureTable([["encoded", "inline:binding-note", "Failure received", "Escalate"]]), "", ...shape
+      ] })
+    } : {});
+    if (scope === "common") write(root, "CONVENTIONS.md", documentSource({ body: conventionsBody({
+      "Error Handling": ["Common failure signals are defined below.", "", ...shape]
+    }) }));
+    const result = ruleIds(taskScoped(root));
+    assert.ok(result.includes(scope === "inline" ? "DM-FAIL-003" : "DM-CONV-004"), result.join(", "));
+  });
+}
+
 task6Test("accepts DM-CONV-004 expanded and replacement common failure shapes", (t) => {
   const root = createFlatOperationSet(t);
   write(root, "CONVENTIONS.md", documentSource({ body: conventionsBody({

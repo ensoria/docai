@@ -2,6 +2,7 @@ import { diagnostic } from "../diagnostics.mjs";
 import { scanMarkdown } from "../markdown.mjs";
 import { validateSentenceLine } from "../sentence.mjs";
 import { parsePipeTable } from "../tables.mjs";
+import { bindingCoreLines } from "./core-binding-extensions.mjs";
 import {
   postTableMarkerKind,
   validPostTableMarkerOrder
@@ -180,7 +181,8 @@ function coreUnitState(lines, { replacementUnit, tableHeader }) {
   let index = 0;
   while (lines[index]?.text.startsWith("**deviation**: ")) index += 1;
   if (!validLeadingDeviations(lines.slice(0, index))) return null;
-  const core = lines.slice(index);
+  const content = lines.slice(index);
+  const core = tableHeader[0] === "Protocol" ? bindingCoreLines(content) : content;
   if (core.length === 1 && core[0].text === "none") {
     return { state: "none", table: null };
   }
@@ -284,7 +286,7 @@ function validateChannel(file, markdown, heading, nextHeading, address) {
     if (bindingState === null) return null;
     index = parsed.nextIndex;
   }
-  if (index !== core.length) return null;
+  if (bindingCoreLines(core.slice(index)).length !== 0) return null;
 
   const actualNames = parameterState.table?.rows.map((row) => row[0]) ?? [];
   const expectedNames = addressParameters(address);

@@ -4,6 +4,7 @@ import { scanMarkdown } from "../markdown.mjs";
 import { canonicalizeMediaType } from "../media-type.mjs";
 import { validateSentenceLine } from "../sentence.mjs";
 import { parsePipeTable } from "../tables.mjs";
+import { bindingCoreLines } from "./core-binding-extensions.mjs";
 import {
   collectPostTableMarkers as postTableMarkers,
   validPostTableMarkerOrder as validMarkerOrder
@@ -1155,7 +1156,8 @@ function canonicalUnitState(lines, {
 } = {}) {
   let index = 0;
   while (lines[index]?.text.startsWith("**deviation**: ")) index += 1;
-  const core = lines.slice(index);
+  const content = lines.slice(index);
+  const core = bindingTable ? bindingCoreLines(content) : content;
   if (core.length === 1 && core[0].text === "none") return "none";
   if (core.length === 2
     && core[0].text === "unknown"
@@ -1229,12 +1231,14 @@ function validateMessageStructure(file, markdown, message, endLine, reply) {
   for (let index = 0; index < entries.length; index += 1) {
     const entry = entries[index];
     if (entry.collapsed) {
-      if (firstNonEmpty) {
+      const nextLine = entries[index + 1]?.line ?? endLine;
+      const tail = nonEmptyLines(lines.filter((line) => line.line > entry.line && line.line < nextLine));
+      if (firstNonEmpty || (entry.name === "Bindings" && bindingCoreLines(tail).length !== 0)) {
         return [messageDiagnostic(
           "DM-MSG-002",
           file,
           entry.line,
-          "Only leading empty Message subsections may use their collapsed none form."
+          "Only leading empty Message subsections may use their collapsed none form, with no additional core content."
         )];
       }
       continue;
@@ -1336,7 +1340,8 @@ function replyChannelUnitState(lines, { parameter, replacementUnit }) {
   let index = 0;
   while (content[index]?.text.startsWith("**deviation**:")) index += 1;
   if (!validLeadingDeviations(content.slice(0, index))) return null;
-  const core = content.slice(index);
+  const remaining = content.slice(index);
+  const core = parameter ? remaining : bindingCoreLines(remaining);
   if (core.length === 1 && core[0].text === "none") {
     return { state: "none", table: null };
   }
@@ -1414,6 +1419,10 @@ function replyChannelEntries(markdown, channelHeading, channelEnd) {
     let state;
     if (entry.collapsed) {
       if (firstNonEmpty) return null;
+      if (entry.name === "Bindings") {
+        const tail = nonEmptyLines(lines.filter((line) => line.line > entry.line && line.line < channelEnd));
+        if (bindingCoreLines(tail).length !== 0) return null;
+      }
       state = { state: "none", table: null };
     } else {
       const nextLine = entries[index + 1]?.line ?? channelEnd;

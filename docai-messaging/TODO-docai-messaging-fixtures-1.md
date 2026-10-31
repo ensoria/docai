@@ -25,30 +25,30 @@
 | Task 12: complete positive candidate | 完了（現candidateの有限scope）。両profile各17 paths、11 operations、5 Workflows、1 Reference。MATRIX-001–005の有限gate / reviewとsource traceabilityを完了。汎用generator・whole-source completenessや公開readinessの認定ではない。 |
 | Task 13–16 | complete focused corpus、token evidence、RC、stable freezeは未完了。後掲checklistを使う。 |
 
-### 最新の検証済みbaseline（2026-10-29、Source / Manifest Contract Closure）
+### 最新の検証済みbaseline（2026-10-31、Trailing Binding Extensions）
 
-- 全suite: `node --test docai-messaging/tools/tests/*.test.mjs` → 2065 tests / 2064 pass / 1既存skip / fail 0 / cancelled 0、312904.712583 ms（2026-10-29、Source / Manifest Contract Closureのreview修正後）。
+- 全suite: `node --test docai-messaging/tools/tests/*.test.mjs` → 2159 tests / 2158 pass / 1既存skip / fail 0 / cancelled 0、328389.372833 ms（2026-10-31、review修正・rule/test名対応修正後）。
 - skip: `validates source-shard evidence with the declared minimum Python 3.9`、python3.9未導入。Python最小版での実行成功を認定していない。
 - Core checker: 264 cases / 193 invalid / one-invalidity 193/193 / unused rules 0 / coverage gaps 0。
 - Complete checker: 17 paths、full/compact equivalent。pair一致だけでsource completeness / readinessを認定しない。
 - Candidate: source四files＋explicit manifest、projector `1.0.5`、publication policy `1.0.0`。[Workflow snapshot / SHA記録](fixtures/complete-candidates/v0.17.1/SOURCE-TRACEABILITY.md#workflow-contributor-snapshot--2026-10-29)のmetadata / retrieval実結果は2026-10-29にユーザー受入済み。受入済みの[operation-shard snapshot](fixtures/complete-candidates/v0.17.1/SOURCE-TRACEABILITY.md#operation-shard-contributor-snapshot--2026-10-27)・[projector 1.0.3 snapshot](fixtures/complete-candidates/v0.17.1/SOURCE-TRACEABILITY.md#refreshed-contributor-snapshot--2026-10-27)・[旧language/semantic snapshot](fixtures/complete-candidates/v0.17.1/SOURCE-TRACEABILITY.md#finite-language-and-semantic-review--2026-10-24)のH evidenceを自動継承しない。
 - language/semantic結果は2026-10-24にユーザーが受入（`67cb116`）。一般generator・将来snapshot・本番business / Kafka / OAuth品質、token効率・配置最適性の認定ではない。content / policy変更時は再reviewする。
 
-## 初版完成までの見通し — 2026-10-29暫定棚卸し
+## 初版完成までの見通し — 2026-10-31暫定棚卸し
 
-完成とは既存Task 11–16のexit criteriaを満たすstable `v1.0.0` conformance corpusであり、任意入力の汎用generator / converterや全将来機能の実装ではない。Coreは完了、complete validators / 回帰testsとpositive pairは既存。candidateにはまだversioned focused corpus / cases.json / COVERAGE.md / 総task token evidenceがなく、RC / stable corpus・conformance / release-readiness CLIも未作成。Task 13の未チェック15機能群は全て未実装という意味ではなく、既存code / testsを再利用して公開可能な証跡へ対応させ、不足だけをTDDで補う。
+完成とは既存Task 11–16のexit criteriaを満たすstable `v1.0.0` conformance corpusであり、任意入力の汎用generator / converterや全将来機能の実装ではない。Coreは完了、complete validators / 回帰testsとpositive pairは既存。candidateにはまだversioned focused corpus / cases.json / COVERAGE.md / 総task token evidenceがなく、RC / stable corpus・conformance / release-readiness CLIも未作成。Task 13の未チェック機能群は全て未実装という意味ではなく、既存code / testsを再利用して公開可能な証跡へ対応させ、不足だけをTDDで補う。
 
 | 残る成果物 | 暫定checkpoint数 | 主な不確実性 |
 |---|---|---|
-| 既知ordinary validator gapsの処置・Task 11完了判断への引継ぎ | 1–2 | Headers duplicate / binding none後x-markerの影響・version境界 |
+| Bindingsの残るsource比較 / space付きMessage table境界・Task 11引継ぎ | 1 | ordinary末尾拡張修正後の別gate。Headers一意性はTask 13 / 15の1.0.0同期項目 |
 | Task 13 complete / first-1.x compatibility corpus・coverage / checker統合 | 4–6 | §8対既存証跡の一対一inventoryで判明する実装不足 |
 | Task 14 総task token測定・公平なbaseline・再現性 / regression証跡 | 2–3 | retrieval会計とbaselineの同一contract化 |
 | Task 15 RC corpus・version移行・source / semantic / independent review | 1–2 | hardcoded version境界とreview blocker / 追加RC |
 | Task 16 stable freeze・readiness gate・最終検証 / 公開文書 | 1 | final RCがblockerなしであること |
 
-残り合計9–14のまとまったcheckpointを仮置きする（Source / Manifest Contract Closureを1成果物として完了し、前回10–15から更新）。1単位は関連する設計・実装・tests・review・証跡まで揃えた成果物で、返信回数や既存の細分化commit数ではない。実測生産性に基づく納期や上限ではなく、重要な新規gap / RCやり直し・利用制限・人手待ちで増える。現時点では経過日数 / 時間を確約しない。次はTask 13 coverage inventory確定時に再見積もり、各checkpoint終了時に成果物・残gap・見積変動を報告する。未検証を完了扱いせず、将来一般化だけの懸念を理由なく初版blockerへ追加しない。
+残り合計9–13のまとまったcheckpointを仮置きする（Bindings ordinary修正を本checkpointで完了。従来9–14のordinary枠を、今回明らかになったsource比較 / Message table境界の残る1成果物へ絞り、Headers新規範はTask 13 / 15へ統合）。1単位は関連する設計・実装・tests・review・証跡まで揃えた成果物で、返信回数や既存の細分化commit数ではない。実測生産性に基づく納期や上限ではなく、重要な新規gap / RCやり直し・利用制限・人手待ちで増える。現時点では経過日数 / 時間を確約しない。次はTask 13 coverage inventory確定時に再見積もり、各checkpoint終了時に成果物・残gap・見積変動を報告する。未検証を完了扱いせず、将来一般化だけの懸念を理由なく初版blockerへ追加しない。
 
-**次scopeの候補（実装未承認・未着手）:** 一般Headers duplicate / binding none後x-markerの既知問題をordinary validator仕上げとしてまとめ、Task 13公開用coverage棚卸しへ進む。異なるversion判断が必要なら分ける。MATRIX-004 / 005とReference二branchは今回一体で完了し、再実装しない。具体scope・完了条件は実装前に確認する。
+**次scopeの候補（実装未承認・未着手）:** 合法なreply Channel末尾拡張のsource-aware比較と、Message / failure-shapeのASCII-space付きBindings table受理を同じgrammar整合の成果物へまとめ、その後Task 13公開用coverage棚卸しへ進む。今回のordinary末尾拡張や完了済みMATRIX-001–005を再実装しない。具体scope・完了条件は実装前に確認する。
 
 ## 共通の実装・公開制約
 
@@ -104,7 +104,7 @@
 
 既知の別残件（順序・scope変更時は先に確認）:
 
-- 一般Headers validatorのduplicate name gap。candidate storefront inventory gateの拒否は一般validatorの修正ではない。
+- 一般Headers Name一意性は2026-10-31に案Aをユーザー承認。初版1.0.0の明文規範・versioned corpus・checker適用開始を同version change setへ揃える公開前必須項目とする。現0.17.1の一般禁止を追加せず、candidate source inventory gateと区別する。
 - binding `none`後の`x-` markerをordinary validatorが拒否するextension gap。version impactも別途検討する。
 - Reference sourceのfinal LFなし正例・source consumer除去の単独mutationは本checkpointで追加済み。再実装しない。
 - Reference structural escape / non-UTF-8のversioned focused corpus、任意schema / adapter / extensionの一般的網羅性は後続Task 13。
@@ -440,6 +440,50 @@
 
 ---
 
+## Ordinary Validator Boundaries — 2026-10-30調査（案A承認済み）
+
+**Preflight / scope:** main / `4c165d7`、開始時clean。AGENTS全文・status / log・TODO残件・Core Remaining Inventory・README §3.1 / §3.5 / §3.6 / §4.1 / §8の現境界を確認。Task 12 / MATRIX-001–005はcommit済みで再実装しない。既知二件を一つの仕上げ候補として調査したが、Headersについて仕様判断が必要と判明したため実装前で停止する。
+
+**Read-only reproduction:** Core full setをloadし、独立したmemory copyのcontent / bytes / identityLineだけを変更して`validateCoreDocumentSet`を実行。baseline診断0、同名同値Header行の追加はRECEIVE / SEND / Replyの三箇所とも診断0。Operation Bindings・primary Message Bindings・reply Message Bindings・collapsed Channel Bindingsの`none`後に`**x-audit**: non-contract note`を置く四例は、それぞれ`DM-OP-004` / `DM-MSG-002` / `DM-MSG-002` / `DM-OP-004`で拒否された。repository files不変、identity再計算を伴うCLI成功やsource-aware証拠ではない。
+
+**Cause / normative distinction:** Headersのdirection table検証にはName重複検査がない。一方READMEはlogical header mapを述べるものの、一般Headersの行Name一意性・同値重複・比較scopeを明示していないため、checker厳格化だけで既存仕様の修正と断定できない。`none`後の拡張拒否は、state readerがmarkerをcore行として数えるため。こちらは既存§3.1の「required content後のx-markerを無視する」規則との明確な不一致で、新規規範の追加とは区別できる。
+
+**案A（推奨・承認済み）:** 現`0.17.1`では既存の拡張規則との整合修正を先に一成果物で行い、Headers一意性は初版`1.0.0`の明示規範・versioned invalid corpus・checker拒否を同じversion change setで必須化する。既存publicationの契約と新制約の適用開始を明確に分離できる。欠点は一般Headers拒否の有効化がその段階まで残ること。初版外へ落とすbacklogではなく、Task 13 / 15で必ず閉じる公開前項目として追跡する。
+
+**案B（未承認）:** Headers一意性を今のdraftで明文規範として追加し、意味変更なら§3.1に従う次minorと新versioned corpus / identities / reviewを伴って一般validatorを厳格化する。次draftから明確な一意性契約を検証できるが、現`0.17.1`の修正とは別のversion移行・証跡受入が必要になる。単にcodeだけを変えて同値重複まで禁止し、version影響を曖昧にする案は採らない。
+
+**Next / impact:** どちらの案でもHeadersの比較はlogical Name cellのASCII-space trim / table-level pipe decode後のexact値・同一table内を基本候補とし、case-fold / Unicode normalization・別Message間の名前禁止を勝手に導入しない。拡張修正は合法な末尾markerと早過ぎる / coreを分割するmarkerを分け、post-table marker orderingと既存一次診断を保持する範囲を設計する。今回は本TODOの調査・選択肢だけを記録し、code / tests / README / corpus / source / manifest / profiles / identity / 既存完了状態は不変。全suite再実行なし、2065 / 2064 pass / 1 skipは前回実測。残9–14は暫定のまま、案Bの場合はversion移行量を確認して再見積もる。Git read-only。
+
+---
+
+## Trailing Binding Extensions — 2026-10-31（設計・連続実行承認済み）
+
+**Intent / approaches:** main / `4c165d7`、開始差分は前回TODO調査だけ。ユーザーは案Aを選択した。既存§3.1の拡張規則との不一致を0.17.1で修正し、Headers Name一意性の新制約は初版1.0.0の規範・corpus・checkerと同期して導入する。案Bは次draftから一意性を明確にできるが、今のpublicationとは別のversion移行・証跡が必要。codeのみで現0.17.1を厳格化する案は採らない。今回は同一責務の小規模bugfix設計であり、Task 12の再実装や初版の範囲縮小ではない。
+
+**Goal / scope:** Operation Bindings、primary / reply Channel Bindings（headed / collapsed）、primary / reply Message Bindings、共通 / inline failure-shapeのBindingsについて、既存のcore stateが完了した後の一行`x-` markerを無視し、元のBindings stateとcontract factsを変えない。`core-operations.mjs` / `core-messages.mjs`のbounded state readerを対象にし、共有処理の切り方は実行計画で固定する。Headersの重複拒否、Headers / Parameters / Payload一般のextension処理、x-heading / multi-line extensionの新対応、全未知構造の一括除去は対象外。共有Message grammarを使うfailure-shapeへの効果は含める。
+
+**Boundary / algorithm:** marker認識は既存`postTableMarkerKind`のextension判定を再利用し、新しい名前文法やUnicode変換を発明しない。none / unknown / replacement-unsupportedでは、先行deviationと必須core contentが既存grammarで完了した後のmarker suffixだけを対象にする。unknownのkey-local marker隣接、replacement unit名・scope、次標準subsection境界、leading-empty collapseと実line位置を維持し、早過ぎるmarker・coreを分割するmarker・marker後の追加standard contentを受理しない。expanded tableは既存post-table marker群の連続性 / 順序 / unknown対応を保持し、suffix除去で違反を隠さない。non-table extensionにpost-table専用の並替え・一意性を追加しない。collapsed Channel末尾はChannel全required content完了とBindingsの境界を区別する。
+
+**TDD / verification:** まず現checkerで拒否される合法な末尾markerをREDとして固定し、各Bindings scope / 既存core states・collapsed / headed・複数markerを検証する。対になる負例は先行marker、unknown immediate sequenceの分断、missing core、scope違いのreplacement、extension後のstandard content、post-table order / adjacency違反。CoreとCompleteのordinary validationを対象とし、既存source-aware gateを弱めない。temporary copiesではfresh stamp / whole-set検証・checker前後bytes不変も確認する。全suite、Core / Complete checker、candidate両explicit-manifest dry-run、現39SHA / roots・歴史156SHA / H証拠保持、diffcheckで締める。既存Python 3.9 skipは別記し、versioned corpus / coverageの未達をtest件数で代替しない。
+
+**Impact / review / stop:** repository source / manifest / profiles / identities・Core corpus / PUBLICATION・READMEの意味 / version・rulesの意味は変えず、新regression testsと必要なvalidator修正・TODO等の証跡更新を一成果物にまとめる。新しい規範や投影訂正が必要なら実装前に確認する。主担当TDD＋最終独立review一名を採用し、review重点はsuffixの所有scope、必須contentを消さないこと、非tableとpost-tableの区別、failure-shape共有効果、source-aware / ordinary / bytes境界。HeadersはTask 13 / 15の明示checklistに移し、初版公開前に必ず実装・検証する。設計時点ではcode / 新tests未着手、実行結果は下記ledgerを正とする。Git read-only、commit案: `fix(messaging): preserve trailing extensions in binding sections`。
+
+---
+
+**Execution plan / ledger:** 承認済み短設計を実装・最終検証まで連続実行する。① `tools/tests/core-binding-extensions.test.mjs`で全Bindings scopeのfixed state / suffixと対になる不正配置を先にRED確認。② 新internal helper `bindingCoreLines(lines)`を`core-binding-extensions.mjs`へ置き、非tableの末尾extensionだけを除く。Operation / Message / reply ChannelのBindings state readerに限定適用し、collapsed Channelの末尾も必須内容を保持して検査。Parameters / Headersとtable marker検証には適用しない。③ 共有failure-shape tests、Complete temporary copyのfresh stamp / pair / read-only CLIをGREEN確認。④ `node --test docai-messaging/tools/tests/*.test.mjs`、Core / Complete CLI、両explicit-manifest dry-run、Git diff / byte保持を確認し、五重点の最終独立review一名で締める。Expected: focused全成功、全suite fail / cancelled 0（既存Python 3.9 skip別記）、Core264 / invalid193 / gaps0、Complete17 paths等価・dry-run no-op。Pre-flight: shared helperはline object / line座標を保持し、table readerと非table readerの契約を分離する。既存TODOを計画・ledgerとして使い、Git書込み・別worktree・別plan commitは作らない。
+
+**TDD progress:** valid core単体が診断0となるmetadata / exact replacement unitを確認してから、65件中17件の期待RED（合法suffix16件とcollapsed reply Channelの余剰core見逃し）を観測。共通 / inline headed failure-shape二件もRED→GREEN、collapsed failure-shape余剰core二件を追加RED→GREEN。共有helperは非table末尾だけを除き、全scopeの先行 / 分断 / missing / wrong-scope / table order・adjacency負例を保持。focused77/77、failure-shape4/4成功。
+
+**Ruling: source-aware Reply Channel比較は本checkpointで変更しない** — 承認済み範囲はordinary state readerであり、有限candidateのsource comparatorはcanonical Reply Channel textを要求する。全8Bindings箇所に拡張したtemp full / compactはfresh stamp・ordinary pairを通り、この一点だけsource gateで拒否することを固定。reply Channelのmarkerだけ外した7箇所版はsource-aware CLI成功・前後bytes不変。投影比較の訂正は次の設計判断として残す。誤りなら合法拡張を含むreply ChannelがComplete source-aware gateで引き続き拒否される（ordinary修正をsource-aware完了と公称しない）。Headers新制約はTask 13 / 15必須のまま。
+
+**Final review / fix pass:** 独立review一名がtracked / untracked全差分と五重点をread-only確認。Critical / Minorなし、Important一件を採用。helperのraw先頭`|`判定がtable parserのASCII-space許容と不一致で、Operation / primary Channel / reply Channelのspace付きtableのmarker順序・隣接違反を隠す。六件のREDを主担当で再現し、ASCII spaceだけを除いた先頭判定へ修正。対になるordered-table valid三件を含めfocused90/90 GREEN。修正前全suite runは中断し、修正後の全suiteで最終証拠を採る。再reviewなし、deferred minorなし。
+
+**Final review rulings（declined五項目）:** (1) source-aware Reply Channelの合法拡張拒否は上記既知制約として次設計へ残す（誤れば合法input拒否が続く）；(2) Headers / Parameters / Payload一般・x-heading / multi-line extensionは今回認定外（誤れば対応範囲の過大表示）；(3) Headers Name一意性は初版1.0.0の規範 / corpus / checkerと同期して必須化（誤れば公開時の制約漏れ）；(4) Message / failure-shapeのspace付きBindings table拒否は既存の別gapとしてTask 13棚卸しへ渡し、今回のtable-tail退行修正と混同しない（誤れば合法table拒否が残る）；(5) versioned corpus全体 / release readinessは未完了（誤れば早過ぎる公開）。最終実測は主担当が確認し、reviewerによる全suite再実行とは称さない。
+
+**Verification follow-up:** 修正後全suite初回は2159件 / pass2157 / fail1 / 既存skip1、322277.401958 ms。唯一の失敗は既存Task 6 rule/test対応監査で、新failure-shape四test名のrule ID欠落が原因。挙動testsの失敗ではないが完了とは扱わず、既存wrapperの命名契約に合わせ各名へ`DM-FAIL-003` / `DM-CONV-004`を付けた。failure-shape＋Task 6対応監査focusedを再実行してから全suiteを再実行する。validator / 期待診断を弱めず、review fix passは全suite GREENまで未完了。
+
+**Final verification / complete:** post-review・rule/test対応修正後の全suiteは2159件 / 2158 pass / 既存Python 3.9 skip1 / fail0 / cancelled0、328389.372833 ms、exit0。focused90/90、failure-shape＋Task 6対応監査11/11成功。Core264 / invalid193 / one-invalidity193/193 / unused0 / gaps0、Complete17 paths等価、両explicit-manifest dry-run no-op。現39SHA / 両rootsを実測照合し、全156SHA行とH reviewを含むSOURCE-TRACEABILITY全文・source / manifest / profiles / identities / Core / 公開READMEはHEAD `4c165d7`比で不変。TODO local link targets13件・`git diff --check`成功。tracked四files＋新helper / tests二filesの計六filesのみ。今回のordinary Bindings末尾拡張修正を1成果物として完了し、Git書込みなしで停止。source-aware Reply Channel比較と既存Message / failure-shape space付きtable gap、Headers新規範、Task 11全体 / 13–16・readinessは残る。残9–13は暫定、次coverage棚卸しで更新。commit案: `fix(messaging): preserve trailing extensions in binding sections`。
+
 ### Task 13: Complete Surface Focused Corpus を完成させる
 
 **Files:**
@@ -463,6 +507,7 @@
 - [ ] exact JSON arbitrary precision を compact examples、same-as、variant、constraints で横断検証。
 - [ ] complete workflow section states と expanded list/table invalid forms。
 - [ ] future-minor synthetic reader compatibility fixtures（metadata key、table suffix、`x-` order）。
+- [ ] 初版1.0.0のHeaders Name一意性について、同一logical table内の同名同値 / 矛盾行、SEND / RECEIVE / Reply / failure-shape・compact復元、別Message同名許可とexact比較のvalid / invalid証拠を用意する。適用開始versionを明示し、現0.17.1へ新しい一般禁止を混入させない（2026-10-31案A承認、Task 15で規範 / checkerと同期して有効化）。
 - [ ] `docai-messaging/README.md` §8 の complete-surface corpus 要件（現在の 1045–1049 行）を `COVERAGE.md` に一対一対応させる。
 - [ ] Run: `node docai-messaging/tools/check-complete-fixtures.mjs`
 - [ ] Expected: coverage gap 0、全 cases PASS。
@@ -512,6 +557,7 @@
 - [ ] Core と complete candidate の reviewed source、sets、focused cases、evidence を RC directory へ固定する。
 - [ ] RC document set の `docai-messaging` は prerelease suffix を使わず `1.0.0` とする。README と fixture README の publication label に `v1.0.0-rc.1` を記録する。
 - [ ] specification version の `0.17.1` → `1.0.0`、publication scope identity、adapter mapping version、reviewed RC projection manifest を同じ RC change set で更新し、`restamp-document-set.mjs [--write] --projection-manifest docai-messaging/fixtures/release-candidates/v1.0.0-rc.1/source/projection-input-manifest.json <RC-root>` として全 document set を restamp する。RC manifest は auto-discover しない。
+- [ ] 案AのHeaders Name一意性を初版1.0.0の明文規範・version-aware checker・Task 13のversioned casesと同change setで有効化し、一般Headers拒否の未実装を公開前blockerとして解消する。比較scope / normalizationは規範に明示し、旧0.17.1のexpectationを黙って上書きしない。
 - [ ] candidate との差を heading/marker/table/example/prose/source fact ごとに分類する。
 - [ ] semantic drift がある差は再評価対象、identity/provenance wording のみの差は no-resubmit 理由を記録する。
 - [ ] checker を RC path に対して実行し、Core と complete 全 rule を検証する。
