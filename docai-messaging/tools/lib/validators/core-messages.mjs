@@ -1168,7 +1168,9 @@ function canonicalUnitState(lines, {
   if (core.length === 1
     && core[0].text.startsWith(replacementPrefix)
     && core[0].text.length > replacementPrefix.length) return "unsupported";
-  if (!core[0]?.text.startsWith("|")) return null;
+  // Bindings tables use the table parser's ASCII-space boundary grammar.
+  // Keep the existing Headers dispatch separate from this Bindings correction.
+  if (!bindingTable && !core[0]?.text.startsWith("|")) return null;
   const table = tableAt(core, 0);
   if (table === null || table.rows.length === 0) return null;
   const markers = postTableMarkers(core, table);

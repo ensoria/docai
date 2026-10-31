@@ -4498,6 +4498,28 @@ for (const [name, shape] of [
 
 for (const scope of ["inline", "common"]) {
   const rule = scope === "inline" ? "DM-FAIL-003" : "DM-CONV-004";
+  for (const [state, tail, valid] of [
+    ["plain", "", true],
+    ["ordered markers", "\n**x-a**: note\n**x-z**: note", true],
+    ["reversed markers", "\n**x-z**: note\n**x-a**: note", false],
+    ["nonadjacent marker", "\n\n**x-a**: note", false]
+  ]) task6Test(`${rule} ${scope} failure-shape space-prefixed Bindings table ${state}`, (t) => {
+    const shape = failureShape("binding-table", { content: [
+      "- Headers: none", "#### Bindings", "",
+      " | Protocol | Property | Value / Rule | ", " |---|---|---| ",
+      ` | test | key | value | ${tail}`, "", "#### Payload", "", "none"
+    ] });
+    const root = createFlatOperationSet(t, scope === "inline" ? {
+      channelBody: operationBody(BASIC_OPERATION_ROW, { failureHandling: [
+        ...failureTable([["encoded", "inline:binding-table", "Failure received", "Escalate"]]), "", ...shape
+      ] })
+    } : {});
+    if (scope === "common") write(root, "CONVENTIONS.md", documentSource({ body: conventionsBody({
+      "Error Handling": ["Common failure signals are defined below.", "", ...shape]
+    }) }));
+    const result = ruleIds(taskScoped(root));
+    assert.equal(result.includes(rule), !valid, result.join(", "));
+  });
   task6Test(`${rule} ${scope} failure-shape Bindings accept trailing extensions`, (t) => {
     const shape = failureShape("binding-note", { content: [
       "- Headers: none", "#### Bindings", "", "none", "",

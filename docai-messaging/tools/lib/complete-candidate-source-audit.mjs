@@ -5,6 +5,7 @@ import { isDeepStrictEqual } from "node:util";
 import { validateCompleteDocumentSet } from "./validators/complete.mjs";
 import { validateCompleteFieldDefaults } from "./validators/complete-field-defaults.mjs";
 import { validateCompleteSameAs } from "./validators/complete-same-as.mjs";
+import { canonicalRepresentationView } from "./validators/complete-profile-comparison.mjs";
 import { parsePipeTable } from "./tables.mjs";
 import { parseExactJson } from "./json-value.mjs";
 import {
@@ -29,6 +30,16 @@ const sourceFiles = new Map([
   ["storefront-asyncapi-3.1.0", "storefront.asyncapi.json"],
   ["storefront-behavior", "storefront-behavior.json"]
 ]);
+
+function isEmptyReplyChannel(text) {
+  if (typeof text !== "string") return false;
+  // Ordinary validation owns syntax and placement. Compare the bounded standard
+  // content here, allowing each leading empty subsection's optional heading.
+  const view = canonicalRepresentationView({ path: "channels/orders.md", content: text },
+    1, text.split("\n").length + 1);
+  return view.every((entry) => typeof entry === "string")
+    && /^(?:- Parameters: none|##### Parameters\nnone)\n(?:- Bindings: none|##### Bindings\nnone)$/.test(view.join("\n"));
+}
 
 export function auditCompleteCandidateSources(candidatePath, documentSets, options) {
   const manifestPath = path.join(candidatePath, "source", "projection-input-manifest.json");
@@ -433,7 +444,7 @@ export function auditCompleteCandidateSources(candidatePath, documentSets, optio
       && replyKeys[2] === `- timeout: ${requestReply.timeout} -- ${requestReply.timeoutMeaning}`,
     "sendCreateOrder Reply timeout");
     check(sendReplyChannel?.parameters === undefined && sendReplyChannel?.bindings === undefined
-      && section(sendReplySection, "#### Channel") === "- Parameters: none\n- Bindings: none",
+      && isEmptyReplyChannel(section(sendReplySection, "#### Channel")),
     "sendCreateOrder Reply Channel");
     const selectedReplyRef = sendReply?.messages?.[0];
     const replyChannelKey = sendReply?.channel?.$ref?.split("/").at(-1);
