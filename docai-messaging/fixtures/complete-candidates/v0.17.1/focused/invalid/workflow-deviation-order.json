@@ -1,0 +1,13 @@
+{
+  "mode": "task-scoped",
+  "changes": [
+    {
+      "profile": "full",
+      "path": "workflows/state-none.md",
+      "operation": "replace",
+      "from": "## Preconditions\n\nnone",
+      "to": "## Preconditions\n\n**deviation**: z note\n**deviation**: a note\nnone"
+    }
+  ],
+  "assertions": []
+}

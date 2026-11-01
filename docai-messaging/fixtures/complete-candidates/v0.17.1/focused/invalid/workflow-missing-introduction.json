@@ -1,0 +1,13 @@
+{
+  "mode": "task-scoped",
+  "changes": [
+    {
+      "profile": "full",
+      "path": "workflows/alpha-delivery.md",
+      "operation": "replace",
+      "from": "Deliver the alpha event and record the correlated middle event.\n\n",
+      "to": ""
+    }
+  ],
+  "assertions": []
+}

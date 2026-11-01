@@ -1,0 +1,713 @@
+{
+  "schema_version": 1,
+  "docai_messaging": "0.17.1",
+  "scope": "complete-candidate",
+  "base_files": {
+    "full/CONVENTIONS.md": "499790d8895c1d1e6fc5c87d0a23baca3d711e6b7cac6f0687a438dddcf3cfc6",
+    "full/INDEX.md": "70580cc2b27ed0c309f86b265da5b5ab529f1c9584d3d9543d21db75e429f1be",
+    "full/channels/alpha.md": "6ffe1034c3a0c1cabbf8a587fe2ae8d30d1d8963248018084e98c7799e6fb3aa",
+    "full/channels/middle.md": "fc152c8e702bc83e793087f0137c538eca60d4f9ecbfea90a7fa95e782923022",
+    "full/channels/orders.md": "d01ee52fd8aaa5fa97a84e003a648fe8700cbcec9c8786f1268325bd5a7bcd42",
+    "full/channels/representations.md": "e68ed8ca1c1c0d069aea9ad47a6d9a4bdfa89151d4224915fdd575ddfcb176fe",
+    "full/channels/zeta.md": "710dcc11e51d73409c1dbc97bf843aa627f1fb930e810c01294ba49bd870b7c6",
+    "full/indexes/operations-broad.md": "b9e08a0e85da742ee400516aa7e3d40547a54ff46b68dabacb996719edc31b2b",
+    "full/indexes/operations-middle.md": "ffec07cd02e8a45fa13ff4486b915bcba179b364bbd14c542fceea4f0812857b",
+    "full/indexes/sources-asyncapi.md": "a7037c79aaaadbe6298268f32476f14f4be262178443d98433fc6177e3a0eb41",
+    "full/indexes/sources-contexts-behavior.md": "ba1dafefadb18ceb5758c987a6cbb2fe03b9e53fcdaa9c64290bec321804b1b3",
+    "full/references/middle-operations.md": "b4505e65d4d1e8a19ff897b52779b4ef768e24f1374c3873d9fa6f228bfcaad3",
+    "full/workflows/alpha-delivery.md": "b2e6f73153e363a6365c445f783680dc2d41a48f0cab405509fbabad07496110",
+    "full/workflows/alpha-observability.md": "5c0a09252b31a2392d09ab0a6e7828d6016e7b3a1453880c9ab56e02df3a99af",
+    "full/workflows/state-none.md": "5a22c3a17e69940c3bd4264cd0697a58fcb0c0b95c276ca8bee4fcaae5d2f8ca",
+    "full/workflows/state-unknown.md": "56fd3944bd6f0dffeb4ee4ee1b9f5032fb4d2674a098f5b04c311e56868b6410",
+    "full/workflows/state-unsupported.md": "e3c172ee7319daa2c1d9b031b126381aed38920f8047eccfa92709db2d98b266",
+    "compact/CONVENTIONS.md": "e947648e02102b1e40ce26ac5a6ad78207b64a6d155f4d0c4942dfbdd0522946",
+    "compact/INDEX.md": "ba7f59b89aaf16be257f5ff069990f2414edbba92b8cc7b5033f1821be29d01c",
+    "compact/channels/alpha.md": "b5d254d8ffe0e4ce7f90a21d7b087b10edc551bac903e8355e16f28fb43f054d",
+    "compact/channels/middle.md": "4041f02eb8a84c11c5df26e36f9f2e1eebc8b9ad3b8d49b4940d6b7b087b9c5b",
+    "compact/channels/orders.md": "f1d8612f008dbc9be74c54fa3e127006bac0b0ecc7e379a0bdae6b5232e87dd4",
+    "compact/channels/representations.md": "3445755f8bd59ccb396bb5d98966828ccee102c6d79d026acaa22431f786e1ae",
+    "compact/channels/zeta.md": "b17d715b19dde6c6e4e82fbcda8b7f5ba16a28385e0fcab81247609f1b23e5ea",
+    "compact/indexes/operations-broad.md": "9b2473f0bc0ef50be52f32ecaca5c95109cd256cdfe9d61747ef025ac2d27f65",
+    "compact/indexes/operations-middle.md": "1f0da141703cf807bba803d4345d600bb4b25f52d5320d8f2d820e334a58ec03",
+    "compact/indexes/sources-asyncapi.md": "51d1ba7207a0dc0aa309325d09c023ad842de887a6c902968bb6b65f0bd5206e",
+    "compact/indexes/sources-contexts-behavior.md": "cfabb85ba795db482dda5a28db4c00a50b4f3f60c546deaa399417c325bcd035",
+    "compact/references/middle-operations.md": "6f702ff539c925d6b21c7c59e595df1586e052e30f9aa63244a356454f3fd767",
+    "compact/workflows/alpha-delivery.md": "ae1a909ce5e01a55f08eaaad798ac047c3af990e0a06346beca44f35ba00897f",
+    "compact/workflows/alpha-observability.md": "160be83bff7bcfdf729de2551f72a929a3e9cebc64e271b0f098439d01a6235d",
+    "compact/workflows/state-none.md": "b5cd2883d66241ed7f38a9dfe24cba6e0f6003e0fa7cd398532ccd6a10126f53",
+    "compact/workflows/state-unknown.md": "c7222ebe00fe83e139b6f1d9d72143bc0539d711bb5522cb3493df166a657aa3",
+    "compact/workflows/state-unsupported.md": "50dbfbc86344a4b94eb29bd214a69a6a63e0ae27e5d50faa767779614cbbfc86",
+    "source/complete-contexts.json": "8b1d2ad744ed2950849a1182aaed15ecdbfb4da92f0ac2086b6cb92a9242771f",
+    "source/complete-representations.json": "4199393498f7aa3e81e69b5bb5842fc55c076365c082b75a129a8a4d336d677e",
+    "source/projection-input-manifest.json": "aa43ea2a8b58d28da00ce8b6533664d9bd4614ac8b4f3e3711aa0cb179396628",
+    "source/storefront-behavior.json": "8a8bf42c303213a3d167a5c9cbd58acc682ccb38761b9e6bdd12d63531a3de43",
+    "source/storefront.asyncapi.json": "779c5c57a09c348ab398f22b558a474dfdccc509b74e83a38815f80cde6bdd97"
+  },
+  "requirements": [
+    {
+      "id": "R8-COMPLETE-001",
+      "facets_complete": false,
+      "facets": [
+        "paired-roots"
+      ]
+    },
+    {
+      "id": "R8-COMPLETE-002",
+      "facets_complete": false,
+      "facets": [
+        "catalog-parity"
+      ]
+    },
+    {
+      "id": "R8-COMPLETE-003",
+      "facets_complete": false,
+      "facets": [
+        "workflow-routing"
+      ]
+    },
+    {
+      "id": "R8-COMPLETE-004",
+      "facets_complete": false,
+      "facets": [
+        "reference-boundaries",
+        "reference-ownership"
+      ]
+    },
+    {
+      "id": "R8-COMPLETE-005",
+      "facets_complete": false,
+      "facets": []
+    },
+    {
+      "id": "R8-COMPLETE-006",
+      "facets_complete": false,
+      "facets": []
+    },
+    {
+      "id": "R8-COMPLETE-007",
+      "facets_complete": false,
+      "facets": []
+    },
+    {
+      "id": "R8-COMPLETE-008",
+      "facets_complete": false,
+      "facets": []
+    },
+    {
+      "id": "R8-COMPLETE-009",
+      "facets_complete": false,
+      "facets": []
+    },
+    {
+      "id": "R8-COMPLETE-010",
+      "facets_complete": false,
+      "facets": []
+    },
+    {
+      "id": "R8-COMPLETE-011",
+      "facets_complete": false,
+      "facets": []
+    },
+    {
+      "id": "R8-COMPLETE-012",
+      "facets_complete": false,
+      "facets": []
+    },
+    {
+      "id": "R8-COMPLETE-013",
+      "facets_complete": false,
+      "facets": []
+    },
+    {
+      "id": "R8-COMPLETE-014",
+      "facets_complete": false,
+      "facets": []
+    },
+    {
+      "id": "R8-COMPLETE-015",
+      "facets_complete": false,
+      "facets": []
+    },
+    {
+      "id": "R8-COMPLETE-016",
+      "facets_complete": false,
+      "facets": []
+    },
+    {
+      "id": "R8-COMPLETE-017",
+      "facets_complete": false,
+      "facets": []
+    },
+    {
+      "id": "R8-COMPLETE-018",
+      "facets_complete": false,
+      "facets": []
+    },
+    {
+      "id": "R8-COMPLETE-019",
+      "facets_complete": false,
+      "facets": [
+        "convention-closure"
+      ]
+    },
+    {
+      "id": "R8-COMPLETE-020",
+      "facets_complete": false,
+      "facets": []
+    },
+    {
+      "id": "R8-COMPLETE-021",
+      "facets_complete": false,
+      "facets": [
+        "field-defaults"
+      ]
+    },
+    {
+      "id": "R8-COMPLETE-022",
+      "facets_complete": false,
+      "facets": [
+        "same-as"
+      ]
+    },
+    {
+      "id": "R8-COMPLETE-023",
+      "facets_complete": false,
+      "facets": []
+    },
+    {
+      "id": "R8-COMPLETE-024",
+      "facets_complete": false,
+      "facets": []
+    },
+    {
+      "id": "R8-COMPLETE-025",
+      "facets_complete": false,
+      "facets": []
+    },
+    {
+      "id": "R8-COMPLETE-026",
+      "facets_complete": false,
+      "facets": []
+    },
+    {
+      "id": "R8-COMPLETE-027",
+      "facets_complete": false,
+      "facets": []
+    },
+    {
+      "id": "R8-COMPLETE-028",
+      "facets_complete": false,
+      "facets": []
+    },
+    {
+      "id": "R8-COMPLETE-029",
+      "facets_complete": false,
+      "facets": []
+    },
+    {
+      "id": "R8-COMPLETE-030",
+      "facets_complete": false,
+      "facets": [
+        "equivalence-exclusions"
+      ]
+    },
+    {
+      "id": "R8-COMPLETE-031",
+      "facets_complete": false,
+      "facets": [
+        "standard-mismatch"
+      ]
+    },
+    {
+      "id": "R8-COMPLETE-032",
+      "facets_complete": false,
+      "facets": []
+    },
+    {
+      "id": "R8-COMPLETE-033",
+      "facets_complete": false,
+      "facets": [
+        "section-states"
+      ]
+    },
+    {
+      "id": "R8-COMPLETE-034",
+      "facets_complete": false,
+      "facets": [
+        "workflow-introduction"
+      ]
+    },
+    {
+      "id": "R8-COMPLETE-035",
+      "facets_complete": false,
+      "facets": []
+    },
+    {
+      "id": "R8-COMPLETE-036",
+      "facets_complete": false,
+      "facets": [
+        "workflow-deviation"
+      ]
+    },
+    {
+      "id": "R8-COMPLETE-037",
+      "facets_complete": false,
+      "facets": [
+        "workflow-lists"
+      ]
+    },
+    {
+      "id": "R8-COMPLETE-038",
+      "facets_complete": false,
+      "facets": []
+    },
+    {
+      "id": "R8-1X-001",
+      "facets_complete": false,
+      "facets": []
+    },
+    {
+      "id": "R8-1X-002",
+      "facets_complete": false,
+      "facets": []
+    },
+    {
+      "id": "RELEASE-HDR-001",
+      "facets_complete": false,
+      "facets": []
+    }
+  ],
+  "cases": [
+    {
+      "id": "paired-base",
+      "kind": "complete-pair",
+      "path": "focused/valid/paired-base.json",
+      "expected": "valid",
+      "expected_rule_ids": [],
+      "rule_ids": [
+        "DM-PROFILE-001",
+        "DM-PROFILE-002",
+        "DM-PROFILE-003"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-001",
+          "facet": "paired-roots"
+        },
+        {
+          "requirement": "R8-COMPLETE-002",
+          "facet": "catalog-parity"
+        },
+        {
+          "requirement": "R8-COMPLETE-030",
+          "facet": "equivalence-exclusions"
+        },
+        {
+          "requirement": "R8-COMPLETE-031",
+          "facet": "standard-mismatch"
+        }
+      ]
+    },
+    {
+      "id": "full-workflows-reference-retrieval",
+      "kind": "complete-full",
+      "path": "focused/valid/full-workflows-reference-retrieval.json",
+      "expected": "valid",
+      "expected_rule_ids": [],
+      "rule_ids": [
+        "DM-WF-001",
+        "DM-WF-002",
+        "DM-WF-004",
+        "DM-WF-005",
+        "DM-WF-006",
+        "DM-REF-001",
+        "DM-REF-002",
+        "DM-REF-003",
+        "DM-CONV-005"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-003",
+          "facet": "workflow-routing"
+        },
+        {
+          "requirement": "R8-COMPLETE-034",
+          "facet": "workflow-introduction"
+        },
+        {
+          "requirement": "R8-COMPLETE-033",
+          "facet": "section-states"
+        },
+        {
+          "requirement": "R8-COMPLETE-036",
+          "facet": "workflow-deviation"
+        },
+        {
+          "requirement": "R8-COMPLETE-037",
+          "facet": "workflow-lists"
+        },
+        {
+          "requirement": "R8-COMPLETE-004",
+          "facet": "reference-boundaries"
+        },
+        {
+          "requirement": "R8-COMPLETE-004",
+          "facet": "reference-ownership"
+        },
+        {
+          "requirement": "R8-COMPLETE-019",
+          "facet": "convention-closure"
+        }
+      ]
+    },
+    {
+      "id": "compact-reconstruction",
+      "kind": "complete-compact",
+      "path": "focused/valid/compact-reconstruction.json",
+      "expected": "valid",
+      "expected_rule_ids": [],
+      "rule_ids": [
+        "DM-PROFILE-004",
+        "DM-PROFILE-005"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-021",
+          "facet": "field-defaults"
+        },
+        {
+          "requirement": "R8-COMPLETE-022",
+          "facet": "same-as"
+        }
+      ]
+    },
+    {
+      "id": "workflow-sharded",
+      "kind": "complete-full",
+      "path": "focused/valid/workflow-sharded.json",
+      "expected": "valid",
+      "expected_rule_ids": [],
+      "rule_ids": [
+        "DM-WF-001",
+        "DM-WF-002",
+        "DM-WF-003"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-003",
+          "facet": "workflow-routing"
+        }
+      ]
+    },
+    {
+      "id": "workflow-overlapping-shards",
+      "kind": "complete-full",
+      "path": "focused/valid/workflow-overlapping-shards.json",
+      "expected": "valid",
+      "expected_rule_ids": [],
+      "rule_ids": [
+        "DM-WF-003"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-003",
+          "facet": "workflow-routing"
+        }
+      ]
+    },
+    {
+      "id": "common-shape-convention-closure",
+      "kind": "complete-full",
+      "path": "focused/valid/common-shape-convention-closure.json",
+      "expected": "valid",
+      "expected_rule_ids": [],
+      "rule_ids": [
+        "DM-CONV-005"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-019",
+          "facet": "convention-closure"
+        }
+      ]
+    },
+    {
+      "id": "profile-link-mismatch",
+      "kind": "complete-pair",
+      "path": "focused/invalid/profile-link-mismatch.json",
+      "expected": "invalid",
+      "expected_rule_ids": [
+        "DM-PROFILE-001"
+      ],
+      "rule_ids": [
+        "DM-PROFILE-001"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-001",
+          "facet": "paired-roots"
+        }
+      ]
+    },
+    {
+      "id": "workflow-routing-name-mismatch",
+      "kind": "complete-pair",
+      "path": "focused/invalid/workflow-routing-name-mismatch.json",
+      "expected": "invalid",
+      "expected_rule_ids": [
+        "DM-PROFILE-002"
+      ],
+      "rule_ids": [
+        "DM-PROFILE-002"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-002",
+          "facet": "catalog-parity"
+        }
+      ]
+    },
+    {
+      "id": "standard-prose-mismatch",
+      "kind": "complete-pair",
+      "path": "focused/invalid/standard-prose-mismatch.json",
+      "expected": "invalid",
+      "expected_rule_ids": [
+        "DM-PROFILE-003"
+      ],
+      "rule_ids": [
+        "DM-PROFILE-003"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-030",
+          "facet": "equivalence-exclusions"
+        },
+        {
+          "requirement": "R8-COMPLETE-031",
+          "facet": "standard-mismatch"
+        }
+      ]
+    },
+    {
+      "id": "field-default-order",
+      "kind": "complete-compact",
+      "path": "focused/invalid/field-default-order.json",
+      "expected": "invalid",
+      "expected_rule_ids": [
+        "DM-PROFILE-004"
+      ],
+      "rule_ids": [
+        "DM-PROFILE-004"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-021",
+          "facet": "field-defaults"
+        }
+      ]
+    },
+    {
+      "id": "same-as-malformed-target",
+      "kind": "complete-compact",
+      "path": "focused/invalid/same-as-malformed-target.json",
+      "expected": "invalid",
+      "expected_rule_ids": [
+        "DM-PROFILE-005"
+      ],
+      "rule_ids": [
+        "DM-PROFILE-005"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-022",
+          "facet": "same-as"
+        }
+      ]
+    },
+    {
+      "id": "workflow-root-shape",
+      "kind": "complete-full",
+      "path": "focused/invalid/workflow-root-shape.json",
+      "expected": "invalid",
+      "expected_rule_ids": [
+        "DM-WF-001"
+      ],
+      "rule_ids": [
+        "DM-WF-001"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-003",
+          "facet": "workflow-routing"
+        }
+      ]
+    },
+    {
+      "id": "workflow-duplicate-name",
+      "kind": "complete-full",
+      "path": "focused/invalid/workflow-duplicate-name.json",
+      "expected": "invalid",
+      "expected_rule_ids": [
+        "DM-WF-002"
+      ],
+      "rule_ids": [
+        "DM-WF-002"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-003",
+          "facet": "workflow-routing"
+        }
+      ]
+    },
+    {
+      "id": "workflow-shard-bounds",
+      "kind": "complete-full",
+      "path": "focused/invalid/workflow-shard-bounds.json",
+      "expected": "invalid",
+      "expected_rule_ids": [
+        "DM-WF-003"
+      ],
+      "rule_ids": [
+        "DM-WF-003"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-003",
+          "facet": "workflow-routing"
+        }
+      ]
+    },
+    {
+      "id": "workflow-missing-introduction",
+      "kind": "complete-full",
+      "path": "focused/invalid/workflow-missing-introduction.json",
+      "expected": "invalid",
+      "expected_rule_ids": [
+        "DM-WF-004"
+      ],
+      "rule_ids": [
+        "DM-WF-004"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-034",
+          "facet": "workflow-introduction"
+        }
+      ]
+    },
+    {
+      "id": "workflow-deviation-order",
+      "kind": "complete-full",
+      "path": "focused/invalid/workflow-deviation-order.json",
+      "expected": "invalid",
+      "expected_rule_ids": [
+        "DM-WF-005"
+      ],
+      "rule_ids": [
+        "DM-WF-005"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-033",
+          "facet": "section-states"
+        },
+        {
+          "requirement": "R8-COMPLETE-036",
+          "facet": "workflow-deviation"
+        }
+      ]
+    },
+    {
+      "id": "workflow-nested-list",
+      "kind": "complete-full",
+      "path": "focused/invalid/workflow-nested-list.json",
+      "expected": "invalid",
+      "expected_rule_ids": [
+        "DM-WF-006"
+      ],
+      "rule_ids": [
+        "DM-WF-006"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-037",
+          "facet": "workflow-lists"
+        }
+      ]
+    },
+    {
+      "id": "reference-extra-heading",
+      "kind": "complete-full",
+      "path": "focused/invalid/reference-extra-heading.json",
+      "expected": "invalid",
+      "expected_rule_ids": [
+        "DM-REF-001"
+      ],
+      "rule_ids": [
+        "DM-REF-001"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-004",
+          "facet": "reference-boundaries"
+        }
+      ]
+    },
+    {
+      "id": "reference-nonminimal-fence",
+      "kind": "complete-full",
+      "path": "focused/invalid/reference-nonminimal-fence.json",
+      "expected": "invalid",
+      "expected_rule_ids": [
+        "DM-REF-002"
+      ],
+      "rule_ids": [
+        "DM-REF-002"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-004",
+          "facet": "reference-boundaries"
+        }
+      ]
+    },
+    {
+      "id": "reference-unreferenced",
+      "kind": "complete-full",
+      "path": "focused/invalid/reference-unreferenced.json",
+      "expected": "invalid",
+      "expected_rule_ids": [
+        "DM-REF-003"
+      ],
+      "rule_ids": [
+        "DM-REF-003"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-004",
+          "facet": "reference-ownership"
+        }
+      ]
+    },
+    {
+      "id": "common-shape-missing-error-handling",
+      "kind": "complete-full",
+      "path": "focused/invalid/common-shape-missing-error-handling.json",
+      "expected": "invalid",
+      "expected_rule_ids": [
+        "DM-CONV-005"
+      ],
+      "rule_ids": [
+        "DM-CONV-005"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-019",
+          "facet": "convention-closure"
+        }
+      ]
+    }
+  ]
+}

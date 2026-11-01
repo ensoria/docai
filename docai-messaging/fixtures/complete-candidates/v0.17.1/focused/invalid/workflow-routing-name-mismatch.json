@@ -1,0 +1,13 @@
+{
+  "mode": "task-scoped",
+  "changes": [
+    {
+      "profile": "compact",
+      "path": "INDEX.md",
+      "operation": "replace",
+      "from": "| Alpha delivery | Deliver alpha and record the middle event |",
+      "to": "| Alpha dispatch | Deliver alpha and record the middle event |"
+    }
+  ],
+  "assertions": []
+}

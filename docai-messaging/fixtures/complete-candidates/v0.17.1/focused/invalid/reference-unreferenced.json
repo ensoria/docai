@@ -1,0 +1,13 @@
+{
+  "mode": "task-scoped",
+  "changes": [
+    {
+      "profile": "full",
+      "path": "indexes/operations-middle.md",
+      "operation": "replace",
+      "from": "| none | references/middle-operations.md | none |",
+      "to": "| none | none | none |"
+    }
+  ],
+  "assertions": []
+}

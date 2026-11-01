@@ -300,10 +300,10 @@ function caseResult(testCase, diagnostics, catalog) {
   };
 }
 
-export function runFixtureCorpus(corpusDir, validator) {
+export function runFixtureCorpus(corpusDir, validator, options = {}) {
   const manifestPath = path.join(corpusDir, "cases.json");
   const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
-  const catalog = loadFixtureRuleCatalog(corpusDir);
+  const catalog = options.catalog ?? loadFixtureRuleCatalog(corpusDir);
   const cases = manifest.cases.map((testCase) => {
     const fixturePath = path.join(corpusDir, testCase.path);
     const { diagnostics = [] } = validator(fixturePath, testCase);

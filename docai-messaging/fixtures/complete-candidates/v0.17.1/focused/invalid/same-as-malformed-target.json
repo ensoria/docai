@@ -1,0 +1,13 @@
+{
+  "mode": "task-scoped",
+  "changes": [
+    {
+      "profile": "compact",
+      "path": "channels/representations.md",
+      "operation": "replace",
+      "from": "**same_as**: Operation r-json-original-operation Message json-original-message Payload application/json",
+      "to": "**same_as**: missing-target"
+    }
+  ],
+  "assertions": []
+}

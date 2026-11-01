@@ -1,0 +1,23 @@
+{
+  "mode": "whole-set",
+  "changes": [],
+  "assertions": [
+    {
+      "pointer": "/complete/fieldDefaults/0/columns",
+      "equals": [
+        {
+          "column": "Required",
+          "value": "yes"
+        },
+        {
+          "column": "Nullable",
+          "value": "no"
+        }
+      ]
+    },
+    {
+      "pointer": "/complete/sameAs/0/target/operation",
+      "equals": "r-json-original-operation"
+    }
+  ]
+}

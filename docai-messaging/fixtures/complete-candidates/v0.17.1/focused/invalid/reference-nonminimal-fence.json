@@ -1,0 +1,20 @@
+{
+  "mode": "task-scoped",
+  "changes": [
+    {
+      "profile": "full",
+      "path": "references/middle-operations.md",
+      "operation": "replace",
+      "from": "`````markdown",
+      "to": "``````markdown"
+    },
+    {
+      "profile": "full",
+      "path": "references/middle-operations.md",
+      "operation": "replace",
+      "from": "\n`````\n",
+      "to": "\n``````\n"
+    }
+  ],
+  "assertions": []
+}

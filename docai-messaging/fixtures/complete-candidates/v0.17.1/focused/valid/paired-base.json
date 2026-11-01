@@ -1,0 +1,14 @@
+{
+  "mode": "whole-set",
+  "changes": [],
+  "assertions": [
+    {
+      "pointer": "/completeProfilePair/projection/docaiMessaging",
+      "equals": "0.17.1"
+    },
+    {
+      "pointer": "/completeProfilePair/full/catalogs/workflows/form",
+      "equals": "direct"
+    }
+  ]
+}

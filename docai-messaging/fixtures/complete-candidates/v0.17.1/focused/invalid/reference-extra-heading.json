@@ -1,0 +1,13 @@
+{
+  "mode": "task-scoped",
+  "changes": [
+    {
+      "profile": "full",
+      "path": "references/middle-operations.md",
+      "operation": "replace",
+      "from": "# Reference Material",
+      "to": "# Unexpected\n\n# Reference Material"
+    }
+  ],
+  "assertions": []
+}

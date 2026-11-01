@@ -12,6 +12,7 @@ import { auditCompleteChannelPlacement } from "./lib/complete-channel-placement-
 import { auditCompleteRelatedPolicy } from "./lib/complete-related-policy-audit.mjs";
 import { loadDocumentSet } from "./lib/document-set.mjs";
 import { validateCompleteProfilePair } from "./lib/validators/complete-profiles.mjs";
+import { runCompleteFixtureCorpus } from "./lib/complete-corpus.mjs";
 
 const defaultCandidatePath = fileURLToPath(
   new URL("../fixtures/complete-candidates/v0.17.1/", import.meta.url)
@@ -117,7 +118,19 @@ function checkCompleteFixtures(candidatePath) {
 }
 
 const arguments_ = process.argv.slice(2);
-if (arguments_.length > 1) {
+if (arguments_[0] === "--corpus") {
+  try {
+    if (!arguments_[1] || arguments_[1].startsWith("--") || arguments_.length > 3
+      || (arguments_[2] !== undefined && arguments_[2] !== "--require-complete")) {
+      throw new TypeError("Usage: check-complete-fixtures.mjs --corpus <candidate-root> [--require-complete]");
+    }
+    const result = runCompleteFixtureCorpus(arguments_[1], { requireComplete: arguments_[2] === "--require-complete" });
+    process.stdout.write(`${result.report}\n`);
+    process.exitCode = result.exitCode;
+  } catch (error) {
+    fail([error instanceof Error ? error.message : String(error)]);
+  }
+} else if (arguments_.length > 1) {
   fail([usage]);
 } else {
   try {

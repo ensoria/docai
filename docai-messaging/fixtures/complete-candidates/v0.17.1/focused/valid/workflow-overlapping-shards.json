@@ -1,0 +1,39 @@
+{
+  "mode": "task-scoped",
+  "changes": [
+    {
+      "profile": "full",
+      "path": "INDEX.md",
+      "operation": "replace",
+      "from": "| Name | Summary | Details |\n|---|---|---|\n| Alpha delivery | Deliver alpha and record the middle event | workflows/alpha-delivery.md |\n| Alpha observability | Observe alpha delivery with synthetic traces | workflows/alpha-observability.md |\n| State none | Exercise every workflow section's none state | workflows/state-none.md |\n| State unknown | Exercise every workflow section's whole-section unknown state | workflows/state-unknown.md |\n| State unsupported | Exercise every workflow section's replacement unsupported state | workflows/state-unsupported.md |",
+      "to": "### Workflow Shards\n\n| First name | Last name | Summary | Details |\n|---|---|---|---|\n| Alpha delivery | State unsupported | Outer workflow bounds | indexes/workflows-outer.md |\n| Alpha observability | State unknown | Inner workflow bounds | indexes/workflows-inner.md |"
+    },
+    {
+      "profile": "full",
+      "path": "indexes/workflows-outer.md",
+      "operation": "add",
+      "content": "> docai-messaging: 0.17.1 | profile: full | perspective: storefront-service | coverage: complete | knowledge: complete | source_refs: complete-contexts\n\n# Messaging Workflow Index\n\n## Workflows\n\n| Name | Summary | Details |\n|---|---|---|\n| Alpha delivery | Deliver alpha and record the middle event | workflows/alpha-delivery.md |\n| State unsupported | Exercise every workflow section's replacement unsupported state | workflows/state-unsupported.md |\n\n> docai-identity: set_id: b32:gfmi3or2obeyzaibo5dxqqyn6q | projection_id: b32:vjb6ukulldji3iam5c3fgnte3e\n"
+    },
+    {
+      "profile": "full",
+      "path": "indexes/workflows-inner.md",
+      "operation": "add",
+      "content": "> docai-messaging: 0.17.1 | profile: full | perspective: storefront-service | coverage: complete | knowledge: complete | source_refs: complete-contexts\n\n# Messaging Workflow Index\n\n## Workflows\n\n| Name | Summary | Details |\n|---|---|---|\n| Alpha observability | Observe alpha delivery with synthetic traces | workflows/alpha-observability.md |\n| State none | Exercise every workflow section's none state | workflows/state-none.md |\n| State unknown | Exercise every workflow section's whole-section unknown state | workflows/state-unknown.md |\n\n> docai-identity: set_id: b32:gfmi3or2obeyzaibo5dxqqyn6q | projection_id: b32:vjb6ukulldji3iam5c3fgnte3e\n"
+    }
+  ],
+  "assertions": [
+    {
+      "pointer": "/complete/workflowRetrieval/exact/Alpha observability/falsePositiveIndexPaths",
+      "equals": [
+        "indexes/workflows-outer.md"
+      ]
+    },
+    {
+      "pointer": "/complete/workflowRetrieval/semanticFallback/loadedIndexPaths",
+      "equals": [
+        "indexes/workflows-inner.md",
+        "indexes/workflows-outer.md"
+      ]
+    }
+  ]
+}

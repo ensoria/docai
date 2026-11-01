@@ -1,0 +1,25 @@
+{
+  "mode": "task-scoped",
+  "changes": [
+    {
+      "profile": "full",
+      "path": "CONVENTIONS.md",
+      "operation": "replace",
+      "from": "\n\n## Request-Reply",
+      "to": "\n\n**message_shape**: audit-signal\n\n- Headers: none\n- Bindings: none\n#### Payload\n\nnone\n\n## Request-Reply"
+    },
+    {
+      "profile": "full",
+      "path": "channels/orders.md",
+      "operation": "replace",
+      "from": "| publish rejected | broker publish error |",
+      "to": "| publish rejected | common:audit-signal |"
+    }
+  ],
+  "assertions": [
+    {
+      "pointer": "/core/failureShapes/commonReferences/0/operation",
+      "equals": "sendCreateOrder"
+    }
+  ]
+}

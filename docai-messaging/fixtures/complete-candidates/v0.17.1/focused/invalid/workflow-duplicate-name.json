@@ -1,0 +1,13 @@
+{
+  "mode": "task-scoped",
+  "changes": [
+    {
+      "profile": "full",
+      "path": "INDEX.md",
+      "operation": "replace",
+      "from": "| Alpha observability | Observe alpha delivery with synthetic traces |",
+      "to": "| Alpha delivery | Observe alpha delivery with synthetic traces |"
+    }
+  ],
+  "assertions": []
+}

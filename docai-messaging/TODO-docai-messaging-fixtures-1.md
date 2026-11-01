@@ -25,9 +25,9 @@
 | Task 12: complete positive candidate | 完了（現candidateの有限scope）。両profile各17 paths、11 operations、5 Workflows、1 Reference。MATRIX-001–005の有限gate / reviewとsource traceabilityを完了。汎用generator・whole-source completenessや公開readinessの認定ではない。 |
 | Task 13–16 | complete focused corpus、token evidence、RC、stable freezeは未完了。後掲checklistを使う。 |
 
-### 最新の検証済みbaseline（2026-10-31、Binding Grammar / Source Comparison Closure）
+### 最新の検証済みbaseline（2026-11-01、Complete Recipe Corpus Foundation）
 
-- 全suite: `node --test docai-messaging/tools/tests/*.test.mjs` → 2194 tests / 2193 pass / 1既存skip / fail 0 / cancelled 0、329228.19825 ms（2026-10-31、Binding Grammar / Source Comparison Closure）。
+- 全suite: `node --test docai-messaging/tools/tests/*.test.mjs` → 2231 tests / 2230 pass / 1既存skip / fail 0 / cancelled 0、348448.29225 ms（2026-11-01、独立review二件修正後）。
 - skip: `validates source-shard evidence with the declared minimum Python 3.9`、python3.9未導入。Python最小版での実行成功を認定していない。
 - Core checker: 264 cases / 193 invalid / one-invalidity 193/193 / unused rules 0 / coverage gaps 0。
 - Complete checker: 17 paths、full/compact equivalent。pair一致だけでsource completeness / readinessを認定しない。
@@ -36,19 +36,19 @@
 
 ## 初版完成までの見通し — 2026-10-31暫定棚卸し
 
-完成とは既存Task 11–16のexit criteriaを満たすstable `v1.0.0` conformance corpusであり、任意入力の汎用generator / converterや全将来機能の実装ではない。Coreは完了、complete validators / 回帰testsとpositive pairは既存。candidateには要件棚卸し用COVERAGE.mdがあるが、実行可能なversioned focused corpus / cases.json / 総task token evidenceがなく、RC / stable corpus・conformance / release-readiness CLIも未作成。Task 13の未チェック機能群は全て未実装という意味ではなく、既存code / testsを再利用して公開可能な証跡へ対応させ、不足だけをTDDで補う。
+完成とは既存Task 11–16のexit criteriaを満たすstable `v1.0.0` conformance corpusであり、任意入力の汎用generator / converterや全将来機能の実装ではない。Coreは完了、complete validators / 回帰testsとpositive pairは既存。candidateには要件inventory・初期21JSON recipes / cases.json / coverage gateがあるが、全38 complete要求のfacet証拠と総task token evidenceが未完了で、RC / stable corpus・conformance / release-readiness CLIも未作成。Task 13の未チェック機能群は全て未実装という意味ではなく、既存code / testsを再利用して公開可能な証跡へ対応させ、不足だけをTDDで補う。
 
 | 残る成果物 | 暫定checkpoint数 | 主な不確実性 |
 |---|---|---|
 | Bindings grammar / source比較の既知境界 | 完了（残0） | Message / failure-shapeのASCII-space tableとReply Channelの末尾拡張・empty heading formsをordinary / source照合で検証。Task 11全体の判定は別。 |
-| Task 13 complete / first-1.x compatibility corpus・coverage / checker統合 | 4–6 | §8対既存証跡の一対一inventoryで判明する実装不足 |
+| Task 13 complete / first-1.x compatibility corpus・coverage / checker統合 | 3–5 | §8対既存証跡の一対一inventoryで判明する実装不足 |
 | Task 14 総task token測定・公平なbaseline・再現性 / regression証跡 | 2–3 | retrieval会計とbaselineの同一contract化 |
 | Task 15 RC corpus・version移行・source / semantic / independent review | 1–2 | hardcoded version境界とreview blocker / 追加RC |
 | Task 16 stable freeze・readiness gate・最終検証 / 公開文書 | 1 | final RCがblockerなしであること |
 
-残り合計8–12のまとまったcheckpointを仮置きする（Bindings grammar / source比較を1成果物として完了し、前回9–13から更新。Headers新規範はTask 13 / 15のversion移行と統合）。1単位は関連する設計・実装・tests・review・証跡まで揃えた成果物で、返信回数や既存の細分化commit数ではない。実測生産性に基づく納期や上限ではなく、重要な新規gap / RCやり直し・利用制限・人手待ちで増える。現時点では経過日数 / 時間を確約しない。次はTask 13 coverage inventory確定時に再見積もり、各checkpoint終了時に成果物・残gap・見積変動を報告する。未検証を完了扱いせず、将来一般化だけの懸念を理由なく初版blockerへ追加しない。
+残り合計7–11のまとまったcheckpointを仮置きする（初期recipe corpus基盤を一成果物として完了し、前回8–12から更新。全38 publication rowsはopenのまま、Headers新規範はTask 13 / 15のversion移行と統合）。1単位は関連する設計・実装・tests・review・証跡まで揃えた成果物で、返信回数や既存の細分化commit数ではない。実測生産性に基づく納期や上限ではなく、重要な新規gap / RCやり直し・利用制限・人手待ちで増える。現時点では経過日数 / 時間を確約しない。次はTask 13 coverage inventory確定時に再見積もり、各checkpoint終了時に成果物・残gap・見積変動を報告する。未検証を完了扱いせず、将来一般化だけの懸念を理由なく初版blockerへ追加しない。
 
-**次scopeの候補（実装未承認・未着手）:** [Complete COVERAGE inventory](fixtures/complete-candidates/v0.17.1/COVERAGE.md)の最初の実装群（manifest / dispatcher / coverage gateとprofile・Workflow・Reference・convention fixtures）を具体設計する。38 complete要求・first-1.x二条件・Headers新規範を公開用case IDsへ結び、Core既存証拠と新caseの責任を分ける。棚卸しだけでschema / naming等の未確認証拠や公開readinessを完了扱いにしない。実装scope・schema・完了条件は事前確認する。
+**次scopeの候補（実装未承認・未着手）:** source / contractの既存Core scenarioをcomplete corpusへ結び、adapters・bindings・variants・exact JSONのfacet証拠を増やす具体設計へ進む。基盤・15rule初期recipes・Bindings境界を再実装せず、semantic fixtureとsource projection / generation outcomesを区別する。Headers一意性は1.0.0同期項目として保持。case kind / 期待outcomes / 完了条件は事前確認する。
 
 ## 共通の実装・公開制約
 
@@ -506,12 +506,40 @@
 
 ### Task 13: Complete Surface Focused Corpus を完成させる
 
+#### Complete Recipe Corpus Foundation — 2026-11-01（案A・一括実行承認済み）
+
+**Short design:** main / `4412770`、開始clean。ユーザーは「検証済みbase＋宣言的JSON recipe」を選択し、基盤・15 complete rules初期fixture・coverage gate・TDD・最終reviewを同checkpointで進めることを承認。Markdown roots保存案はexact bytesを直接reviewできるが、変異意図 / baseとの関係を別途管理する。採用案はbase SHA / whole-set validityを先に検証し、exact置換・追加・削除とliteral factsをJSONで宣言、入力は変更せず所有temp copyへ再現する。任意JS実行・sourceからの期待値推測・normative / version変更は行わない。
+
+**Layers / interfaces:** `cases.json` schema1にversion / scope、base39 files SHA、全41 requirementsと部分facet inventory、case IDs / kind / recipe path / expected / expected_rule_ids / facet bindingsを宣言。kindは`complete-pair` / `complete-full` / `complete-compact`。recipeは`mode`、`changes`（profile / path / operation / exact from,to またはcontent）、`assertions`（facts JSON pointer / literal equals）。未変異の`whole-set`はidentity込み、変異recipeの`task-scoped`はidentity検証済みbaseからの構文 / retrieval evidenceと明記し、fresh identityやwhole-set artifact適合と呼ばない。tempへ変更後reloadしmetadataやline座標を捏造しない。既存Core `runFixtureCorpus`の期待diagn断照合・one-primary原則を再利用し、facts不一致やschema / path / pin違反はrunner失敗として扱う。
+
+**Coverage / CLI:** `runCompleteFixtureCorpus(corpusDir,{requireComplete:false})`を新設、既存`check-complete-fixtures.mjs`へ`--corpus <dir> [--require-complete]`を追加。既存default positive candidate mode / source-aware gatesは保持。全38 complete IDsとfirst-1.x二ID / Headers一IDの欠落・重複・未知参照を拒否。facetは成功した正負caseとfacts assertionをリンクする。`facets_complete:false`のrowをcase数から自動でcoveredにせず、初期corpusでは全38 publication rowsをopenのままにする。通常corpus modeは実cases成功とopen数を併記、strictはopenがあれば非0。first-1.x / Headersは0.17.1のconditional残件として別計数し、新しい規範を現在のcheckerへ混入しない。
+
+**Files / plan（主担当inline、Git read-only、canonical TODOのみ）:**
+- [x] `tools/tests/complete-corpus.test.mjs`へschema / pin / base identity / exact mutation / path / facts / read-only / strict-open / unknown IDs等のRED testsを先に書く。新`lib/complete-corpus-contract.mjs`、`lib/complete-fixture-validator.mjs`、`lib/complete-corpus.mjs`とCLI dispatchをGREENへ実装。既存validator APIは変更しない。
+- [x] candidate `cases.json`と`focused/{valid,invalid}/*.json`を追加し、15 complete diagnostic rulesの正負証拠とliteral retrieval / reconstruction factsを固定。Workflow sharded positive・profile mismatch・Reference boundary / ownership・convention closure・field_defaults / same_asを既存testから具体化する。REDCasesが期待ruleで拒否されることを確認し、1 primary rule / expected cascade分類を維持。対象15rule coverageとrequirement全facet完了を区別する。
+- [x] `COVERAGE.md` / candidate READMEへschema・層・CLIと未達数を記録し、TODOの`*.md`想定を承認済みJSONへ更新。focused / Core / positive Complete / corpus / strict期待失敗、両explicit-manifest no-op、39SHA / 両roots・全156SHA行 / H review・input bytes保持、全suiteとdiffcheckを確認。Expected: casesとtests fail0、strictはpublication未達を拒否、既存Python3.9 skip別記。
+- [x] fresh reviewer一名が全差分をread-only review。Important / Criticalは一回のTDD修正と全suite、Minor / declined判断はledger / finalへ。Review Focus: (1) base identityと変異後の検証層、(2) exact pin / path / 操作 / metadata reload、(3) facts assertionが実結果を独立literalと比較、(4) 部分facet inventoryやcase成功を公開完了にしない、(5) 既存candidate source-aware gate・inputs不変。完了後この一成果物で停止。commit案: `test(messaging): add complete recipe corpus and coverage gate`。
+
+**Pre-flight:** recipe contract→dispatcher→runner / CLIの依存を確認。literal期待値はvalidator出力から自動生成しない。manifestがtrusted facet inventoryの一部であるため、facet追加・完了宣言はnormative inventoryとのreviewが必要。部分inventoryは必ずopenにする。既存source / manifest / profile / identity / Core / 公開README bytesは保持し、fixture出力をsource契約のauthorityとしない。
+
+**TDD / progress:** API未実装のRED後、基盤を実装。temp corpusのcatalog探索というsetup不備を確認し、case-local偽catalogで未知ruleを受理するREDを追加、generic runnerへ後方互換の明示catalog引数を追加してtool側catalogに固定。declared coverageからreadinessをtrueにするRED、無効UTF8 recipeの暗黙置換による受理REDも観測し、coverageCompleteとpublicationReadyを分離、既存fatal decoderを再利用してGREEN。初期corpus未存在のREDから21JSON recipesを具体化し、期待一次診断が混在した二fixtureはvalidatorを弱めず変異意図を分離した。corpus21/21（valid6 / invalid15、whole-set3 / task-scoped18）、one-primary15/15、focused＋generic runner37/37成功。全38rowsはfacets_complete:false、conditional3を別記。all15rule正負を持ってもpublication未完了、strict非0をCLI testで確認。全suite実行中、最終review一名をdispatch済み。
+
+**Ruling: JSON recipe数値はsafe integerに限定する** — fixture schema/versionやcountのliteralはsafe integer、arbitrary-precision source値はcontent文字列として保持する。JSON.parseで黙って数値を丸めないためのfixture境界であり、DocAIの数値domainを狭める規範ではない。将来のexact numeric facts assertionは専用の表現設計が必要（誤ればfixture期待値の数値丸めや、対応済み範囲の過大表示）。
+
+**Final review / fix pass:** reviewer一名が全code / manifest / 21recipes / tests / docsをread-only確認。Criticalなし、Important二件を採用。native JSON.parse後のsafe-integer判定では丸め / underflowを見逃すため、exact ASTの整数性と±9007199254740991範囲を変換前に検証する。JSON escapeされた孤立surrogateはfatal UTF8 decoderだけでは防げないため、replace / addの書込み前にUTF8 round-trip一致を要求し、valid pair / literal escaped sourceは保持する。追加11tests中6件のRED（rounding3・実facts偽一致1・surrogate replace/add2）を再現し、境界値 / integer spelling / valid Unicode正例も含めfocused＋runner48/48 GREEN。修正前suiteは中断、修正後suiteを最終証拠とする。再reviewなし。
+
+**Final: minor (deferred):** 成功するremove / reloadとsymlink拒否の専用testsは追加候補として残す。既存remove操作は実行前に拒否される負例のみで、直接の成功branch証拠は未取得。現在のcorpusはremoveを使わず、symlink guardもcodeとreview確認に留まる。
+
+**Final review rulings（declined三項目）:** (1) 将来facetの網羅性 / release readinessは初期corpusの認定外、全38rowはopenを維持（誤れば部分証拠で早過ぎる公開）；(2) 検査とcopyの間に第三者が同時変更するhostile filesystem raceは未保証、安定したlocal corpusを前提にする（誤れば同時変更を検出できない可能性）；(3) fullsuiteの最終結果は主担当実測を正としreviewerの重複実行と称さない（誤れば未検証成功表示）。
+
+**Final verification / complete:** review修正後全suite2231件 / 2230 pass / 既存Python3.9 skip1 / fail0 / cancelled0、348448.29225 ms、exit0。focused＋runner48/48、初期corpus21/21（valid6 / invalid15、whole-set3 / task-scoped18、one-primary15/15）と全15rule正負証拠を確認。Core264 / invalid193 / one-invalidity193/193 / unused0 / gaps0、従来Complete17 paths等価、strict corpusは全38open＋conditional3のため期待exit1。両explicit-manifest dry-run no-op、現39SHA / 両roots・全156SHA行 / H review全文をHEAD `4412770`比で保持。source / projection manifest / profile34files / Core / 公開READMEとsemantic validatorsは不変。corpus入力bytes不変、links / diffcheck成功。base検証とtask-scoped再現層、partial coverageとpublication readinessを分離して一成果物完了、Git書込みなしで停止。次はsource / contract facetの具体設計、残Task 13は3–5・全体7–11を暫定見通しとする。全publication rows / Task 11全体 / 13–16 / 初版Headers規範 / release readinessは未完了。commit案: `test(messaging): add complete recipe corpus and coverage gate`。
+
 **2026-10-31 inventory checkpoint:** main / `c0faa61`、開始clean。前Bindings checkpointはcommit済みで再実装せず、README §8・Core Remaining Inventory・67 Core / 15 complete rules・validator / runner / tests / candidateをread-only棚卸し。[COVERAGE](fixtures/complete-candidates/v0.17.1/COVERAGE.md)を新設し、complete要求38行・first-1.x二条件・承認済みHeaders一意性を独立追跡。全complete publication行はopen。既存unit / Core versioned証拠 / 有限positive candidateを区別し、stable-name override / collision、Server Variable / Channel Parameter default、schema feature認識・polymorphic欠落・Workflow generation failureの専用証拠未確認を明示した。現CLIは一pair＋finite source/policy gateであり、manifest corpus runner / complete coverage gateは未実装。新規規範・fixture schema・validatorは変更せず、TDD対象のcode変更なし。candidate READMEからinventoryへlink。次実装群は文書の提案であり未承認、残Task 13は4–6・全体8–12を据置き（棚卸し完了と、明示された実装不確実性を相殺して機械的に減算しない）。検証結果は下記に追記する。
 
 **Files:**
 
-- Create: complete candidate `focused/valid/*.md`
-- Create: complete candidate `focused/invalid/*.md`
+- Create: complete candidate `focused/valid/*.json`（2026-11-01承認済みrecipe方式）
+- Create: complete candidate `focused/invalid/*.json`（同上）
 - Modify: complete candidate `cases.json` and `COVERAGE.md`
 
 **Inventory verification / review:** 関連七test filesは134/134成功、fail / cancelled / skip0（271.226792 ms）。Core264 / invalid193 / one-invalidity193/193 / unused0 / gaps0、Complete17 paths等価。要件ID41件の一意性と38 / 2 / 1の内訳、local link targets49件、39SHA / 両roots・全156SHA行 / H review全文保持、code / Core / 公開README不変を確認。独立review一名がREADME clauses・三docs・関連code / testsをread-only照合。Criticalなし、Important一件（名前生成の拡張後衝突失敗の明示漏れ）を採用し、128→256 bit / 26→52文字と、完全digest一致とは別の拡張後一意性失敗を追記。Minor一件のmapping checkbox状態は今回の要件対応完了を反映し、公開corpus項目はopenのまま。declined-to-judgeなし。docsのみのため新tests / 全suite再実行は行わず、2194件 / 2193 pass / Python3.9 skip1は前checkpoint実測として保持。三doc filesだけを変更しGit書込みなし、この1成果物で停止。commit案: `docs(messaging): inventory complete surface publication coverage`。

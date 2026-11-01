@@ -1,0 +1,34 @@
+{
+  "mode": "whole-set",
+  "changes": [],
+  "assertions": [
+    {
+      "pointer": "/complete/workflows/form",
+      "equals": "direct"
+    },
+    {
+      "pointer": "/complete/workflowDefinitions/0/title",
+      "equals": "Alpha delivery across operation boundaries"
+    },
+    {
+      "pointer": "/complete/referenceMaterials/0/info",
+      "equals": "markdown"
+    },
+    {
+      "pointer": "/complete/conventionRetrieval/operations/0/requiredWorkflowPaths",
+      "equals": [
+        "workflows/alpha-delivery.md"
+      ]
+    },
+    {
+      "pointer": "/complete/conventionRetrieval/operations/0/supplementalWorkflows/0/fallback",
+      "equals": true
+    },
+    {
+      "pointer": "/complete/workflowRetrieval/exact/Alpha delivery/loadedWorkflowPaths",
+      "equals": [
+        "workflows/alpha-delivery.md"
+      ]
+    }
+  ]
+}

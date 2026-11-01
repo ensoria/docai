@@ -1,0 +1,13 @@
+{
+  "mode": "task-scoped",
+  "changes": [
+    {
+      "profile": "full",
+      "path": "INDEX.md",
+      "operation": "replace",
+      "from": "| State unsupported | Exercise every workflow section's replacement unsupported state | workflows/state-unsupported.md |",
+      "to": "| State unsupported | Exercise every workflow section's replacement unsupported state | workflows/state-unsupported.md |\n\nUnexpected trailing workflow content."
+    }
+  ],
+  "assertions": []
+}

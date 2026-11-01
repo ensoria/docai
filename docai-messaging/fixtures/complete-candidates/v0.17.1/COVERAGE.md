@@ -1,12 +1,12 @@
 # Complete Surface Coverage Inventory — 0.17.1 Candidate
 
-Audit date: 2026-10-31. Baseline: `c0faa61`. This is a requirements and evidence inventory, **not a completed conformance corpus or publication approval**. The current checker validates one positive candidate pair; it does not consume this table or a complete-surface `cases.json`.
+Inventory audit: 2026-10-31, baseline `c0faa61`. Initial recipe corpus: 2026-11-01, baseline `4412770`. This is a requirements and evidence inventory with a partial executable corpus, **not a completed conformance corpus or publication approval**. The default checker still validates the positive candidate pair; explicit `--corpus` mode executes `cases.json`.
 
 ## Scope and evidence rules
 
 The authority is [README §8](../../../README.md#8-compliance-checklist), including the three complete-surface corpus paragraphs, the first-1.x reader-compatibility paragraph, and the existing Core requirements. The [Core inventory](../../core/v0.17.1/COVERAGE.md) remains closed for its own published scope: 264 cases, 193 invalid, 71 valid. Its `R8-CORE-001`–`049` evidence is reusable only for the named Core facet; it does not establish advanced-surface compatibility.
 
-The complete candidate currently has paired 17-path roots and finite source/manifest evidence in [SOURCE-TRACEABILITY](SOURCE-TRACEABILITY.md). It has no complete-surface `cases.json`, `focused/valid/`, or `focused/invalid/`. This file supplies the previously missing coverage inventory; adding it does not fill those other gaps.
+The complete candidate has paired 17-path roots and finite source/manifest evidence in [SOURCE-TRACEABILITY](SOURCE-TRACEABILITY.md). [cases.json](cases.json) now pins those 39 base files and declares 21 recipes: six valid and fifteen invalid, with positive and negative witnesses for each of the fifteen complete diagnostic rules. Three recipes validate unchanged whole sets/pair; eighteen use the explicitly task-scoped mutation layer. These counts do not close any of the 38 publication requirements below.
 
 Evidence below means an existing implementation or regression was located and inspected, not that every listed subcase passed a new audit. All 38 `R8-COMPLETE` rows remain **open for versioned publication evidence**. An existing unit test, a catalog rule, a positive candidate, and a published valid/invalid fixture are different evidence. Partial Core reuse and unconfirmed implementation gaps are stated explicitly. No row is `covered` merely because the full test suite passes.
 
@@ -76,17 +76,34 @@ These three rows are tracked separately; they are not valid newer-pre-1.0 inputs
 
 ## Infrastructure gaps and completion contract
 
-1. Add a complete-surface manifest and case dispatcher. [Generic runner][runner] already loads `cases.json` and compares expected diagnostic sets. [Core dispatcher][core-dispatcher] covers Core kinds; its `operation-profile-pair` branch is not the complete pair validator. [Complete CLI][checker] currently loads one pair and candidate-specific source/policy gates, without a corpus manifest or coverage audit. Reuse these responsibilities; do not replace the existing candidate gate or label its success “all complete cases passed”.
+1. The initial manifest and [complete dispatcher][complete-dispatcher] reuse [generic runner][runner] expectation matching and its one-primary audit, with the tool's trusted rule catalog. [Core dispatcher][core-dispatcher] covers different Core kinds; its `operation-profile-pair` branch is not the complete pair validator. [Complete CLI][checker] retains the one-pair candidate-specific source/policy gate and adds a separate explicit corpus mode. The remaining work is requirement-facet completion, not replacement of the candidate gate or relabeling its success as complete publication coverage.
 2. Separate ordinary set/pair cases, source projection/generation outcomes, and synthetic reader-compatibility cases. Ordinary rejection, source unrepresentability, and generation failure are not interchangeable. Every invalid case needs one primary responsibility, expected rule/outcome and documented cascades. Trusted adapter mappings remain explicit, never inferred from emitted examples.
 3. Materialize reproducible valid/invalid evidence: immutable versioned roots or explicit deterministic fixture recipes with exact bases and assertions. Use the existing restamper only for owned staging copies and declared manifests; identity validity must not mask the intended failure. Do not copy or relabel Core cases without declaring the exact reused requirement and compatible validation path.
-4. Bind every required facet above to case IDs, rule/outcome assertions and an executable coverage check. The current table has no complete case IDs because none exist yet. Closing a row requires every named facet, not one arbitrary representative. A coverage result must distinguish applicable open rows, Task 14 dependencies and release-version conditions; a zero on a subset is not complete readiness.
+4. Bind every required facet above to case IDs, rule/outcome assertions and the executable coverage check. `cases.json` contains initial case/facet links; every row has `facets_complete:false` because its facet inventory is still partial. Closing a row requires a reviewed exhaustive facet declaration and successful valid/invalid witnesses for every facet, not one arbitrary representative. A coverage result distinguishes 38 applicable open rows from three conditional release obligations; a zero on a subset is not complete readiness.
 5. Synchronize first-1.x reader behavior and the new Headers constraint with Task 15's versioned corpus and normative changes. Preserve 0.17.1's published meaning. Task 14 supplies total-task evidence and accounting failures before release acceptance; it is not waived by closing grammar rows.
 
 ## Delivery grouping and estimate
 
-This audit closes the inventory deliverable only. Proposed remaining Task 13 groups are: (a) manifest/dispatcher/coverage gate plus profile, Workflow, Reference and convention fixtures; (b) source/contract promotion including adapters, bindings, variants and exact JSON; (c) uncovered naming/default/representability/generation outcomes; (d) first-1.x synthetic cases and full closure with release-version dependencies. Groups (b)/(c) may each require an extra coherent checkpoint after their per-feature TDD findings: **4–6 remaining Task 13 checkpoints**. Combined with Task 14 (2–3), Task 15 (1–2) and Task 16 (1), the overall provisional **8–12** remains unchanged. It is not a time estimate or upper bound. The inventory turns uncertainty into named work; it does not justify subtracting a checkpoint while newly explicit gaps are unresolved.
+The inventory and initial group (a), manifest/dispatcher/coverage gate plus profile, Workflow, Reference and convention representatives, now exist. Remaining Task 13 groups are (b) source/contract promotion including adapters, bindings, variants and exact JSON; (c) uncovered naming/default/representability/generation outcomes; (d) first-1.x synthetic cases and full facet closure with release-version dependencies. Groups (b)/(c) may each require an extra coherent checkpoint after their per-feature TDD findings: **3–5 remaining Task 13 checkpoints**. Combined with Task 14 (2–3), Task 15 (1–2) and Task 16 (1), the provisional total is **7–11**. This is not a deadline or upper bound; all 38 publication rows remain open.
 
-The next implementation proposal is group (a); its exact fixture schema, rules, admission/coverage behavior and tests need a concrete design before implementation. No new behavior, fixture format or release sequence is approved by this inventory.
+### Recipe schema and validation layers
+
+`cases.json` schema 1 has `docai_messaging:0.17.1`, `scope:complete-candidate`, `base_files` (exact SHA-256 bindings), 41 requirement declarations, and case entries. Each case names `id`, `kind`, `path`, `expected`, `expected_rule_ids`, `rule_ids` and `facets`. Kinds are `complete-pair`, `complete-full` and `complete-compact`. An invalid case declares one primary rule; valid entries declare none. The declared `rule_ids` are evidence labels, not inferred branch coverage or proof of every normative facet.
+
+Each JSON recipe has `mode`, `changes`, `assertions`. The runner first verifies complete base membership, every pin, both identities and whole-pair validity with explicit trusted example adapters. It replays changes in an owned temporary copy, reloads the documents using existing parsers and compares actual facts against literal JSON-pointer assertions. Inputs are never edited. Replacement anchors must occur exactly once; `add` requires an absent file, and `remove` requires an existing file. Only full/compact document paths are admitted; escaping paths, symlinks, unknown fields, duplicate JSON names and invalid UTF-8 fail. Numeric recipe literals are checked as exact safe integers before native conversion; exact numeric source representations remain strings, without silent narrowing. Unpaired surrogates in text to be written fail before UTF-8 encoding; valid Unicode pairs and literal escaped source text are preserved.
+
+- `whole-set`: no changes; validates identities and the complete selected set/pair.
+- `task-scoped`: nonempty changes after the pinned base passed whole-set validation. Checks grammar, pair contracts or retrieval facts without asserting a new checksum for the changed view. These are executable semantic fixtures, **not freshly stamped standalone document sets**. They do not replace identity, source-aware or release-publication gates.
+
+Commands (all preserve corpus input bytes):
+
+```sh
+node docai-messaging/tools/check-complete-fixtures.mjs
+node docai-messaging/tools/check-complete-fixtures.mjs --corpus docai-messaging/fixtures/complete-candidates/v0.17.1
+node docai-messaging/tools/check-complete-fixtures.mjs --corpus docai-messaging/fixtures/complete-candidates/v0.17.1 --require-complete
+```
+
+The first command remains the finite candidate source/policy check. The second currently reports 21 passed, 0 failed, 38 open complete requirements and three conditional release obligations. The third **must exit nonzero** while applicable rows are open. Successful declared facet witnesses alone never certify publication readiness: Task 14/15/16, human review and first-1.x requirements remain separate. Later source-scenario and reader-compatibility kinds need an explicit design, not arbitrary executable recipe code.
 
 [pair]: ../../../tools/tests/complete-profile-pair.test.mjs
 [workflow-routing]: ../../../tools/tests/complete-validator.test.mjs
@@ -112,3 +129,4 @@ The next implementation proposal is group (a); its exact fixture schema, rules, 
 [runner]: ../../../tools/lib/fixture-runner.mjs
 [core-dispatcher]: ../../../tools/lib/core-fixture-validator.mjs
 [checker]: ../../../tools/check-complete-fixtures.mjs
+[complete-dispatcher]: ../../../tools/lib/complete-fixture-validator.mjs

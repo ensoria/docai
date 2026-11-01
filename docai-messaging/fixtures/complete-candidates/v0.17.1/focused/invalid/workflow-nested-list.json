@@ -1,0 +1,13 @@
+{
+  "mode": "task-scoped",
+  "changes": [
+    {
+      "profile": "full",
+      "path": "workflows/alpha-delivery.md",
+      "operation": "replace",
+      "from": "- Caller-local alpha event data is validated",
+      "to": "- Caller-local alpha event data is validated\n  - nested prerequisite"
+    }
+  ],
+  "assertions": []
+}
