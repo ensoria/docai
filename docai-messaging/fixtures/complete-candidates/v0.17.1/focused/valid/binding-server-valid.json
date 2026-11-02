@@ -1,0 +1,25 @@
+{
+  "mode": "task-scoped",
+  "changes": [
+    {
+      "profile": "full",
+      "path": "CONVENTIONS.md",
+      "operation": "replace",
+      "from": "Use Kafka protocol version `3.6.0`. Kafka record headers encode each logical header as one UTF-8 value, and clients expose logical headers by their documented names.",
+      "to": "Use Kafka protocol version `3.6.0`. Kafka record headers encode each logical header as one UTF-8 value, and clients expose logical headers by their documented names. The synthetic server binding requires TLS transport."
+    },
+    {
+      "profile": "compact",
+      "path": "CONVENTIONS.md",
+      "operation": "replace",
+      "from": "Use Kafka protocol version `3.6.0`. Kafka record headers encode each logical header as one UTF-8 value, and clients expose logical headers by their documented names.",
+      "to": "Use Kafka protocol version `3.6.0`. Kafka record headers encode each logical header as one UTF-8 value, and clients expose logical headers by their documented names. The synthetic server binding requires TLS transport."
+    }
+  ],
+  "assertions": [
+    {
+      "pointer": "/completeProfilePair/projection/docaiMessaging",
+      "equals": "0.17.1"
+    }
+  ]
+}

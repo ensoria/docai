@@ -1,0 +1,13 @@
+{
+  "mode": "task-scoped",
+  "changes": [
+    {
+      "profile": "full",
+      "path": "channels/representations.md",
+      "operation": "replace",
+      "from": "## SEND representations.tagged (r-tagged-operation)\n\nSends a lifecycle event selected by its complete discriminator mapping.\n\n### Behavior\n\n- side_effects: none\n- idempotency: none\n- preconditions: none\n- authorization: none\n- delivery: none\n- ordering: none\n\n### Operation Bindings\n\nnone\n\n### Channel\n\n- Parameters: none\n- Bindings: none\n\n### Message tagged-message\n\n#### Headers\n\nnone\n\n#### Bindings\n\nnone\n\n#### Payload\n\n**payload_required**: yes\n\n**media_type**: application/json\n\n**payload_nullable**: no\n\n**variant**: kind = \"created\"\n\n```json\n{\"kind\":\"created\",\"id\":\"evt_01\"}\n```\n\n| Field | Type | Required | Nullable | Constraints / Meaning |\n|---|---|---|---|---|\n| $ | object | yes | no | Additional properties are forbidden. |\n| kind | string | yes | no | `const=\"created\"`; Variant discriminator |\n| id | string | yes | no | Synthetic event identifier |\n\n**variant**: kind = \"rejected\"\n\n```json\n{\"kind\":\"rejected\",\"reason\":\"invalid\"}\n```\n\n| Field | Type | Required | Nullable | Constraints / Meaning |\n|---|---|---|---|---|\n| $ | object | yes | no | Additional properties are forbidden. |\n| kind | string | yes | no | `const=\"rejected\"`; Variant discriminator |\n| reason | string | yes | no | Rejection reason |\n\n### Reply\n\nnone\n\n### Failure Handling\n\nnone\n\n### Related\n\nnone",
+      "to": "## SEND representations.tagged (r-tagged-operation)\n\nSends a lifecycle event selected by its complete discriminator mapping.\n\n### Behavior\n\n- side_effects: none\n- idempotency: none\n- preconditions: none\n- authorization: none\n- delivery: none\n- ordering: none\n\n### Operation Bindings\n\nnone\n\n### Channel\n\n- Parameters: none\n- Bindings: none\n\n### Message tagged-message\n\n#### Headers\n\nnone\n\n#### Bindings\n\nnone\n\n#### Payload\n\n**payload_required**: yes\n\n**media_type**: application/json\n\n**payload_nullable**: no\n\n**variant**: kind = null\n\n```json\n{\"kind\":\"quoted\\\"\\\\value\"}\n```\n\n| Field | Type | Required | Nullable | Constraints / Meaning |\n|---|---|---|---|---|\n| $ | object | yes | no | Additional properties are forbidden. |\n| kind | string | yes | no | `const=\"quoted\\\"\\\\value\"`; Discriminator |\n\n### Reply\n\nnone\n\n### Failure Handling\n\nnone\n\n### Related\n\nnone"
+    }
+  ],
+  "assertions": []
+}

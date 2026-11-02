@@ -8,8 +8,120 @@ import { fileURLToPath } from "node:url";
 import { candidate, copyCandidate, snapshot } from "./helpers/complete-contributor-fixture.mjs";
 import { runCompleteFixtureCorpus } from "../lib/complete-corpus.mjs";
 import { readCorpusJson } from "../lib/complete-corpus-contract.mjs";
+import { validateCompleteFixtureRecipe } from "../lib/complete-fixture-validator.mjs";
+import { validateCompleteSourceFixture } from "../lib/complete-source-fixture-validator.mjs";
 
 const checker = fileURLToPath(new URL("../check-complete-fixtures.mjs", import.meta.url));
+function sourceFixture(t) {
+  const f = fixture(t);
+  f.manifest.cases[0].kind = "complete-source-scenario";
+  f.manifest.cases[0].rule_ids = ["DM-ADAPTER-001"];
+  f.recipe = { mode: "source-scenario", evaluator: "adapter", scenario: {
+    docaiMessagingVersion: "0.17.1", cases: [{ caseId: "default-schema", adapterClass: "schema",
+      sourceSpecification: "AsyncAPI 3.1.0", schemaFormat: null, publicationMappings: [],
+      projected: { caseId: "default-schema", outcome: "supported", resolution: "source-default",
+        effectiveTarget: "application/vnd.aai.asyncapi+json;version=3.1.0",
+        ruleId: "direct-asyncapi-schema-object-3.1.0", ruleVersion: "0.17.1",
+        ordinaryReaderRequirement: "normalized-contract-only" }
+    }] }, assertions: [{ pointer: "/adapterSourceExpectations/0/resolution", equals: "source-default" }] };
+  return f;
+}
+function saveSource(f) {
+  write(f.root, "cases.json", f.manifest);
+  write(f.root, f.manifest.cases[0].path, f.recipe);
+}
+test("source scenario derives adapter facts from source and preserves input bytes", t => {
+  const f = sourceFixture(t); saveSource(f);
+  const before = snapshot(f.root), result = runCompleteFixtureCorpus(f.root);
+  assert.equal(result.passed, 1, result.report);
+  assert.match(result.report, /mode=source-scenario/);
+  assert.deepEqual(snapshot(f.root), before);
+  assert.equal(runCompleteFixtureCorpus(f.root, { requireComplete: true }).exitCode, 1);
+});
+test("source scenario rejects an incorrectly projected adapter with its primary diagnostic", t => {
+  const f = sourceFixture(t);
+  f.recipe.scenario.cases[0].projected.resolution = "direct";
+  f.manifest.cases[0].expected = "invalid";
+  f.manifest.cases[0].path = "focused/invalid/source.json";
+  f.manifest.cases[0].expected_rule_ids = ["DM-ADAPTER-001"];
+  saveSource(f);
+  const result = runCompleteFixtureCorpus(f.root);
+  assert.equal(result.passed, 1, result.report);
+  assert.equal(result.exitCode, 0);
+  assert.deepEqual(result.cases[0].diagnostics.map(item => item.ruleId), ["DM-ADAPTER-001"]);
+});
+test("source scenario cannot use a supplied projection as authority after source changes", t => {
+  const f = sourceFixture(t);
+  f.recipe.scenario.cases[0].sourceSpecification = "AsyncAPI 3.0.0";
+  saveSource(f);
+  const result = runCompleteFixtureCorpus(f.root);
+  assert.equal(result.failed, 1, result.report);
+  assert.deepEqual(result.cases[0].diagnostics.map(item => item.ruleId), ["DM-ADAPTER-001"]);
+});
+test("missing source expectations are setup failures, not successful negative witnesses", t => {
+  const f = sourceFixture(t);
+  delete f.recipe.scenario.cases[0].projected;
+  f.manifest.cases[0].expected = "invalid";
+  f.manifest.cases[0].path = "focused/invalid/missing-expectation.json";
+  f.manifest.cases[0].expected_rule_ids = ["DM-ADAPTER-001"];
+  saveSource(f);
+  const result = runCompleteFixtureCorpus(f.root);
+  assert.equal(result.failed, 1, result.report);
+  assert.match(result.report, /source expectation/);
+});
+for (const [id, group, key] of [
+  ["source-schema-adapter-targets-valid", "cases", "projected"],
+  ["source-payload-media-identity-valid", "cases", "projectedIdentity"],
+  ["source-adapter-publication-scope-valid", "selectionCases", "projectedSelection"],
+  ["source-adapter-publication-scope-valid", "publicationCases", "projectedPublication"],
+  ["source-adapter-publication-scope-valid", "actorCases", "projectedActors"]
+]) test(`source expectation container ${key} must be an explicit object`, t => {
+  const root = copyCandidate(t), manifest = readCorpusJson(path.join(root, "cases.json"));
+  const entry = manifest.cases.find(item => item.id === id);
+  for (const value of [undefined, null, []]) {
+    const recipe = readCorpusJson(path.join(candidate, entry.path));
+    if (value === undefined) delete recipe.scenario[group][0][key];
+    else recipe.scenario[group][0][key] = value;
+    write(root, entry.path, recipe);
+    assert.throws(() => validateCompleteSourceFixture(root, entry), /source expectation/);
+  }
+});
+test("primary Message binding witness has one defect and repairing it restores validity", t => {
+  const root = copyCandidate(t), manifest = readCorpusJson(path.join(root, "cases.json"));
+  const entry = manifest.cases.find(item => item.id === "binding-message-invalid");
+  const original = validateCompleteFixtureRecipe(root, entry);
+  assert.deepEqual(original.diagnostics.map(item => item.ruleId), ["DM-MSG-002"]);
+  const recipe = readCorpusJson(path.join(root, entry.path));
+  recipe.changes[0].to = recipe.changes[0].to.replace("| Other | Property | Value / Rule |", "| Protocol | Property | Value / Rule |");
+  write(root, entry.path, recipe);
+  assert.deepEqual(validateCompleteFixtureRecipe(root, entry).diagnostics, []);
+});
+test("repairing only the beyond-IEEE754 example restores pair equivalence", t => {
+  const root = copyCandidate(t), manifest = readCorpusJson(path.join(root, "cases.json"));
+  const entry = manifest.cases.find(item => item.id === "exact-pair-beyond-ieee-invalid");
+  assert.deepEqual(validateCompleteFixtureRecipe(root, entry).diagnostics.map(item => item.ruleId), ["DM-PROFILE-003"]);
+  const recipe = readCorpusJson(path.join(root, entry.path));
+  recipe.changes.find(item => item.profile === "compact").to = recipe.changes.find(item => item.profile === "compact").to
+    .replace('{"n":9007199254740993,', '{"n":9007199254740992,');
+  write(root, entry.path, recipe);
+  assert.deepEqual(validateCompleteFixtureRecipe(root, entry).diagnostics, []);
+});
+for (const [label, mutate, pattern] of [
+  ["unknown evaluator", f => { f.recipe.evaluator = "constructor"; }, /evaluator/],
+  ["wrong layer", f => { f.recipe.mode = "whole-set"; }, /mode/],
+  ["unexpected envelope field", f => { f.recipe.changes = []; }, /keys|field/],
+  ["empty source cases", f => { f.recipe.scenario.cases = []; }, /nonempty|non-empty/],
+  ["duplicate source identity", f => { f.recipe.scenario.cases.push(f.recipe.scenario.cases[0]); }, /unique|duplicate/],
+  ["source version drift", f => { f.recipe.scenario.docaiMessagingVersion = "0.17.2"; }, /version/],
+  ["false literal fact", f => { f.recipe.assertions[0].equals = "direct"; }, /fact-mismatch/],
+  ["missing literal facts", f => { f.recipe.assertions = []; }, /assertion/],
+  ["unknown adapter class", f => { f.recipe.scenario.cases[0].adapterClass = "custom-code"; }, /adapter class/]
+]) test(`source scenario fails closed for ${label}`, t => {
+  const f = sourceFixture(t); mutate(f); saveSource(f);
+  const result = runCompleteFixtureCorpus(f.root);
+  assert.equal(result.failed, 1, result.report);
+  assert.match(result.report, pattern);
+});
 const requirementIds = [...Array.from({ length: 38 }, (_, n) => `R8-COMPLETE-${String(n + 1).padStart(3, "0")}`),
   "R8-1X-001", "R8-1X-002", "RELEASE-HDR-001"];
 function write(root, name, data) {
@@ -237,4 +349,20 @@ test("initial versioned complete corpus exercises all fifteen complete rules wit
   assert.equal(result.coverage.open.length, 38);
   assert.equal(result.publicationReady, false);
   assert.deepEqual(snapshot(candidate), before);
+});
+test("versioned source and document witnesses exercise promoted contract facets", () => {
+  const result = runCompleteFixtureCorpus(candidate);
+  for (const id of ["source-schema-adapter-targets-valid", "source-adapter-publication-scope-valid",
+    "source-payload-media-identity-projection-invalid", "binding-operation-valid", "binding-reply-message-invalid",
+    "binding-common-failure-valid", "binding-inline-failure-valid", "tagged-number-valid", "tagged-boolean-valid",
+    "tagged-escaped-string-valid", "untagged-delimiter-invalid", "raw-structured-invalid",
+    "exact-pair-numeric-spelling-valid", "exact-pair-beyond-ieee-invalid", "exact-variant-const-invalid",
+    "exact-same-as-valid", "exact-array-order-invalid", "exact-duplicate-name-invalid",
+    "exact-variant-numeric-spelling-valid", "exact-variant-beyond-ieee-invalid",
+    "raw-xml-invalid", "raw-yaml-invalid", "raw-parameterized-json-invalid",
+    "binding-server-valid", "binding-server-invalid"]) {
+    assert.equal(result.cases.find(item => item.id === id)?.passed, true, `${id}\n${result.report}`);
+  }
+  assert.equal(result.failed, 0, result.report);
+  assert.equal(result.coverage.open.length, 38);
 });

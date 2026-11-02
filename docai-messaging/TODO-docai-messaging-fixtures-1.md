@@ -25,30 +25,30 @@
 | Task 12: complete positive candidate | 完了（現candidateの有限scope）。両profile各17 paths、11 operations、5 Workflows、1 Reference。MATRIX-001–005の有限gate / reviewとsource traceabilityを完了。汎用generator・whole-source completenessや公開readinessの認定ではない。 |
 | Task 13–16 | complete focused corpus、token evidence、RC、stable freezeは未完了。後掲checklistを使う。 |
 
-### 最新の検証済みbaseline（2026-11-01、Complete Recipe Corpus Foundation）
+### 最新の検証済みbaseline（2026-11-02、Source / Contract Corpus Promotion）
 
-- 全suite: `node --test docai-messaging/tools/tests/*.test.mjs` → 2231 tests / 2230 pass / 1既存skip / fail 0 / cancelled 0、348448.29225 ms（2026-11-01、独立review二件修正後）。
+- 全suite: `node --test docai-messaging/tools/tests/*.test.mjs` → 2252 tests / 2251 pass / 1既存skip / fail 0 / cancelled 0、392381.37375 ms（2026-11-02、review三件修正後・candidate固定run）。
 - skip: `validates source-shard evidence with the declared minimum Python 3.9`、python3.9未導入。Python最小版での実行成功を認定していない。
 - Core checker: 264 cases / 193 invalid / one-invalidity 193/193 / unused rules 0 / coverage gaps 0。
 - Complete checker: 17 paths、full/compact equivalent。pair一致だけでsource completeness / readinessを認定しない。
 - Candidate: source四files＋explicit manifest、projector `1.0.5`、publication policy `1.0.0`。[Workflow snapshot / SHA記録](fixtures/complete-candidates/v0.17.1/SOURCE-TRACEABILITY.md#workflow-contributor-snapshot--2026-10-29)のmetadata / retrieval実結果は2026-10-29にユーザー受入済み。受入済みの[operation-shard snapshot](fixtures/complete-candidates/v0.17.1/SOURCE-TRACEABILITY.md#operation-shard-contributor-snapshot--2026-10-27)・[projector 1.0.3 snapshot](fixtures/complete-candidates/v0.17.1/SOURCE-TRACEABILITY.md#refreshed-contributor-snapshot--2026-10-27)・[旧language/semantic snapshot](fixtures/complete-candidates/v0.17.1/SOURCE-TRACEABILITY.md#finite-language-and-semantic-review--2026-10-24)のH evidenceを自動継承しない。
 - language/semantic結果は2026-10-24にユーザーが受入（`67cb116`）。一般generator・将来snapshot・本番business / Kafka / OAuth品質、token効率・配置最適性の認定ではない。content / policy変更時は再reviewする。
 
-## 初版完成までの見通し — 2026-10-31暫定棚卸し
+## 初版完成までの見通し — 2026-11-02暫定更新
 
-完成とは既存Task 11–16のexit criteriaを満たすstable `v1.0.0` conformance corpusであり、任意入力の汎用generator / converterや全将来機能の実装ではない。Coreは完了、complete validators / 回帰testsとpositive pairは既存。candidateには要件inventory・初期21JSON recipes / cases.json / coverage gateがあるが、全38 complete要求のfacet証拠と総task token evidenceが未完了で、RC / stable corpus・conformance / release-readiness CLIも未作成。Task 13の未チェック機能群は全て未実装という意味ではなく、既存code / testsを再利用して公開可能な証跡へ対応させ、不足だけをTDDで補う。
+完成とは既存Task 11–16のexit criteriaを満たすstable `v1.0.0` conformance corpusであり、任意入力の汎用generator / converterや全将来機能の実装ではない。Coreは完了、complete validators / 回帰testsとpositive pairは既存。candidateには要件inventory・75JSON recipes（source13 / 文書62）/ cases.json / coverage gateがあるが、全38 complete要求のfacet証拠と総task token evidenceが未完了で、RC / stable corpus・conformance / release-readiness CLIも未作成。Task 13の未チェック機能群は全て未実装という意味ではなく、既存code / testsを再利用して公開可能な証跡へ対応させ、不足だけをTDDで補う。
 
 | 残る成果物 | 暫定checkpoint数 | 主な不確実性 |
 |---|---|---|
 | Bindings grammar / source比較の既知境界 | 完了（残0） | Message / failure-shapeのASCII-space tableとReply Channelの末尾拡張・empty heading formsをordinary / source照合で検証。Task 11全体の判定は別。 |
-| Task 13 complete / first-1.x compatibility corpus・coverage / checker統合 | 3–5 | §8対既存証跡の一対一inventoryで判明する実装不足 |
+| Task 13 complete / first-1.x compatibility corpus・coverage / checker統合 | 2–4 | §8対既存証跡の一対一inventoryで判明する実装不足 |
 | Task 14 総task token測定・公平なbaseline・再現性 / regression証跡 | 2–3 | retrieval会計とbaselineの同一contract化 |
 | Task 15 RC corpus・version移行・source / semantic / independent review | 1–2 | hardcoded version境界とreview blocker / 追加RC |
 | Task 16 stable freeze・readiness gate・最終検証 / 公開文書 | 1 | final RCがblockerなしであること |
 
-残り合計7–11のまとまったcheckpointを仮置きする（初期recipe corpus基盤を一成果物として完了し、前回8–12から更新。全38 publication rowsはopenのまま、Headers新規範はTask 13 / 15のversion移行と統合）。1単位は関連する設計・実装・tests・review・証跡まで揃えた成果物で、返信回数や既存の細分化commit数ではない。実測生産性に基づく納期や上限ではなく、重要な新規gap / RCやり直し・利用制限・人手待ちで増える。現時点では経過日数 / 時間を確約しない。次はTask 13 coverage inventory確定時に再見積もり、各checkpoint終了時に成果物・残gap・見積変動を報告する。未検証を完了扱いせず、将来一般化だけの懸念を理由なく初版blockerへ追加しない。
+残り合計6–10のまとまったcheckpointを仮置きする（source / contract promotionを一成果物として進め、前回7–11から更新。全38 publication rowsはopenのまま、Headers新規範はTask 13 / 15のversion移行と統合）。1単位は関連する設計・実装・tests・review・証跡まで揃えた成果物で、返信回数や既存の細分化commit数ではない。実測生産性に基づく納期や上限ではなく、重要な新規gap / RCやり直し・利用制限・人手待ちで増える。現時点では経過日数 / 時間を確約しない。次はTask 13 coverage inventory確定時に再見積もり、各checkpoint終了時に成果物・残gap・見積変動を報告する。未検証を完了扱いせず、将来一般化だけの懸念を理由なく初版blockerへ追加しない。
 
-**次scopeの候補（実装未承認・未着手）:** source / contractの既存Core scenarioをcomplete corpusへ結び、adapters・bindings・variants・exact JSONのfacet証拠を増やす具体設計へ進む。基盤・15rule初期recipes・Bindings境界を再実装せず、semantic fixtureとsource projection / generation outcomesを区別する。Headers一意性は1.0.0同期項目として保持。case kind / 期待outcomes / 完了条件は事前確認する。
+**次scopeの候補（実装未承認・未着手）:** 残るnaming / defaults / schema representability / generation outcomesの具体設計へ進む。併せて全38rowの既存・不足facetと完了条件を明示し、代表caseを増やすだけで終わらないclosure計画を作る。完了した基盤・source kind / 54recipes・Bindings境界を再実装しない。Headers一意性は1.0.0同期項目として保持し、新たなcase kind / outcome / 生成機能の追加は事前確認する。
 
 ## 共通の実装・公開制約
 
@@ -505,6 +505,29 @@
 **Final verification / complete:** 全suite2194件 / 2193 pass / 既存Python3.9 skip1 / fail0 / cancelled0、329228.19825 ms、exit0。focused117/117、failure-shape＋Task 6対応監査19/19成功。Core264 / invalid193 / one-invalidity193/193 / unused0 / gaps0、Complete17 paths等価、両explicit-manifest dry-run no-op。現39SHA / 両root identity照合、全156SHA行 / H reviewを含むtraceability全文、source / manifest / profile34files / Core / READMEのHEAD `c5ce52e`比bytes保持を確認。TODO local links13件・diffcheck成功。変更はvalidator / source audit二files・tests二files・本TODOの計五files、repository restamp / Git書込みなし。既知二境界を一成果物として完了し、残見通し8–12へ更新。Task 11全体 / 13–16・Headers新規範・公開readinessは未完了のまま、このcheckpointで停止。commit案: `fix(messaging): align binding syntax and source comparison`。
 
 ### Task 13: Complete Surface Focused Corpus を完成させる
+
+#### Source / Contract Corpus Promotion — 2026-11-02（案A承認済み）
+
+**Design / plan:** main / `c6cff9d`、開始clean。案A（source scenarioと文書recipeを明示分離）を承認。案Bの文書recipeのみではadapter選択 / generation outcomesを検証できないため採用しない。`writing-plans` / `executing-plans` / TDDを使用し、既存workspace・本TODOを計画 / ledgerとして主担当が一括実行、最後に一名の独立review。Git書込み・normative/version変更なし。
+
+**Interfaces:** 新kind `complete-source-scenario` はrecipe `{mode:"source-scenario", evaluator, scenario, assertions}`。evaluatorは既存 `validateAdapterSourceExpectations` / `validateAdapterPublicationExpectations` / `validatePayloadMediaIdentityExpectations`への固定allowlist（`adapter` / `adapter-publication` / `payload-media-identity`）。非空・caseId一意・version一致のscenarioだけを評価し、返却factsを独立literal assertionsと比較する。validは正しいunsupported / unknown / generation-failureも含み、invalidは誤った投影 / outcomeに対する既存一次診断を要求する。source内projected値は期待投影でありsource authorityではない。任意code・path import・adapter実行を認めない。既存三kind / CLI契約とbase39pins保持。
+
+- [x] **1 RED→GREEN:** corpus testsに新kind受理、source-derived facts、誤投影一次診断、unknown evaluator / envelope / empty / duplicate case / version / assertion失敗、read-only / strict-openの回帰を追加。contract / dispatcherを実装し、source層をmodeで報告する。source evaluatorは既存実装を再利用し再実装しない。
+- [x] **2 Corpus:** Core adapter / publication / media-identityの固定scenarioを由来明記で昇格。文書recipesで全binding scopes、tagged値class / untagged label、opaque binaryと構造化偽装、full/compact / same_as / constraints / variantsのexact JSON正負を追加。各caseのliteral facts / 一次rule / facetを確認する。source evaluator出力から期待値を生成しない。
+- [x] **3 Acceptance:** focused tests、Core / candidate / corpus CLI、strict期待非0、全suite、両explicit-manifest no-op、base39SHA / identity・SOURCE-TRACEABILITY全文保持・input bytes不変・diffcheck。COVERAGE / READMEと本TODOへ実測 / 残gapを簡潔に記録。全facet未確定rowはopen、Task14 / first1.x / Headersは維持。
+- [x] **4 Review:** fresh reviewer一名が全差分をread-only確認。Important / Criticalは一回のTDD修正＋全suite、Minor / declined判断は記録し停止。
+
+**Review Focus:** (1) source outcomeとordinary不適合の区別、(2) evaluator / version / empty入力のfail-closed、(3) source由来factsとliteral期待値の独立性、(4) exact JSON / Unicodeをnative数値や正規化で壊さない、(5) partial facetを公開完了にしない。**Pre-flight:** manifest kind→dispatcher→generic runnerは同じentry契約、既存evaluatorはdiagnostics/factsを返すためそのまま合成可。sourceと文書recipeは独立した有限証拠で、sourceから任意文書への汎用投影の証明ではない。誤って同一視するとcoverage / generator能力を過大認定する。
+
+**Progress / rulings:** 新kind未受理の11件RED→GREEN、実corpus未登録のREDから54recipesを追加し計75件（valid29 / invalid46、whole-set3 / task-scoped59 / source-scenario13、nested source69）。focused＋runner61/61成功。失敗fixtureの変異範囲・型表記・配列要素行・literal pointerを修正し、semantic validatorは変更していない。**Ruling:** server bindingはCONVENTIONSのproseをpair比較する有限証拠、source helperのchannel binding outcomeをserverへ付替えて対応済みとはしない（誤れば未実装のadapter / scope認識を過大認定）。**Ruling:** pairのconstraintセルは同じlogical textを要求し、`1` / `1.0` / `1e0`等の表記差はexample / variant / const評価で検証する（誤れば表セル一致の規範を緩和）。全38rows / conditional3はopen、既存39pinsは維持。残見通しはTask13が2–4・全体6–10へ更新、次は既存と今回の部分facetを網羅inventoryへ閉じる具体設計を優先する。
+
+**Final review / correction pass:** Criticalなし、Important三件を採用。欠落 / null / arrayの`projected*`を五groupすべてsetup失敗として拒否、primary Message recipeのreply巻込みを正負両方で除去、beyond-IEEE pairは両方に同じminimumセルを置いて例だけの差へ分離。追加8testsのREDを観測し、primaryだけの修復 / 数値例だけの修復でdiagnosticsが消えることも確認、focused＋runner69/69 GREEN。先行全suite2244 / pass2243 / skip1 / fail0は修正前結果、最終証拠は下記candidate固定run。再reviewなし。**Minor deferred:** negative source七recipesのassertionsはcaseId＋一次診断に留まり、derived outcome / reasonの追加assertionを今後の強化候補とする（同じruleの別原因で期待outcomeの回帰を見逃す可能性）。
+
+**Review declined rulings:** (1) 汎用AsyncAPI変換 / 任意adapter実行は承認scope外（誤れば実生成の問題が未検出）；(2) 網羅facet / polymorphic fallback / feature認識 / 残generationは全38openで次へ（誤れば早過ぎるcoverage認定）；(3) first1.x / Headers新規範 / readinessは既存Task13–16へ保持（誤れば旧versionへの規範混入）；(4) nested source全fieldのrecursive schemaは既存evaluator契約を再利用し未追加、今回の新しいfail-closed境界はenvelope / projected containersに限定（誤ればmalformed nested入力がsemantic診断として解釈され得る）；(5) media-identity evaluatorへ渡す非payload adapterは既存のreduced outcomeを保持しpayload専用制約を新設しない（誤れば詳細identityの検証済み範囲を誤認）。mainの全suite実測を正としreviewerの重複全suiteと称さない。
+
+**Verification note:** 修正後suite2252件 / pass2250 / skip1 / fail1は、mainが実行中にcandidate COVERAGEを更新してinput snapshot testが実際の差（COVERAGE 27005→27788 bytes）を検出したもの。checkerの書込みではなく検証中のmain編集が原因。code / testを緩めず、candidate固定の再実行で全2252件 / pass2251 / skip1 / fail0を確認。candidate外の本TODOだけへ最終実測を記録する。
+
+**Final verification / complete:** 全suite2252件 / pass2251 / 既存Python3.9 skip1 / fail0 / cancelled0、392381.37375 ms、exit0。focused＋runner69/69、corpus75/75（valid29 / invalid46、one-primary46/46、source13内69scenarios）、strictは38open＋conditional3のため期待exit1。Core264 / invalid193 / one-invalidity193/193 / unused0 / gaps0、従来Complete17 paths等価、両explicit-manifest dry-run no-op。base39pins / SHA / 両identity・source / manifest / profile34files / SOURCE-TRACEABILITY全文（156SHA行とH review含む）・Core / 公開README / semantic validatorsはHEAD `c6cff9d`比不変。corpus入力bytes不変、local links54 / diffcheck成功。変更はsource dispatcher / shared fact assertions / kind dispatch / tests・54JSON recipes・manifest / 三docs、source投影の汎用化や規範変更なし。全38rows / Task11全体 / Task13–16 / Headers新規範 / release readinessは未完了、残6–10checkpoint。この一成果物で停止、Git書込みなし。commit案: `test(messaging): extend complete corpus with source and contract witnesses`。
 
 #### Complete Recipe Corpus Foundation — 2026-11-01（案A・一括実行承認済み）
 

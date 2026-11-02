@@ -86,7 +86,16 @@
     {
       "id": "R8-COMPLETE-007",
       "facets_complete": false,
-      "facets": []
+      "facets": [
+        "operation",
+        "channel",
+        "message",
+        "reply-channel",
+        "reply-message",
+        "common-failure",
+        "inline-failure",
+        "server-convention"
+      ]
     },
     {
       "id": "R8-COMPLETE-008",
@@ -111,17 +120,25 @@
     {
       "id": "R8-COMPLETE-012",
       "facets_complete": false,
-      "facets": []
+      "facets": [
+        "source-adapter",
+        "source-payload-media-identity"
+      ]
     },
     {
       "id": "R8-COMPLETE-013",
       "facets_complete": false,
-      "facets": []
+      "facets": [
+        "source-adapter",
+        "source-adapter-publication"
+      ]
     },
     {
       "id": "R8-COMPLETE-014",
       "facets_complete": false,
-      "facets": []
+      "facets": [
+        "opaque"
+      ]
     },
     {
       "id": "R8-COMPLETE-015",
@@ -182,12 +199,22 @@
     {
       "id": "R8-COMPLETE-025",
       "facets_complete": false,
-      "facets": []
+      "facets": [
+        "number",
+        "boolean",
+        "escaped-string",
+        "marker-const",
+        "marker-delimiter",
+        "numeric-spelling"
+      ]
     },
     {
       "id": "R8-COMPLETE-026",
       "facets_complete": false,
-      "facets": []
+      "facets": [
+        "label",
+        "order"
+      ]
     },
     {
       "id": "R8-COMPLETE-027",
@@ -197,7 +224,15 @@
     {
       "id": "R8-COMPLETE-028",
       "facets_complete": false,
-      "facets": []
+      "facets": [
+        "exact-pair-numeric-spelling",
+        "exact-same-as",
+        "exact-pair-beyond-ieee",
+        "exact-array-order",
+        "exact-string-normalization",
+        "exact-arbitrary-exponent",
+        "duplicate-names"
+      ]
     },
     {
       "id": "R8-COMPLETE-029",
@@ -706,6 +741,932 @@
         {
           "requirement": "R8-COMPLETE-019",
           "facet": "convention-closure"
+        }
+      ]
+    },
+    {
+      "id": "source-adapter-defined-header-schema-projection-invalid",
+      "kind": "complete-source-scenario",
+      "path": "focused/invalid/source-adapter-defined-header-schema-projection-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": [
+        "DM-ADAPTER-003"
+      ],
+      "rule_ids": [
+        "DM-ADAPTER-003"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-013",
+          "facet": "source-adapter"
+        }
+      ]
+    },
+    {
+      "id": "source-adapter-defined-header-schema-valid",
+      "kind": "complete-source-scenario",
+      "path": "focused/valid/source-adapter-defined-header-schema-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": [],
+      "rule_ids": [
+        "DM-ADAPTER-003"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-013",
+          "facet": "source-adapter"
+        }
+      ]
+    },
+    {
+      "id": "source-adapter-header-encoding-projection-invalid",
+      "kind": "complete-source-scenario",
+      "path": "focused/invalid/source-adapter-header-encoding-projection-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": [
+        "DM-ADAPTER-003"
+      ],
+      "rule_ids": [
+        "DM-ADAPTER-003"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-013",
+          "facet": "source-adapter"
+        }
+      ]
+    },
+    {
+      "id": "source-adapter-parameterized-wire-projection-invalid",
+      "kind": "complete-source-scenario",
+      "path": "focused/invalid/source-adapter-parameterized-wire-projection-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": [
+        "DM-ADAPTER-002"
+      ],
+      "rule_ids": [
+        "DM-ADAPTER-002"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-013",
+          "facet": "source-adapter"
+        }
+      ]
+    },
+    {
+      "id": "source-adapter-wire-header-projection-valid",
+      "kind": "complete-source-scenario",
+      "path": "focused/valid/source-adapter-wire-header-projection-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": [],
+      "rule_ids": [
+        "DM-ADAPTER-003"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-013",
+          "facet": "source-adapter"
+        }
+      ]
+    },
+    {
+      "id": "source-adapter-publication-scope-projection-invalid",
+      "kind": "complete-source-scenario",
+      "path": "focused/invalid/source-adapter-publication-scope-projection-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": [
+        "DM-ADAPTER-004"
+      ],
+      "rule_ids": [
+        "DM-ADAPTER-004"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-013",
+          "facet": "source-adapter-publication"
+        }
+      ]
+    },
+    {
+      "id": "source-adapter-publication-scope-valid",
+      "kind": "complete-source-scenario",
+      "path": "focused/valid/source-adapter-publication-scope-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": [],
+      "rule_ids": [
+        "DM-ADAPTER-004"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-013",
+          "facet": "source-adapter-publication"
+        }
+      ]
+    },
+    {
+      "id": "source-media-type-canonicalization-projection-invalid",
+      "kind": "complete-source-scenario",
+      "path": "focused/invalid/source-media-type-canonicalization-projection-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": [
+        "DM-ADAPTER-002"
+      ],
+      "rule_ids": [
+        "DM-ADAPTER-002"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-012",
+          "facet": "source-adapter"
+        }
+      ]
+    },
+    {
+      "id": "source-media-type-canonicalization-valid",
+      "kind": "complete-source-scenario",
+      "path": "focused/valid/source-media-type-canonicalization-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": [],
+      "rule_ids": [
+        "DM-ADAPTER-002"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-012",
+          "facet": "source-adapter"
+        }
+      ]
+    },
+    {
+      "id": "source-payload-media-identity-projection-invalid",
+      "kind": "complete-source-scenario",
+      "path": "focused/invalid/source-payload-media-identity-projection-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": [
+        "DM-ADAPTER-002"
+      ],
+      "rule_ids": [
+        "DM-ADAPTER-002"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-012",
+          "facet": "source-payload-media-identity"
+        }
+      ]
+    },
+    {
+      "id": "source-payload-media-identity-valid",
+      "kind": "complete-source-scenario",
+      "path": "focused/valid/source-payload-media-identity-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": [],
+      "rule_ids": [
+        "DM-ADAPTER-002"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-012",
+          "facet": "source-payload-media-identity"
+        }
+      ]
+    },
+    {
+      "id": "source-schema-adapter-duplicate-mapping-projection-invalid",
+      "kind": "complete-source-scenario",
+      "path": "focused/invalid/source-schema-adapter-duplicate-mapping-projection-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": [
+        "DM-ADAPTER-001"
+      ],
+      "rule_ids": [
+        "DM-ADAPTER-001"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-013",
+          "facet": "source-adapter"
+        }
+      ]
+    },
+    {
+      "id": "source-schema-adapter-targets-valid",
+      "kind": "complete-source-scenario",
+      "path": "focused/valid/source-schema-adapter-targets-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": [],
+      "rule_ids": [
+        "DM-ADAPTER-001"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-013",
+          "facet": "source-adapter"
+        }
+      ]
+    },
+    {
+      "id": "binding-operation-valid",
+      "kind": "complete-full",
+      "path": "focused/valid/binding-operation-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": [],
+      "rule_ids": [
+        "DM-OP-004"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-007",
+          "facet": "operation"
+        }
+      ]
+    },
+    {
+      "id": "binding-operation-invalid",
+      "kind": "complete-full",
+      "path": "focused/invalid/binding-operation-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": [
+        "DM-OP-004"
+      ],
+      "rule_ids": [
+        "DM-OP-004"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-007",
+          "facet": "operation"
+        }
+      ]
+    },
+    {
+      "id": "binding-channel-valid",
+      "kind": "complete-full",
+      "path": "focused/valid/binding-channel-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": [],
+      "rule_ids": [
+        "DM-OP-004"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-007",
+          "facet": "channel"
+        }
+      ]
+    },
+    {
+      "id": "binding-channel-invalid",
+      "kind": "complete-full",
+      "path": "focused/invalid/binding-channel-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": [
+        "DM-OP-004"
+      ],
+      "rule_ids": [
+        "DM-OP-004"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-007",
+          "facet": "channel"
+        }
+      ]
+    },
+    {
+      "id": "binding-message-valid",
+      "kind": "complete-full",
+      "path": "focused/valid/binding-message-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": [],
+      "rule_ids": [
+        "DM-MSG-002"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-007",
+          "facet": "message"
+        }
+      ]
+    },
+    {
+      "id": "binding-message-invalid",
+      "kind": "complete-full",
+      "path": "focused/invalid/binding-message-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": [
+        "DM-MSG-002"
+      ],
+      "rule_ids": [
+        "DM-MSG-002"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-007",
+          "facet": "message"
+        }
+      ]
+    },
+    {
+      "id": "binding-reply-channel-valid",
+      "kind": "complete-full",
+      "path": "focused/valid/binding-reply-channel-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": [],
+      "rule_ids": [
+        "DM-REPLY-002"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-007",
+          "facet": "reply-channel"
+        }
+      ]
+    },
+    {
+      "id": "binding-reply-channel-invalid",
+      "kind": "complete-full",
+      "path": "focused/invalid/binding-reply-channel-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": [
+        "DM-REPLY-002"
+      ],
+      "rule_ids": [
+        "DM-REPLY-002"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-007",
+          "facet": "reply-channel"
+        }
+      ]
+    },
+    {
+      "id": "binding-reply-message-valid",
+      "kind": "complete-full",
+      "path": "focused/valid/binding-reply-message-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": [],
+      "rule_ids": [
+        "DM-MSG-002"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-007",
+          "facet": "reply-message"
+        }
+      ]
+    },
+    {
+      "id": "binding-reply-message-invalid",
+      "kind": "complete-full",
+      "path": "focused/invalid/binding-reply-message-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": [
+        "DM-MSG-002"
+      ],
+      "rule_ids": [
+        "DM-MSG-002"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-007",
+          "facet": "reply-message"
+        }
+      ]
+    },
+    {
+      "id": "binding-common-failure-valid",
+      "kind": "complete-full",
+      "path": "focused/valid/binding-common-failure-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": [],
+      "rule_ids": [
+        "DM-CONV-004"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-007",
+          "facet": "common-failure"
+        }
+      ]
+    },
+    {
+      "id": "binding-common-failure-invalid",
+      "kind": "complete-full",
+      "path": "focused/invalid/binding-common-failure-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": [
+        "DM-CONV-004"
+      ],
+      "rule_ids": [
+        "DM-CONV-004"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-007",
+          "facet": "common-failure"
+        }
+      ]
+    },
+    {
+      "id": "binding-inline-failure-valid",
+      "kind": "complete-full",
+      "path": "focused/valid/binding-inline-failure-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": [],
+      "rule_ids": [
+        "DM-FAIL-003"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-007",
+          "facet": "inline-failure"
+        }
+      ]
+    },
+    {
+      "id": "binding-inline-failure-invalid",
+      "kind": "complete-full",
+      "path": "focused/invalid/binding-inline-failure-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": [
+        "DM-FAIL-003"
+      ],
+      "rule_ids": [
+        "DM-FAIL-003"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-007",
+          "facet": "inline-failure"
+        }
+      ]
+    },
+    {
+      "id": "tagged-number-valid",
+      "kind": "complete-full",
+      "path": "focused/valid/tagged-number-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": [],
+      "rule_ids": [
+        "DM-MSG-006"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-025",
+          "facet": "number"
+        }
+      ]
+    },
+    {
+      "id": "tagged-number-invalid",
+      "kind": "complete-full",
+      "path": "focused/invalid/tagged-number-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": [
+        "DM-MSG-006"
+      ],
+      "rule_ids": [
+        "DM-MSG-006"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-025",
+          "facet": "number"
+        }
+      ]
+    },
+    {
+      "id": "tagged-boolean-valid",
+      "kind": "complete-full",
+      "path": "focused/valid/tagged-boolean-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": [],
+      "rule_ids": [
+        "DM-MSG-006"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-025",
+          "facet": "boolean"
+        }
+      ]
+    },
+    {
+      "id": "tagged-boolean-invalid",
+      "kind": "complete-full",
+      "path": "focused/invalid/tagged-boolean-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": [
+        "DM-MSG-006"
+      ],
+      "rule_ids": [
+        "DM-MSG-006"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-025",
+          "facet": "boolean"
+        }
+      ]
+    },
+    {
+      "id": "tagged-escaped-string-valid",
+      "kind": "complete-full",
+      "path": "focused/valid/tagged-escaped-string-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": [],
+      "rule_ids": [
+        "DM-MSG-006"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-025",
+          "facet": "escaped-string"
+        }
+      ]
+    },
+    {
+      "id": "tagged-escaped-string-invalid",
+      "kind": "complete-full",
+      "path": "focused/invalid/tagged-escaped-string-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": [
+        "DM-MSG-006"
+      ],
+      "rule_ids": [
+        "DM-MSG-006"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-025",
+          "facet": "escaped-string"
+        }
+      ]
+    },
+    {
+      "id": "exact-variant-const-invalid",
+      "kind": "complete-full",
+      "path": "focused/invalid/exact-variant-const-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": [
+        "DM-MSG-006"
+      ],
+      "rule_ids": [
+        "DM-MSG-006"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-025",
+          "facet": "marker-const"
+        }
+      ]
+    },
+    {
+      "id": "exact-variant-delimiter-invalid",
+      "kind": "complete-full",
+      "path": "focused/invalid/exact-variant-delimiter-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": [
+        "DM-MSG-006"
+      ],
+      "rule_ids": [
+        "DM-MSG-006"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-025",
+          "facet": "marker-delimiter"
+        }
+      ]
+    },
+    {
+      "id": "untagged-label-valid",
+      "kind": "complete-full",
+      "path": "focused/valid/untagged-label-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": [],
+      "rule_ids": [
+        "DM-MSG-006"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-026",
+          "facet": "label"
+        }
+      ]
+    },
+    {
+      "id": "untagged-delimiter-invalid",
+      "kind": "complete-full",
+      "path": "focused/invalid/untagged-delimiter-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": [
+        "DM-MSG-006"
+      ],
+      "rule_ids": [
+        "DM-MSG-006"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-026",
+          "facet": "label"
+        }
+      ]
+    },
+    {
+      "id": "untagged-order-invalid",
+      "kind": "complete-full",
+      "path": "focused/invalid/untagged-order-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": [
+        "DM-MSG-006"
+      ],
+      "rule_ids": [
+        "DM-MSG-006"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-026",
+          "facet": "order"
+        }
+      ]
+    },
+    {
+      "id": "raw-opaque-valid",
+      "kind": "complete-full",
+      "path": "focused/valid/raw-opaque-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": [],
+      "rule_ids": [
+        "DM-MSG-004"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-014",
+          "facet": "opaque"
+        }
+      ]
+    },
+    {
+      "id": "raw-structured-invalid",
+      "kind": "complete-full",
+      "path": "focused/invalid/raw-structured-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": [
+        "DM-MSG-004"
+      ],
+      "rule_ids": [
+        "DM-MSG-004"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-014",
+          "facet": "opaque"
+        }
+      ]
+    },
+    {
+      "id": "exact-pair-numeric-spelling-valid",
+      "kind": "complete-pair",
+      "path": "focused/valid/exact-pair-numeric-spelling-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": [],
+      "rule_ids": [
+        "DM-PROFILE-003"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-028",
+          "facet": "exact-pair-numeric-spelling"
+        }
+      ]
+    },
+    {
+      "id": "exact-same-as-valid",
+      "kind": "complete-pair",
+      "path": "focused/valid/exact-same-as-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": [],
+      "rule_ids": [
+        "DM-PROFILE-003"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-028",
+          "facet": "exact-same-as"
+        }
+      ]
+    },
+    {
+      "id": "exact-pair-beyond-ieee-invalid",
+      "kind": "complete-pair",
+      "path": "focused/invalid/exact-pair-beyond-ieee-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": [
+        "DM-PROFILE-003"
+      ],
+      "rule_ids": [
+        "DM-PROFILE-003"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-028",
+          "facet": "exact-pair-beyond-ieee"
+        }
+      ]
+    },
+    {
+      "id": "exact-array-order-invalid",
+      "kind": "complete-pair",
+      "path": "focused/invalid/exact-array-order-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": [
+        "DM-PROFILE-003"
+      ],
+      "rule_ids": [
+        "DM-PROFILE-003"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-028",
+          "facet": "exact-array-order"
+        }
+      ]
+    },
+    {
+      "id": "exact-string-normalization-invalid",
+      "kind": "complete-pair",
+      "path": "focused/invalid/exact-string-normalization-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": [
+        "DM-PROFILE-003"
+      ],
+      "rule_ids": [
+        "DM-PROFILE-003"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-028",
+          "facet": "exact-string-normalization"
+        }
+      ]
+    },
+    {
+      "id": "exact-arbitrary-exponent-valid",
+      "kind": "complete-pair",
+      "path": "focused/valid/exact-arbitrary-exponent-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": [],
+      "rule_ids": [
+        "DM-PROFILE-003"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-028",
+          "facet": "exact-arbitrary-exponent"
+        }
+      ]
+    },
+    {
+      "id": "exact-duplicate-name-invalid",
+      "kind": "complete-full",
+      "path": "focused/invalid/exact-duplicate-name-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": [
+        "DM-MSG-005"
+      ],
+      "rule_ids": [
+        "DM-MSG-005"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-028",
+          "facet": "duplicate-names"
+        }
+      ]
+    },
+    {
+      "id": "exact-variant-numeric-spelling-valid",
+      "kind": "complete-full",
+      "path": "focused/valid/exact-variant-numeric-spelling-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": [],
+      "rule_ids": [
+        "DM-MSG-006"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-025",
+          "facet": "numeric-spelling"
+        }
+      ]
+    },
+    {
+      "id": "exact-variant-beyond-ieee-invalid",
+      "kind": "complete-full",
+      "path": "focused/invalid/exact-variant-beyond-ieee-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": [
+        "DM-MSG-006"
+      ],
+      "rule_ids": [
+        "DM-MSG-006"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-025",
+          "facet": "numeric-spelling"
+        }
+      ]
+    },
+    {
+      "id": "raw-xml-invalid",
+      "kind": "complete-full",
+      "path": "focused/invalid/raw-xml-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": [
+        "DM-MSG-004"
+      ],
+      "rule_ids": [
+        "DM-MSG-004"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-014",
+          "facet": "opaque"
+        }
+      ]
+    },
+    {
+      "id": "raw-yaml-invalid",
+      "kind": "complete-full",
+      "path": "focused/invalid/raw-yaml-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": [
+        "DM-MSG-004"
+      ],
+      "rule_ids": [
+        "DM-MSG-004"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-014",
+          "facet": "opaque"
+        }
+      ]
+    },
+    {
+      "id": "raw-parameterized-json-invalid",
+      "kind": "complete-full",
+      "path": "focused/invalid/raw-parameterized-json-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": [
+        "DM-MSG-004"
+      ],
+      "rule_ids": [
+        "DM-MSG-004"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-014",
+          "facet": "opaque"
+        }
+      ]
+    },
+    {
+      "id": "binding-server-valid",
+      "kind": "complete-pair",
+      "path": "focused/valid/binding-server-valid.json",
+      "expected": "valid",
+      "expected_rule_ids": [],
+      "rule_ids": [
+        "DM-PROFILE-003"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-007",
+          "facet": "server-convention"
+        }
+      ]
+    },
+    {
+      "id": "binding-server-invalid",
+      "kind": "complete-pair",
+      "path": "focused/invalid/binding-server-invalid.json",
+      "expected": "invalid",
+      "expected_rule_ids": [
+        "DM-PROFILE-003"
+      ],
+      "rule_ids": [
+        "DM-PROFILE-003"
+      ],
+      "facets": [
+        {
+          "requirement": "R8-COMPLETE-007",
+          "facet": "server-convention"
         }
       ]
     }

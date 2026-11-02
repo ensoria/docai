@@ -2,10 +2,26 @@ import fs from "node:fs";
 import path from "node:path";
 import { compareExactJsonNumbers, parseExactJson } from "./json-value.mjs";
 import { decodeUtf8Bytes } from "./identity.mjs";
+import { isDeepStrictEqual } from "node:util";
 
 export const COMPLETE_REQUIREMENTS = Array.from({ length: 38 }, (_, n) => `R8-COMPLETE-${String(n + 1).padStart(3, "0")}`);
 export const CONDITIONAL_REQUIREMENTS = ["R8-1X-001", "R8-1X-002", "RELEASE-HDR-001"];
-const kinds = new Set(["complete-pair", "complete-full", "complete-compact"]);
+const kinds = new Set(["complete-pair", "complete-full", "complete-compact", "complete-source-scenario"]);
+export function assertCorpusFacts(facts, assertions) {
+  requireValue(Array.isArray(assertions), "assertions must be an array");
+  for (const assertion of assertions) {
+    objectKeys(assertion, ["pointer", "equals"], [], "fact assertion");
+    const pointer = assertion.pointer;
+    requireValue(typeof pointer === "string" && (pointer === "" || pointer.startsWith("/"))
+      && !/~(?![01])/.test(pointer), "invalid facts pointer");
+    let value = facts, found = true;
+    for (const key of pointer === "" ? [] : pointer.slice(1).split("/").map(part => part.replace(/~1/g, "/").replace(/~0/g, "~"))) {
+      if (value === null || typeof value !== "object" || !Object.hasOwn(value, key)) { found = false; break; }
+      value = value[key];
+    }
+    requireValue(found && isDeepStrictEqual(value, assertion.equals), `fact-mismatch:${pointer}`);
+  }
+}
 export function requireValue(condition, message) {
   if (!condition) throw new TypeError(`Complete corpus: ${message}`);
 }

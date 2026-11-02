@@ -1,0 +1,13 @@
+{
+  "mode": "task-scoped",
+  "changes": [
+    {
+      "profile": "full",
+      "path": "channels/representations.md",
+      "operation": "replace",
+      "from": "## SEND representations.json-original (r-json-original-operation)\n\nPublishes the canonical lifecycle record used by the compact reuse example.\n\n### Behavior\n\n- side_effects: none\n- idempotency: none\n- preconditions: none\n- authorization: none\n- delivery: none\n- ordering: none\n\n### Operation Bindings\n\nnone\n\n### Channel\n\n- Parameters: none\n- Bindings: none\n\n### Message json-original-message\n\n#### Headers\n\nnone\n\n#### Bindings\n\nnone\n\n#### Payload\n\n**payload_required**: yes\n\n**media_type**: application/json\n\n**payload_nullable**: no\n\n```json\n{\n  \"event_id\": \"evt_04\",\n  \"status\": \"created\"\n}\n```\n\n| Field | Type | Required | Nullable | Constraints / Meaning |\n|---|---|---|---|---|\n| $ | object | yes | no | Additional properties are forbidden. |\n| event_id | string | yes | no | Synthetic event identifier |\n| status | string | yes | no | Lifecycle status |\n\n### Reply\n\nnone\n\n### Failure Handling\n\nnone\n\n### Related\n\nnone",
+      "to": "## SEND representations.json-original (r-json-original-operation)\n\nPublishes the canonical lifecycle record used by the compact reuse example.\n\n### Behavior\n\n- side_effects: none\n- idempotency: none\n- preconditions: none\n- authorization: none\n- delivery: none\n- ordering: none\n\n### Operation Bindings\n\nnone\n\n### Channel\n\n- Parameters: none\n- Bindings: none\n\n### Message json-original-message\n\n#### Headers\n\nnone\n\n#### Bindings\n\nnone\n\n#### Payload\n\n**payload_required**: yes\n\n**media_type**: application/json\n\n**payload_nullable**: no\n\n```json\n{\"n\":1,\"n\":1,\"s\":\"é\",\"a\":[1,2]}\n```\n\n| Field | Type | Required | Nullable | Constraints / Meaning |\n|---|---|---|---|---|\n| $ | object | yes | no | Additional properties are forbidden. |\n| n | number | yes | no | `const=1`; Exact numeric value |\n| s | string | yes | no | Exact string value |\n| a | int[] | yes | no | Ordered values |\n| a[] | int | yes | no | Array item |\n\n### Reply\n\nnone\n\n### Failure Handling\n\nnone\n\n### Related\n\nnone"
+    }
+  ],
+  "assertions": []
+}

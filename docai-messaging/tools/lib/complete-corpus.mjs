@@ -6,6 +6,7 @@ import { loadTrustedCompleteExampleAdapterOptions } from "./complete-example-ada
 import { validateCompleteProfilePair } from "./validators/complete-profiles.mjs";
 import { runFixtureCorpus, auditFixtureOneInvalidity } from "./fixture-runner.mjs";
 import { validateCompleteFixtureRecipe } from "./complete-fixture-validator.mjs";
+import { validateCompleteSourceFixture } from "./complete-source-fixture-validator.mjs";
 import { COMPLETE_REQUIREMENTS, CONDITIONAL_REQUIREMENTS, containedPath, readCorpusJson, requireValue, validateCorpusManifest } from "./complete-corpus-contract.mjs";
 
 function filesUnder(root, relative) {
@@ -38,7 +39,8 @@ export function runCompleteFixtureCorpus(corpusDir, { requireComplete = false } 
   const failures = new Map(), modes = new Map();
   const corpus = runFixtureCorpus(root, (_file, entry) => {
     try {
-      const result = validateCompleteFixtureRecipe(root, entry);
+      const result = entry.kind === "complete-source-scenario"
+        ? validateCompleteSourceFixture(root, entry) : validateCompleteFixtureRecipe(root, entry);
       modes.set(entry.id, result.mode);
       return result;
     } catch (error) {

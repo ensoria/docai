@@ -1,13 +1,12 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { isDeepStrictEqual } from "node:util";
 import { loadDocumentSet } from "./document-set.mjs";
 import { loadTrustedCompleteExampleAdapterOptions } from "./complete-example-adapters.mjs";
 import { validateCompleteDocumentSet } from "./validators/complete.mjs";
 import { validateCompleteProfilePair } from "./validators/complete-profiles.mjs";
 import { decodeUtf8Bytes } from "./identity.mjs";
-import { containedPath, objectKeys, readCorpusJson, requireValue, safeRelative } from "./complete-corpus-contract.mjs";
+import { assertCorpusFacts, containedPath, objectKeys, readCorpusJson, requireValue, safeRelative } from "./complete-corpus-contract.mjs";
 
 function exactMutationText(text) {
   requireValue(decodeUtf8Bytes(Buffer.from(text, "utf8")) === text,
@@ -15,16 +14,6 @@ function exactMutationText(text) {
   return text;
 }
 
-function atPointer(facts, pointer) {
-  requireValue(typeof pointer === "string" && (pointer === "" || pointer.startsWith("/"))
-    && !/~(?![01])/.test(pointer), "invalid facts pointer");
-  let value = facts;
-  for (const key of pointer === "" ? [] : pointer.slice(1).split("/").map(part => part.replace(/~1/g, "/").replace(/~0/g, "~"))) {
-    if (value === null || typeof value !== "object" || !Object.hasOwn(value, key)) return { found: false };
-    value = value[key];
-  }
-  return { found: true, value };
-}
 export function validateCompleteFixtureRecipe(root, entry) {
   const recipe = readCorpusJson(containedPath(root, entry.path));
   objectKeys(recipe, ["mode", "changes", "assertions"], [], "recipe");
@@ -63,11 +52,7 @@ export function validateCompleteFixtureRecipe(root, entry) {
     const options = { ...loadTrustedCompleteExampleAdapterOptions(root, [full, compact]), wholeSet: recipe.mode === "whole-set" };
     const result = entry.kind === "complete-pair" ? validateCompleteProfilePair(full, compact, options)
       : validateCompleteDocumentSet(entry.kind === "complete-full" ? full : compact, options);
-    for (const assertion of recipe.assertions) {
-      objectKeys(assertion, ["pointer", "equals"], [], "fact assertion");
-      const actual = atPointer(result.facts, assertion.pointer);
-      requireValue(actual.found && isDeepStrictEqual(actual.value, assertion.equals), `fact-mismatch:${assertion.pointer}`);
-    }
+    assertCorpusFacts(result.facts, recipe.assertions);
     return { ...result, mode: recipe.mode };
   } finally {
     fs.rmSync(temporary, { recursive: true, force: true });

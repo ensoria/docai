@@ -1,0 +1,18 @@
+{
+  "mode": "task-scoped",
+  "changes": [
+    {
+      "profile": "full",
+      "path": "channels/representations.md",
+      "operation": "replace",
+      "from": "## SEND representations.raw (r-raw-operation)\n\nSends an authoritatively opaque receipt payload.\n\n### Behavior\n\n- side_effects: none\n- idempotency: none\n- preconditions: none\n- authorization: none\n- delivery: none\n- ordering: none\n\n### Operation Bindings\n\nnone\n\n### Channel\n\n- Parameters: none\n- Bindings: none\n\n### Message raw-message\n\n#### Headers\n\nnone\n\n#### Bindings\n\nnone\n\n#### Payload\n\n**payload_required**: yes\n\n**media_type**: application/octet-stream\n\nOpaque receipt bytes are limited to 2 MiB and carry a SHA-256 integrity digest.\n\n### Reply\n\nnone\n\n### Failure Handling\n\nnone\n\n### Related\n\nnone",
+      "to": "## SEND representations.raw (r-raw-operation)\n\nSends an authoritatively opaque receipt payload.\n\n### Behavior\n\n- side_effects: none\n- idempotency: none\n- preconditions: none\n- authorization: none\n- delivery: none\n- ordering: none\n\n### Operation Bindings\n\nnone\n\n### Channel\n\n- Parameters: none\n- Bindings: none\n\n### Message raw-message\n\n#### Headers\n\nnone\n\n#### Bindings\n\nnone\n\n#### Payload\n\n**payload_required**: yes\n\n**media_type**: application/octet-stream\n\nOpaque receipt bytes are limited to 1 MiB and carry a SHA-256 integrity digest.\n\n### Reply\n\nnone\n\n### Failure Handling\n\nnone\n\n### Related\n\nnone"
+    }
+  ],
+  "assertions": [
+    {
+      "pointer": "/core/messageDefinitions/byOperation/r-tagged-operation/0/name",
+      "equals": "tagged-message"
+    }
+  ]
+}

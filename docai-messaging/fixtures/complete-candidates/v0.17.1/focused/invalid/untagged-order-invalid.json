@@ -1,0 +1,13 @@
+{
+  "mode": "task-scoped",
+  "changes": [
+    {
+      "profile": "full",
+      "path": "channels/representations.md",
+      "operation": "replace",
+      "from": "## RECEIVE representations.untagged (r-untagged-operation)\n\nReceives a lifecycle event selected without a discriminator field.\n\n### Behavior\n\n- side_effects: none\n- idempotency: none\n- preconditions: none\n- authorization: none\n- delivery: none\n- ordering: none\n\n### Operation Bindings\n\nnone\n\n### Channel\n\n- Parameters: none\n- Bindings: none\n\n### Message untagged-message\n\n#### Headers\n\nnone\n\n#### Bindings\n\nnone\n\n#### Payload\n\n**payload_presence**: always\n\n**media_type**: application/json\n\n**payload_nullable**: no\n\nThe receiver identifies the applicable lifecycle shape from the complete decoded value.\n\n**variant**: archived\n\n```json\n{\"reason\":\"expired\"}\n```\n\n| Field | Type | Presence | Nullable | Meaning |\n|---|---|---|---|---|\n| $ | object | always | no | Additional properties are forbidden. |\n| reason | string | always | no | Archival reason |\n\n**variant**: restored\n\n```json\n{\"id\":\"evt_02\"}\n```\n\n| Field | Type | Presence | Nullable | Meaning |\n|---|---|---|---|---|\n| $ | object | always | no | Additional properties are forbidden. |\n| id | string | always | no | Synthetic event identifier |\n\n### Reply\n\nnone\n\n### Failure Handling\n\nnone\n\n### Related\n\nnone",
+      "to": "## RECEIVE representations.untagged (r-untagged-operation)\n\nReceives a lifecycle event selected without a discriminator field.\n\n### Behavior\n\n- side_effects: none\n- idempotency: none\n- preconditions: none\n- authorization: none\n- delivery: none\n- ordering: none\n\n### Operation Bindings\n\nnone\n\n### Channel\n\n- Parameters: none\n- Bindings: none\n\n### Message untagged-message\n\n#### Headers\n\nnone\n\n#### Bindings\n\nnone\n\n#### Payload\n\n**payload_presence**: always\n\n**media_type**: application/json\n\n**payload_nullable**: no\n\nThe receiver identifies the applicable lifecycle shape from the complete decoded value.\n\n**variant**: zzz\n\n```json\n{\"reason\":\"expired\"}\n```\n\n| Field | Type | Presence | Nullable | Meaning |\n|---|---|---|---|---|\n| $ | object | always | no | Additional properties are forbidden. |\n| reason | string | always | no | Archival reason |\n\n**variant**: restored\n\n```json\n{\"id\":\"evt_02\"}\n```\n\n| Field | Type | Presence | Nullable | Meaning |\n|---|---|---|---|---|\n| $ | object | always | no | Additional properties are forbidden. |\n| id | string | always | no | Synthetic event identifier |\n\n### Reply\n\nnone\n\n### Failure Handling\n\nnone\n\n### Related\n\nnone"
+    }
+  ],
+  "assertions": []
+}
