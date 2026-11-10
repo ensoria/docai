@@ -27,6 +27,9 @@ export const CHECKS = [
   ["check-openapi-comparison-v3-calibration2-plan", "docai-http/tools/check-openapi-comparison-v3-calibration2-plan.mjs", ["--frozen"]],
   ["freeze-openapi-comparison-v3-calibration2", "docai-http/benchmarks/openapi-comparison/v3/calibrations/3.0.0-calibration.2/runtime/freeze.mjs", ["--check"]],
   ["check-openapi-comparison-v3-calibration2-parity", "docai-http/benchmarks/openapi-comparison/v3/calibrations/3.0.0-calibration.2/runtime/check-parity.mjs"],
+  ["check-openapi-comparison-v3-calibration3-plan", "docai-http/benchmarks/openapi-comparison/v3/calibrations/3.0.0-calibration.3/runtime/check-plan.mjs", ["--frozen"]],
+  ["freeze-openapi-comparison-v3-calibration3", "docai-http/benchmarks/openapi-comparison/v3/calibrations/3.0.0-calibration.3/runtime/freeze.mjs", ["--check"]],
+  ["check-openapi-comparison-v3-calibration3-parity", "docai-http/benchmarks/openapi-comparison/v3/calibrations/3.0.0-calibration.3/runtime/check-parity.mjs"],
 ];
 
 export function runReleaseReadiness(checks = CHECKS) {
@@ -49,7 +52,8 @@ function main() {
   const failures = runReleaseReadiness();
   console.log(
     "\nOpenAPI comparison v3 3.0.0-calibration.1 remains blocked from Live execution. "
-      + "3.0.0-calibration.2 is frozen but requires separate, explicit Live approval. "
+      + "3.0.0-calibration.2 remains blocked from Live execution. "
+      + "3.0.0-calibration.3 is frozen but requires separate, explicit Live approval after final review. "
       + "A passing general readiness check is not authorization for Live execution; "
       + "see docai-http/OPENAPI-COMPARISON-V3-CALIBRATION-RUNBOOK.md.",
   );

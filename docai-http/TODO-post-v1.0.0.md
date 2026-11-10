@@ -181,6 +181,12 @@ future version before publication.
 
 ## P2: OpenAPI Comparison Benchmark v3 Calibration
 
+Current preparation:
+[`calibration.3 checklist`](OPENAPI-COMPARISON-V3-CALIBRATION3-PREPARATION.md).
+Historical calibration.2 Live/gate/adjudication items below remain unexecuted
+audit entries; calibration.3 supersedes them. They are not instructions to
+execute the blocked historical package.
+
 Implementation plan:
 [`../docs/superpowers/plans/2026-08-27-openapi-comparison-v3-calibration.md`](../docs/superpowers/plans/2026-08-27-openapi-comparison-v3-calibration.md).
 
@@ -203,9 +209,45 @@ Implementation plan:
 - [x] Add frozen `3.0.0-calibration.2` plan, public freeze, and parity checks
   to ordinary release readiness without requiring private provider responses
   or granting Live authorization.
+- [x] Run the final deterministic v3 suite and public/private freeze checks
+  before Live approval: 578 tests passed on 2026-11-09.
+- [x] Recheck current provider catalogs before requesting Live approval;
+  identify Google's automatic `gemini-3.7-flash` to `gemini-3.8-flash`
+  redirection as a calibration.2 execution blocker on 2026-11-09.
+- [x] Decide the replacement model panel: retain `gpt-5.6-sol` and
+  `claude-sonnet-5`, update only Google to `gemini-3.8-flash` (user decision,
+  2026-11-09).
+- [x] Prepare the builder-reviewed calibration.3 design and implementation
+  plan while preserving calibration.2's frozen artifacts:
+  [`calibration.3 preparation`](OPENAPI-COMPARISON-V3-CALIBRATION3-PREPARATION.md).
+- [x] Create and independently review calibration.3's isolated draft and
+  inherited baseline: 173 offline tests passed at the initial checkpoint.
+- [x] Carry the Task 8 adversarial-review fixes into the replacement runtime:
+  preserve fatal stopped state across resume with zero further calls, supply
+  the production clock through the actual execute CLI, and require verified
+  evidence for result-bearing reports.
+- [x] Correct calibration.3 fatal-stop verification, stopped re-entry and
+  crash recovery; independently review the correction. Calibration.3 tests
+  passed 214/214 at that checkpoint.
+- [x] Add successor regressions for every fatal stop reason, complete execute
+  CLI wiring with injected transports, and fabricated/mismatched/copied
+  evidence passed to reporting. Retain the original verifier exploit tests.
+- [x] Freeze and independently verify the replacement calibration and
+  recalculate its provider costs: 77 artifacts, 294 calibration.3 tests;
+  post-rename rollback fix passed scoped independent re-review.
+- [x] Complete the final whole-package review: no unresolved Critical or
+  Important finding; full v3 suite passed 873 tests on 2026-11-10.
+- [ ] Obtain explicit Live approval for the frozen calibration.3 envelope.
+- [ ] Execute `3.0.0-calibration.3` Live only after separate explicit approval
+  of its reviewed model, request, token and cost envelope.
+- [ ] Record the verified `3.0.0-calibration.3` gate result; preserve all
+  stopped/failed evidence and do not override terminal checkpoints.
+- [ ] Record any conditional calibration.3 adjudication as secondary evidence,
+  without replacing automatic results or the reliability gate.
 - [ ] Execute `3.0.0-calibration.2` Live only after separate explicit approval
   for its exact frozen envelope;
-  do not create or execute any primary schedule before calibration review.
+  currently blocked by provider model redirection. Retain this historical item
+  as unexecuted; do not create any primary schedule before calibration review.
 - [ ] Record the verified `3.0.0-calibration.2` gate result against the 23
   automated-decision and 1 exceptional-run thresholds before proposing any
   primary benchmark work.

@@ -1,0 +1,70 @@
+{
+  "benchmark_id": "docai-http-openapi-comparison-v3",
+  "plan_version": "3.0.0-calibration.3",
+  "status": "calibration-frozen",
+  "conditions": [
+    "openapi-raw",
+    "openapi-sliced",
+    "openapi-enriched",
+    "docai-selected"
+  ],
+  "targets": [
+    {
+      "id": "openai-frontier",
+      "provider": "openai",
+      "model_id": "gpt-5.6-sol"
+    },
+    {
+      "id": "anthropic-balanced",
+      "provider": "anthropic",
+      "model_id": "claude-sonnet-5"
+    },
+    {
+      "id": "google-stable-agentic",
+      "provider": "google",
+      "model_id": "gemini-3.8-flash"
+    }
+  ],
+  "calibration": {
+    "api_id": "complete-commerce",
+    "task_ids": [
+      "upload-document-request",
+      "complete-checkout-workflow"
+    ],
+    "repetitions": [
+      1
+    ],
+    "planned_requests": 24,
+    "maximum_attempts_per_work_step": 100,
+    "gate": {
+      "minimum_automated_decisions": 23,
+      "maximum_exceptional_runs": 1
+    }
+  },
+  "future_primary_design": {
+    "api_count": 3,
+    "tasks_per_api": 6,
+    "target_count": 3,
+    "repetitions": 3,
+    "condition_count": 4,
+    "planned_requests": 648,
+    "batch_count": 9,
+    "requests_per_batch": 72
+  },
+  "freeze": {
+    "manifest": "freeze-manifest.json",
+    "frozen_at": "2026-11-10T00:00:00Z",
+    "artifact_set_sha256": "a89730a1579deaa2aa13cdc0717420f373c3127cb6c2a907509d59a641aa280e",
+    "required_artifact_classes": [
+      "package-documentation",
+      "calibration-inputs",
+      "private-calibration-inputs",
+      "runtime",
+      "calibration-tests",
+      "authoritative-stable-sources",
+      "authoritative-stable-projections",
+      "model-resolutions",
+      "cost-estimate"
+    ]
+  }
+}
