@@ -6,12 +6,16 @@
 verified-report, and execute-CLI corrections. Current model/cost inputs and
 77 artifacts were frozen on 2026-11-10. The freeze and final whole-package
 reviews passed with no remaining Critical or Important finding. The final
-full v3 suite passed 873 tests. Live execution awaits explicit user confirmation.
+full v3 suite passed 873 tests. The maintainer approved Live execution on
+2026-11-10. All 24 calls received responses, but the verified reliability
+gate failed: 16 automatic decisions, eight exceptional runs, including four
+incomplete responses. See [Live results and follow-up](OPENAPI-COMPARISON-V3-CALIBRATION3-RESULTS.md).
 
 A passing general readiness check is not authorization for Live execution.
-The maintainer must give separate, explicit Live approval for the final
-calibration.3 envelope. The commands below are the reviewed operator handoff;
-do not execute the Live command before that confirmation.
+The calibration.3 approval has been consumed by its completed run. The commands
+below are retained as the historical operator handoff, not instructions to
+send more requests. Keep the Live-used identity unchanged. A successor needs
+separate review, freeze and explicit Live approval.
 
 See [preparation checklist](OPENAPI-COMPARISON-V3-CALIBRATION3-PREPARATION.md)
 for completed work and remaining gates.

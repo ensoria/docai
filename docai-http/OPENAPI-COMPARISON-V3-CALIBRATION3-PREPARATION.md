@@ -51,9 +51,9 @@ execution. Historical .1/.2 manifests and artifacts remain intact.
   historical integrity checks, readiness, and zero-call dry-run.
 - [x] Complete a fresh whole-package review covering the three runtime
   findings and both original retained-evidence exploits.
-- [ ] Present the exact reviewed execution envelope to the maintainer and
+- [x] Present the exact reviewed execution envelope to the maintainer and
   obtain separate Live confirmation.
-- [ ] Execute Live only after that confirmation; verify retained evidence
+- [x] Execute Live only after that confirmation; verify retained evidence
   and gate result before proposing any primary benchmark.
 
 No Live inference call is authorized by the model-panel decision. General
@@ -62,4 +62,6 @@ near execution. This document records preparation, not a passing gate result.
 
 Preparation completed on 2026-11-10: 873 full v3 tests passed, and the final
 whole-package review found no unresolved Critical or Important issue. The
-remaining approval and Live-result items above stay unchecked until they occur.
+approved Live run completed on the same date. Evidence verification passed,
+but the reliability gate failed. See [results and next work](OPENAPI-COMPARISON-V3-CALIBRATION3-RESULTS.md).
+Completion of this preparation checklist does not authorize a primary run.

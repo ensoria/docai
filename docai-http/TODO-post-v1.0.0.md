@@ -237,13 +237,24 @@ Implementation plan:
   post-rename rollback fix passed scoped independent re-review.
 - [x] Complete the final whole-package review: no unresolved Critical or
   Important finding; full v3 suite passed 873 tests on 2026-11-10.
-- [ ] Obtain explicit Live approval for the frozen calibration.3 envelope.
-- [ ] Execute `3.0.0-calibration.3` Live only after separate explicit approval
+- [x] Obtain explicit Live approval for the frozen calibration.3 envelope
+  (maintainer approval, 2026-11-10).
+- [x] Execute `3.0.0-calibration.3` Live only after separate explicit approval
   of its reviewed model, request, token and cost envelope.
-- [ ] Record the verified `3.0.0-calibration.3` gate result; preserve all
+- [x] Record the verified `3.0.0-calibration.3` gate result; preserve all
   stopped/failed evidence and do not override terminal checkpoints.
-- [ ] Record any conditional calibration.3 adjudication as secondary evidence,
-  without replacing automatic results or the reliability gate.
+- [x] Resolve conditional calibration.3 adjudication: no run requires manual
+  review. Do not replace automatic results or the reliability gate.
+- [x] Document the failed gate, output-budget/contract diagnostics and Google
+  thinking-token cost caveat in
+  [calibration.3 results](OPENAPI-COMPARISON-V3-CALIBRATION3-RESULTS.md).
+- [ ] Audit answer instructions and semantic assertions offline, including
+  equivalent wire/placeholder representations and schema metadata confusion.
+- [ ] Design and test successor Google output/thinking allocation and
+  complete provider billing-token normalization before another freeze.
+- [ ] Independently review and freeze a successor calibration; obtain new
+  explicit approval for its exact Live request/token/cost envelope. Keep .3
+  unchanged and primary work blocked until a verified calibration gate passes.
 - [ ] Execute `3.0.0-calibration.2` Live only after separate explicit approval
   for its exact frozen envelope;
   currently blocked by provider model redirection. Retain this historical item
