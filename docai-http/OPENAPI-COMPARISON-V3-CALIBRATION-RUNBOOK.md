@@ -17,6 +17,12 @@ below are retained as the historical operator handoff, not instructions to
 send more requests. Keep the Live-used identity unchanged. A successor needs
 separate review, freeze and explicit Live approval.
 
+The maintainer selected a structured semantic answer contract for the
+successor. The [calibration.4 design](OPENAPI-COMPARISON-V3-CALIBRATION4-DESIGN.md)
+was approved on 2026-11-10. The
+[implementation plan](OPENAPI-COMPARISON-V3-CALIBRATION4-PLAN.md) awaits review
+and execution-method confirmation. No Live call is authorized.
+
 See [preparation checklist](OPENAPI-COMPARISON-V3-CALIBRATION3-PREPARATION.md)
 for completed work and remaining gates.
 

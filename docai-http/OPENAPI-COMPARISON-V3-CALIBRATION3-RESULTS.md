@@ -97,9 +97,16 @@ records rather than rewriting their usage fields.
 
 ## Next Work Before Any More Inference
 
-- [ ] Audit public answer instructions and private assertions together;
-  distinguish required semantics from arbitrary exact spellings and add
-  offline examples for acceptable and unacceptable representations.
+- [x] Audit public answer instructions and private assertions together;
+  distinguish required semantics from arbitrary exact spellings and record
+  offline examples for acceptable and unacceptable representations in the
+  [offline audit](OPENAPI-COMPARISON-V3-CALIBRATION3-AUDIT.md).
+- [x] Select successor approach A: structured semantics and deterministic grading.
+- [x] Approve the builder-reviewed
+  [successor design](OPENAPI-COMPARISON-V3-CALIBRATION4-DESIGN.md).
+- [ ] Review the [implementation plan](OPENAPI-COMPARISON-V3-CALIBRATION4-PLAN.md),
+  confirm execution method and implement permanent regression tests without
+  modifying calibration.3.
 - [ ] Design and test a Google thinking/final-output allocation that can
   complete the workflow, with explicit completion diagnostics.
 - [ ] Correct successor provider usage normalization and budget accounting;

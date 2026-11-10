@@ -181,7 +181,12 @@ future version before publication.
 
 ## P2: OpenAPI Comparison Benchmark v3 Calibration
 
-Current preparation:
+Current status: calibration.3 Live is complete and its gate failed. The
+[offline audit](OPENAPI-COMPARISON-V3-CALIBRATION3-AUDIT.md) records its findings.
+The calibration.4 design is approved; implementation-plan review and execution
+method confirmation are next.
+No additional Live call is approved.
+Historical preparation:
 [`calibration.3 checklist`](OPENAPI-COMPARISON-V3-CALIBRATION3-PREPARATION.md).
 Historical calibration.2 Live/gate/adjudication items below remain unexecuted
 audit entries; calibration.3 supersedes them. They are not instructions to
@@ -248,8 +253,29 @@ Implementation plan:
 - [x] Document the failed gate, output-budget/contract diagnostics and Google
   thinking-token cost caveat in
   [calibration.3 results](OPENAPI-COMPARISON-V3-CALIBRATION3-RESULTS.md).
-- [ ] Audit answer instructions and semantic assertions offline, including
-  equivalent wire/placeholder representations and schema metadata confusion.
+- [x] Audit answer instructions and semantic assertions offline, including
+  equivalent wire/placeholder representations, false-positive containment,
+  source vocabulary and schema metadata confusion; record 18 grading probes
+  and three usage probes in the
+  [offline audit](OPENAPI-COMPARISON-V3-CALIBRATION3-AUDIT.md).
+- [x] Obtain the maintainer's successor grading-method choice: approach A,
+  explicit structured semantic contract with deterministic grading
+  (2026-11-10).
+- [x] Write and builder-review the
+  [calibration.4 design](OPENAPI-COMPARISON-V3-CALIBRATION4-DESIGN.md); clarify
+  answer-language leakage, partial collection knowledge and the grading-layer
+  boundary. Builder recheck found no important unanswered question.
+- [x] Obtain maintainer approval of the detailed calibration.4 design,
+  including scored validation constraints and proposed generated-token limits.
+- [x] Write and self-review the
+  [successor implementation plan](OPENAPI-COMPARISON-V3-CALIBRATION4-PLAN.md)
+  after design approval: seven testable work units with explicit interfaces,
+  regression checks and separate Live-approval handoff.
+- [ ] Obtain maintainer review of the implementation plan and confirm the
+  execution method before creating the successor package.
+- [ ] Implement permanent positive/negative successor regressions for the
+  audit cases; review each scored fact against public instructions and source
+  evidence, including size-limit scope and condition-neutral state vocabulary.
 - [ ] Design and test successor Google output/thinking allocation and
   complete provider billing-token normalization before another freeze.
 - [ ] Independently review and freeze a successor calibration; obtain new
