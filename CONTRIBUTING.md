@@ -1,5 +1,15 @@
 # Contributing
 
+## Current Participation Policy
+
+DocAI is progressing slowly and is not currently an actively prioritized project. The maintainer is not currently seeking external contributors or soliciting pull requests. Please use [GitHub Issues](https://github.com/ensoria/docai/issues) to share feedback, ask questions, or report problems rather than submitting unsolicited pull requests.
+
+Before opening an issue, check existing issues for the same topic. Identify whether it concerns DocAI HTTP or DocAI Messaging and, where relevant, include the specification version, the relevant section or a minimal example, and the behavior or wording you expected. Do not include credentials or private data.
+
+Issues are welcome, but there is no guaranteed response or resolution time, and opening an issue does not commit the maintainer to implementing a proposal. Completion and release dates are not committed. See the [project status](README.md#project-status) for the current development pace and each format's status.
+
+The evaluation instructions below remain available as a technical reference for ongoing maintenance and independent experimentation.
+
 ## Live LLM Task Evaluation
 
 DocAI HTTP live LLM task evaluation calls external model provider APIs. These runs may send selected evaluation prompts and fixture context to the provider, may incur API usage cost, and may be subject to provider account, quota, region, and model-access limits.
