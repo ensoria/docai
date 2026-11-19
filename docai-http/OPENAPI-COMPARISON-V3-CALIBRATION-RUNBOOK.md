@@ -20,8 +20,24 @@ separate review, freeze and explicit Live approval.
 The maintainer selected a structured semantic answer contract for the
 successor. The [calibration.4 design](OPENAPI-COMPARISON-V3-CALIBRATION4-DESIGN.md)
 was approved on 2026-11-10. The
-[implementation plan](OPENAPI-COMPARISON-V3-CALIBRATION4-PLAN.md) awaits review
-and execution-method confirmation. No Live call is authorized.
+[implementation plan](OPENAPI-COMPARISON-V3-CALIBRATION4-PLAN.md) and task-by-task
+independent review were approved on 2026-11-10. Offline draft implementation
+is in progress. Tasks1-4 are independently reviewed and complete. Task4 has
+74/74 covering tests for the maintainer-approved single-request domain;
+unexpected Anthropic iterations remain unknown/unpriced and must stop
+subsequent sends. Task5's retained-evidence and terminal-stop enforcement is
+implemented and independently reviewed. Phase6A candidate
+model/cost/prompt preparation is independently reviewed, not spending approval.
+Phase7A offline freeze construction/closure/transaction regressions use only
+disposable synthetic fixtures. Production remains a prepared draft: target IDs
+null, trust anchor null, no manifest or retained runs. Strong exact-manifest
+authority is implemented and tested (affected285/285; fresh authority10/10 on
+2026-11-19), but its scoped independent review was interrupted by an automated
+review-tool restriction before a verdict. That gate remains required.
+Phase7A scoped review,
+phase6B whole-package checks/review and actual7B anchoring/publication remain
+separate gates. Outer readiness registration waits for actual7B. No Live call
+is authorized; fixture dates are not an actual freeze timestamp.
 
 See [preparation checklist](OPENAPI-COMPARISON-V3-CALIBRATION3-PREPARATION.md)
 for completed work and remaining gates.

@@ -95,6 +95,18 @@ cache billing, credits, tax and other adjustments may differ. Both estimates
 are below the approved USD 2.4957045 estimate threshold. Preserve the original
 records rather than rewriting their usage fields.
 
+Follow-up accounting check on 2026-11-10: the OpenAI responses also report
+32,091 cache-write tokens, zero cache-read tokens and 24 ordinary input tokens.
+The earlier USD 1.02630025 diagnostic did not apply a cache-write premium.
+Using the documented default 30-minute write rate (1.25 times ordinary input)
+gives OpenAI USD 0.434711 and an aggregate diagnostic estimate of
+**USD 1.05839125**. This assumes the documented default lifetime, not an invoice
+reconciliation. See [OpenAI cache accounting](https://developers.openai.com/api/docs/guides/prompt-caching)
+and [the model's rates](https://developers.openai.com/api/docs/models/gpt-5.6-sol).
+No retained usage or frozen result was changed. The .4 accounting policy must
+retain native read/write components rather than treating omitted request cache
+options as proof of disabled provider caching.
+
 ## Next Work Before Any More Inference
 
 - [x] Audit public answer instructions and private assertions together;

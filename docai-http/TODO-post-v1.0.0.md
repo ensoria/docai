@@ -183,8 +183,19 @@ future version before publication.
 
 Current status: calibration.3 Live is complete and its gate failed. The
 [offline audit](OPENAPI-COMPARISON-V3-CALIBRATION3-AUDIT.md) records its findings.
-The calibration.4 design is approved; implementation-plan review and execution
-method confirmation are next.
+The calibration.4 design and implementation method are approved. Tasks1-3
+are complete and independently reviewed. Task4 provider accounting is complete
+and independently reviewed with74/74 covering tests for the approved bounded
+single-request policy. Unexpected Anthropic iterations must retain evidence
+and stop execution; Task5's durable enforcement is implemented and independently
+reviewed. Phase6A model/cost/prompt preparation is also independently reviewed.
+Phase7A offline freeze construction/closure/transaction tests use disposable
+synthetic fixtures only. Production remains a prepared draft with null target
+IDs and anchor, no manifest or dynamic stores. The approved strong manifest
+authority is implemented: affected285/285 and fresh authority10/10 tests passed
+on2026-11-19. The independent fix2 review was interrupted by an automated tool
+restriction before a verdict and is still required, not waived. Phase7A scoped review,
+phase6B whole-package review and actual7B freeze/readiness registration remain.
 No additional Live call is approved.
 Historical preparation:
 [`calibration.3 checklist`](OPENAPI-COMPARISON-V3-CALIBRATION3-PREPARATION.md).
@@ -271,13 +282,41 @@ Implementation plan:
   [successor implementation plan](OPENAPI-COMPARISON-V3-CALIBRATION4-PLAN.md)
   after design approval: seven testable work units with explicit interfaces,
   regression checks and separate Live-approval handoff.
-- [ ] Obtain maintainer review of the implementation plan and confirm the
+- [x] Obtain maintainer review of the implementation plan and confirm the
   execution method before creating the successor package.
-- [ ] Implement permanent positive/negative successor regressions for the
+- [x] Complete implementation-plan Task 1: isolated public .4 draft,
+  actual-CLI zero-fetch guard and preserved successor regression inventory;
+  focused8/8, independent spec/quality review clean. Full successor tests are
+  not yet green; recorded migration baseline193 passed/84 failed, no skips.
+- [x] Complete implementation-plan Task 2: structured schemas, source ledger
+  and neutral public prompts; independent review fixes verified on 2026-11-11.
+  Initial scoped42/42, fix covering23/23;89 measured predicates and two
+  contextual-only rows. Whole-runtime readiness is not implied.
+- [x] Implement permanent positive/negative successor regressions for the
   audit cases; review each scored fact against public instructions and source
   evidence, including size-limit scope and condition-neutral state vocabulary.
-- [ ] Design and test successor Google output/thinking allocation and
+  Task 3 completed and independently reviewed on 2026-11-11;207/207 covering
+  tests, including89 own-predicate negative controls. Provider/runtime work
+  and whole-package acceptance remain pending.
+- [x] Design and test successor Google output/thinking allocation and
   complete provider billing-token normalization before another freeze.
+  Task4 accepted on2026-11-13:74/74 covering tests, independent review clean
+  for the maintainer-approved single-request domain. Unexpected Anthropic
+  iterations remain unpriced/unknown. This item covers the standalone billing
+  policy; Task5's separate item below records durable-stop/native-evidence tests.
+- [x] Complete phase6A candidate model/cost/prompt preparation and independent
+  review. Preserve dated offline integrity and current-UTC send eligibility;
+  this is not a frozen envelope or spending approval.
+- [x] Complete Task5 verified execution/accounting integration and independent
+  review. Earlier covering566/566, final-guard subset206/206 and subsequent
+  native-shape fix covering246/246. Unknown charges stop durably; native model,
+  policy and pricing are rederived from retained evidence. Whole-package
+  acceptance and freeze remain separate.
+- [x] Implement the maintainer-approved strong manifest authority in the .4
+  draft and its same-ID/time reseal regressions. No signature key is needed;
+  production root stays null. Verification: affected285/285 and fresh10/10.
+  Independent acceptance remains part of the next unchecked gate, not implied
+  by this implementation checkbox.
 - [ ] Independently review and freeze a successor calibration; obtain new
   explicit approval for its exact Live request/token/cost envelope. Keep .3
   unchanged and primary work blocked until a verified calibration gate passes.

@@ -160,7 +160,8 @@ schema-metadata distinction and the unasserted size-limit inventory entry.
 The maintainer selected **A: an explicit structured semantic answer contract**
 on 2026-11-10. The [detailed successor design](OPENAPI-COMPARISON-V3-CALIBRATION4-DESIGN.md)
 has also been approved. The [implementation plan](OPENAPI-COMPARISON-V3-CALIBRATION4-PLAN.md)
-awaits maintainer review and execution-method confirmation, not authorization to send.
+and subagent-driven implementation are approved; offline work is in progress.
+No additional Live call is authorized.
 
 | Approach | Advantages | Disadvantages |
 |---|---|---|

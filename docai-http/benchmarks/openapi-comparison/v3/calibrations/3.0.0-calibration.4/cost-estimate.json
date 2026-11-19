@@ -1,0 +1,87 @@
+{
+  "estimate_version": "2",
+  "benchmark_id": "docai-http-openapi-comparison-v3",
+  "plan_version": "3.0.0-calibration.4",
+  "status": "candidate-not-spending-authorization",
+  "estimated_at": "2026-11-13T00:00:00Z",
+  "valid_through": "2026-11-30",
+  "model_resolutions_sha256": "424e1cd4682e629b1fd114d2c701319a0f7bc9aee5143a6957e4d3dae16d75c4",
+  "metrics_sha256": "edd875571bcd798fdf10c806944c6bc1826b31558659c1ff47e10fd1e648e4d0",
+  "methodology": {
+    "input": "Per complete prompt ceil(Unicode code points / 4), then ceil(tokens * 110 / 100); approximate, not provider measured usage.",
+    "charge": "Maximum priceUsage projection over every supported disjoint input category; inclusive generated output charged once.",
+    "retries": "No extra spending allocation; unknown potentially billed attempts require safe stop, not zero charge.",
+    "rounding": "Unrounded USD for stops; display rounding is non-authoritative."
+  },
+  "calibration": {
+    "requests": 24,
+    "input_tokens_estimate": 230544,
+    "input_tokens_ceiling": 253611,
+    "output_tokens_ceiling": 393216,
+    "total_tokens_ceiling": 646827,
+    "cost_ceiling_usd": 5.67060075,
+    "targets": [
+      {
+        "target_id": "openai-frontier",
+        "provider": "openai",
+        "requested_model": "gpt-5.6-sol",
+        "resolved_model": "gpt-5.6-sol",
+        "model_resolution_id": "calibration4-openai-2229e0b05af68d9dfeb27e97616d3b2d9a09b3dae145442f9ae2a4539dddb546",
+        "policy_id": "calibration4-openai-responses-default30m-v2",
+        "requests": 8,
+        "input_contingency_percent": 10,
+        "input_tokens_estimate": 76848,
+        "input_tokens_ceiling": 84537,
+        "output_tokens_ceiling": 131072,
+        "total_tokens_ceiling": 215609,
+        "category_cost_ceilings_usd": {
+          "input_uncached": 2.959588,
+          "input_cache_read": 2.6552548,
+          "input_cache_write_1800s": 3.0441249999999997,
+          "input_cache_write_43200s": 3.4668099999999997
+        },
+        "cost_ceiling_usd": 3.4668099999999997
+      },
+      {
+        "target_id": "anthropic-balanced",
+        "provider": "anthropic",
+        "requested_model": "claude-sonnet-5",
+        "resolved_model": "claude-sonnet-5",
+        "model_resolution_id": "calibration4-anthropic-f23a612096560583f1f7103910edb2d0f881e38ea02cef1d44b71d5fb1c665e9",
+        "policy_id": "calibration4-anthropic-messages-2023-06-01-default5m-v2",
+        "requests": 8,
+        "input_contingency_percent": 10,
+        "input_tokens_estimate": 76848,
+        "input_tokens_ceiling": 84537,
+        "output_tokens_ceiling": 131072,
+        "total_tokens_ceiling": 215609,
+        "category_cost_ceilings_usd": {
+          "input_uncached": 1.4797940000000003,
+          "input_cache_read": 1.3276274,
+          "input_cache_write_300s": 1.5220624999999999,
+          "input_cache_write_3600s": 1.648868
+        },
+        "cost_ceiling_usd": 1.648868
+      },
+      {
+        "target_id": "google-stable-agentic",
+        "provider": "google",
+        "requested_model": "gemini-3.8-flash",
+        "resolved_model": "gemini-3.8-flash",
+        "model_resolution_id": "calibration4-google-857d916394783bf29cda69b0d2a8c3d6c5c20fab28b4705b09db7e99305be685",
+        "policy_id": "calibration4-google-text-no-tools-v2",
+        "requests": 8,
+        "input_contingency_percent": 10,
+        "input_tokens_estimate": 76848,
+        "input_tokens_ceiling": 84537,
+        "output_tokens_ceiling": 131072,
+        "total_tokens_ceiling": 215609,
+        "category_cost_ceilings_usd": {
+          "input_uncached": 0.5549227499999999,
+          "input_cache_read": 0.497860275
+        },
+        "cost_ceiling_usd": 0.5549227499999999
+      }
+    ]
+  }
+}

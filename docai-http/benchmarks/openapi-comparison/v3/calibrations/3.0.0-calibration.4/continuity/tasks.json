@@ -1,0 +1,4154 @@
+{
+  "benchmark_id": "docai-http-openapi-comparison-v3",
+  "api_id": "complete-commerce",
+  "tasks": [
+    {
+      "id": "create-user-request",
+      "class": "request_construction",
+      "profile": "compact",
+      "public": {
+        "user_task": "Construct the complete HTTP request for creating a user named Taro Yamada with email taro@example.com. The operation may need a safe retry after an ambiguous network outcome.",
+        "output_contract": "request-construction.calibration4",
+        "retrieval": {
+          "openapi_roots": [
+            "paths./users.post",
+            "components.schemas.User"
+          ],
+          "docai_files": [
+            "INDEX.md",
+            "CONVENTIONS.md",
+            "resources/users.md"
+          ]
+        },
+        "inputs": {
+          "email": "taro@example.com",
+          "name": "Taro Yamada"
+        }
+      },
+      "private": {
+        "expected_outcome": {
+          "request": {
+            "method": {
+              "status": "known",
+              "value": "POST"
+            },
+            "path": {
+              "status": "known",
+              "value": "/v1/users"
+            },
+            "path_parameters": {
+              "status": "complete",
+              "items": []
+            },
+            "query": {
+              "status": "complete",
+              "items": []
+            },
+            "headers": {
+              "status": "complete",
+              "items": [
+                {
+                  "name": "Authorization",
+                  "value": {
+                    "status": "known",
+                    "value": {
+                      "kind": "external-input",
+                      "name": "access_token"
+                    }
+                  },
+                  "scheme": {
+                    "status": "known",
+                    "value": "Bearer"
+                  }
+                },
+                {
+                  "name": "Accept",
+                  "value": {
+                    "status": "known",
+                    "value": "application/json"
+                  },
+                  "scheme": {
+                    "status": "known",
+                    "value": null
+                  }
+                },
+                {
+                  "name": "Content-Type",
+                  "value": {
+                    "status": "known",
+                    "value": "application/json"
+                  },
+                  "scheme": {
+                    "status": "known",
+                    "value": null
+                  }
+                },
+                {
+                  "name": "Idempotency-Key",
+                  "value": {
+                    "status": "known",
+                    "value": {
+                      "kind": "generated",
+                      "rule": "opaque-string",
+                      "scope": "create-user"
+                    }
+                  },
+                  "scheme": {
+                    "status": "known",
+                    "value": null
+                  }
+                }
+              ]
+            },
+            "body": {
+              "status": "known",
+              "value": {
+                "email": {
+                  "status": "known",
+                  "value": {
+                    "kind": "task-input",
+                    "name": "email"
+                  }
+                },
+                "name": {
+                  "status": "known",
+                  "value": {
+                    "kind": "task-input",
+                    "name": "name"
+                  }
+                }
+              }
+            },
+            "parts": {
+              "status": "complete",
+              "items": []
+            },
+            "content_type": {
+              "status": "known",
+              "value": "application/json"
+            },
+            "boundary": {
+              "mode": {
+                "status": "known",
+                "value": "not-applicable"
+              },
+              "value": {
+                "status": "known",
+                "value": null
+              }
+            },
+            "validation": {
+              "status": "complete",
+              "items": []
+            }
+          },
+          "retry": {
+            "status": "complete",
+            "items": [
+              {
+                "trigger": {
+                  "status": "known",
+                  "value": {
+                    "category": "ambiguous-outcome",
+                    "status": null,
+                    "code": null
+                  }
+                },
+                "operation": {
+                  "status": "known",
+                  "value": {
+                    "method": {
+                      "status": "known",
+                      "value": "POST"
+                    },
+                    "path": {
+                      "status": "known",
+                      "value": "/v1/users"
+                    }
+                  }
+                },
+                "action": {
+                  "status": "known",
+                  "value": {
+                    "kind": "retry",
+                    "key_strategy": "preserve",
+                    "request_equivalence": "semantically-identical"
+                  }
+                },
+                "preserve": {
+                  "status": "complete",
+                  "items": [
+                    {
+                      "target": {
+                        "kind": "generated",
+                        "rule": "opaque-string",
+                        "scope": "create-user"
+                      },
+                      "equivalence": {
+                        "status": "known",
+                        "value": "identity"
+                      }
+                    },
+                    {
+                      "target": {
+                        "kind": "task-input",
+                        "name": "email"
+                      },
+                      "equivalence": {
+                        "status": "known",
+                        "value": "identity"
+                      }
+                    },
+                    {
+                      "target": {
+                        "kind": "task-input",
+                        "name": "name"
+                      },
+                      "equivalence": {
+                        "status": "known",
+                        "value": "identity"
+                      }
+                    }
+                  ]
+                },
+                "repeat_side_effect": {
+                  "status": "known",
+                  "value": false
+                }
+              }
+            ]
+          },
+          "uncertainties": []
+        },
+        "assertions": [
+          {
+            "path": "/request/method",
+            "operator": "equals",
+            "value": {
+              "status": "known",
+              "value": "POST"
+            },
+            "failure_category": "users-create-method",
+            "fact_id": "users:create-method"
+          },
+          {
+            "path": "/request/path",
+            "operator": "equals",
+            "value": {
+              "status": "known",
+              "value": "/v1/users"
+            },
+            "failure_category": "common-base-path-v1",
+            "fact_id": "common:base-path-v1"
+          },
+          {
+            "path": "/request/headers",
+            "operator": "contains",
+            "value": {
+              "items": [
+                {
+                  "name": "Authorization",
+                  "value": {
+                    "status": "known",
+                    "value": {
+                      "kind": "external-input",
+                      "name": "access_token"
+                    }
+                  },
+                  "scheme": {
+                    "status": "known",
+                    "value": "Bearer"
+                  }
+                }
+              ]
+            },
+            "failure_category": "common-bearer-auth",
+            "fact_id": "common:bearer-auth"
+          },
+          {
+            "path": "/request/headers",
+            "operator": "contains",
+            "value": {
+              "items": [
+                {
+                  "name": "Accept",
+                  "value": {
+                    "status": "known",
+                    "value": "application/json"
+                  },
+                  "scheme": {
+                    "status": "known",
+                    "value": null
+                  }
+                }
+              ]
+            },
+            "failure_category": "common-json-request-response",
+            "fact_id": "common:json-request-response"
+          },
+          {
+            "path": "/request/headers",
+            "operator": "contains",
+            "value": {
+              "items": [
+                {
+                  "name": "Idempotency-Key",
+                  "value": {
+                    "status": "known",
+                    "value": {
+                      "kind": "generated",
+                      "rule": "opaque-string",
+                      "scope": "create-user"
+                    }
+                  },
+                  "scheme": {
+                    "status": "known",
+                    "value": null
+                  }
+                }
+              ]
+            },
+            "failure_category": "common-create-idempotency",
+            "fact_id": "common:create-idempotency"
+          },
+          {
+            "path": "/retry",
+            "operator": "contains",
+            "value": {
+              "items": [
+                {
+                  "trigger": {
+                    "status": "known",
+                    "value": {
+                      "category": "ambiguous-outcome",
+                      "status": null,
+                      "code": null
+                    }
+                  },
+                  "operation": {
+                    "status": "known",
+                    "value": {
+                      "method": {
+                        "status": "known",
+                        "value": "POST"
+                      },
+                      "path": {
+                        "status": "known",
+                        "value": "/v1/users"
+                      }
+                    }
+                  },
+                  "action": {
+                    "status": "known",
+                    "value": {
+                      "kind": "retry",
+                      "key_strategy": "preserve",
+                      "request_equivalence": "semantically-identical"
+                    }
+                  },
+                  "preserve": {
+                    "status": "complete",
+                    "items": [
+                      {
+                        "target": {
+                          "kind": "generated",
+                          "rule": "opaque-string",
+                          "scope": "create-user"
+                        },
+                        "equivalence": {
+                          "status": "known",
+                          "value": "identity"
+                        }
+                      },
+                      {
+                        "target": {
+                          "kind": "task-input",
+                          "name": "email"
+                        },
+                        "equivalence": {
+                          "status": "known",
+                          "value": "identity"
+                        }
+                      },
+                      {
+                        "target": {
+                          "kind": "task-input",
+                          "name": "name"
+                        },
+                        "equivalence": {
+                          "status": "known",
+                          "value": "identity"
+                        }
+                      }
+                    ]
+                  },
+                  "repeat_side_effect": {
+                    "status": "known",
+                    "value": false
+                  }
+                }
+              ]
+            },
+            "failure_category": "common-create-idempotency",
+            "fact_id": "common:create-idempotency"
+          },
+          {
+            "path": "/request/headers",
+            "operator": "contains",
+            "value": {
+              "items": [
+                {
+                  "name": "Content-Type",
+                  "value": {
+                    "status": "known",
+                    "value": "application/json"
+                  },
+                  "scheme": {
+                    "status": "known",
+                    "value": null
+                  }
+                }
+              ]
+            },
+            "failure_category": "common-json-request-response",
+            "fact_id": "common:json-request-response"
+          },
+          {
+            "path": "/request/body",
+            "operator": "equals",
+            "value": {
+              "status": "known",
+              "value": {
+                "email": {
+                  "status": "known",
+                  "value": {
+                    "kind": "task-input",
+                    "name": "email"
+                  }
+                },
+                "name": {
+                  "status": "known",
+                  "value": {
+                    "kind": "task-input",
+                    "name": "name"
+                  }
+                }
+              }
+            },
+            "failure_category": "users-create-fields",
+            "fact_id": "users:create-fields"
+          },
+          {
+            "path": "/request/body",
+            "operator": "equals",
+            "value": {
+              "status": "known",
+              "value": {
+                "email": {
+                  "status": "known",
+                  "value": {
+                    "kind": "task-input",
+                    "name": "email"
+                  }
+                },
+                "name": {
+                  "status": "known",
+                  "value": {
+                    "kind": "task-input",
+                    "name": "name"
+                  }
+                }
+              }
+            },
+            "failure_category": "users-role-default",
+            "fact_id": "users:role-default"
+          }
+        ],
+        "fact_inventory": {
+          "required": [
+            "users:create-method",
+            "common:base-path-v1",
+            "common:bearer-auth",
+            "common:json-request-response",
+            "common:create-idempotency",
+            "users:create-fields",
+            "users:role-default"
+          ],
+          "raw_missing": [
+            "common:base-path-v1",
+            "common:bearer-auth",
+            "common:json-request-response",
+            "common:create-idempotency"
+          ],
+          "sliced_missing": [
+            "common:base-path-v1",
+            "common:bearer-auth",
+            "common:json-request-response",
+            "common:create-idempotency"
+          ]
+        }
+      }
+    },
+    {
+      "id": "upload-document-request",
+      "class": "request_construction",
+      "profile": "full",
+      "public": {
+        "user_task": "Construct the complete multipart HTTP request for uploading statement.pdf as a PDF with JSON metadata title Q2 statement and tags finance and quarterly. The operation may need a safe retry after an ambiguous network outcome.",
+        "output_contract": "request-construction.calibration4",
+        "retrieval": {
+          "openapi_roots": [
+            "paths./documents.post",
+            "components.schemas.DocumentMetadata"
+          ],
+          "docai_files": [
+            "INDEX.md",
+            "CONVENTIONS.md",
+            "resources/documents.md"
+          ]
+        },
+        "inputs": {
+          "document": {
+            "kind": "local-file",
+            "filename": "statement.pdf"
+          },
+          "filename": "statement.pdf",
+          "content_type": "application/pdf",
+          "metadata": {
+            "title": "Q2 statement",
+            "tags": [
+              "finance",
+              "quarterly"
+            ]
+          }
+        }
+      },
+      "private": {
+        "expected_outcome": {
+          "request": {
+            "method": {
+              "status": "known",
+              "value": "POST"
+            },
+            "path": {
+              "status": "known",
+              "value": "/v1/documents"
+            },
+            "path_parameters": {
+              "status": "complete",
+              "items": []
+            },
+            "query": {
+              "status": "complete",
+              "items": []
+            },
+            "headers": {
+              "status": "complete",
+              "items": [
+                {
+                  "name": "Authorization",
+                  "value": {
+                    "status": "known",
+                    "value": {
+                      "kind": "external-input",
+                      "name": "access_token"
+                    }
+                  },
+                  "scheme": {
+                    "status": "known",
+                    "value": "Bearer"
+                  }
+                },
+                {
+                  "name": "Accept",
+                  "value": {
+                    "status": "known",
+                    "value": "application/json"
+                  },
+                  "scheme": {
+                    "status": "known",
+                    "value": null
+                  }
+                },
+                {
+                  "name": "Idempotency-Key",
+                  "value": {
+                    "status": "known",
+                    "value": {
+                      "kind": "generated",
+                      "rule": "opaque-string",
+                      "scope": "upload"
+                    }
+                  },
+                  "scheme": {
+                    "status": "known",
+                    "value": null
+                  }
+                }
+              ]
+            },
+            "body": {
+              "status": "known",
+              "value": null
+            },
+            "parts": {
+              "status": "complete",
+              "items": [
+                {
+                  "name": "document",
+                  "filename": {
+                    "status": "known",
+                    "value": "statement.pdf"
+                  },
+                  "content_type": {
+                    "status": "known",
+                    "value": "application/pdf"
+                  },
+                  "value": {
+                    "status": "known",
+                    "value": {
+                      "kind": "task-input",
+                      "name": "document"
+                    }
+                  }
+                },
+                {
+                  "name": "metadata",
+                  "filename": {
+                    "status": "known",
+                    "value": null
+                  },
+                  "content_type": {
+                    "status": "known",
+                    "value": "application/json"
+                  },
+                  "value": {
+                    "status": "known",
+                    "value": {
+                      "kind": "task-input",
+                      "name": "metadata"
+                    }
+                  }
+                }
+              ]
+            },
+            "content_type": {
+              "status": "known",
+              "value": "multipart/form-data"
+            },
+            "boundary": {
+              "mode": {
+                "status": "known",
+                "value": "library-managed"
+              },
+              "value": {
+                "status": "known",
+                "value": null
+              }
+            },
+            "validation": {
+              "status": "complete",
+              "items": [
+                {
+                  "target": "document",
+                  "constraint": "maximum-bytes",
+                  "value": {
+                    "status": "known",
+                    "value": 10485760
+                  }
+                },
+                {
+                  "target": "metadata",
+                  "constraint": "maximum-bytes",
+                  "value": {
+                    "status": "known",
+                    "value": 4096
+                  }
+                },
+                {
+                  "target": "document",
+                  "constraint": "accepted-content-types",
+                  "value": {
+                    "status": "known",
+                    "value": [
+                      "application/pdf",
+                      "image/png"
+                    ]
+                  }
+                },
+                {
+                  "target": "metadata",
+                  "constraint": "accepted-content-types",
+                  "value": {
+                    "status": "known",
+                    "value": [
+                      "application/json"
+                    ]
+                  }
+                },
+                {
+                  "target": "document",
+                  "constraint": "filename-required",
+                  "value": {
+                    "status": "known",
+                    "value": true
+                  }
+                },
+                {
+                  "target": "document",
+                  "constraint": "preserve-extension",
+                  "value": {
+                    "status": "known",
+                    "value": true
+                  }
+                },
+                {
+                  "target": "metadata",
+                  "constraint": "additional-properties",
+                  "value": {
+                    "status": "known",
+                    "value": false
+                  }
+                }
+              ]
+            }
+          },
+          "retry": {
+            "status": "complete",
+            "items": [
+              {
+                "trigger": {
+                  "status": "known",
+                  "value": {
+                    "category": "ambiguous-outcome",
+                    "status": null,
+                    "code": null
+                  }
+                },
+                "operation": {
+                  "status": "known",
+                  "value": {
+                    "method": {
+                      "status": "known",
+                      "value": "POST"
+                    },
+                    "path": {
+                      "status": "known",
+                      "value": "/v1/documents"
+                    }
+                  }
+                },
+                "action": {
+                  "status": "known",
+                  "value": {
+                    "kind": "retry",
+                    "key_strategy": "preserve",
+                    "request_equivalence": "byte-identical"
+                  }
+                },
+                "preserve": {
+                  "status": "complete",
+                  "items": [
+                    {
+                      "target": {
+                        "kind": "generated",
+                        "rule": "opaque-string",
+                        "scope": "upload"
+                      },
+                      "equivalence": {
+                        "status": "known",
+                        "value": "identity"
+                      }
+                    },
+                    {
+                      "target": {
+                        "kind": "task-input",
+                        "name": "document"
+                      },
+                      "equivalence": {
+                        "status": "known",
+                        "value": "identity"
+                      }
+                    },
+                    {
+                      "target": {
+                        "kind": "task-input",
+                        "name": "metadata"
+                      },
+                      "equivalence": {
+                        "status": "known",
+                        "value": "identity"
+                      }
+                    }
+                  ]
+                },
+                "repeat_side_effect": {
+                  "status": "known",
+                  "value": false
+                }
+              }
+            ]
+          },
+          "uncertainties": []
+        },
+        "assertions": [
+          {
+            "path": "/request/method",
+            "operator": "equals",
+            "value": {
+              "status": "known",
+              "value": "POST"
+            },
+            "failure_category": "documents-upload-method",
+            "fact_id": "documents:upload-method"
+          },
+          {
+            "path": "/request/path",
+            "operator": "equals",
+            "value": {
+              "status": "known",
+              "value": "/v1/documents"
+            },
+            "failure_category": "common-base-path-v1",
+            "fact_id": "common:base-path-v1"
+          },
+          {
+            "path": "/request/headers",
+            "operator": "contains",
+            "value": {
+              "items": [
+                {
+                  "name": "Authorization",
+                  "value": {
+                    "status": "known",
+                    "value": {
+                      "kind": "external-input",
+                      "name": "access_token"
+                    }
+                  },
+                  "scheme": {
+                    "status": "known",
+                    "value": "Bearer"
+                  }
+                }
+              ]
+            },
+            "failure_category": "common-bearer-auth",
+            "fact_id": "common:bearer-auth"
+          },
+          {
+            "path": "/request/headers",
+            "operator": "contains",
+            "value": {
+              "items": [
+                {
+                  "name": "Accept",
+                  "value": {
+                    "status": "known",
+                    "value": "application/json"
+                  },
+                  "scheme": {
+                    "status": "known",
+                    "value": null
+                  }
+                }
+              ]
+            },
+            "failure_category": "documents-json-response",
+            "fact_id": "documents:json-response"
+          },
+          {
+            "path": "/request/headers",
+            "operator": "contains",
+            "value": {
+              "items": [
+                {
+                  "name": "Idempotency-Key",
+                  "value": {
+                    "status": "known",
+                    "value": {
+                      "kind": "generated",
+                      "rule": "opaque-string",
+                      "scope": "upload"
+                    }
+                  },
+                  "scheme": {
+                    "status": "known",
+                    "value": null
+                  }
+                }
+              ]
+            },
+            "failure_category": "common-create-idempotency",
+            "fact_id": "common:create-idempotency"
+          },
+          {
+            "path": "/retry",
+            "operator": "contains",
+            "value": {
+              "items": [
+                {
+                  "trigger": {
+                    "status": "known",
+                    "value": {
+                      "category": "ambiguous-outcome",
+                      "status": null,
+                      "code": null
+                    }
+                  },
+                  "operation": {
+                    "status": "known",
+                    "value": {
+                      "method": {
+                        "status": "known",
+                        "value": "POST"
+                      },
+                      "path": {
+                        "status": "known",
+                        "value": "/v1/documents"
+                      }
+                    }
+                  },
+                  "action": {
+                    "status": "known",
+                    "value": {
+                      "kind": "retry",
+                      "key_strategy": "preserve",
+                      "request_equivalence": "byte-identical"
+                    }
+                  },
+                  "preserve": {
+                    "status": "complete",
+                    "items": [
+                      {
+                        "target": {
+                          "kind": "generated",
+                          "rule": "opaque-string",
+                          "scope": "upload"
+                        },
+                        "equivalence": {
+                          "status": "known",
+                          "value": "identity"
+                        }
+                      },
+                      {
+                        "target": {
+                          "kind": "task-input",
+                          "name": "document"
+                        },
+                        "equivalence": {
+                          "status": "known",
+                          "value": "identity"
+                        }
+                      },
+                      {
+                        "target": {
+                          "kind": "task-input",
+                          "name": "metadata"
+                        },
+                        "equivalence": {
+                          "status": "known",
+                          "value": "identity"
+                        }
+                      }
+                    ]
+                  },
+                  "repeat_side_effect": {
+                    "status": "known",
+                    "value": false
+                  }
+                }
+              ]
+            },
+            "failure_category": "common-create-idempotency",
+            "fact_id": "common:create-idempotency"
+          },
+          {
+            "path": "/request/content_type",
+            "operator": "equals",
+            "value": {
+              "status": "known",
+              "value": "multipart/form-data"
+            },
+            "failure_category": "documents-multipart-boundary",
+            "fact_id": "documents:multipart-boundary"
+          },
+          {
+            "path": "/request/boundary",
+            "operator": "equals",
+            "value": {
+              "mode": {
+                "status": "known",
+                "value": "library-managed"
+              },
+              "value": {
+                "status": "known",
+                "value": null
+              }
+            },
+            "failure_category": "documents-multipart-boundary",
+            "fact_id": "documents:multipart-boundary"
+          },
+          {
+            "path": "/request/parts",
+            "operator": "contains",
+            "value": {
+              "items": [
+                {
+                  "name": "document",
+                  "filename": {
+                    "status": "known",
+                    "value": "statement.pdf"
+                  },
+                  "content_type": {
+                    "status": "known",
+                    "value": "application/pdf"
+                  },
+                  "value": {
+                    "status": "known",
+                    "value": {
+                      "kind": "task-input",
+                      "name": "document"
+                    }
+                  }
+                }
+              ]
+            },
+            "failure_category": "documents-file-part",
+            "fact_id": "documents:file-part"
+          },
+          {
+            "path": "/request/parts",
+            "operator": "contains",
+            "value": {
+              "items": [
+                {
+                  "name": "metadata",
+                  "filename": {
+                    "status": "known",
+                    "value": null
+                  },
+                  "content_type": {
+                    "status": "known",
+                    "value": "application/json"
+                  },
+                  "value": {
+                    "status": "known",
+                    "value": {
+                      "kind": "task-input",
+                      "name": "metadata"
+                    }
+                  }
+                }
+              ]
+            },
+            "failure_category": "documents-metadata-part",
+            "fact_id": "documents:metadata-part"
+          },
+          {
+            "path": "/request/validation",
+            "operator": "contains",
+            "value": {
+              "items": [
+                {
+                  "target": "document",
+                  "constraint": "maximum-bytes",
+                  "value": {
+                    "status": "known",
+                    "value": 10485760
+                  }
+                }
+              ]
+            },
+            "failure_category": "documents-size-limits",
+            "fact_id": "documents:size-limits"
+          },
+          {
+            "path": "/request/validation",
+            "operator": "contains",
+            "value": {
+              "items": [
+                {
+                  "target": "metadata",
+                  "constraint": "maximum-bytes",
+                  "value": {
+                    "status": "known",
+                    "value": 4096
+                  }
+                }
+              ]
+            },
+            "failure_category": "documents-size-limits",
+            "fact_id": "documents:size-limits"
+          },
+          {
+            "path": "/request/validation",
+            "operator": "contains",
+            "value": {
+              "items": [
+                {
+                  "target": "document",
+                  "constraint": "accepted-content-types",
+                  "value": {
+                    "status": "known",
+                    "value": [
+                      "application/pdf",
+                      "image/png"
+                    ]
+                  }
+                }
+              ]
+            },
+            "failure_category": "documents-file-content-types",
+            "fact_id": "documents:file-content-types"
+          },
+          {
+            "path": "/request/validation",
+            "operator": "contains",
+            "value": {
+              "items": [
+                {
+                  "target": "metadata",
+                  "constraint": "accepted-content-types",
+                  "value": {
+                    "status": "known",
+                    "value": [
+                      "application/json"
+                    ]
+                  }
+                }
+              ]
+            },
+            "failure_category": "documents-metadata-content-type",
+            "fact_id": "documents:metadata-content-type"
+          },
+          {
+            "path": "/request/validation",
+            "operator": "contains",
+            "value": {
+              "items": [
+                {
+                  "target": "document",
+                  "constraint": "filename-required",
+                  "value": {
+                    "status": "known",
+                    "value": true
+                  }
+                }
+              ]
+            },
+            "failure_category": "documents-filename-required",
+            "fact_id": "documents:filename-required"
+          },
+          {
+            "path": "/request/validation",
+            "operator": "contains",
+            "value": {
+              "items": [
+                {
+                  "target": "document",
+                  "constraint": "preserve-extension",
+                  "value": {
+                    "status": "known",
+                    "value": true
+                  }
+                }
+              ]
+            },
+            "failure_category": "documents-preserve-extension",
+            "fact_id": "documents:preserve-extension"
+          },
+          {
+            "path": "/request/validation",
+            "operator": "contains",
+            "value": {
+              "items": [
+                {
+                  "target": "metadata",
+                  "constraint": "additional-properties",
+                  "value": {
+                    "status": "known",
+                    "value": false
+                  }
+                }
+              ]
+            },
+            "failure_category": "documents-metadata-additional-properties",
+            "fact_id": "documents:metadata-additional-properties"
+          }
+        ],
+        "fact_inventory": {
+          "required": [
+            "documents:upload-method",
+            "common:base-path-v1",
+            "common:bearer-auth",
+            "documents:json-response",
+            "common:create-idempotency",
+            "documents:multipart-boundary",
+            "documents:file-part",
+            "documents:metadata-part",
+            "documents:size-limits",
+            "documents:file-content-types",
+            "documents:metadata-content-type",
+            "documents:filename-required",
+            "documents:preserve-extension",
+            "documents:metadata-additional-properties"
+          ],
+          "raw_missing": [
+            "common:base-path-v1",
+            "common:bearer-auth",
+            "documents:json-response",
+            "common:create-idempotency",
+            "documents:multipart-boundary",
+            "documents:size-limits",
+            "documents:filename-required",
+            "documents:preserve-extension"
+          ],
+          "sliced_missing": [
+            "common:base-path-v1",
+            "common:bearer-auth",
+            "documents:json-response",
+            "common:create-idempotency",
+            "documents:multipart-boundary",
+            "documents:size-limits",
+            "documents:filename-required",
+            "documents:preserve-extension"
+          ]
+        }
+      }
+    },
+    {
+      "id": "payment-created-response",
+      "class": "response_handling",
+      "profile": "compact",
+      "public": {
+        "user_task": "Handle the successful response from creating a checkout payment, including the values to retain and any follow-up workflow or webhook relationships.",
+        "output_contract": "response-handling.calibration4",
+        "retrieval": {
+          "openapi_roots": [
+            "paths./payments.post",
+            "components.schemas.PaymentResponse",
+            "webhooks.payment.completed",
+            "x-docai-workflows.checkout"
+          ],
+          "docai_files": [
+            "INDEX.md",
+            "CONVENTIONS.md",
+            "resources/payments.md",
+            "workflows/checkout.md",
+            "webhooks/payment-completed.md"
+          ]
+        },
+        "inputs": {}
+      },
+      "private": {
+        "expected_outcome": {
+          "response": {
+            "status": {
+              "status": "known",
+              "value": 201
+            },
+            "headers": {
+              "status": "complete",
+              "items": []
+            },
+            "body": {
+              "presence": {
+                "status": "known",
+                "value": "always"
+              },
+              "nullable": {
+                "status": "known",
+                "value": false
+              },
+              "content_type": {
+                "status": "known",
+                "value": "application/json"
+              },
+              "fields": {
+                "status": "complete",
+                "items": [
+                  {
+                    "name": "payment_id",
+                    "type": {
+                      "status": "known",
+                      "value": "string"
+                    },
+                    "presence": {
+                      "status": "known",
+                      "value": "always"
+                    },
+                    "nullable": {
+                      "status": "known",
+                      "value": false
+                    },
+                    "value": {
+                      "status": "known",
+                      "value": {
+                        "kind": "external-input",
+                        "name": "response.payment_id"
+                      }
+                    }
+                  },
+                  {
+                    "name": "status",
+                    "type": {
+                      "status": "known",
+                      "value": "string"
+                    },
+                    "presence": {
+                      "status": "known",
+                      "value": "always"
+                    },
+                    "nullable": {
+                      "status": "known",
+                      "value": false
+                    },
+                    "value": {
+                      "status": "known",
+                      "value": "pending"
+                    }
+                  }
+                ]
+              }
+            },
+            "retained_fields": {
+              "status": "complete",
+              "items": [
+                "payment_id"
+              ]
+            },
+            "relations": {
+              "status": "complete",
+              "items": [
+                {
+                  "target": {
+                    "status": "known",
+                    "value": "POST /orders"
+                  },
+                  "field": {
+                    "status": "known",
+                    "value": "payment_id"
+                  },
+                  "action": {
+                    "status": "known",
+                    "value": "pass-as-input"
+                  }
+                },
+                {
+                  "target": {
+                    "status": "known",
+                    "value": "payment.completed"
+                  },
+                  "field": {
+                    "status": "known",
+                    "value": "payment_id"
+                  },
+                  "action": {
+                    "status": "known",
+                    "value": "match"
+                  }
+                }
+              ]
+            }
+          },
+          "uncertainties": []
+        },
+        "assertions": [
+          {
+            "path": "/response/status",
+            "operator": "equals",
+            "value": {
+              "status": "known",
+              "value": 201
+            },
+            "failure_category": "payments-created-status",
+            "fact_id": "payments:created-status"
+          },
+          {
+            "path": "/response/body/fields",
+            "operator": "contains",
+            "value": {
+              "items": [
+                {
+                  "name": "status",
+                  "value": {
+                    "status": "known",
+                    "value": "pending"
+                  }
+                }
+              ]
+            },
+            "failure_category": "payments-pending-body",
+            "fact_id": "payments:pending-body"
+          },
+          {
+            "path": "/response/retained_fields",
+            "operator": "contains",
+            "value": {
+              "items": [
+                "payment_id"
+              ]
+            },
+            "failure_category": "payments-retained-id",
+            "fact_id": "payments:retained-id"
+          },
+          {
+            "path": "/response/relations",
+            "operator": "contains",
+            "value": {
+              "items": [
+                {
+                  "target": {
+                    "status": "known",
+                    "value": "POST /orders"
+                  },
+                  "field": {
+                    "status": "known",
+                    "value": "payment_id"
+                  },
+                  "action": {
+                    "status": "known",
+                    "value": "pass-as-input"
+                  }
+                }
+              ]
+            },
+            "failure_category": "payments-order-link",
+            "fact_id": "payments:order-link"
+          },
+          {
+            "path": "/response/relations",
+            "operator": "contains",
+            "value": {
+              "items": [
+                {
+                  "target": {
+                    "status": "known",
+                    "value": "payment.completed"
+                  },
+                  "field": {
+                    "status": "known",
+                    "value": "payment_id"
+                  },
+                  "action": {
+                    "status": "known",
+                    "value": "match"
+                  }
+                }
+              ]
+            },
+            "failure_category": "payments-webhook-link",
+            "fact_id": "payments:webhook-link"
+          },
+          {
+            "path": "/response/body/presence",
+            "operator": "equals",
+            "value": {
+              "status": "known",
+              "value": "always"
+            },
+            "failure_category": "payments-body-presence",
+            "fact_id": "payments:body-presence"
+          },
+          {
+            "path": "/response/body/nullable",
+            "operator": "equals",
+            "value": {
+              "status": "known",
+              "value": false
+            },
+            "failure_category": "payments-body-nullable",
+            "fact_id": "payments:body-nullable"
+          },
+          {
+            "path": "/response/body/content_type",
+            "operator": "equals",
+            "value": {
+              "status": "known",
+              "value": "application/json"
+            },
+            "failure_category": "payments-body-content-type",
+            "fact_id": "payments:body-content-type"
+          },
+          {
+            "path": "/response/body/fields",
+            "operator": "equals",
+            "value": {
+              "status": "complete",
+              "items": [
+                {
+                  "name": "payment_id",
+                  "type": {
+                    "status": "known",
+                    "value": "string"
+                  },
+                  "presence": {
+                    "status": "known",
+                    "value": "always"
+                  },
+                  "nullable": {
+                    "status": "known",
+                    "value": false
+                  },
+                  "value": {
+                    "status": "known",
+                    "value": {
+                      "kind": "external-input",
+                      "name": "response.payment_id"
+                    }
+                  }
+                },
+                {
+                  "name": "status",
+                  "type": {
+                    "status": "known",
+                    "value": "string"
+                  },
+                  "presence": {
+                    "status": "known",
+                    "value": "always"
+                  },
+                  "nullable": {
+                    "status": "known",
+                    "value": false
+                  },
+                  "value": {
+                    "status": "known",
+                    "value": "pending"
+                  }
+                }
+              ]
+            },
+            "failure_category": "payments-body-fields",
+            "fact_id": "payments:body-fields"
+          }
+        ],
+        "fact_inventory": {
+          "required": [
+            "payments:created-status",
+            "payments:pending-body",
+            "payments:retained-id",
+            "payments:order-link",
+            "payments:webhook-link",
+            "payments:body-presence",
+            "payments:body-nullable",
+            "payments:body-content-type",
+            "payments:body-fields"
+          ],
+          "raw_missing": [
+            "payments:order-link"
+          ],
+          "sliced_missing": [
+            "payments:order-link"
+          ]
+        }
+      }
+    },
+    {
+      "id": "create-user-errors",
+      "class": "error_recovery",
+      "profile": "compact",
+      "public": {
+        "user_task": "Design error handling for creating a user when the email is already used, validation fails, the idempotency key conflicts, or the access token has expired. State whether and how each case may be retried.",
+        "output_contract": "error-recovery.calibration4",
+        "retrieval": {
+          "openapi_roots": [
+            "paths./users.post",
+            "components.responses.ValidationError",
+            "components.responses.TokenExpired",
+            "components.schemas.EmailTakenError",
+            "components.schemas.StandardError",
+            "components.schemas.ValidationError"
+          ],
+          "docai_files": [
+            "INDEX.md",
+            "CONVENTIONS.md",
+            "resources/users.md"
+          ]
+        },
+        "inputs": {}
+      },
+      "private": {
+        "expected_outcome": {
+          "errors": {
+            "status": "complete",
+            "items": [
+              {
+                "status": {
+                  "status": "known",
+                  "value": 409
+                },
+                "code": {
+                  "status": "known",
+                  "value": "email_taken"
+                },
+                "recovery": {
+                  "trigger": {
+                    "status": "known",
+                    "value": {
+                      "category": "rejected-input",
+                      "status": 409,
+                      "code": "email_taken"
+                    }
+                  },
+                  "operation": {
+                    "status": "known",
+                    "value": {
+                      "method": {
+                        "status": "known",
+                        "value": "POST"
+                      },
+                      "path": {
+                        "status": "known",
+                        "value": "/v1/users"
+                      }
+                    }
+                  },
+                  "action": {
+                    "status": "known",
+                    "value": {
+                      "kind": "correct-and-retry",
+                      "key_strategy": "new",
+                      "request_equivalence": "changed"
+                    }
+                  },
+                  "preserve": {
+                    "status": "complete",
+                    "items": []
+                  },
+                  "repeat_side_effect": {
+                    "status": "known",
+                    "value": false
+                  }
+                }
+              },
+              {
+                "status": {
+                  "status": "known",
+                  "value": 422
+                },
+                "code": {
+                  "status": "known",
+                  "value": "validation_failed"
+                },
+                "recovery": {
+                  "trigger": {
+                    "status": "known",
+                    "value": {
+                      "category": "rejected-input",
+                      "status": 422,
+                      "code": "validation_failed"
+                    }
+                  },
+                  "operation": {
+                    "status": "known",
+                    "value": {
+                      "method": {
+                        "status": "known",
+                        "value": "POST"
+                      },
+                      "path": {
+                        "status": "known",
+                        "value": "/v1/users"
+                      }
+                    }
+                  },
+                  "action": {
+                    "status": "known",
+                    "value": {
+                      "kind": "correct-and-retry",
+                      "key_strategy": "new",
+                      "request_equivalence": "changed"
+                    }
+                  },
+                  "preserve": {
+                    "status": "complete",
+                    "items": []
+                  },
+                  "repeat_side_effect": {
+                    "status": "known",
+                    "value": false
+                  }
+                }
+              },
+              {
+                "status": {
+                  "status": "known",
+                  "value": 409
+                },
+                "code": {
+                  "status": "known",
+                  "value": "idempotency_conflict"
+                },
+                "recovery": {
+                  "trigger": {
+                    "status": "known",
+                    "value": {
+                      "category": "conflict",
+                      "status": 409,
+                      "code": "idempotency_conflict"
+                    }
+                  },
+                  "operation": {
+                    "status": "known",
+                    "value": {
+                      "method": {
+                        "status": "known",
+                        "value": "POST"
+                      },
+                      "path": {
+                        "status": "known",
+                        "value": "/v1/users"
+                      }
+                    }
+                  },
+                  "action": {
+                    "status": "known",
+                    "value": {
+                      "kind": "select-original-or-new",
+                      "key_strategy": "original-or-new",
+                      "request_equivalence": "not-applicable"
+                    }
+                  },
+                  "preserve": {
+                    "status": "complete",
+                    "items": []
+                  },
+                  "repeat_side_effect": {
+                    "status": "known",
+                    "value": false
+                  }
+                }
+              },
+              {
+                "status": {
+                  "status": "known",
+                  "value": 401
+                },
+                "code": {
+                  "status": "known",
+                  "value": "token_expired"
+                },
+                "recovery": {
+                  "trigger": {
+                    "status": "known",
+                    "value": {
+                      "category": "expired-credential",
+                      "status": 401,
+                      "code": "token_expired"
+                    }
+                  },
+                  "operation": {
+                    "status": "known",
+                    "value": {
+                      "method": {
+                        "status": "known",
+                        "value": "POST"
+                      },
+                      "path": {
+                        "status": "known",
+                        "value": "/v1/users"
+                      }
+                    }
+                  },
+                  "action": {
+                    "status": "known",
+                    "value": {
+                      "kind": "refresh-and-retry",
+                      "max_attempts": {
+                        "status": "known",
+                        "value": 1
+                      },
+                      "key_strategy": "preserve",
+                      "request_equivalence": "semantically-identical"
+                    }
+                  },
+                  "preserve": {
+                    "status": "complete",
+                    "items": [
+                      {
+                        "target": {
+                          "kind": "generated",
+                          "rule": "opaque-string",
+                          "scope": "create-user"
+                        },
+                        "equivalence": {
+                          "status": "known",
+                          "value": "identity"
+                        }
+                      },
+                      {
+                        "target": {
+                          "kind": "external-input",
+                          "name": "original_request"
+                        },
+                        "equivalence": {
+                          "status": "known",
+                          "value": "identity"
+                        }
+                      }
+                    ]
+                  },
+                  "repeat_side_effect": {
+                    "status": "known",
+                    "value": false
+                  }
+                }
+              }
+            ]
+          },
+          "uncertainties": []
+        },
+        "assertions": [
+          {
+            "path": "/errors/items/0/recovery",
+            "operator": "equals",
+            "value": {
+              "trigger": {
+                "status": "known",
+                "value": {
+                  "category": "rejected-input",
+                  "status": 409,
+                  "code": "email_taken"
+                }
+              },
+              "operation": {
+                "status": "known",
+                "value": {
+                  "method": {
+                    "status": "known",
+                    "value": "POST"
+                  },
+                  "path": {
+                    "status": "known",
+                    "value": "/v1/users"
+                  }
+                }
+              },
+              "action": {
+                "status": "known",
+                "value": {
+                  "kind": "correct-and-retry",
+                  "key_strategy": "new",
+                  "request_equivalence": "changed"
+                }
+              },
+              "preserve": {
+                "status": "complete",
+                "items": []
+              },
+              "repeat_side_effect": {
+                "status": "known",
+                "value": false
+              }
+            },
+            "failure_category": "users-email-taken-action",
+            "fact_id": "users:email-taken-action"
+          },
+          {
+            "path": "/errors/items/1/recovery",
+            "operator": "equals",
+            "value": {
+              "trigger": {
+                "status": "known",
+                "value": {
+                  "category": "rejected-input",
+                  "status": 422,
+                  "code": "validation_failed"
+                }
+              },
+              "operation": {
+                "status": "known",
+                "value": {
+                  "method": {
+                    "status": "known",
+                    "value": "POST"
+                  },
+                  "path": {
+                    "status": "known",
+                    "value": "/v1/users"
+                  }
+                }
+              },
+              "action": {
+                "status": "known",
+                "value": {
+                  "kind": "correct-and-retry",
+                  "key_strategy": "new",
+                  "request_equivalence": "changed"
+                }
+              },
+              "preserve": {
+                "status": "complete",
+                "items": []
+              },
+              "repeat_side_effect": {
+                "status": "known",
+                "value": false
+              }
+            },
+            "failure_category": "users-validation-action",
+            "fact_id": "users:validation-action"
+          },
+          {
+            "path": "/errors/items/2/recovery",
+            "operator": "equals",
+            "value": {
+              "trigger": {
+                "status": "known",
+                "value": {
+                  "category": "conflict",
+                  "status": 409,
+                  "code": "idempotency_conflict"
+                }
+              },
+              "operation": {
+                "status": "known",
+                "value": {
+                  "method": {
+                    "status": "known",
+                    "value": "POST"
+                  },
+                  "path": {
+                    "status": "known",
+                    "value": "/v1/users"
+                  }
+                }
+              },
+              "action": {
+                "status": "known",
+                "value": {
+                  "kind": "select-original-or-new",
+                  "key_strategy": "original-or-new",
+                  "request_equivalence": "not-applicable"
+                }
+              },
+              "preserve": {
+                "status": "complete",
+                "items": []
+              },
+              "repeat_side_effect": {
+                "status": "known",
+                "value": false
+              }
+            },
+            "failure_category": "common-idempotency-conflict-action",
+            "fact_id": "common:idempotency-conflict-action"
+          },
+          {
+            "path": "/errors/items/3/recovery",
+            "operator": "equals",
+            "value": {
+              "trigger": {
+                "status": "known",
+                "value": {
+                  "category": "expired-credential",
+                  "status": 401,
+                  "code": "token_expired"
+                }
+              },
+              "operation": {
+                "status": "known",
+                "value": {
+                  "method": {
+                    "status": "known",
+                    "value": "POST"
+                  },
+                  "path": {
+                    "status": "known",
+                    "value": "/v1/users"
+                  }
+                }
+              },
+              "action": {
+                "status": "known",
+                "value": {
+                  "kind": "refresh-and-retry",
+                  "max_attempts": {
+                    "status": "known",
+                    "value": 1
+                  },
+                  "key_strategy": "preserve",
+                  "request_equivalence": "semantically-identical"
+                }
+              },
+              "preserve": {
+                "status": "complete",
+                "items": [
+                  {
+                    "target": {
+                      "kind": "generated",
+                      "rule": "opaque-string",
+                      "scope": "create-user"
+                    },
+                    "equivalence": {
+                      "status": "known",
+                      "value": "identity"
+                    }
+                  },
+                  {
+                    "target": {
+                      "kind": "external-input",
+                      "name": "original_request"
+                    },
+                    "equivalence": {
+                      "status": "known",
+                      "value": "identity"
+                    }
+                  }
+                ]
+              },
+              "repeat_side_effect": {
+                "status": "known",
+                "value": false
+              }
+            },
+            "failure_category": "common-token-expired-action",
+            "fact_id": "common:token-expired-action"
+          },
+          {
+            "path": "/errors/items/3/recovery/preserve",
+            "operator": "equals",
+            "value": {
+              "status": "complete",
+              "items": [
+                {
+                  "target": {
+                    "kind": "generated",
+                    "rule": "opaque-string",
+                    "scope": "create-user"
+                  },
+                  "equivalence": {
+                    "status": "known",
+                    "value": "identity"
+                  }
+                },
+                {
+                  "target": {
+                    "kind": "external-input",
+                    "name": "original_request"
+                  },
+                  "equivalence": {
+                    "status": "known",
+                    "value": "identity"
+                  }
+                }
+              ]
+            },
+            "failure_category": "common-create-idempotency",
+            "fact_id": "common:create-idempotency"
+          },
+          {
+            "path": "/errors/items/0/status",
+            "operator": "equals",
+            "value": {
+              "status": "known",
+              "value": 409
+            },
+            "failure_category": "users-email-taken-action",
+            "fact_id": "users:email-taken-action"
+          },
+          {
+            "path": "/errors/items/0/code",
+            "operator": "equals",
+            "value": {
+              "status": "known",
+              "value": "email_taken"
+            },
+            "failure_category": "users-email-taken-action",
+            "fact_id": "users:email-taken-action"
+          },
+          {
+            "path": "/errors/items/1/status",
+            "operator": "equals",
+            "value": {
+              "status": "known",
+              "value": 422
+            },
+            "failure_category": "users-validation-action",
+            "fact_id": "users:validation-action"
+          },
+          {
+            "path": "/errors/items/1/code",
+            "operator": "equals",
+            "value": {
+              "status": "known",
+              "value": "validation_failed"
+            },
+            "failure_category": "users-validation-action",
+            "fact_id": "users:validation-action"
+          },
+          {
+            "path": "/errors/items/2/status",
+            "operator": "equals",
+            "value": {
+              "status": "known",
+              "value": 409
+            },
+            "failure_category": "common-idempotency-conflict-action",
+            "fact_id": "common:idempotency-conflict-action"
+          },
+          {
+            "path": "/errors/items/2/code",
+            "operator": "equals",
+            "value": {
+              "status": "known",
+              "value": "idempotency_conflict"
+            },
+            "failure_category": "common-idempotency-conflict-action",
+            "fact_id": "common:idempotency-conflict-action"
+          },
+          {
+            "path": "/errors/items/3/status",
+            "operator": "equals",
+            "value": {
+              "status": "known",
+              "value": 401
+            },
+            "failure_category": "common-token-expired-action",
+            "fact_id": "common:token-expired-action"
+          },
+          {
+            "path": "/errors/items/3/code",
+            "operator": "equals",
+            "value": {
+              "status": "known",
+              "value": "token_expired"
+            },
+            "failure_category": "common-token-expired-action",
+            "fact_id": "common:token-expired-action"
+          }
+        ],
+        "fact_inventory": {
+          "required": [
+            "users:email-taken-action",
+            "users:validation-action",
+            "common:idempotency-conflict-action",
+            "common:token-expired-action",
+            "common:create-idempotency"
+          ],
+          "raw_missing": [
+            "users:email-taken-action",
+            "users:validation-action",
+            "common:idempotency-conflict-action",
+            "common:token-expired-action",
+            "common:create-idempotency"
+          ],
+          "sliced_missing": [
+            "users:email-taken-action",
+            "users:validation-action",
+            "common:idempotency-conflict-action",
+            "common:token-expired-action",
+            "common:create-idempotency"
+          ]
+        }
+      }
+    },
+    {
+      "id": "complete-checkout-workflow",
+      "class": "workflow_completion",
+      "profile": "compact",
+      "public": {
+        "user_task": "Complete checkout for cart_01K0COMPLETE with a card payment for JPY 1200. Explain the ordered calls, values and idempotency keys to retain, recovery after an ambiguous order result, and reconciliation when payment.completed arrives before the order is confirmed.",
+        "output_contract": "workflow-completion.calibration4",
+        "retrieval": {
+          "openapi_roots": [
+            "paths./carts/{id}/validate.post",
+            "paths./payments.post",
+            "paths./orders.post",
+            "webhooks.payment.completed",
+            "x-docai-workflows.checkout"
+          ],
+          "docai_files": [
+            "INDEX.md",
+            "CONVENTIONS.md",
+            "resources/checkout.md",
+            "resources/payments.md",
+            "workflows/checkout.md",
+            "webhooks/payment-completed.md"
+          ]
+        },
+        "inputs": {
+          "cart_id": "cart_01K0COMPLETE",
+          "amount": 1200,
+          "currency": "JPY",
+          "type": "card"
+        }
+      },
+      "private": {
+        "expected_outcome": {
+          "steps": {
+            "status": "complete",
+            "items": [
+              {
+                "order": 1,
+                "request": {
+                  "method": {
+                    "status": "known",
+                    "value": "POST"
+                  },
+                  "path": {
+                    "status": "known",
+                    "value": "/v1/carts/cart_01K0COMPLETE/validate"
+                  },
+                  "path_parameters": {
+                    "status": "complete",
+                    "items": [
+                      {
+                        "name": "id",
+                        "value": {
+                          "status": "known",
+                          "value": {
+                            "kind": "task-input",
+                            "name": "cart_id"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "query": {
+                    "status": "complete",
+                    "items": []
+                  },
+                  "headers": {
+                    "status": "complete",
+                    "items": [
+                      {
+                        "name": "Authorization",
+                        "value": {
+                          "status": "known",
+                          "value": {
+                            "kind": "external-input",
+                            "name": "access_token"
+                          }
+                        },
+                        "scheme": {
+                          "status": "known",
+                          "value": "Bearer"
+                        }
+                      },
+                      {
+                        "name": "Accept",
+                        "value": {
+                          "status": "known",
+                          "value": "application/json"
+                        },
+                        "scheme": {
+                          "status": "known",
+                          "value": null
+                        }
+                      }
+                    ]
+                  },
+                  "body": {
+                    "status": "known",
+                    "value": null
+                  },
+                  "parts": {
+                    "status": "complete",
+                    "items": []
+                  },
+                  "content_type": {
+                    "status": "known",
+                    "value": null
+                  },
+                  "boundary": {
+                    "mode": {
+                      "status": "known",
+                      "value": "not-applicable"
+                    },
+                    "value": {
+                      "status": "known",
+                      "value": null
+                    }
+                  },
+                  "validation": {
+                    "status": "complete",
+                    "items": []
+                  }
+                },
+                "keep": {
+                  "status": "complete",
+                  "items": [
+                    {
+                      "kind": "step-output",
+                      "step": 1,
+                      "field": "cart_id"
+                    }
+                  ]
+                },
+                "states_after_success": {
+                  "status": "complete",
+                  "items": [
+                    {
+                      "subject": "cart",
+                      "state": {
+                        "status": "known",
+                        "value": "validated"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "order": 2,
+                "request": {
+                  "method": {
+                    "status": "known",
+                    "value": "POST"
+                  },
+                  "path": {
+                    "status": "known",
+                    "value": "/v1/payments"
+                  },
+                  "path_parameters": {
+                    "status": "complete",
+                    "items": []
+                  },
+                  "query": {
+                    "status": "complete",
+                    "items": []
+                  },
+                  "headers": {
+                    "status": "complete",
+                    "items": [
+                      {
+                        "name": "Authorization",
+                        "value": {
+                          "status": "known",
+                          "value": {
+                            "kind": "external-input",
+                            "name": "access_token"
+                          }
+                        },
+                        "scheme": {
+                          "status": "known",
+                          "value": "Bearer"
+                        }
+                      },
+                      {
+                        "name": "Accept",
+                        "value": {
+                          "status": "known",
+                          "value": "application/json"
+                        },
+                        "scheme": {
+                          "status": "known",
+                          "value": null
+                        }
+                      },
+                      {
+                        "name": "Content-Type",
+                        "value": {
+                          "status": "known",
+                          "value": "application/json"
+                        },
+                        "scheme": {
+                          "status": "known",
+                          "value": null
+                        }
+                      },
+                      {
+                        "name": "Idempotency-Key",
+                        "value": {
+                          "status": "known",
+                          "value": {
+                            "kind": "generated",
+                            "rule": "opaque-string",
+                            "scope": "payment"
+                          }
+                        },
+                        "scheme": {
+                          "status": "known",
+                          "value": null
+                        }
+                      }
+                    ]
+                  },
+                  "body": {
+                    "status": "known",
+                    "value": {
+                      "cart_id": {
+                        "status": "known",
+                        "value": {
+                          "kind": "step-output",
+                          "step": 1,
+                          "field": "cart_id"
+                        }
+                      },
+                      "amount": {
+                        "status": "known",
+                        "value": {
+                          "kind": "task-input",
+                          "name": "amount"
+                        }
+                      },
+                      "currency": {
+                        "status": "known",
+                        "value": {
+                          "kind": "task-input",
+                          "name": "currency"
+                        }
+                      },
+                      "type": {
+                        "status": "known",
+                        "value": {
+                          "kind": "task-input",
+                          "name": "type"
+                        }
+                      },
+                      "card_token": {
+                        "status": "known",
+                        "value": {
+                          "kind": "external-input",
+                          "name": "card_token"
+                        }
+                      }
+                    }
+                  },
+                  "parts": {
+                    "status": "complete",
+                    "items": []
+                  },
+                  "content_type": {
+                    "status": "known",
+                    "value": "application/json"
+                  },
+                  "boundary": {
+                    "mode": {
+                      "status": "known",
+                      "value": "not-applicable"
+                    },
+                    "value": {
+                      "status": "known",
+                      "value": null
+                    }
+                  },
+                  "validation": {
+                    "status": "complete",
+                    "items": []
+                  }
+                },
+                "keep": {
+                  "status": "complete",
+                  "items": [
+                    {
+                      "kind": "step-output",
+                      "step": 2,
+                      "field": "payment_id"
+                    },
+                    {
+                      "kind": "generated",
+                      "rule": "opaque-string",
+                      "scope": "payment"
+                    }
+                  ]
+                },
+                "states_after_success": {
+                  "status": "complete",
+                  "items": [
+                    {
+                      "subject": "payment",
+                      "state": {
+                        "status": "known",
+                        "value": "pending"
+                      }
+                    },
+                    {
+                      "subject": "order",
+                      "state": {
+                        "status": "known",
+                        "value": "not_confirmed"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "order": 3,
+                "request": {
+                  "method": {
+                    "status": "known",
+                    "value": "POST"
+                  },
+                  "path": {
+                    "status": "known",
+                    "value": "/v1/orders"
+                  },
+                  "path_parameters": {
+                    "status": "complete",
+                    "items": []
+                  },
+                  "query": {
+                    "status": "complete",
+                    "items": []
+                  },
+                  "headers": {
+                    "status": "complete",
+                    "items": [
+                      {
+                        "name": "Authorization",
+                        "value": {
+                          "status": "known",
+                          "value": {
+                            "kind": "external-input",
+                            "name": "access_token"
+                          }
+                        },
+                        "scheme": {
+                          "status": "known",
+                          "value": "Bearer"
+                        }
+                      },
+                      {
+                        "name": "Accept",
+                        "value": {
+                          "status": "known",
+                          "value": "application/json"
+                        },
+                        "scheme": {
+                          "status": "known",
+                          "value": null
+                        }
+                      },
+                      {
+                        "name": "Content-Type",
+                        "value": {
+                          "status": "known",
+                          "value": "application/json"
+                        },
+                        "scheme": {
+                          "status": "known",
+                          "value": null
+                        }
+                      },
+                      {
+                        "name": "Idempotency-Key",
+                        "value": {
+                          "status": "known",
+                          "value": {
+                            "kind": "generated",
+                            "rule": "opaque-string",
+                            "scope": "order"
+                          }
+                        },
+                        "scheme": {
+                          "status": "known",
+                          "value": null
+                        }
+                      }
+                    ]
+                  },
+                  "body": {
+                    "status": "known",
+                    "value": {
+                      "cart_id": {
+                        "status": "known",
+                        "value": {
+                          "kind": "step-output",
+                          "step": 1,
+                          "field": "cart_id"
+                        }
+                      },
+                      "payment_id": {
+                        "status": "known",
+                        "value": {
+                          "kind": "step-output",
+                          "step": 2,
+                          "field": "payment_id"
+                        }
+                      }
+                    }
+                  },
+                  "parts": {
+                    "status": "complete",
+                    "items": []
+                  },
+                  "content_type": {
+                    "status": "known",
+                    "value": "application/json"
+                  },
+                  "boundary": {
+                    "mode": {
+                      "status": "known",
+                      "value": "not-applicable"
+                    },
+                    "value": {
+                      "status": "known",
+                      "value": null
+                    }
+                  },
+                  "validation": {
+                    "status": "complete",
+                    "items": []
+                  }
+                },
+                "keep": {
+                  "status": "complete",
+                  "items": [
+                    {
+                      "kind": "step-output",
+                      "step": 3,
+                      "field": "order_id"
+                    },
+                    {
+                      "kind": "step-output",
+                      "step": 1,
+                      "field": "cart_id"
+                    },
+                    {
+                      "kind": "step-output",
+                      "step": 2,
+                      "field": "payment_id"
+                    },
+                    {
+                      "kind": "generated",
+                      "rule": "opaque-string",
+                      "scope": "order"
+                    }
+                  ]
+                },
+                "states_after_success": {
+                  "status": "complete",
+                  "items": [
+                    {
+                      "subject": "payment",
+                      "state": {
+                        "status": "known",
+                        "value": "settled"
+                      }
+                    },
+                    {
+                      "subject": "order",
+                      "state": {
+                        "status": "known",
+                        "value": "confirmed"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "failure_recovery": {
+            "status": "complete",
+            "items": [
+              {
+                "trigger": {
+                  "status": "known",
+                  "value": {
+                    "category": "ambiguous-outcome",
+                    "status": null,
+                    "code": null
+                  }
+                },
+                "operation": {
+                  "status": "known",
+                  "value": {
+                    "method": {
+                      "status": "known",
+                      "value": "POST"
+                    },
+                    "path": {
+                      "status": "known",
+                      "value": "/v1/orders"
+                    }
+                  }
+                },
+                "action": {
+                  "status": "known",
+                  "value": {
+                    "kind": "retry",
+                    "key_strategy": "preserve",
+                    "request_equivalence": "semantically-identical"
+                  }
+                },
+                "preserve": {
+                  "status": "complete",
+                  "items": [
+                    {
+                      "target": {
+                        "kind": "step-output",
+                        "step": 1,
+                        "field": "cart_id"
+                      },
+                      "equivalence": {
+                        "status": "known",
+                        "value": "identity"
+                      }
+                    },
+                    {
+                      "target": {
+                        "kind": "step-output",
+                        "step": 2,
+                        "field": "payment_id"
+                      },
+                      "equivalence": {
+                        "status": "known",
+                        "value": "identity"
+                      }
+                    },
+                    {
+                      "target": {
+                        "kind": "generated",
+                        "rule": "opaque-string",
+                        "scope": "order"
+                      },
+                      "equivalence": {
+                        "status": "known",
+                        "value": "identity"
+                      }
+                    }
+                  ]
+                },
+                "repeat_side_effect": {
+                  "status": "known",
+                  "value": false
+                }
+              },
+              {
+                "trigger": {
+                  "status": "known",
+                  "value": {
+                    "category": "settled-state",
+                    "status": null,
+                    "code": null
+                  }
+                },
+                "operation": {
+                  "status": "known",
+                  "value": {
+                    "method": {
+                      "status": "known",
+                      "value": "POST"
+                    },
+                    "path": {
+                      "status": "known",
+                      "value": "/v1/orders"
+                    }
+                  }
+                },
+                "action": {
+                  "status": "known",
+                  "value": {
+                    "kind": "continue",
+                    "key_strategy": "preserve",
+                    "request_equivalence": "semantically-identical"
+                  }
+                },
+                "preserve": {
+                  "status": "complete",
+                  "items": [
+                    {
+                      "target": {
+                        "kind": "step-output",
+                        "step": 2,
+                        "field": "payment_id"
+                      },
+                      "equivalence": {
+                        "status": "known",
+                        "value": "identity"
+                      }
+                    }
+                  ]
+                },
+                "repeat_side_effect": {
+                  "status": "known",
+                  "value": false
+                }
+              }
+            ]
+          },
+          "webhook_reconciliation": {
+            "status": "complete",
+            "items": [
+              {
+                "event": {
+                  "status": "known",
+                  "value": "payment.completed"
+                },
+                "match_by": {
+                  "status": "complete",
+                  "items": [
+                    "payment_id"
+                  ]
+                },
+                "record_states": {
+                  "status": "complete",
+                  "items": [
+                    {
+                      "subject": "payment",
+                      "state": {
+                        "status": "known",
+                        "value": "settled"
+                      }
+                    },
+                    {
+                      "subject": "order",
+                      "state": {
+                        "status": "known",
+                        "value": "not_confirmed"
+                      }
+                    }
+                  ]
+                },
+                "continue_operation": {
+                  "status": "known",
+                  "value": {
+                    "method": {
+                      "status": "known",
+                      "value": "POST"
+                    },
+                    "path": {
+                      "status": "known",
+                      "value": "/v1/orders"
+                    }
+                  }
+                },
+                "repeat_side_effect": {
+                  "status": "known",
+                  "value": false
+                }
+              }
+            ]
+          },
+          "uncertainties": []
+        },
+        "assertions": [
+          {
+            "path": "/steps/items/0/request/path",
+            "operator": "equals",
+            "value": {
+              "status": "known",
+              "value": "/v1/carts/cart_01K0COMPLETE/validate"
+            },
+            "failure_category": "checkout-expanded-paths",
+            "fact_id": "checkout:expanded-paths"
+          },
+          {
+            "path": "/steps/items/0/states_after_success",
+            "operator": "equals",
+            "value": {
+              "status": "complete",
+              "items": [
+                {
+                  "subject": "cart",
+                  "state": {
+                    "status": "known",
+                    "value": "validated"
+                  }
+                }
+              ]
+            },
+            "failure_category": "checkout-state-transitions",
+            "fact_id": "checkout:state-transitions"
+          },
+          {
+            "path": "/steps/items/1/request/path",
+            "operator": "equals",
+            "value": {
+              "status": "known",
+              "value": "/v1/payments"
+            },
+            "failure_category": "checkout-expanded-paths",
+            "fact_id": "checkout:expanded-paths"
+          },
+          {
+            "path": "/steps/items/1/states_after_success",
+            "operator": "contains",
+            "value": {
+              "items": [
+                {
+                  "subject": "payment",
+                  "state": {
+                    "status": "known",
+                    "value": "pending"
+                  }
+                }
+              ]
+            },
+            "failure_category": "checkout-state-transitions",
+            "fact_id": "checkout:state-transitions"
+          },
+          {
+            "path": "/steps/items/2/request/path",
+            "operator": "equals",
+            "value": {
+              "status": "known",
+              "value": "/v1/orders"
+            },
+            "failure_category": "checkout-expanded-paths",
+            "fact_id": "checkout:expanded-paths"
+          },
+          {
+            "path": "/steps/items/2/states_after_success",
+            "operator": "contains",
+            "value": {
+              "items": [
+                {
+                  "subject": "order",
+                  "state": {
+                    "status": "known",
+                    "value": "confirmed"
+                  }
+                }
+              ]
+            },
+            "failure_category": "checkout-state-transitions",
+            "fact_id": "checkout:state-transitions"
+          },
+          {
+            "path": "/steps/items/1/request/headers",
+            "operator": "contains",
+            "value": {
+              "items": [
+                {
+                  "name": "Idempotency-Key",
+                  "value": {
+                    "status": "known",
+                    "value": {
+                      "kind": "generated",
+                      "rule": "opaque-string",
+                      "scope": "payment"
+                    }
+                  },
+                  "scheme": {
+                    "status": "known",
+                    "value": null
+                  }
+                }
+              ]
+            },
+            "failure_category": "checkout-payment-idempotency",
+            "fact_id": "checkout:payment-idempotency"
+          },
+          {
+            "path": "/steps/items/2/request/headers",
+            "operator": "contains",
+            "value": {
+              "items": [
+                {
+                  "name": "Idempotency-Key",
+                  "value": {
+                    "status": "known",
+                    "value": {
+                      "kind": "generated",
+                      "rule": "opaque-string",
+                      "scope": "order"
+                    }
+                  },
+                  "scheme": {
+                    "status": "known",
+                    "value": null
+                  }
+                }
+              ]
+            },
+            "failure_category": "checkout-order-idempotency",
+            "fact_id": "checkout:order-idempotency"
+          },
+          {
+            "path": "/failure_recovery",
+            "operator": "contains",
+            "value": {
+              "items": [
+                {
+                  "trigger": {
+                    "status": "known",
+                    "value": {
+                      "category": "ambiguous-outcome",
+                      "status": null,
+                      "code": null
+                    }
+                  },
+                  "operation": {
+                    "status": "known",
+                    "value": {
+                      "method": {
+                        "status": "known",
+                        "value": "POST"
+                      },
+                      "path": {
+                        "status": "known",
+                        "value": "/v1/orders"
+                      }
+                    }
+                  },
+                  "action": {
+                    "status": "known",
+                    "value": {
+                      "kind": "retry",
+                      "key_strategy": "preserve",
+                      "request_equivalence": "semantically-identical"
+                    }
+                  },
+                  "preserve": {
+                    "status": "complete",
+                    "items": [
+                      {
+                        "target": {
+                          "kind": "step-output",
+                          "step": 1,
+                          "field": "cart_id"
+                        },
+                        "equivalence": {
+                          "status": "known",
+                          "value": "identity"
+                        }
+                      },
+                      {
+                        "target": {
+                          "kind": "step-output",
+                          "step": 2,
+                          "field": "payment_id"
+                        },
+                        "equivalence": {
+                          "status": "known",
+                          "value": "identity"
+                        }
+                      },
+                      {
+                        "target": {
+                          "kind": "generated",
+                          "rule": "opaque-string",
+                          "scope": "order"
+                        },
+                        "equivalence": {
+                          "status": "known",
+                          "value": "identity"
+                        }
+                      }
+                    ]
+                  },
+                  "repeat_side_effect": {
+                    "status": "known",
+                    "value": false
+                  }
+                }
+              ]
+            },
+            "failure_category": "checkout-order-recovery",
+            "fact_id": "checkout:order-recovery"
+          },
+          {
+            "path": "/failure_recovery",
+            "operator": "contains",
+            "value": {
+              "items": [
+                {
+                  "trigger": {
+                    "status": "known",
+                    "value": {
+                      "category": "settled-state",
+                      "status": null,
+                      "code": null
+                    }
+                  },
+                  "operation": {
+                    "status": "known",
+                    "value": {
+                      "method": {
+                        "status": "known",
+                        "value": "POST"
+                      },
+                      "path": {
+                        "status": "known",
+                        "value": "/v1/orders"
+                      }
+                    }
+                  },
+                  "action": {
+                    "status": "known",
+                    "value": {
+                      "kind": "continue",
+                      "key_strategy": "preserve",
+                      "request_equivalence": "semantically-identical"
+                    }
+                  },
+                  "preserve": {
+                    "status": "complete",
+                    "items": [
+                      {
+                        "target": {
+                          "kind": "step-output",
+                          "step": 2,
+                          "field": "payment_id"
+                        },
+                        "equivalence": {
+                          "status": "known",
+                          "value": "identity"
+                        }
+                      }
+                    ]
+                  },
+                  "repeat_side_effect": {
+                    "status": "known",
+                    "value": false
+                  }
+                }
+              ]
+            },
+            "failure_category": "checkout-no-double-capture",
+            "fact_id": "checkout:no-double-capture"
+          },
+          {
+            "path": "/webhook_reconciliation",
+            "operator": "contains",
+            "value": {
+              "items": [
+                {
+                  "event": {
+                    "status": "known",
+                    "value": "payment.completed"
+                  },
+                  "match_by": {
+                    "status": "complete",
+                    "items": [
+                      "payment_id"
+                    ]
+                  },
+                  "record_states": {
+                    "status": "complete",
+                    "items": [
+                      {
+                        "subject": "payment",
+                        "state": {
+                          "status": "known",
+                          "value": "settled"
+                        }
+                      },
+                      {
+                        "subject": "order",
+                        "state": {
+                          "status": "known",
+                          "value": "not_confirmed"
+                        }
+                      }
+                    ]
+                  },
+                  "continue_operation": {
+                    "status": "known",
+                    "value": {
+                      "method": {
+                        "status": "known",
+                        "value": "POST"
+                      },
+                      "path": {
+                        "status": "known",
+                        "value": "/v1/orders"
+                      }
+                    }
+                  },
+                  "repeat_side_effect": {
+                    "status": "known",
+                    "value": false
+                  }
+                }
+              ]
+            },
+            "failure_category": "checkout-early-webhook",
+            "fact_id": "checkout:early-webhook"
+          },
+          {
+            "path": "/webhook_reconciliation/items/0/repeat_side_effect",
+            "operator": "equals",
+            "value": {
+              "status": "known",
+              "value": false
+            },
+            "failure_category": "checkout-no-double-capture",
+            "fact_id": "checkout:no-double-capture"
+          },
+          {
+            "path": "/steps/items/1/request/body",
+            "operator": "equals",
+            "value": {
+              "status": "known",
+              "value": {
+                "cart_id": {
+                  "status": "known",
+                  "value": {
+                    "kind": "step-output",
+                    "step": 1,
+                    "field": "cart_id"
+                  }
+                },
+                "amount": {
+                  "status": "known",
+                  "value": {
+                    "kind": "task-input",
+                    "name": "amount"
+                  }
+                },
+                "currency": {
+                  "status": "known",
+                  "value": {
+                    "kind": "task-input",
+                    "name": "currency"
+                  }
+                },
+                "type": {
+                  "status": "known",
+                  "value": {
+                    "kind": "task-input",
+                    "name": "type"
+                  }
+                },
+                "card_token": {
+                  "status": "known",
+                  "value": {
+                    "kind": "external-input",
+                    "name": "card_token"
+                  }
+                }
+              }
+            },
+            "failure_category": "checkout-request-inputs",
+            "fact_id": "checkout:request-inputs"
+          },
+          {
+            "path": "/steps/items/2/request/body",
+            "operator": "equals",
+            "value": {
+              "status": "known",
+              "value": {
+                "cart_id": {
+                  "status": "known",
+                  "value": {
+                    "kind": "step-output",
+                    "step": 1,
+                    "field": "cart_id"
+                  }
+                },
+                "payment_id": {
+                  "status": "known",
+                  "value": {
+                    "kind": "step-output",
+                    "step": 2,
+                    "field": "payment_id"
+                  }
+                }
+              }
+            },
+            "failure_category": "checkout-request-inputs",
+            "fact_id": "checkout:request-inputs"
+          },
+          {
+            "path": "/steps/items/0/keep",
+            "operator": "contains",
+            "value": {
+              "items": [
+                {
+                  "kind": "step-output",
+                  "step": 1,
+                  "field": "cart_id"
+                }
+              ]
+            },
+            "failure_category": "checkout-ordered-steps",
+            "fact_id": "checkout:ordered-steps"
+          },
+          {
+            "path": "/steps/items/1/keep",
+            "operator": "contains",
+            "value": {
+              "items": [
+                {
+                  "kind": "generated",
+                  "rule": "opaque-string",
+                  "scope": "payment"
+                }
+              ]
+            },
+            "failure_category": "checkout-payment-idempotency",
+            "fact_id": "checkout:payment-idempotency"
+          },
+          {
+            "path": "/steps/items/2/keep",
+            "operator": "contains",
+            "value": {
+              "items": [
+                {
+                  "kind": "generated",
+                  "rule": "opaque-string",
+                  "scope": "order"
+                }
+              ]
+            },
+            "failure_category": "checkout-order-idempotency",
+            "fact_id": "checkout:order-idempotency"
+          },
+          {
+            "path": "/steps/items/1/states_after_success",
+            "operator": "contains",
+            "value": {
+              "items": [
+                {
+                  "subject": "order",
+                  "state": {
+                    "status": "known",
+                    "value": "not_confirmed"
+                  }
+                }
+              ]
+            },
+            "failure_category": "checkout-state-transitions",
+            "fact_id": "checkout:state-transitions"
+          },
+          {
+            "path": "/steps/items/2/states_after_success",
+            "operator": "contains",
+            "value": {
+              "items": [
+                {
+                  "subject": "payment",
+                  "state": {
+                    "status": "known",
+                    "value": "settled"
+                  }
+                }
+              ]
+            },
+            "failure_category": "checkout-state-transitions",
+            "fact_id": "checkout:state-transitions"
+          },
+          {
+            "path": "/steps/items/0/order",
+            "operator": "equals",
+            "value": 1,
+            "failure_category": "checkout-ordered-steps",
+            "fact_id": "checkout:ordered-steps"
+          },
+          {
+            "path": "/steps/items/0/request/method",
+            "operator": "equals",
+            "value": {
+              "status": "known",
+              "value": "POST"
+            },
+            "failure_category": "checkout-ordered-steps",
+            "fact_id": "checkout:ordered-steps"
+          },
+          {
+            "path": "/steps/items/1/order",
+            "operator": "equals",
+            "value": 2,
+            "failure_category": "checkout-ordered-steps",
+            "fact_id": "checkout:ordered-steps"
+          },
+          {
+            "path": "/steps/items/1/request/method",
+            "operator": "equals",
+            "value": {
+              "status": "known",
+              "value": "POST"
+            },
+            "failure_category": "checkout-ordered-steps",
+            "fact_id": "checkout:ordered-steps"
+          },
+          {
+            "path": "/steps/items/2/order",
+            "operator": "equals",
+            "value": 3,
+            "failure_category": "checkout-ordered-steps",
+            "fact_id": "checkout:ordered-steps"
+          },
+          {
+            "path": "/steps/items/2/request/method",
+            "operator": "equals",
+            "value": {
+              "status": "known",
+              "value": "POST"
+            },
+            "failure_category": "checkout-ordered-steps",
+            "fact_id": "checkout:ordered-steps"
+          },
+          {
+            "path": "/steps/items/1/keep",
+            "operator": "contains",
+            "value": {
+              "items": [
+                {
+                  "kind": "step-output",
+                  "step": 2,
+                  "field": "payment_id"
+                }
+              ]
+            },
+            "failure_category": "checkout-retained-ids",
+            "fact_id": "checkout:retained-ids"
+          },
+          {
+            "path": "/steps/items/2/keep",
+            "operator": "contains",
+            "value": {
+              "items": [
+                {
+                  "kind": "step-output",
+                  "step": 3,
+                  "field": "order_id"
+                }
+              ]
+            },
+            "failure_category": "checkout-retained-ids",
+            "fact_id": "checkout:retained-ids"
+          },
+          {
+            "path": "/steps/items/2/keep",
+            "operator": "contains",
+            "value": {
+              "items": [
+                {
+                  "kind": "step-output",
+                  "step": 1,
+                  "field": "cart_id"
+                }
+              ]
+            },
+            "failure_category": "checkout-retained-ids",
+            "fact_id": "checkout:retained-ids"
+          },
+          {
+            "path": "/steps/items/2/keep",
+            "operator": "contains",
+            "value": {
+              "items": [
+                {
+                  "kind": "step-output",
+                  "step": 2,
+                  "field": "payment_id"
+                }
+              ]
+            },
+            "failure_category": "checkout-retained-ids",
+            "fact_id": "checkout:retained-ids"
+          }
+        ],
+        "fact_inventory": {
+          "required": [
+            "checkout:expanded-paths",
+            "checkout:state-transitions",
+            "checkout:payment-idempotency",
+            "checkout:order-idempotency",
+            "checkout:order-recovery",
+            "checkout:no-double-capture",
+            "checkout:early-webhook",
+            "checkout:request-inputs",
+            "checkout:ordered-steps",
+            "checkout:retained-ids"
+          ],
+          "raw_missing": [
+            "checkout:expanded-paths",
+            "checkout:payment-idempotency",
+            "checkout:order-idempotency",
+            "checkout:order-recovery",
+            "checkout:no-double-capture",
+            "checkout:early-webhook",
+            "checkout:state-transitions"
+          ],
+          "sliced_missing": [
+            "checkout:expanded-paths",
+            "checkout:payment-idempotency",
+            "checkout:order-idempotency",
+            "checkout:order-recovery",
+            "checkout:no-double-capture",
+            "checkout:early-webhook",
+            "checkout:state-transitions"
+          ]
+        }
+      }
+    },
+    {
+      "id": "payment-completed-webhook",
+      "class": "webhook_handling",
+      "profile": "compact",
+      "public": {
+        "user_task": "Implement a receiver for payment.completed. Describe the HTTP delivery, required header and payload handling, acknowledgement deadline, duplicate handling, opaque metadata treatment, and reconciliation with checkout when the event arrives early.",
+        "output_contract": "webhook-handling.calibration4",
+        "retrieval": {
+          "openapi_roots": [
+            "webhooks.payment.completed",
+            "paths./payments.post",
+            "x-docai-workflows.checkout"
+          ],
+          "docai_files": [
+            "INDEX.md",
+            "CONVENTIONS.md",
+            "resources/payments.md",
+            "workflows/checkout.md",
+            "webhooks/payment-completed.md"
+          ]
+        },
+        "inputs": {}
+      },
+      "private": {
+        "expected_outcome": {
+          "webhook": {
+            "event": {
+              "status": "known",
+              "value": "payment.completed"
+            },
+            "method": {
+              "status": "known",
+              "value": "POST"
+            },
+            "path": {
+              "status": "known",
+              "value": {
+                "kind": "external-input",
+                "name": "registered_url"
+              }
+            },
+            "delivery": {
+              "at_least_once": {
+                "status": "known",
+                "value": true
+              },
+              "ordered": {
+                "status": "known",
+                "value": false
+              },
+              "deduplicate_by": {
+                "status": "known",
+                "value": "event_id"
+              }
+            },
+            "headers": {
+              "status": "complete",
+              "items": [
+                {
+                  "name": "X-Payment-Attempt",
+                  "required": {
+                    "status": "known",
+                    "value": true
+                  },
+                  "type": {
+                    "status": "known",
+                    "value": "string"
+                  },
+                  "single_field_line": {
+                    "status": "known",
+                    "value": true
+                  },
+                  "comma_combinable": {
+                    "status": "known",
+                    "value": false
+                  },
+                  "order_significant": {
+                    "status": "known",
+                    "value": false
+                  }
+                }
+              ]
+            },
+            "payload": {
+              "presence": {
+                "status": "known",
+                "value": "always"
+              },
+              "nullable": {
+                "status": "known",
+                "value": false
+              },
+              "content_type": {
+                "status": "known",
+                "value": "application/json"
+              },
+              "fields": {
+                "status": "complete",
+                "items": [
+                  {
+                    "name": "event_id",
+                    "type": {
+                      "status": "known",
+                      "value": "string"
+                    },
+                    "presence": {
+                      "status": "known",
+                      "value": "always"
+                    },
+                    "nullable": {
+                      "status": "known",
+                      "value": false
+                    },
+                    "value": {
+                      "status": "known",
+                      "value": {
+                        "kind": "external-input",
+                        "name": "event.event_id"
+                      }
+                    }
+                  },
+                  {
+                    "name": "event",
+                    "type": {
+                      "status": "known",
+                      "value": "string"
+                    },
+                    "presence": {
+                      "status": "known",
+                      "value": "always"
+                    },
+                    "nullable": {
+                      "status": "known",
+                      "value": false
+                    },
+                    "value": {
+                      "status": "known",
+                      "value": "payment.completed"
+                    }
+                  },
+                  {
+                    "name": "payment_id",
+                    "type": {
+                      "status": "known",
+                      "value": "string"
+                    },
+                    "presence": {
+                      "status": "known",
+                      "value": "always"
+                    },
+                    "nullable": {
+                      "status": "known",
+                      "value": false
+                    },
+                    "value": {
+                      "status": "known",
+                      "value": {
+                        "kind": "external-input",
+                        "name": "event.payment_id"
+                      }
+                    }
+                  },
+                  {
+                    "name": "amount",
+                    "type": {
+                      "status": "known",
+                      "value": "integer"
+                    },
+                    "presence": {
+                      "status": "known",
+                      "value": "always"
+                    },
+                    "nullable": {
+                      "status": "known",
+                      "value": false
+                    },
+                    "value": {
+                      "status": "known",
+                      "value": {
+                        "kind": "external-input",
+                        "name": "event.amount"
+                      }
+                    }
+                  },
+                  {
+                    "name": "occurred_at",
+                    "type": {
+                      "status": "known",
+                      "value": "string"
+                    },
+                    "presence": {
+                      "status": "known",
+                      "value": "always"
+                    },
+                    "nullable": {
+                      "status": "known",
+                      "value": false
+                    },
+                    "value": {
+                      "status": "known",
+                      "value": {
+                        "kind": "external-input",
+                        "name": "event.occurred_at"
+                      }
+                    }
+                  },
+                  {
+                    "name": "metadata",
+                    "type": {
+                      "status": "known",
+                      "value": "object"
+                    },
+                    "presence": {
+                      "status": "known",
+                      "value": "always"
+                    },
+                    "nullable": {
+                      "status": "known",
+                      "value": false
+                    },
+                    "value": {
+                      "status": "known",
+                      "value": {
+                        "kind": "external-input",
+                        "name": "event.metadata"
+                      }
+                    }
+                  }
+                ]
+              },
+              "metadata": {
+                "handling": {
+                  "status": "known",
+                  "value": "opaque"
+                },
+                "allowed_actions": {
+                  "status": "complete",
+                  "items": [
+                    "store",
+                    "forward"
+                  ]
+                },
+                "interpret": {
+                  "status": "known",
+                  "value": false
+                }
+              }
+            },
+            "acknowledgement": {
+              "status_class": {
+                "status": "known",
+                "value": "2xx"
+              },
+              "deadline_seconds": {
+                "status": "known",
+                "value": 5
+              }
+            },
+            "reconciliation": {
+              "status": "complete",
+              "items": [
+                {
+                  "event": {
+                    "status": "known",
+                    "value": "payment.completed"
+                  },
+                  "match_by": {
+                    "status": "complete",
+                    "items": [
+                      "payment_id"
+                    ]
+                  },
+                  "record_states": {
+                    "status": "complete",
+                    "items": [
+                      {
+                        "subject": "payment",
+                        "state": {
+                          "status": "known",
+                          "value": "settled"
+                        }
+                      },
+                      {
+                        "subject": "order",
+                        "state": {
+                          "status": "known",
+                          "value": "not_confirmed"
+                        }
+                      }
+                    ]
+                  },
+                  "continue_operation": {
+                    "status": "known",
+                    "value": {
+                      "method": {
+                        "status": "known",
+                        "value": "POST"
+                      },
+                      "path": {
+                        "status": "known",
+                        "value": "/v1/orders"
+                      }
+                    }
+                  },
+                  "repeat_side_effect": {
+                    "status": "known",
+                    "value": false
+                  }
+                }
+              ]
+            }
+          },
+          "uncertainties": []
+        },
+        "assertions": [
+          {
+            "path": "/webhook/event",
+            "operator": "equals",
+            "value": {
+              "status": "known",
+              "value": "payment.completed"
+            },
+            "failure_category": "webhook-payment-event",
+            "fact_id": "webhook:payment-event"
+          },
+          {
+            "path": "/webhook/method",
+            "operator": "equals",
+            "value": {
+              "status": "known",
+              "value": "POST"
+            },
+            "failure_category": "webhook-payment-method",
+            "fact_id": "webhook:payment-method"
+          },
+          {
+            "path": "/webhook/headers",
+            "operator": "contains",
+            "value": {
+              "items": [
+                {
+                  "name": "X-Payment-Attempt",
+                  "single_field_line": {
+                    "status": "known",
+                    "value": true
+                  },
+                  "comma_combinable": {
+                    "status": "known",
+                    "value": false
+                  },
+                  "order_significant": {
+                    "status": "known",
+                    "value": false
+                  }
+                }
+              ]
+            },
+            "failure_category": "webhook-payment-attempt-header",
+            "fact_id": "webhook:payment-attempt-header"
+          },
+          {
+            "path": "/webhook/payload/fields",
+            "operator": "equals",
+            "value": {
+              "status": "complete",
+              "items": [
+                {
+                  "name": "event_id",
+                  "type": {
+                    "status": "known",
+                    "value": "string"
+                  },
+                  "presence": {
+                    "status": "known",
+                    "value": "always"
+                  },
+                  "nullable": {
+                    "status": "known",
+                    "value": false
+                  },
+                  "value": {
+                    "status": "known",
+                    "value": {
+                      "kind": "external-input",
+                      "name": "event.event_id"
+                    }
+                  }
+                },
+                {
+                  "name": "event",
+                  "type": {
+                    "status": "known",
+                    "value": "string"
+                  },
+                  "presence": {
+                    "status": "known",
+                    "value": "always"
+                  },
+                  "nullable": {
+                    "status": "known",
+                    "value": false
+                  },
+                  "value": {
+                    "status": "known",
+                    "value": "payment.completed"
+                  }
+                },
+                {
+                  "name": "payment_id",
+                  "type": {
+                    "status": "known",
+                    "value": "string"
+                  },
+                  "presence": {
+                    "status": "known",
+                    "value": "always"
+                  },
+                  "nullable": {
+                    "status": "known",
+                    "value": false
+                  },
+                  "value": {
+                    "status": "known",
+                    "value": {
+                      "kind": "external-input",
+                      "name": "event.payment_id"
+                    }
+                  }
+                },
+                {
+                  "name": "amount",
+                  "type": {
+                    "status": "known",
+                    "value": "integer"
+                  },
+                  "presence": {
+                    "status": "known",
+                    "value": "always"
+                  },
+                  "nullable": {
+                    "status": "known",
+                    "value": false
+                  },
+                  "value": {
+                    "status": "known",
+                    "value": {
+                      "kind": "external-input",
+                      "name": "event.amount"
+                    }
+                  }
+                },
+                {
+                  "name": "occurred_at",
+                  "type": {
+                    "status": "known",
+                    "value": "string"
+                  },
+                  "presence": {
+                    "status": "known",
+                    "value": "always"
+                  },
+                  "nullable": {
+                    "status": "known",
+                    "value": false
+                  },
+                  "value": {
+                    "status": "known",
+                    "value": {
+                      "kind": "external-input",
+                      "name": "event.occurred_at"
+                    }
+                  }
+                },
+                {
+                  "name": "metadata",
+                  "type": {
+                    "status": "known",
+                    "value": "object"
+                  },
+                  "presence": {
+                    "status": "known",
+                    "value": "always"
+                  },
+                  "nullable": {
+                    "status": "known",
+                    "value": false
+                  },
+                  "value": {
+                    "status": "known",
+                    "value": {
+                      "kind": "external-input",
+                      "name": "event.metadata"
+                    }
+                  }
+                }
+              ]
+            },
+            "failure_category": "webhook-payment-payload",
+            "fact_id": "webhook:payment-payload"
+          },
+          {
+            "path": "/webhook/delivery/at_least_once",
+            "operator": "equals",
+            "value": {
+              "status": "known",
+              "value": true
+            },
+            "failure_category": "webhook-at-least-once-unordered",
+            "fact_id": "webhook:at-least-once-unordered"
+          },
+          {
+            "path": "/webhook/delivery/ordered",
+            "operator": "equals",
+            "value": {
+              "status": "known",
+              "value": false
+            },
+            "failure_category": "webhook-at-least-once-unordered",
+            "fact_id": "webhook:at-least-once-unordered"
+          },
+          {
+            "path": "/webhook/delivery/deduplicate_by",
+            "operator": "equals",
+            "value": {
+              "status": "known",
+              "value": "event_id"
+            },
+            "failure_category": "webhook-deduplicate-event-id",
+            "fact_id": "webhook:deduplicate-event-id"
+          },
+          {
+            "path": "/webhook/acknowledgement",
+            "operator": "equals",
+            "value": {
+              "status_class": {
+                "status": "known",
+                "value": "2xx"
+              },
+              "deadline_seconds": {
+                "status": "known",
+                "value": 5
+              }
+            },
+            "failure_category": "webhook-ack-2xx-five-seconds",
+            "fact_id": "webhook:ack-2xx-five-seconds"
+          },
+          {
+            "path": "/webhook/payload/metadata",
+            "operator": "equals",
+            "value": {
+              "handling": {
+                "status": "known",
+                "value": "opaque"
+              },
+              "allowed_actions": {
+                "status": "complete",
+                "items": [
+                  "store",
+                  "forward"
+                ]
+              },
+              "interpret": {
+                "status": "known",
+                "value": false
+              }
+            },
+            "failure_category": "webhook-opaque-metadata",
+            "fact_id": "webhook:opaque-metadata"
+          },
+          {
+            "path": "/webhook/reconciliation",
+            "operator": "contains",
+            "value": {
+              "items": [
+                {
+                  "event": {
+                    "status": "known",
+                    "value": "payment.completed"
+                  },
+                  "match_by": {
+                    "status": "complete",
+                    "items": [
+                      "payment_id"
+                    ]
+                  },
+                  "record_states": {
+                    "status": "complete",
+                    "items": [
+                      {
+                        "subject": "payment",
+                        "state": {
+                          "status": "known",
+                          "value": "settled"
+                        }
+                      },
+                      {
+                        "subject": "order",
+                        "state": {
+                          "status": "known",
+                          "value": "not_confirmed"
+                        }
+                      }
+                    ]
+                  },
+                  "continue_operation": {
+                    "status": "known",
+                    "value": {
+                      "method": {
+                        "status": "known",
+                        "value": "POST"
+                      },
+                      "path": {
+                        "status": "known",
+                        "value": "/v1/orders"
+                      }
+                    }
+                  },
+                  "repeat_side_effect": {
+                    "status": "known",
+                    "value": false
+                  }
+                }
+              ]
+            },
+            "failure_category": "checkout-early-webhook",
+            "fact_id": "checkout:early-webhook"
+          },
+          {
+            "path": "/webhook/reconciliation/items/0/repeat_side_effect",
+            "operator": "equals",
+            "value": {
+              "status": "known",
+              "value": false
+            },
+            "failure_category": "checkout-no-double-capture",
+            "fact_id": "checkout:no-double-capture"
+          },
+          {
+            "path": "/webhook/headers",
+            "operator": "contains",
+            "value": {
+              "items": [
+                {
+                  "name": "X-Payment-Attempt",
+                  "required": {
+                    "status": "known",
+                    "value": true
+                  },
+                  "type": {
+                    "status": "known",
+                    "value": "string"
+                  }
+                }
+              ]
+            },
+            "failure_category": "webhook-payment-attempt-header",
+            "fact_id": "webhook:payment-attempt-header"
+          }
+        ],
+        "fact_inventory": {
+          "required": [
+            "webhook:payment-event",
+            "webhook:payment-method",
+            "webhook:payment-attempt-header",
+            "webhook:payment-payload",
+            "webhook:at-least-once-unordered",
+            "webhook:deduplicate-event-id",
+            "webhook:ack-2xx-five-seconds",
+            "webhook:opaque-metadata",
+            "checkout:early-webhook",
+            "checkout:no-double-capture"
+          ],
+          "raw_missing": [
+            "webhook:payment-attempt-header",
+            "webhook:at-least-once-unordered",
+            "webhook:deduplicate-event-id",
+            "webhook:ack-2xx-five-seconds",
+            "checkout:early-webhook",
+            "checkout:no-double-capture"
+          ],
+          "sliced_missing": [
+            "webhook:payment-attempt-header",
+            "webhook:at-least-once-unordered",
+            "webhook:deduplicate-event-id",
+            "webhook:ack-2xx-five-seconds",
+            "checkout:early-webhook",
+            "checkout:no-double-capture"
+          ]
+        }
+      }
+    }
+  ]
+}

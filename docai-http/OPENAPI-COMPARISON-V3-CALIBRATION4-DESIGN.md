@@ -10,9 +10,9 @@ The maintainer approved this detailed design on 2026-11-10, including scored
 validation constraints and the 16,384 generated-token limit policy. The
 successor identity is `3.0.0-calibration.4`. Approval does not authorize a
 freeze, API fees or Live calls. The .3 result remains failed and immutable.
-The [implementation plan](OPENAPI-COMPARISON-V3-CALIBRATION4-PLAN.md) is awaiting
-maintainer review and execution-method confirmation; no successor runtime or
-package has been created by the planning step.
+The [implementation plan](OPENAPI-COMPARISON-V3-CALIBRATION4-PLAN.md) and
+subagent-driven implementation were also approved on 2026-11-10. Offline
+implementation is in progress; freeze and Live approval remain separate.
 
 ## Intent And Scope
 
@@ -251,6 +251,16 @@ do not classify a charge as free. All charge-bearing attempts, including
 incomplete responses and any response-bearing failures with usage, enter
 budget accounting.
 
+Maintainer-approved boundary (2026-11-13): Anthropic accounting targets the
+fixed standard-version single request, without beta, tools, compaction,
+advisor or fallback features. Unexpected `usage.iterations` is outside this
+reviewed domain: retain the native response, leave its charge unknown, and
+stop subsequent sends. Do not infer overlap, another model's rate or a free
+request. Accepting this bounded policy does not assert that such responses
+cannot occur; legitimate responses can stop the calibration. Full iteration
+accounting requires a separate reviewed contract, not a permissive fallback.
+The runner and verifier must enforce this boundary before freeze.
+
 For Google Interactions, include separately reported thinking in generated
 billing tokens. For OpenAI, reasoning already included in output is a subset,
 not an additional charge. For Anthropic, retain separate uncached/cache-read/
@@ -322,6 +332,35 @@ Required acceptance evidence before freeze:
 Do not publish a regraded .3 score as .4 Live evidence. Synthetic tests and any
 offline replay diagnostics are labeled as such, never substituted for new
 independent model responses.
+
+Maintainer decision (2026-11-19): the successor trust anchor must authenticate
+the complete reviewed artifact set. Matching identity/timestamp and a
+self-consistent plan/manifest are insufficient: changing a reviewed file and
+resealing it under the same identity must fail against the unchanged trusted
+anchor. Document the self-reference boundary explicitly; do not silently
+reinterpret raw file SHA-256 values or weaken this to a Git-review assumption.
+This decision does not authorize the production freeze or Live inference.
+
+Builder mechanism for that approved requirement: directly import one fixed,
+data-only `runtime/freeze-authority.mjs` record containing the authority
+format/version, benchmark/plan identity and SHA-256 of the exact final manifest
+bytes. Keep its digest null during offline implementation. This separately
+reviewed trust root is the sole additional named exclusion from the
+authenticated payload, not an exclusion of a directory or arbitrary dependency.
+The complete verifier and all ordinary payload files retain raw whole-file
+hashes; do not normalize source spans. Compute final plan and manifest before
+pinning the root, then include the entire root bytes in runner revision without
+embedding that revision back into authenticated inputs. Publication must not
+rewrite or choose the root. All frozen/publication/Live validation must compare
+the exact manifest bytes against it, with no identity-only fallback.
+
+Authenticity is relative to the independently reviewed verifier and root;
+neither hashes nor signatures bootstrap trust in their own replacement.
+Replacing that trusted root is outside the fixed-root guarantee. Detached
+signatures were considered but add signer custody and authenticate reusable
+signing authority rather than uniquely pinning one reviewed bundle; those
+distribution requirements are not needed here. Preserve the two-file
+publication transaction and its explicit post-commit cleanup outcomes.
 
 ## Stages And Approval Boundaries
 
